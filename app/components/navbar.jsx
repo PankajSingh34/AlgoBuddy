@@ -13,7 +13,6 @@ const CATEGORIES = [
   { label: "Blogs",          href: "/blogs" },
   { label: "Learn CS",       href: "https://learn.dsavisualizer.in/" },
   { label: "Features",       href: "/#features" },
-  { label: "About",          href: "/#about" },
   { label: "Reviews",        href: "/#testimonial" },
 ];
 

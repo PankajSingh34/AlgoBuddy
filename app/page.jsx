@@ -1,7 +1,6 @@
 import Navbar from "@/app/components/navbar";
 import Hero from "@/app/components/hero";
 import Feature from "@/app/components/feature";
-import About from "@/app/components/about";
 import Review from "@/app/components/review";
 import Testimonial from "@/app/components/testimonial";
 import Footer from "@/app/components/footer";
@@ -53,9 +52,6 @@ export default function Home() {
         </div>
         <div id="features">
           <Feature />
-        </div>
-        <div id="about">
-          <About />
         </div>
         <div id="review">
           <Review/>
