@@ -1,15 +1,7 @@
-<p align="center">
-  <img src="./public/og.png" alt="AlgoBuddy Banner"/>
-</p>
-
 <h1 align="center">AlgoBuddy</h1>
 
 <p align="center">
   Visualize & Learn DSA Algorithms with Animations and Interactive UI.
-</p>
-
-<p align="center">
-  Built with ❤️ by <a href="https://github.com/Sohan-Rout">Sohan Rout</a>
 </p>
 
 ---
