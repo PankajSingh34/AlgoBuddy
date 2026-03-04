@@ -32,7 +32,7 @@ const Footer = () => {
         <div className="flex items-center gap-4">
           {/* GitHub */}
           <a
-            href="https://github.com"
+            href="https://github.com/PankajSingh34"
             aria-label="GitHub"
             className="w-10 h-10 rounded-full border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-udemy-dark-text hover:border-udemy-dark-text transition-colors"
           >
@@ -43,7 +43,7 @@ const Footer = () => {
 
           {/* LinkedIn */}
           <a
-            href="https://linkedin.com"
+            href="https://www.linkedin.com/in/pankaj-singh-2a968b212/"
             aria-label="LinkedIn"
             className="w-10 h-10 rounded-full border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-udemy-dark-text hover:border-udemy-dark-text transition-colors"
           >

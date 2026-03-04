@@ -37,7 +37,7 @@
 
 ## Connect With Me  
 
-<a href="https://www.linkedin.com/in/sohan-rout">
+<a href="https://www.linkedin.com/in/pankaj-singh-2a968b212/">
   <img src="https://skillicons.dev/icons?i=linkedin" alt="LinkedIn" />
 </a>
 
