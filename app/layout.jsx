@@ -4,8 +4,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/app/contexts/AuthContext";
 import { UserProvider } from "@/app/contexts/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
@@ -61,14 +59,7 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  let session = null;
-  try {
-    const supabase = createServerComponentClient({ cookies });
-    const { data } = await supabase.auth.getSession();
-    session = data?.session ?? null;
-  } catch (e) {
-    // supabase not configured or key missing — continue without session
-  }
+  const session = null; // auth is handled client-side via AuthContext
 
   return (
     <html lang="en">
