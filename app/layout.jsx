@@ -61,10 +61,14 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let session = null;
+  try {
+    const supabase = createServerComponentClient({ cookies });
+    const { data } = await supabase.auth.getSession();
+    session = data?.session ?? null;
+  } catch (e) {
+    // supabase not configured or key missing — continue without session
+  }
 
   return (
     <html lang="en">
