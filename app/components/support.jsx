@@ -1,20 +1,20 @@
-'use client';
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiMail, FiMessageSquare, FiSend } from 'react-icons/fi';
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiX, FiMail, FiMessageSquare, FiSend } from "react-icons/fi";
 
 const ContactSupportPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('contact');
+  const [activeTab, setActiveTab] = useState("contact");
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: '',
-    subject: 'Support Request'
+    name: "",
+    email: "",
+    message: "",
+    subject: "Support Request",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const popupRef = useRef(null);
 
   // Close popup when clicking outside
@@ -26,43 +26,43 @@ const ContactSupportPopup = () => {
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setError('');
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
+      const response = await fetch("/api/contact", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error("Failed to send message");
       }
 
       setIsSubmitted(true);
       setFormData({
-        name: '',
-        email: '',
-        message: '',
-        subject: 'Support Request'
+        name: "",
+        email: "",
+        message: "",
+        subject: "Support Request",
       });
 
       // Reset form after 3 seconds
@@ -71,7 +71,7 @@ const ContactSupportPopup = () => {
         setIsOpen(false);
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -105,15 +105,15 @@ const ContactSupportPopup = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25 }}
+              transition={{ type: "spring", damping: 25 }}
               className="bg-white dark:bg-udemy-dark-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
             >
               {/* Header */}
               <div className="bg-udemy-purple p-4 text-white flex justify-between items-center">
                 <h3 className="text-xl font-bold">
-                  {activeTab === 'contact' ? 'Contact Us' : 'Support Center'}
+                  {activeTab === "contact" ? "Contact Us" : "Support Center"}
                 </h3>
-                <button 
+                <button
                   onClick={() => setIsOpen(false)}
                   className="text-white hover:text-white/80 transition-colors"
                   disabled={isLoading}
@@ -124,7 +124,7 @@ const ContactSupportPopup = () => {
 
               {/* Content */}
               <div className="p-6">
-                {activeTab === 'contact' ? (
+                {activeTab === "contact" ? (
                   <form onSubmit={handleSubmit}>
                     {isSubmitted ? (
                       <motion.div
@@ -165,7 +165,10 @@ const ContactSupportPopup = () => {
                         )}
                         <div className="space-y-4">
                           <div>
-                            <label htmlFor="name" className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1">
+                            <label
+                              htmlFor="name"
+                              className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1"
+                            >
                               Your Name
                             </label>
                             <input
@@ -180,7 +183,10 @@ const ContactSupportPopup = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="email" className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1">
+                            <label
+                              htmlFor="email"
+                              className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1"
+                            >
                               Email Address
                             </label>
                             <input
@@ -195,7 +201,10 @@ const ContactSupportPopup = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="subject" className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1">
+                            <label
+                              htmlFor="subject"
+                              className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1"
+                            >
                               Subject
                             </label>
                             <select
@@ -214,7 +223,10 @@ const ContactSupportPopup = () => {
                             </select>
                           </div>
                           <div>
-                            <label htmlFor="message" className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1">
+                            <label
+                              htmlFor="message"
+                              className="block text-left text-sm font-semibold text-udemy-text dark:text-udemy-dark-text mb-1"
+                            >
                               Message
                             </label>
                             <textarea
@@ -232,13 +244,29 @@ const ContactSupportPopup = () => {
                         <button
                           type="submit"
                           disabled={isLoading}
-                        className="mt-6 w-full bg-udemy-purple hover:bg-udemy-purple-dark text-white py-3 px-4 rounded font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="mt-6 w-full bg-udemy-purple hover:bg-udemy-purple-dark text-white py-3 px-4 rounded font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                           {isLoading ? (
                             <>
-                              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               Sending...
                             </>
@@ -258,7 +286,15 @@ const ContactSupportPopup = () => {
                         Need immediate help?
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
-                        Check out our <a href="#" className="underline">FAQs</a> or join our <a href="#" className="underline">community forum</a>.
+                        Check out our{" "}
+                        <a href="#" className="underline">
+                          FAQs
+                        </a>{" "}
+                        or join our{" "}
+                        <a href="#" className="underline">
+                          community forum
+                        </a>
+                        .
                       </p>
                     </div>
                     <div>
@@ -270,7 +306,7 @@ const ContactSupportPopup = () => {
                           "How do I reset my password?",
                           "Where can I find documentation?",
                           "What are your business hours?",
-                          "How do I cancel my subscription?"
+                          "How do I cancel my subscription?",
                         ].map((question, index) => (
                           <a
                             key={index}

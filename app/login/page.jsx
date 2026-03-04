@@ -17,7 +17,7 @@ import dynamic from "next/dynamic";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function LoginPage() {

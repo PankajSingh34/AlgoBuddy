@@ -9,18 +9,24 @@ import { supabase } from "@/lib/supabase";
    DATA
 ───────────────────────────────────────────── */
 const CATEGORIES = [
-  { label: "Visualizer",     href: "/visualizer" },
-  { label: "Blogs",          href: "/blogs" },
-  { label: "Learn CS",       href: "https://learn.dsavisualizer.in/" },
-  { label: "Features",       href: "/#features" },
-  { label: "Reviews",        href: "/#testimonial" },
+  { label: "Visualizer", href: "/visualizer" },
+  { label: "Blogs", href: "/blogs" },
+  { label: "Learn CS", href: "https://learn.dsavisualizer.in/" },
+  { label: "Features", href: "/#features" },
+  { label: "Reviews", href: "/#testimonial" },
 ];
 
 /* ─────────────────────────────────────────────
    ICONS (inline SVG, no extra deps)
 ───────────────────────────────────────────── */
 const SearchIcon = () => (
-  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+  <svg
+    className="w-[18px] h-[18px]"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.2}
+    viewBox="0 0 24 24"
+  >
     <circle cx="11" cy="11" r="8" />
     <path strokeLinecap="round" d="M21 21l-4.35-4.35" />
   </svg>
@@ -29,33 +35,76 @@ const SearchIcon = () => (
 const ChevronDown = ({ open }) => (
   <svg
     className={`w-4 h-4 ml-0.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-    fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.2}
+    viewBox="0 0 24 24"
   >
     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
   </svg>
 );
 
 const MoonIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+    />
   </svg>
 );
 
 const SunIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+    />
   </svg>
 );
 
 const MenuIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  <svg
+    className="w-6 h-6"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 6h16M4 12h16M4 18h16"
+    />
   </svg>
 );
 
 const CloseIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  <svg
+    className="w-6 h-6"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M6 18L18 6M6 6l12 12"
+    />
   </svg>
 );
 
@@ -92,7 +141,9 @@ function UserDropdown({ user, onLogout, onClose }) {
       style={{ fontFamily: "'Source Sans 3', sans-serif" }}
     >
       <div className="px-4 py-3 border-b border-[#d1d7dc] dark:border-[#3e4143]">
-        <p className="text-xs text-[#6a6f73] dark:text-[#9e9e9e] truncate">{user.email}</p>
+        <p className="text-xs text-[#6a6f73] dark:text-[#9e9e9e] truncate">
+          {user.email}
+        </p>
       </div>
       <Link
         href="/dashboard"
@@ -102,7 +153,10 @@ function UserDropdown({ user, onLogout, onClose }) {
         My Dashboard
       </Link>
       <button
-        onClick={() => { onLogout(); onClose(); }}
+        onClick={() => {
+          onLogout();
+          onClose();
+        }}
         className="w-full text-left px-4 py-3 text-[14px] font-semibold text-[#1c1d1f] dark:text-[#f7f9fa] hover:bg-[#f7f9fa] dark:hover:bg-[#3e4143] transition-colors border-t border-[#d1d7dc] dark:border-[#3e4143]"
       >
         Log out
@@ -115,15 +169,15 @@ function UserDropdown({ user, onLogout, onClose }) {
    MAIN NAVBAR
 ───────────────────────────────────────────── */
 export default function Navbar() {
-  const [theme, setTheme]           = useState("light");
+  const [theme, setTheme] = useState("light");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [query, setQuery]           = useState("");
+  const [query, setQuery] = useState("");
 
   const exploreRef = useRef(null);
-  const userRef    = useRef(null);
-  const router     = useRouter();
+  const userRef = useRef(null);
+  const router = useRouter();
   const { user, setUser } = useUser();
 
   /* theme init */
@@ -136,8 +190,10 @@ export default function Navbar() {
   /* close dropdowns on outside click */
   useEffect(() => {
     const fn = (e) => {
-      if (exploreRef.current && !exploreRef.current.contains(e.target)) setExploreOpen(false);
-      if (userRef.current    && !userRef.current.contains(e.target))    setUserMenuOpen(false);
+      if (exploreRef.current && !exploreRef.current.contains(e.target))
+        setExploreOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target))
+        setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", fn);
     return () => document.removeEventListener("mousedown", fn);
@@ -160,12 +216,15 @@ export default function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     const q = query.trim();
-    if (q) { router.push(`/blogs?q=${encodeURIComponent(q)}`); setMobileOpen(false); }
+    if (q) {
+      router.push(`/blogs?q=${encodeURIComponent(q)}`);
+      setMobileOpen(false);
+    }
   };
 
   /* shared text style */
   const navText = "text-[#1c1d1f] dark:text-[#f7f9fa]";
-  const font    = { fontFamily: "'Source Sans 3', sans-serif" };
+  const font = { fontFamily: "'Source Sans 3', sans-serif" };
 
   return (
     <>
@@ -177,7 +236,6 @@ export default function Navbar() {
         className="fixed top-0 left-0 right-0 z-[9998] h-[60px] bg-white dark:bg-[#1c1d1f] border-b border-[#d1d7dc] dark:border-[#3e4143] flex items-center"
       >
         <div className="w-full max-w-[1340px] mx-auto px-4 flex items-center gap-3 h-full">
-
           {/* ── Logo ── */}
           <Link
             href="/"
@@ -200,7 +258,9 @@ export default function Navbar() {
               Explore
               <ChevronDown open={exploreOpen} />
             </button>
-            {exploreOpen && <ExploreDropdown onClose={() => setExploreOpen(false)} />}
+            {exploreOpen && (
+              <ExploreDropdown onClose={() => setExploreOpen(false)} />
+            )}
           </div>
 
           {/* ── Search bar (grows) ── */}
@@ -231,11 +291,10 @@ export default function Navbar() {
 
           {/* ── Right side items ── */}
           <div className="hidden md:flex items-center gap-1 shrink-0">
-
             {/* text nav links */}
             {[
-              { href: "/#features",    label: "Features" },
-              { href: "/#testimonial", label: "Reviews"  },
+              { href: "/#features", label: "Features" },
+              { href: "/#testimonial", label: "Reviews" },
             ].map((l) => (
               <Link
                 key={l.href}
@@ -269,7 +328,11 @@ export default function Navbar() {
                   />
                 </button>
                 {userMenuOpen && (
-                  <UserDropdown user={user} onLogout={handleLogout} onClose={() => setUserMenuOpen(false)} />
+                  <UserDropdown
+                    user={user}
+                    onLogout={handleLogout}
+                    onClose={() => setUserMenuOpen(false)}
+                  />
                 )}
               </div>
             ) : (
@@ -292,7 +355,11 @@ export default function Navbar() {
 
           {/* ── Mobile right (theme + hamburger) ── */}
           <div className="flex items-center gap-1 ml-auto md:hidden">
-            <button onClick={toggleTheme} aria-label="Toggle theme" className={`w-10 h-10 flex items-center justify-center ${navText}`}>
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className={`w-10 h-10 flex items-center justify-center ${navText}`}
+            >
               {theme === "light" ? <MoonIcon /> : <SunIcon />}
             </button>
             <button
@@ -359,7 +426,10 @@ export default function Navbar() {
                   Dashboard
                 </Link>
                 <button
-                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  onClick={() => {
+                    handleLogout();
+                    setMobileOpen(false);
+                  }}
                   className="flex-1 h-[42px] text-[15px] font-bold bg-[#a435f0] hover:bg-[#7d2be0] text-white transition-colors"
                 >
                   Log out

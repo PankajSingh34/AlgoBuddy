@@ -16,7 +16,7 @@ export default function TutorialOverlay() {
       gsap.fromTo(
         overlayRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.5, ease: "power2.out" }
+        { opacity: 1, duration: 0.5, ease: "power2.out" },
       );
     }
   }, []);
@@ -78,9 +78,12 @@ export default function TutorialOverlay() {
           {step === 2 && "Learn More About Each Structure"}
         </h2>
         <p className="text-gray-700 dark:text-gray-300 mb-6">
-          {step === 0 && "Here’s a quick guide to help you get started with visualizing data structures."}
-          {step === 1 && "This is the algorithm page where you can choose a data structure and explore related algorithms."}
-          {step === 2 && "Click the 'i' button on each data structure card to learn more about it before visualizing."}
+          {step === 0 &&
+            "Here’s a quick guide to help you get started with visualizing data structures."}
+          {step === 1 &&
+            "This is the algorithm page where you can choose a data structure and explore related algorithms."}
+          {step === 2 &&
+            "Click the 'i' button on each data structure card to learn more about it before visualizing."}
         </p>
         {step > 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">

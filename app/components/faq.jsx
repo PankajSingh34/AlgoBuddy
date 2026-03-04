@@ -1,6 +1,11 @@
-'use client';
-import React, { useState } from 'react';
-import { FiChevronDown, FiChevronUp, FiHelpCircle, FiMail } from 'react-icons/fi';
+"use client";
+import React, { useState } from "react";
+import {
+  FiChevronDown,
+  FiChevronUp,
+  FiHelpCircle,
+  FiMail,
+} from "react-icons/fi";
 import Support from "@/app/components/support";
 
 const FAQSection = () => {
@@ -13,20 +18,24 @@ const FAQSection = () => {
   const faqs = [
     {
       question: "What is AlgoBuddy?",
-      answer: "AlgoBuddy is an interactive learning tool that helps you understand Data Structures and Algorithms through visual representations. It provides step-by-step animations of how different algorithms work."
+      answer:
+        "AlgoBuddy is an interactive learning tool that helps you understand Data Structures and Algorithms through visual representations. It provides step-by-step animations of how different algorithms work.",
     },
     {
       question: "Is this tool suitable for beginners?",
-      answer: "Absolutely! Our visualizations are designed to make complex concepts accessible to learners at all levels. Beginners can see exactly how data structures operate, while advanced users can use it to refine their understanding."
+      answer:
+        "Absolutely! Our visualizations are designed to make complex concepts accessible to learners at all levels. Beginners can see exactly how data structures operate, while advanced users can use it to refine their understanding.",
     },
     {
       question: "Can I use this to prepare for coding interviews?",
-      answer: "Yes! Many users find our visualizations particularly helpful for interview preparation. Seeing algorithms in action helps reinforce understanding better than just reading pseudocode."
+      answer:
+        "Yes! Many users find our visualizations particularly helpful for interview preparation. Seeing algorithms in action helps reinforce understanding better than just reading pseudocode.",
     },
     {
       question: "Are there plans to add more data structures?",
-      answer: "We're continuously expanding our collection. Currently working on adding Trees and Graphs visualizations - stay tuned for updates!"
-    }
+      answer:
+        "We're continuously expanding our collection. Currently working on adding Trees and Graphs visualizations - stay tuned for updates!",
+    },
   ];
 
   return (
@@ -39,7 +48,10 @@ const FAQSection = () => {
             Need Help?
           </span>
           <h2 className="text-4xl md:text-5xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-6">
-            Frequently <span className="text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">Asked Questions</span>
+            Frequently{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">
+              Asked Questions
+            </span>
           </h2>
           <p className="text-xl text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
             Quick answers to common questions about our platform
@@ -49,9 +61,9 @@ const FAQSection = () => {
         {/* FAQ Accordion */}
         <div className="max-w-3xl mx-auto space-y-4">
           {faqs.map((faq, index) => (
-            <div 
+            <div
               key={index}
-              className={`bg-white dark:bg-udemy-dark-surface backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-xl overflow-hidden transition-all duration-300 ${activeIndex === index ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}
+              className={`bg-white dark:bg-udemy-dark-surface backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-xl overflow-hidden transition-all duration-300 ${activeIndex === index ? "shadow-lg" : "shadow-sm hover:shadow-md"}`}
             >
               <button
                 className="w-full flex items-center justify-between p-6 text-left"
@@ -69,8 +81,8 @@ const FAQSection = () => {
                   )}
                 </span>
               </button>
-              <div 
-                className={`px-6 pb-6 pt-0 text-udemy-muted dark:text-udemy-dark-muted transition-all duration-300 ${activeIndex === index ? 'block opacity-100' : 'hidden opacity-0'}`}
+              <div
+                className={`px-6 pb-6 pt-0 text-udemy-muted dark:text-udemy-dark-muted transition-all duration-300 ${activeIndex === index ? "block opacity-100" : "hidden opacity-0"}`}
               >
                 <div className="pl-8 border-l-2 border-udemy-purple/30">
                   <p className="flex">
@@ -84,20 +96,21 @@ const FAQSection = () => {
         </div>
 
         {/* Additional Help */}
-          <div className="max-w-3xl mx-auto mt-16 text-center bg-white dark:bg-udemy-dark-surface backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-2xl p-8 shadow-sm">
-            <div className="w-16 h-16 bg-purple-100 dark:bg-udemy-purple/20 rounded-full flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light mx-auto mb-6">
-              <FiMail className="w-8 h-8" />
-            </div>
-            <h3 className="text-2xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-4">
-              Still have questions?
-            </h3>
-            <p className="text-udemy-muted dark:text-udemy-dark-muted mb-6 max-w-md mx-auto">
-              Our team is ready to help you with any additional questions you might have.
-            </p>
-            <div className="mt-20 flex justify-center items-center">
-              <Support/>
-            </div>
+        <div className="max-w-3xl mx-auto mt-16 text-center bg-white dark:bg-udemy-dark-surface backdrop-blur-sm border border-udemy-border dark:border-udemy-dark-border rounded-2xl p-8 shadow-sm">
+          <div className="w-16 h-16 bg-purple-100 dark:bg-udemy-purple/20 rounded-full flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light mx-auto mb-6">
+            <FiMail className="w-8 h-8" />
           </div>
+          <h3 className="text-2xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-4">
+            Still have questions?
+          </h3>
+          <p className="text-udemy-muted dark:text-udemy-dark-muted mb-6 max-w-md mx-auto">
+            Our team is ready to help you with any additional questions you
+            might have.
+          </p>
+          <div className="mt-20 flex justify-center items-center">
+            <Support />
+          </div>
+        </div>
 
         {/* Divider */}
         <div className="mt-20 mx-auto h-[1px] max-w-4xl bg-gradient-to-r rounded-sm from-transparent via-udemy-purple/20 dark:via-udemy-purple/30 to-transparent"></div>

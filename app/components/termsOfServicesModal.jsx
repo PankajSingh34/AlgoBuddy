@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
+import React, { useEffect } from "react";
+import { FiX } from "react-icons/fi";
 
 const termsSections = [
   {
@@ -58,12 +58,12 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     }
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [isOpen]);
 
@@ -72,11 +72,11 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop with fade-in animation */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
-      
+
       {/* Modal container with slide-up animation */}
       <div className="relative bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 max-w-3xl w-full rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 max-h-[90vh] flex flex-col">
         {/* Header with close button */}
@@ -96,31 +96,46 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
         {/* Scrollable content */}
         <div className="overflow-y-auto p-6">
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            Please read these terms and conditions carefully before using our website and services. Your access to and use of the service is conditioned on your acceptance of and compliance with these terms.
+            Please read these terms and conditions carefully before using our
+            website and services. Your access to and use of the service is
+            conditioned on your acceptance of and compliance with these terms.
           </p>
 
           {/* Terms sections */}
           <div className="space-y-6">
             <ul>
               {termsSections.map((item, index) => (
-                <li key={index} className='mb-3'>
+                <li key={index} className="mb-3">
                   <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                    <div className='flex'>
-                      <span className="w-6 h-6 font-poppins font-semibold bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">{item.id}</span>
+                    <div className="flex">
+                      <span className="w-6 h-6 font-poppins font-semibold bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                        {item.id}
+                      </span>
                       <h3 className="text-xl font-semibold mb-2 flex items-center">
                         {item.title}
                       </h3>
                     </div>
-                    {item.points && <ul className="space-y-2 text-gray-600 dark:text-gray-300 pl-9">
-                      {item.points.map((subitem, subindex) => (
-                        <li key={subindex} className='list-disc text-blue-500'>
-                          <span className='text-gray-600 dark:text-gray-300'>{subitem}</span>
-                        </li>
-                      ))}
-                    </ul>}
-                    <p className="text-gray-600 dark:text-gray-300 pl-9">{item.data}</p>
+                    {item.points && (
+                      <ul className="space-y-2 text-gray-600 dark:text-gray-300 pl-9">
+                        {item.points.map((subitem, subindex) => (
+                          <li
+                            key={subindex}
+                            className="list-disc text-blue-500"
+                          >
+                            <span className="text-gray-600 dark:text-gray-300">
+                              {subitem}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-gray-600 dark:text-gray-300 pl-9">
+                      {item.data}
+                    </p>
                     {item.contact && (
-                      <span className="font-medium pl-9 text-blue-600 dark:text-blue-400">{item.contact}</span>
+                      <span className="font-medium pl-9 text-blue-600 dark:text-blue-400">
+                        {item.contact}
+                      </span>
                     )}
                   </div>
                 </li>

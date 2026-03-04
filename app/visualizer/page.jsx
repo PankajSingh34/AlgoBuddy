@@ -1,60 +1,61 @@
-import React from 'react';
-import Navbar from '@/app/components/navbar';
-import Footer from '@/app/components/footer';
-import VisualizerClient from './VisualizerClient';
-import ArrayModal from '@/app/components/models/ArrayModal';
-import StackModal from '@/app/components/models/StackModel';
-import QueueModal from '@/app/components/models/QueueModal';
-import LinkedListModal from '@/app/components/models/LinkedListModal';
-import TreeModal from '@/app/components/models/TreeModal';
-import GraphModal from '@/app/components/models/GraphModal';
-import TutorialOverlay from '@/app/components/ui/TutorialOverlay';
+import React from "react";
+import Navbar from "@/app/components/navbar";
+import Footer from "@/app/components/footer";
+import VisualizerClient from "./VisualizerClient";
+import ArrayModal from "@/app/components/models/ArrayModal";
+import StackModal from "@/app/components/models/StackModel";
+import QueueModal from "@/app/components/models/QueueModal";
+import LinkedListModal from "@/app/components/models/LinkedListModal";
+import TreeModal from "@/app/components/models/TreeModal";
+import GraphModal from "@/app/components/models/GraphModal";
+import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 
 export const metadata = {
-  title: 'Algorithm Visualizer | AlgoBuddy',
-  description: 'Explore visual representations and source code for various DSA algorithms including searching, sorting, stacks, queues, trees, graphs, and stack-based expression evaluation like Polish Notation using arrays and linked lists. Interactive and beginner-friendly!',
+  title: "Algorithm Visualizer | AlgoBuddy",
+  description:
+    "Explore visual representations and source code for various DSA algorithms including searching, sorting, stacks, queues, trees, graphs, and stack-based expression evaluation like Polish Notation using arrays and linked lists. Interactive and beginner-friendly!",
   keywords: [
-    'DSA Visualizer',
-    'Algorithm Visualizer',
-    'Data Structures',
-    'Searching Algorithms',
-    'Sorting Algorithms',
-    'Stack',
-    'Queue',
-    'Tree',
-    'Graph',
-    'Graph Algorithms',
-    'BFS',
-    'DFS',
-    'Linear Search',
-    'Bubble Sort',
-    'Tree Traversal',
-    'Heap Sort',
-    'Linked List',
-    'Singly Linked List',
-    'Doubly Linked List',
-    'Circular Linked List',
-    'Prefix Notation',
-    'Postfix Notation',
-    'Polish Notation',
-    'Stack using Array',
-    'Stack using Linked List',
-    'Prefix using Stack',
-    'Postfix using Stack',
-    'Polish Notation Implementation',
-    'Queue using Array',
-    'Queue using Linked List',
-    'Circular Queue',
-    'Priority Queue',
-    'Deque',
-    'Queue Operations',
-    'Graph Traversal',
-    'Code for DSA Algorithms',
-    'Code for Data Structures',
-    'Interactive Code Samples',
-    'DSA with Code'
+    "DSA Visualizer",
+    "Algorithm Visualizer",
+    "Data Structures",
+    "Searching Algorithms",
+    "Sorting Algorithms",
+    "Stack",
+    "Queue",
+    "Tree",
+    "Graph",
+    "Graph Algorithms",
+    "BFS",
+    "DFS",
+    "Linear Search",
+    "Bubble Sort",
+    "Tree Traversal",
+    "Heap Sort",
+    "Linked List",
+    "Singly Linked List",
+    "Doubly Linked List",
+    "Circular Linked List",
+    "Prefix Notation",
+    "Postfix Notation",
+    "Polish Notation",
+    "Stack using Array",
+    "Stack using Linked List",
+    "Prefix using Stack",
+    "Postfix using Stack",
+    "Polish Notation Implementation",
+    "Queue using Array",
+    "Queue using Linked List",
+    "Circular Queue",
+    "Priority Queue",
+    "Deque",
+    "Queue Operations",
+    "Graph Traversal",
+    "Code for DSA Algorithms",
+    "Code for Data Structures",
+    "Interactive Code Samples",
+    "DSA with Code",
   ],
-  robots: 'index, follow',
+  robots: "index, follow",
   openGraph: {
     images: [
       {
@@ -87,8 +88,9 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "An array is a data structure that stores multiple values of the same type in a single variable. Each value is stored at a specific index, starting from 0.",
-      Representation : <ArrayModal />,
+      About:
+        "An array is a data structure that stores multiple values of the same type in a single variable. Each value is stored at a specific index, starting from 0.",
+      Representation: <ArrayModal />,
     },
     subsections: [
       {
@@ -129,8 +131,9 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "LIFO data structure; push adds to top; pop removes from top; peek views top; works like a stack of plates. Used in function calls, undo, expression evaluation.",
-      Representation : <StackModal />,
+      About:
+        "LIFO data structure; push adds to top; pop removes from top; peek views top; works like a stack of plates. Used in function calls, undo, expression evaluation.",
+      Representation: <StackModal />,
     },
     subsections: [
       {
@@ -183,8 +186,9 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "FIFO data structure; enqueue adds to rear; dequeue removes from front; peek views front; works like a line in a queue. Used in scheduling, buffering, BFS.",
-      Representation : <QueueModal />,
+      About:
+        "FIFO data structure; enqueue adds to rear; dequeue removes from front; peek views front; works like a line in a queue. Used in scheduling, buffering, BFS.",
+      Representation: <QueueModal />,
     },
     subsections: [
       {
@@ -257,8 +261,9 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "Linear data structure; elements (nodes) connected using pointers; each node has data + next; no fixed size; types: singly, doubly, circular. Used in dynamic memory, insert/delete operations.",
-      Representation : <LinkedListModal />,
+      About:
+        "Linear data structure; elements (nodes) connected using pointers; each node has data + next; no fixed size; types: singly, doubly, circular. Used in dynamic memory, insert/delete operations.",
+      Representation: <LinkedListModal />,
     },
     subsections: [
       {
@@ -332,9 +337,10 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "Hierarchical data structure; has root, nodes, edges; each node has parent/child; no cycles; Used in hierarchies, file systems, searching.",
-      Types : "binary tree, BST, AVL, etc.",
-      Representation : <TreeModal maxLevel={3}/>,
+      About:
+        "Hierarchical data structure; has root, nodes, edges; each node has parent/child; no cycles; Used in hierarchies, file systems, searching.",
+      Types: "binary tree, BST, AVL, etc.",
+      Representation: <TreeModal maxLevel={3} />,
     },
     subsections: [
       {
@@ -457,8 +463,9 @@ const sections = [
       </svg>
     ),
     info: {
-      About : "A graph is a data structure made up of: Nodes (also called vertices) Represent entities. Edges Represent connections between nodes.",
-      Representation : <GraphModal />,
+      About:
+        "A graph is a data structure made up of: Nodes (also called vertices) Represent entities. Edges Represent connections between nodes.",
+      Representation: <GraphModal />,
     },
     subsections: [
       {
@@ -512,28 +519,29 @@ const sections = [
   },
 ];
 
-  const Visualizer = () => {
-    return (
-      <div className="min-h-screen bg-white dark:bg-neutral-900 text-gray-800 dark:text-gray-200 flex flex-col">
-        <Navbar />
-        <TutorialOverlay />
-        <main className="container mx-auto px-4 sm:px-6 pt-20 pb-16 min-h-[calc(100vh-80px)] flex-grow relative z-10">
-          <div className="text-center mb-10 mt-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Algorithm <span className="text-blue-600 dark:text-blue-500">Visualizer</span>
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Interactive visual representations of computer science concepts
-            </p>
-          </div>
-          
-          <VisualizerClient initialSections={sections} />
-        </main>
-        <div className="w-full relative z-10">
-          <Footer />
+const Visualizer = () => {
+  return (
+    <div className="min-h-screen bg-white dark:bg-neutral-900 text-gray-800 dark:text-gray-200 flex flex-col">
+      <Navbar />
+      <TutorialOverlay />
+      <main className="container mx-auto px-4 sm:px-6 pt-20 pb-16 min-h-[calc(100vh-80px)] flex-grow relative z-10">
+        <div className="text-center mb-10 mt-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Algorithm{" "}
+            <span className="text-blue-600 dark:text-blue-500">Visualizer</span>
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Interactive visual representations of computer science concepts
+          </p>
         </div>
+
+        <VisualizerClient initialSections={sections} />
+      </main>
+      <div className="w-full relative z-10">
+        <Footer />
       </div>
-    );
-  };
-  
-  export default Visualizer;
+    </div>
+  );
+};
+
+export default Visualizer;

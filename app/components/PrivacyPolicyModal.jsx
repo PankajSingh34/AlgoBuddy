@@ -1,31 +1,31 @@
-import React, { useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
+import React, { useEffect } from "react";
+import { FiX } from "react-icons/fi";
 
 const policySections = [
   {
-    id : "1",
-    title : "Information We Collect",
-    data : "We collect personal information like name, email address, and usage data (IP, browser, etc.) to provide and improve our services.",
+    id: "1",
+    title: "Information We Collect",
+    data: "We collect personal information like name, email address, and usage data (IP, browser, etc.) to provide and improve our services.",
   },
   {
-    id : "2",
-    title : "How We Use Your Information",
-    points : [
+    id: "2",
+    title: "How We Use Your Information",
+    points: [
       "To provide and maintain our services",
       "Improve user experience and service quality",
       "Send important updates or support emails",
     ],
   },
   {
-    id : "3",
-    title : "Your Rights",
-    data : "You have the right to request access, correction, or deletion of your personal data at any time by contacting us.",
+    id: "3",
+    title: "Your Rights",
+    data: "You have the right to request access, correction, or deletion of your personal data at any time by contacting us.",
   },
   {
-    id : "4",
-    title : "Contact Information",
-    data : "For any privacy-related questions, please contact us at",
-    contact : "hello@algobuddy.in",
+    id: "4",
+    title: "Contact Information",
+    data: "For any privacy-related questions, please contact us at",
+    contact: "hello@algobuddy.in",
   },
 ];
 
@@ -33,12 +33,12 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     }
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [isOpen]);
 
@@ -47,11 +47,11 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop with fade-in animation */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       />
-      
+
       {/* Modal container with slide-up animation */}
       <div className="relative bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 max-w-3xl w-full rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 max-h-[90vh] flex flex-col">
         {/* Header with close button */}
@@ -71,30 +71,45 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
         {/* Scrollable content */}
         <div className="overflow-y-auto p-6">
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our services.
+            Your privacy is important to us. This Privacy Policy explains how we
+            collect, use, disclose, and safeguard your information when you
+            visit our website or use our services.
           </p>
 
           {/* Policy sections */}
           <div className="space-y-6">
             <ul>
               {policySections.map((item, index) => (
-                <li key={index} className='mb-3'>
+                <li key={index} className="mb-3">
                   <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                    <div className='flex'>
-                    <span className="w-6 h-6 font-poppins font-semibold bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">{item.id}</span>
-                    <h3 className="text-xl font-semibold mb-2 flex items-center">
-                      {item.title}
-                    </h3>
+                    <div className="flex">
+                      <span className="w-6 h-6 font-poppins font-semibold bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                        {item.id}
+                      </span>
+                      <h3 className="text-xl font-semibold mb-2 flex items-center">
+                        {item.title}
+                      </h3>
                     </div>
-                    {item.points && <ul className="space-y-2 text-gray-600 dark:text-gray-300 pl-9">
-                      {item.points.map((subitem, subindex) => (
-                        <li key={subindex} className='list-disc text-blue-500'>
-                          <span className='text-gray-600 dark:text-gray-300'>{subitem}</span>
-                        </li>
-                      ))}
-                    </ul>}
-                    <p className="text-gray-600 dark:text-gray-300 pl-9">{item.data}</p>
-                    <span className="font-medium pl-9 text-blue-600 dark:text-blue-400">{item.contact}</span>
+                    {item.points && (
+                      <ul className="space-y-2 text-gray-600 dark:text-gray-300 pl-9">
+                        {item.points.map((subitem, subindex) => (
+                          <li
+                            key={subindex}
+                            className="list-disc text-blue-500"
+                          >
+                            <span className="text-gray-600 dark:text-gray-300">
+                              {subitem}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-gray-600 dark:text-gray-300 pl-9">
+                      {item.data}
+                    </p>
+                    <span className="font-medium pl-9 text-blue-600 dark:text-blue-400">
+                      {item.contact}
+                    </span>
                   </div>
                 </li>
               ))}

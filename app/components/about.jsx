@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { IoMdInformationCircle } from "react-icons/io";
 
 const AboutSection = () => {
@@ -8,11 +8,14 @@ const AboutSection = () => {
         {/* Section Header */}
         <div className="max-w-2xl mx-auto text-center mb-12">
           <span className="flex items-center justify-center gap-2 text-udemy-purple dark:text-udemy-purple-light text-sm font-bold tracking-wider uppercase mb-4">
-            <IoMdInformationCircle className='text-xl'/>
+            <IoMdInformationCircle className="text-xl" />
             About The Platform
           </span>
           <h2 className="text-4xl md:text-5xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-6">
-            Revolutionizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">DSA Learning</span>
+            Revolutionizing{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">
+              DSA Learning
+            </span>
           </h2>
         </div>
 
@@ -21,16 +24,22 @@ const AboutSection = () => {
           <div className="relative">
             {/* Decorative element */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-udemy-purple/10 rounded-full filter blur-xl"></div>
-            
+
             <h3 className="text-2xl md:text-3xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-6 relative">
               <span className="text-udemy-purple">Our</span> Mission
             </h3>
             <div className="space-y-6 text-lg text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
               <p>
-                AlgoBuddy was created to bridge the gap between theoretical knowledge and practical understanding. We believe that seeing concepts in action is the key to mastering data structures and algorithms.
+                AlgoBuddy was created to bridge the gap between theoretical
+                knowledge and practical understanding. We believe that seeing
+                concepts in action is the key to mastering data structures and
+                algorithms.
               </p>
               <p>
-                Whether you're a student preparing for exams, a developer honing your skills, or an enthusiast exploring computer science, our tool makes learning engaging and effective through interactive visualizations and a user-friendly interface.
+                Whether you're a student preparing for exams, a developer honing
+                your skills, or an enthusiast exploring computer science, our
+                tool makes learning engaging and effective through interactive
+                visualizations and a user-friendly interface.
               </p>
             </div>
           </div>

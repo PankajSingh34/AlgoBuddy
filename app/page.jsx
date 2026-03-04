@@ -7,36 +7,37 @@ import Footer from "@/app/components/footer";
 import BottomAd from "./components/ads/bottom";
 
 export const metadata = {
-  title: 'AlgoBuddy | Visualize & Learn DSA the Smart Way',
-  description: 'Master Data Structures and Algorithms with interactive visualizations. Perfect for students, beginners, and interview prep. Visualize Stack, Queue, Tree, Graph, Sorting & more.',
+  title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
+  description:
+    "Master Data Structures and Algorithms with interactive visualizations. Perfect for students, beginners, and interview prep. Visualize Stack, Queue, Tree, Graph, Sorting & more.",
   keywords: [
-    'DSA Visualizer',
-    'Algorithm Visualizer',
-    'Learn DSA',
-    'Practice DSA Problems',
-    'DSA Quizzes',
-    'Interactive DSA',
-    'Sorting Algorithms',
-    'Searching Algorithms',
-    'Stack',
-    'Queue',
-    'Tree',
-    'Linked List',
-    'Heap Sort',
-    'Tree Traversal',
-    'Linear Search',
-    'Bubble Sort',
-    'Singly Linked List',
-    'Doubly Linked List',
-    'Circular Linked List',
-    'Data Structures for Beginners',
-    'DSA Practice Platform',
-    'Quiz for DSA',
-    'Algorithm Quiz',
-    'Interactive Algorithm Quiz',
-    'Learn DSA with Quizzes'
+    "DSA Visualizer",
+    "Algorithm Visualizer",
+    "Learn DSA",
+    "Practice DSA Problems",
+    "DSA Quizzes",
+    "Interactive DSA",
+    "Sorting Algorithms",
+    "Searching Algorithms",
+    "Stack",
+    "Queue",
+    "Tree",
+    "Linked List",
+    "Heap Sort",
+    "Tree Traversal",
+    "Linear Search",
+    "Bubble Sort",
+    "Singly Linked List",
+    "Doubly Linked List",
+    "Circular Linked List",
+    "Data Structures for Beginners",
+    "DSA Practice Platform",
+    "Quiz for DSA",
+    "Algorithm Quiz",
+    "Interactive Algorithm Quiz",
+    "Learn DSA with Quizzes",
   ],
-  robots: 'index, follow',
+  robots: "index, follow",
 };
 
 export default function Home() {
@@ -48,13 +49,13 @@ export default function Home() {
           <Hero />
         </div>
         <div id="testimonial">
-          <Testimonial/>
+          <Testimonial />
         </div>
         <div id="features">
           <Feature />
         </div>
         <div id="review">
-          <Review/>
+          <Review />
         </div>
         <Footer />
       </div>
