@@ -1,12 +1,17 @@
-'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+"use client";
+import { createContext, useContext, useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const UserContext = createContext();
 
+const supabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+);
+
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const supabase = createClientComponentClient();
+  const supabase = supabaseClient;
 
   useEffect(() => {
     const getSessionAndUser = async () => {
@@ -15,14 +20,20 @@ export const UserProvider = ({ children }) => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
     };
 
     getSessionAndUser();
   }, []);
 
-  return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ user, setUser }}>
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 export const useUser = () => useContext(UserContext);
