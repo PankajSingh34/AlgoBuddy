@@ -54,7 +54,7 @@ const Footer = () => {
 
           {/* Email */}
           <a
-            href="mailto:hello@algobuddy.in"
+            href="mailto:singhps588@gmail.com"
             aria-label="Email"
             className="w-10 h-10 rounded-full border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-udemy-dark-text hover:border-udemy-dark-text transition-colors"
           >
