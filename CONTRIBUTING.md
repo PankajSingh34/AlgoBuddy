@@ -1,4 +1,4 @@
-# Contributing to DSAVisualizer
+# Contributing to AlgoBuddy
 
 Thank you for considering contributing to this project! ❤️
 
@@ -14,7 +14,7 @@ We welcome contributions in the form of:
 1. Fork the repository  
 2. Clone your fork  
 ```bash
-git clone https://github.com/your-username/dsavisualizer.git
+git clone https://github.com/your-username/AlgoBuddy.git
 ```
 
 3. Create a new branch

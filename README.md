@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./public/og.png" alt="DSAVisualizer Banner"/>
+  <img src="./public/og.png" alt="AlgoBuddy Banner"/>
 </p>
 
-<h1 align="center">DSAVisualizer</h1>
+<h1 align="center">AlgoBuddy</h1>
 
 <p align="center">
   Visualize & Learn DSA Algorithms with Animations and Interactive UI.
