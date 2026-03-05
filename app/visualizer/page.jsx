@@ -521,16 +521,19 @@ const sections = [
 
 const Visualizer = () => {
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-900 text-gray-800 dark:text-gray-200 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-[#0f0f0f] text-gray-800 dark:text-gray-200 flex flex-col" style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}>
       <Navbar />
       <TutorialOverlay />
       <main className="container mx-auto px-4 sm:px-6 pt-20 pb-16 min-h-[calc(100vh-80px)] flex-grow relative z-10">
         <div className="text-center mb-10 mt-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1
+            className="text-4xl md:text-5xl font-extrabold text-[#1a1a1a] dark:text-white mb-4"
+            style={{ letterSpacing: "-0.03em" }}
+          >
             Algorithm{" "}
-            <span className="text-blue-600 dark:text-blue-500">Visualizer</span>
+            <span className="text-[#a435f0]">Visualizer</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg text-[#4b5563] dark:text-[#a3a3a3] max-w-2xl mx-auto">
             Interactive visual representations of computer science concepts
           </p>
         </div>

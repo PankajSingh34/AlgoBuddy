@@ -1,8 +1,7 @@
 import Navbar from "@/app/components/navbar";
 import Hero from "@/app/components/hero";
-import Feature from "@/app/components/feature";
-import Review from "@/app/components/review";
-import Testimonial from "@/app/components/testimonial";
+import ConceptsSection from "@/app/components/ConceptsSection";
+import PersonalizedSection from "@/app/components/PersonalizedSection";
 import Footer from "@/app/components/footer";
 import BottomAd from "./components/ads/bottom";
 
@@ -48,15 +47,8 @@ export default function Home() {
         <div id="hero">
           <Hero />
         </div>
-        <div id="testimonial">
-          <Testimonial />
-        </div>
-        <div id="features">
-          <Feature />
-        </div>
-        <div id="review">
-          <Review />
-        </div>
+        <PersonalizedSection />
+        <ConceptsSection />
         <Footer />
       </div>
     </>

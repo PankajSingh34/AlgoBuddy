@@ -53,14 +53,14 @@ const SearchBar = ({ sections, onSearchResults }) => {
     <div className="mt-4 max-w-2xl mx-auto relative">
       <input
         type="text"
-        placeholder="Search for algorithms..."
-        className="w-full px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500/75 bg-white dark:bg-neutral-950 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 transition-all"
+        placeholder="Search algorithms, data structures..."
+        className="w-full px-6 py-3.5 rounded-full border border-[#e5e7eb] dark:border-[#333] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/40 focus:border-[#a435f0] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-[#f5f5f5] placeholder-[#9ca3af] dark:placeholder-[#555] text-[15px] transition-all shadow-sm"
         value={searchQuery}
         onChange={handleSearch}
       />
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 absolute right-4 top-3.5 text-gray-400 dark:text-gray-500"
+        className="h-5 w-5 absolute right-5 top-1/2 -translate-y-1/2 text-[#9ca3af] dark:text-[#555]"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

@@ -1,46 +1,31 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { event } from "@/lib/gtag";
 
-/* ── typewriter words ── */
-const WORDS = [
-  "Data Structures",
-  "Sorting Algorithms",
-  "Binary Search",
-  "Graph Traversal",
-  "Dynamic Programming",
+const TOPICS = [
+  { label: "Sorting Algorithms", color: "#a435f0", bg: "#faf5ff" },
+  { label: "Binary Search", color: "#2563eb", bg: "#eff6ff" },
+  { label: "Graph Traversal", color: "#059669", bg: "#f0fdf4" },
+  { label: "Linked Lists", color: "#d97706", bg: "#fffbeb" },
+  { label: "Dynamic Programming", color: "#dc2626", bg: "#fef2f2" },
+  { label: "Stack & Queue", color: "#7c3aed", bg: "#f5f3ff" },
 ];
 
 const HeroSection = () => {
-  const router = useRouter();
-  const [wordIndex, setWordIndex] = useState(0);
-  const [displayed, setDisplayed] = useState("");
-  const [deleting, setDeleting] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
 
-  /* typewriter effect */
   useEffect(() => {
-    const current = WORDS[wordIndex];
-    let timeout;
-    if (!deleting && displayed.length < current.length) {
-      timeout = setTimeout(
-        () => setDisplayed(current.slice(0, displayed.length + 1)),
-        60,
-      );
-    } else if (!deleting && displayed.length === current.length) {
-      timeout = setTimeout(() => setDeleting(true), 1800);
-    } else if (deleting && displayed.length > 0) {
-      timeout = setTimeout(
-        () => setDisplayed(current.slice(0, displayed.length - 1)),
-        35,
-      );
-    } else {
-      setDeleting(false);
-      setWordIndex((i) => (i + 1) % WORDS.length);
-    }
-    return () => clearTimeout(timeout);
-  }, [displayed, deleting, wordIndex]);
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % TOPICS.length);
+        setVisible(true);
+      }, 350);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStart = () => {
     event({
@@ -48,7 +33,6 @@ const HeroSection = () => {
       category: "Hero",
       label: "Start Visualizing Button",
     });
-    router.push("/visualizer");
   };
 
   return (
@@ -56,60 +40,53 @@ const HeroSection = () => {
       className="bg-white dark:bg-[#1c1d1f]"
       style={{ fontFamily: "'Source Sans 3', sans-serif" }}
     >
-      <section className="min-h-[calc(100vh-60px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
-        {/* ── very subtle background grid ── */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#1c1d1f 1px,transparent 1px),linear-gradient(90deg,#1c1d1f 1px,transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-
+      <section className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
         <div className="relative z-10 w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* ══ LEFT — text ══ */}
           <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">
-            {/* eyebrow badge */}
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#d1d7dc] dark:border-[#3e4143] text-[13px] font-semibold text-[#6a6f73] dark:text-[#9e9e9e] tracking-wide uppercase">
-              <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse" />
-              Interactive Learning Platform
-            </span>
-
             {/* headline */}
             <h1
               className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-extrabold leading-[1.1] tracking-tight text-[#1c1d1f] dark:text-[#f7f9fa]"
-              style={{ fontFamily: "'Source Serif 4', serif" }}
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: "-0.03em",
+              }}
             >
-              Visualize &amp; Master
+              The smartest way
               <br />
-              <span className="text-[#a435f0]">Algo</span>Buddy the Smart Way.
+              to learn DSA — <span className="text-[#a435f0]">visually.</span>
             </h1>
 
-            {/* typewriter */}
-            <p className="text-[1.15rem] text-[#6a6f73] dark:text-[#9e9e9e] font-medium h-7">
-              Currently visualizing:{" "}
-              <span className="text-[#1c1d1f] dark:text-[#f7f9fa] font-semibold">
-                {displayed}
-                <span className="animate-pulse">|</span>
+            {/* animated topic pill */}
+            <div className="flex items-center gap-3 h-10">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[14px] font-bold transition-all duration-300"
+                style={{
+                  background: visible ? TOPICS[index].bg : "transparent",
+                  color: visible ? TOPICS[index].color : "transparent",
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? "translateY(0px)" : "translateY(6px)",
+                  border: `1.5px solid ${visible ? TOPICS[index].color + "33" : "transparent"}`,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: TOPICS[index].color }}
+                />
+                {TOPICS[index].label}
               </span>
-            </p>
-
-            {/* sub-copy */}
-            <p className="text-[1.05rem] text-[#6a6f73] dark:text-[#9e9e9e] max-w-[480px] leading-relaxed">
-              Step-by-step animations for every major algorithm and data
-              structure. Build intuition before you write a single line of code.
-            </p>
+            </div>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-              <button
+              <Link
+                href="/visualizer"
                 onClick={handleStart}
-                className="group inline-flex items-center gap-2 h-[48px] px-8 bg-[#1c1d1f] dark:bg-[#f7f9fa] text-white dark:text-[#1c1d1f] text-[15px] font-bold hover:bg-[#a435f0] dark:hover:bg-[#a435f0] dark:hover:text-white transition-colors"
+                className="group inline-flex items-center gap-2 h-[52px] px-8 rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] text-[15px] font-bold hover:bg-[#a435f0] dark:hover:bg-[#a435f0] dark:hover:text-white active:scale-95 transition-all duration-200"
               >
                 Start Visualizing
                 <svg
-                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth={2.5}
@@ -121,11 +98,11 @@ const HeroSection = () => {
                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                   />
                 </svg>
-              </button>
+              </Link>
 
               <Link
                 href="/blogs"
-                className="inline-flex items-center gap-2 h-[48px] px-8 border-[1.5px] border-[#1c1d1f] dark:border-[#f7f9fa] text-[#1c1d1f] dark:text-[#f7f9fa] text-[15px] font-bold hover:border-[#a435f0] hover:text-[#a435f0] dark:hover:border-[#a435f0] dark:hover:text-[#a435f0] transition-colors"
+                className="inline-flex items-center gap-2 h-[52px] px-8 rounded-full border-2 border-[#1a1a1a] dark:border-[#f7f9fa] text-[#1a1a1a] dark:text-[#f7f9fa] text-[15px] font-bold hover:bg-[#1a1a1a] hover:text-white dark:hover:bg-white dark:hover:text-[#1a1a1a] transition-all duration-200"
               >
                 Read Blogs
               </Link>
@@ -297,29 +274,7 @@ const HeroSection = () => {
             </div>
           </div>
         </div>
-
-        {/* ── scroll hint ── */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[#6a6f73] dark:text-[#9e9e9e]">
-          <svg
-            className="w-5 h-5 animate-bounce"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
       </section>
-
-      {/* divider */}
-      <div className="px-6">
-        <div className="mx-auto h-px max-w-4xl bg-gradient-to-r from-transparent via-[#d1d7dc] dark:via-[#3e4143] to-transparent" />
-      </div>
     </main>
   );
 };
