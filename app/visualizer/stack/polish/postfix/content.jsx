@@ -80,18 +80,18 @@ const content = () => {
           </span>
         </div>
       </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-neutral-950 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is Postfix Notation? */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             What is Postfix Notation?
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             {paragraph.map((text, idx) => (
               <p
                 key={idx}
-                className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed"
+                className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed"
               >
                 {text}
               </p>
@@ -100,15 +100,15 @@ const content = () => {
         </section>
 
         {/* Infix to Postfix Conversion Steps */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Infix to Postfix Conversion Steps
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             <ol className="space-y-3 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {steps.map((item, idx) => (
-                <li key={idx} className="text-gray-700 dark:text-gray-300 pl-2">
+                <li key={idx} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {item.points}
                 </li>
               ))}
@@ -120,7 +120,7 @@ const content = () => {
               </span>
               <ul className="mt-2 space-y-2 list-disc pl-5 marker:text-gray-400 dark:marker:text-gray-500">
                 {example.map((item, idx) => (
-                  <li key={idx} className="text-gray-600 dark:text-gray-400">
+                  <li key={idx} className="text-[#6b7280] dark:text-[#9ca3af]">
                     {item.points}
                   </li>
                 ))}
@@ -131,8 +131,8 @@ const content = () => {
 
         {/* Operator Precedence Table */}
         <section className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Operator Precedence Table
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
@@ -152,52 +152,52 @@ const content = () => {
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ( )
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Parentheses
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Highest
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ^ %
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Exponentiation / Modulus
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     2
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     * /
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Multiplication / Division
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     3
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     + -
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Addition / Subtraction
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-gray-700 dark:text-gray-300">
+                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     4 (Lowest)
                   </td>
                 </tr>
               </tbody>
             </table>
-            <p className="text-gray-700 dark:text-gray-300 mt-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mt-4 leading-relaxed">
               {paragraph[2]}
             </p>
           </div>

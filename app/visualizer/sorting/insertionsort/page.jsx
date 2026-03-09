@@ -62,23 +62,23 @@ export default function Page() {
         <Navbar />
       </div>
 
-      <div className="py-20 bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-gray-200">
+      <div className="py-20 bg-white dark:bg-[#0f0f0f] text-[#1a1a1a] dark:text-[#f5f5f5]">
         <section className="px-6 md:px-12">
           <div className="mt-10 sm:mt-10 mb-4">
             <Breadcrumbs paths={paths} />
           </div>
           <div className="flex items-center flex-col">
             <div className="flex">
-              <p className="uppercase tracking-wide bg-green-500 dark:text-black px-4 py-1 mb-2 rounded-full">
+              <p className="uppercase tracking-wide bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0] px-4 py-1 mb-2 rounded-full text-sm font-semibold">
                 Sorting
               </p>
             </div>
-            <h1 className="text-4xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-0">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-center text-[#1a1a1a] dark:text-white mb-0">
               Insertion Sort
             </h1>
             <ArticleActions />
           </div>
-          <div className="bg-black border border-none dark:bg-gray-600 w-100 h-[2px] rounded-xl my-10"></div>
+          <div className="h-px max-w-4xl mx-auto my-10 bg-gradient-to-r from-transparent via-[#d1d7dc] dark:via-[#333] to-transparent"></div>
           <Content />
         </section>
 
@@ -87,7 +87,7 @@ export default function Page() {
         </section>
 
         <section className="px-6">
-          <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-lg text-center text-[#6b7280] dark:text-[#9ca3af] mb-2">
             Test Your Knowledge before moving forward!
           </p>
           <Quiz />

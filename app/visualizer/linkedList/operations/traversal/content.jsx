@@ -84,19 +84,19 @@ const content = () => {
     <main className="max-w-4xl mx-auto">
       <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         {/* Overview Section */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Traversal
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             {overview.map((para, index) => (
-              <p key={index} className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+              <p key={index} className="text-[#374151] dark:text-[#d1d5db] mb-3 leading-relaxed">
                 {para}
               </p>
             ))}
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="mt-4 p-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
+              <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 <strong>Key Insight:</strong> Traversal is the basis for all linked list operations—ensure you visit every node, and beware of cycles that can cause infinite loops.
               </p>
             </div>
@@ -104,7 +104,7 @@ const content = () => {
         </section>
 
         {/* Traversal Types */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Traversal Types</h2>
           <div className="space-y-6">
             {traversalTypes.map((type, index) => (
@@ -112,8 +112,8 @@ const content = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{type.name}</h3>
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1">
-                    <p className="text-gray-700 dark:text-gray-300 mb-2"><strong>Complexity:</strong> <span className="font-mono">{type.complexity}</span></p>
-                    <p className="text-gray-700 dark:text-gray-300">{type.description}</p>
+                    <p className="text-[#374151] dark:text-[#d1d5db] mb-2"><strong>Complexity:</strong> <span className="font-mono">{type.complexity}</span></p>
+                    <p className="text-[#374151] dark:text-[#d1d5db]">{type.description}</p>
                   </div>
                   <div className="flex-1">
                     <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm overflow-x-auto">
@@ -127,19 +127,19 @@ const content = () => {
         </section>
 
         {/* Traversal Process */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Traversal Process</h2>
           <div>
             <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {traversalSteps.map((step, index) => (
-                <li key={index} className="text-gray-700 dark:text-gray-300 pl-2">{step.step}</li>
+                <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">{step.step}</li>
               ))}
             </ol>
           </div>
         </section>
 
         {/* Visualization */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Operation Visualization</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -153,7 +153,7 @@ const content = () => {
                 {visualization.map((item, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-white">{item.operation}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">{item.state}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-[#374151] dark:text-[#d1d5db]">{item.state}</td>
                   </tr>
                 ))}
               </tbody>
@@ -162,7 +162,7 @@ const content = () => {
         </section>
 
         {/* Edge Cases */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Edge Cases to Consider</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {edgeCases.map((caseItem, index) => (
@@ -174,7 +174,7 @@ const content = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{caseItem}</p>
+                    <p className="text-sm text-[#374151] dark:text-[#d1d5db]">{caseItem}</p>
                   </div>
                 </div>
               </div>
@@ -183,7 +183,7 @@ const content = () => {
         </section>
 
         {/* Best Practices */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Best Practices</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {bestPractices.map((practice, index) => (
@@ -195,7 +195,7 @@ const content = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{practice}</p>
+                    <p className="text-sm text-[#374151] dark:text-[#d1d5db]">{practice}</p>
                   </div>
                 </div>
               </div>
@@ -204,7 +204,7 @@ const content = () => {
         </section>
 
         {/* Comparison with Arrays */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Comparison with Array Traversal</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -219,15 +219,15 @@ const content = () => {
                 {comparisonTable.map((row, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{row.feature}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.array}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.linkedList}</td>
+                    <td className="px-4 py-3 text-sm text-[#374151] dark:text-[#d1d5db]">{row.array}</td>
+                    <td className="px-4 py-3 text-sm text-[#374151] dark:text-[#d1d5db]">{row.linkedList}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+          <div className="mt-4 p-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
+            <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
               <strong>When to Choose:</strong> Use arrays for indexed, direct access and linked lists for flexible sequential access and recursive algorithms.
             </p>
           </div>
@@ -238,16 +238,16 @@ const content = () => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Implementation Notes</h2>
           <div className="prose dark:prose-invert max-w-none">
             <ul className="list-disc pl-5 space-y-2 marker:text-blue-500 dark:marker:text-blue-400">
-              <li className="text-gray-700 dark:text-gray-300">
+              <li className="text-[#374151] dark:text-[#d1d5db]">
                 <strong>Cycle Detection:</strong> Be cautious of loops in the list during traversal, consider Floyd’s algorithm for detection
               </li>
-              <li className="text-gray-700 dark:text-gray-300">
+              <li className="text-[#374151] dark:text-[#d1d5db]">
                 <strong>Logging:</strong> Use console or UI to log visited nodes during visualization
               </li>
-              <li className="text-gray-700 dark:text-gray-300">
+              <li className="text-[#374151] dark:text-[#d1d5db]">
                 <strong>Testing:</strong> Test traversal on empty, single-node, and multi-node lists
               </li>
-              <li className="text-gray-700 dark:text-gray-300">
+              <li className="text-[#374151] dark:text-[#d1d5db]">
                 <strong>Efficiency:</strong> For large lists, prefer iteration to avoid stack issues with recursion
               </li>
             </ul>

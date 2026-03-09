@@ -93,24 +93,24 @@ const content = () => {
           </span>
         </div>
       </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-neutral-950 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* -------  HEADER  ------- */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             What is Stack Implementation Using Array?
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
               A stack is a linear data structure that follows the LIFO (Last In First Out) principle. Arrays provide a simple way to implement stack operations with constant time complexity.
             </p>
           </div>
         </section>
 
         {/* -------  ALGORITHMIC STEPS – LIFT CARDS  ------- */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Algorithmic Steps
           </h1>
 
@@ -138,7 +138,7 @@ const content = () => {
                       <h3 className="font-semibold mb-2">{t}</h3>
                       <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
                         {s.map((p, i) => (
-                          <li key={i} className="text-gray-700 dark:text-gray-300 pl-2">
+                          <li key={i} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                             {p.points}
                           </li>
                         ))}
@@ -172,7 +172,7 @@ const content = () => {
                       <h3 className="font-semibold mb-2">{t}</h3>
                       <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
                         {s.map((p, i) => (
-                          <li key={i} className="text-gray-700 dark:text-gray-300 pl-2">
+                          <li key={i} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                             {p.points}
                           </li>
                         ))}
@@ -185,9 +185,9 @@ const content = () => {
           </div>
         </section>
 
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Time Complexity
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
@@ -218,8 +218,8 @@ const content = () => {
         </section>
 
         <section className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Key Characteristics
           </h1>
           <div className="prose dark:prose-invert max-w-none">
@@ -230,7 +230,7 @@ const content = () => {
                 "Efficiency: All operations work in constant time",
                 "Versatility: Foundation for many algorithms",
               ].map((item) => (
-                <li key={item} className="text-gray-700 dark:text-gray-300 pl-2">
+                <li key={item} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {item}
                 </li>
               ))}

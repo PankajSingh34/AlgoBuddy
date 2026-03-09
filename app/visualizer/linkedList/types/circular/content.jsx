@@ -73,19 +73,19 @@ const content = () => {
     <main className="max-w-4xl mx-auto">
       <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         {/* Overview Section */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Circular Linked List
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             {overview.map((para, index) => (
-              <p key={index} className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+              <p key={index} className="text-[#374151] dark:text-[#d1d5db] mb-3 leading-relaxed">
                 {para}
               </p>
             ))}
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="mt-4 p-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
+              <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 <strong>Key Property:</strong> The last node's next pointer always points back to the first node, creating a continuous loop.
               </p>
             </div>
@@ -93,7 +93,7 @@ const content = () => {
         </section>
 
         {/* Basic Operations */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Basic Operations</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -108,8 +108,8 @@ const content = () => {
                 {basicOperations.map((op, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{op.name}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">{op.complexity}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{op.description}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-[#374151] dark:text-[#d1d5db]">{op.complexity}</td>
+                    <td className="px-4 py-3 text-sm text-[#374151] dark:text-[#d1d5db]">{op.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -118,13 +118,13 @@ const content = () => {
         </section>
 
         {/* Insertion Process */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Insertion Process</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
                 {insertionSteps.map((step, index) => (
-                  <li key={index} className="text-gray-700 dark:text-gray-300 pl-2">
+                  <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                     {step.step}
                   </li>
                 ))}
@@ -155,13 +155,13 @@ const content = () => {
         </section>
 
         {/* Deletion Process */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Deletion Process</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
                 {deletionSteps.map((step, index) => (
-                  <li key={index} className="text-gray-700 dark:text-gray-300 pl-2">
+                  <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                     {step.step}
                   </li>
                 ))}
@@ -192,7 +192,7 @@ const content = () => {
         </section>
 
         {/* Visualization */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Operation Visualization</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -206,7 +206,7 @@ const content = () => {
                 {visualization.map((item, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-white">{item.operation}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">{item.state}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-[#374151] dark:text-[#d1d5db]">{item.state}</td>
                   </tr>
                 ))}
               </tbody>
@@ -215,7 +215,7 @@ const content = () => {
         </section>
 
         {/* Comparison with Linear Linked List */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Comparison with Linear Linked List</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -230,8 +230,8 @@ const content = () => {
                 {comparisonTable.map((row, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{row.feature}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.linear}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.circular}</td>
+                    <td className="px-4 py-3 text-sm text-[#374151] dark:text-[#d1d5db]">{row.linear}</td>
+                    <td className="px-4 py-3 text-sm text-[#374151] dark:text-[#d1d5db]">{row.circular}</td>
                   </tr>
                 ))}
               </tbody>
@@ -240,7 +240,7 @@ const content = () => {
         </section>
 
         {/* Pros and Cons */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Pros and Cons</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -251,7 +251,7 @@ const content = () => {
                     <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-gray-700 dark:text-gray-300">{item.point}</span>
+                    <span className="text-[#374151] dark:text-[#d1d5db]">{item.point}</span>
                   </li>
                 ))}
               </ul>
@@ -264,7 +264,7 @@ const content = () => {
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span className="text-gray-700 dark:text-gray-300">{item.point}</span>
+                    <span className="text-[#374151] dark:text-[#d1d5db]">{item.point}</span>
                   </li>
                 ))}
               </ul>
@@ -278,13 +278,13 @@ const content = () => {
           <div className="prose dark:prose-invert max-w-none">
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc pl-5 marker:text-blue-500 dark:marker:text-blue-400">
               {applications.map((app, index) => (
-                <li key={index} className="text-gray-700 dark:text-gray-300 pl-2">
+                <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {app}
                 </li>
               ))}
             </ul>
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="mt-4 p-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
+              <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 <strong>When to Choose:</strong> Prefer circular linked lists when you need continuous cycling through elements or when the application naturally follows a circular pattern (like round-robin scheduling).
               </p>
             </div>

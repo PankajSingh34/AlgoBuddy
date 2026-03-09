@@ -115,7 +115,7 @@ export default function LoginPage() {
         className="w-full max-w-md bg-white dark:bg-udemy-dark-surface rounded-xl shadow-lg overflow-hidden border border-udemy-border dark:border-udemy-dark-border"
       >
         {/* Header */}
-        <div className="bg-udemy-purple p-6 text-white flex justify-between items-center">
+        <div className="bg-udemy-purple p-6 text-white">
           <div>
             <h1 className="text-2xl font-bold font-serif">
               {isLogin ? "Welcome Back" : "Create Account"}
@@ -126,17 +126,6 @@ export default function LoginPage() {
                 : "Join us to get started"}
             </p>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-udemy-purple-dark"
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? (
-              <FiMoon className="w-5 h-5" />
-            ) : (
-              <FiSun className="w-5 h-5" />
-            )}
-          </button>
         </div>
 
         <div className="flex justify-center items-center p-6">

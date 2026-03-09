@@ -126,35 +126,35 @@ const content = () => {
           </span>
         </div>
       </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-neutral-950 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is a Double-Ended Queue (Deque)? */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             What is a Double-Ended Queue (Deque)?
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
               {paragraph[0]}
             </p>
           </div>
         </section>
 
         {/* Key Characteristics */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Key Characteristics
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed">
               Deques have these fundamental properties:
             </p>
             <ol className="space-y-3 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {characteristics.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
                   {item.points}
                   {item.subpoints && (
@@ -162,7 +162,7 @@ const content = () => {
                       {item.subpoints.map((subitem, subindex) => (
                         <li
                           key={subindex}
-                          className="text-gray-600 dark:text-gray-400"
+                          className="text-[#6b7280] dark:text-[#9ca3af]"
                         >
                           {subitem}
                         </li>
@@ -176,20 +176,20 @@ const content = () => {
         </section>
 
         {/* Implementation Variations */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Implementation Variations
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed">
               Common implementation approaches:
             </p>
             <ol className="space-y-3 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {variations.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
                   <span className="font-semibold">{item.points}</span>
                   {item.subpoints && (
@@ -197,7 +197,7 @@ const content = () => {
                       {item.subpoints.map((subitem, subindex) => (
                         <li
                           key={subindex}
-                          className="text-gray-600 dark:text-gray-400"
+                          className="text-[#6b7280] dark:text-[#9ca3af]"
                         >
                           {subitem}
                         </li>
@@ -211,9 +211,9 @@ const content = () => {
         </section>
 
         {/* Time Complexity */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Time Complexity
           </h1>
           <div className="prose dark:prose-invert max-w-none">
@@ -221,9 +221,9 @@ const content = () => {
               {complexity.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
-                  <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+                  <span className="font-mono bg-[#f3f4f6] dark:bg-[#222] px-2 py-1 rounded-md text-sm font-mono">
                     {item.points.split(":")[0]}:
                   </span>
                   <span className="ml-2">{item.points.split(":")[1]}</span>
@@ -234,20 +234,20 @@ const content = () => {
         </section>
 
         {/* Applications */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Applications
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed">
               Deques are used in:
             </p>
             <ul className="space-y-2 list-disc pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {application.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
                   {item.points}
                 </li>
@@ -258,19 +258,19 @@ const content = () => {
 
         {/* Special Cases */}
         <section className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Special Cases
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed">
               Interesting deque variations:
             </p>
             <ul className="space-y-2 list-disc pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {cases.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
                   {item.points}
                 </li>
@@ -280,10 +280,10 @@ const content = () => {
         </section>
 
         {/* Additional Info */}
-        <section className="p-6 border-t border-gray-100 dark:border-gray-700">
+        <section className="p-6 border-t border-[#f3f4f6] dark:border-[#1e1e1e]">
           <div className="prose dark:prose-invert max-w-none">
-            <div className="px-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="px-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
+              <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 {paragraph[1]}
               </p>
             </div>

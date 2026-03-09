@@ -149,9 +149,9 @@ export default function content() {
     <main className="max-w-4xl mx-auto">
       <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         {/* Quick tags */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Three Types
           </h1>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
@@ -169,9 +169,9 @@ export default function content() {
         </section>
 
         {/* GSAP trees */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Visual Comparison
           </h1>
 
@@ -203,7 +203,7 @@ export default function content() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">{title}</h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{description}</p>
+                  <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">{description}</p>
                 </div>
               </div>
             ))}
@@ -211,9 +211,9 @@ export default function content() {
         </section>
 
         {/* Structural Rules */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Structural Rules
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -227,7 +227,7 @@ export default function content() {
                 </h2>
                 <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
                   {rules.map((r, i) => (
-                    <li key={i} className="text-gray-700 dark:text-gray-300 pl-2">
+                    <li key={i} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                       {r.points}
                     </li>
                   ))}
@@ -238,15 +238,15 @@ export default function content() {
         </section>
 
         {/* Identification */}
-        <section className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             How to Identify a Type
           </h1>
           <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
             <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
               {identify.map((r, i) => (
-                <li key={i} className="text-gray-700 dark:text-gray-300 pl-2">
+                <li key={i} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {r.points}
                 </li>
               ))}
@@ -256,8 +256,8 @@ export default function content() {
 
         {/* Complexity */}
         <section className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Height & Complexity
           </h1>
           <div className="overflow-x-auto">

@@ -72,19 +72,19 @@ const content = () => {
           </span>
         </div>
       </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-neutral-950 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* Peek Operation */}
         <section className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Peek Operation
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
               {paragraphs[0]}
             </p>
 
-            <p className="text-gray-700 dark:text-gray-300 font-medium mt-4 mb-2">
+            <p className="text-[#374151] dark:text-[#d1d5db] font-medium mt-4 mb-2">
               Example: Peeking at a stack
             </p>
 
@@ -92,7 +92,7 @@ const content = () => {
               {example.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
                   {item.points}
                 </li>
@@ -103,9 +103,9 @@ const content = () => {
               {complexity.map((item, index) => (
                 <li
                   key={index}
-                  className="text-gray-700 dark:text-gray-300 pl-2"
+                  className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
-                  <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
+                  <span className="font-mono bg-[#f3f4f6] dark:bg-[#222] px-2 py-1 rounded-md text-sm font-mono">
                     {item.points.split(":")[0]}:
                   </span>
                   <span className="ml-2">{item.points.split(":")[1]}</span>
@@ -122,7 +122,7 @@ const content = () => {
               />
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 mt-4 leading-relaxed">
+            <p className="text-[#374151] dark:text-[#d1d5db] mt-4 leading-relaxed">
               {paragraphs[1]}
             </p>
           </div>
