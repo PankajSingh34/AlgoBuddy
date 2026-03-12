@@ -71,6 +71,7 @@ export const metadata = {
 const sections = [
   {
     title: "Array",
+    desc: "Searching & sorting algorithms on contiguous memory",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -114,6 +115,7 @@ const sections = [
   },
   {
     title: "Stack",
+    desc: "LIFO operations, polish notations & implementations",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -169,6 +171,7 @@ const sections = [
   },
   {
     title: "Queue",
+    desc: "FIFO operations, variants & implementations",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -238,6 +241,7 @@ const sections = [
   },
   {
     title: "Linked List",
+    desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -320,6 +324,7 @@ const sections = [
   },
   {
     title: "Tree",
+    desc: "BST, AVL, traversals, tries & advanced trees",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -446,6 +451,7 @@ const sections = [
   },
   {
     title: "Graph",
+    desc: "BFS, DFS, Dijkstra, MST & topological sort",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -520,26 +526,19 @@ const sections = [
 ];
 
 const Visualizer = () => {
+  /* Strip non-serialisable `info` (contains JSX modals) before
+     passing to the client component. Icons are fine — they're
+     plain <svg> elements. */
+  const clientSections = sections.map(({ info, ...rest }) => rest);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0f0f0f] text-gray-800 dark:text-gray-200 flex flex-col" style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}>
+    <div
+      className="min-h-screen bg-white dark:bg-[#1c1d1f] text-gray-800 dark:text-gray-200 flex flex-col"
+      style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
+    >
       <Navbar />
       <TutorialOverlay />
-      <main className="container mx-auto px-4 sm:px-6 pt-20 pb-16 min-h-[calc(100vh-80px)] flex-grow relative z-10">
-        <div className="text-center mb-10 mt-10">
-          <h1
-            className="text-4xl md:text-5xl font-extrabold text-[#1a1a1a] dark:text-white mb-4"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            Algorithm{" "}
-            <span className="text-[#a435f0]">Visualizer</span>
-          </h1>
-          <p className="text-lg text-[#4b5563] dark:text-[#a3a3a3] max-w-2xl mx-auto">
-            Interactive visual representations of computer science concepts
-          </p>
-        </div>
-
-        <VisualizerClient initialSections={sections} />
-      </main>
+      <VisualizerClient initialSections={clientSections} />
       <div className="w-full relative z-10">
         <Footer />
       </div>
