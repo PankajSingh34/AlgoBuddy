@@ -1,53 +1,51 @@
-<h1 align="center">AlgoBuddy</h1>
+# Contributing to AlgoBuddy
 
-<p align="center">
-  Visualize & Learn DSA Algorithms with Animations and Interactive UI.
-</p>
+Thank you for considering contributing to this project! ❤️
 
----
+We welcome contributions in the form of:
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0">
-</p>
-<p align="center">
-  <p align="left">Product Built Using:</p>
-  <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=git,js,react,nextjs,tailwind,supabase,redis,npm,vercel,googlecloud" />
-  </a>
-</p>
+- Bug fixes 🐛
+- New Algorithm Visualizers ✨
+- UI/UX Improvements 🎨
+- Documentation 📚
 
-## Features
+## Getting Started
 
-- DSA Algorithm Visualizer
-- Custom Array Input
-- Linear Search & Binary Search
-- All Sorting Algorithms (Except Heap Sort)
-- Stack Visualizer
-- Dark / Light Mode Toggle
-- Responsive Design (In Progress)
-- Blog Explanations via Medium (Upcoming)
-- Queue Visualizer (Upcoming)
+1. Fork the repository
+2. Clone your fork
 
-## Future Plans
+```bash
+git clone https://github.com/your-username/AlgoBuddy.git
+```
 
-- Make the platform interactive
-- Improve Mobile Responsiveness
-- Social Media Promotion
+3. Create a new branch
 
-## Connect With Me
+```bash
+git checkout -b feature-name
+```
 
-<a href="https://www.linkedin.com/in/pankaj-singh-2a968b212/">
-  <img src="https://skillicons.dev/icons?i=linkedin" alt="LinkedIn" />
-</a>
+4. Make your changes
+5. Commit your changes
 
-## License
+```bash
+git commit -m "Added: your feature description"
+```
 
-Apache 2.0 License — See `LICENSE` for details.
+6. Push to GitHub
 
-# Contribution
+```bash
+git push origin feature-name
+```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md)
+7. Open a Pull Request
 
-Code of Conduct — [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+# Guidelines
 
----
+1. Follow clean code practices
+2. Proper commit messages
+3. Test your code before PR
+4. No plagiarism in blog content
+
+## Happy Contributing! 🚀
+
+Made with ❤️ by Sohan Rout
