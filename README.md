@@ -19,39 +19,32 @@
   </a>
 </p>
 
-Most DSA learning tools show you a static diagram and call it done. AlgoBuddy actually runs the algorithm — step by step, comparison by comparison, swap by swap. Pick a topic, tweak the inputs, and watch it move. Then read the explanation, peek at the code in a few languages, and take a quiz to see if it clicked.
+Many DSA learning tools stop at a static diagram. AlgoBuddy runs the algorithm step by step so you can see each comparison and swap. Pick a topic, change the inputs, and watch it run. Then read the explanation, skim code samples in a few languages, and take a short quiz.
 
-Behind the scenes it is Next.js with Supabase for auth and storage. If you sign up, your dashboard tracks everything — completed modules, a 90-day heatmap, current streak.
+Built with Next.js and Supabase for auth and storage. If you sign up, your dashboard tracks completed modules, a 90-day heatmap, and your current streak.
 
-Try it: [algobuddy.in](https://algobuddy.in)
 
 ---
 
 ## What you can do with it
 
-**Searching.** Linear and Binary search. Each comparison lights up as the algorithm narrows things down.
+- Searching: Linear and Binary search. Each comparison lights up as the algorithm narrows the range.
+- Sorting: Bubble, Selection, Insertion, Merge, Quick sort. Adjust speed from half-pace to 5x. Enter your own array or use random input. Comparison and swap counters update while the bars move.
+- Stacks: Push, Pop, Peek, IsEmpty, IsFull - all animated. The app shows both an array version and a linked-list version. It also evaluates postfix and prefix expressions if that is what you are studying.
+- Queues: Enqueue, Dequeue, Peek Front, IsEmpty, IsFull. Types include Single-Ended, Deque, Circular, and Priority, with array and linked-list variants.
+- Linked lists: Singly, Doubly, Circular. Step through traversal, insertion, deletion, searching, reverse, merge, and comparison.
+- Trees: Binary Tree types, BST insertion/deletion/searching, AVL balancing, and in-order traversal with animated steps.
+- Graphs: coming later.
 
-**Sorting.** Bubble, Selection, Insertion, Merge, Quick sort. Crank the speed from half-pace to 5x. Type in your own array or hit random. The comparison and swap counters tick up while the bars shuffle around.
-
-**Stacks.** Push, Pop, Peek, IsEmpty, IsFull — all animated. The app shows both an array version and a linked-list version. It also evaluates postfix and prefix expressions if that is what you are studying.
-
-**Queues.** Enqueue, Dequeue, Peek Front, IsEmpty, IsFull. Four types: Single-Ended, Deque, Circular, Priority. Array and linked-list variants for each.
-
-**Linked Lists.** Singly, Doubly, Circular. Step through traversal, insertion, deletion, searching, reverse, merge, and comparison.
-
-**Trees.** Binary Tree types, BST insertion/deletion/searching, AVL balancing, In-order traversal with animated steps.
-
-**Graphs** — coming.
-
-Every module also has a walkthrough, complexity charts drawn with Recharts, code tabs in JS / C / Python / Java, a multiple-choice quiz, and a daily challenge embed from Hello World.
+Each module includes a walkthrough, complexity charts drawn with Recharts, code tabs in JS / C / Python / Java, a multiple-choice quiz, and a daily challenge embed from Hello World.
 
 If you create an account you can mark modules complete. Your dashboard shows what you finished, a 90-day activity heatmap, and a streak.
 
-Auth is Supabase — email/password or Google OAuth. Cloudflare Turnstile sits on the signup form to keep bots out.
+Auth uses Supabase with email/password or Google OAuth. Cloudflare Turnstile protects the signup form.
 
 The blog has four posts. Topics: whether DSA actually matters for web developers, how implementations differ across languages, a beginner-friendly data structures explainer, and realistic timelines for learning DSA.
 
-Dark mode. Light mode. Breadcrumbs. Back-to-top. Article share buttons. Tutorial overlay for first-time visitors. A floating contact form if something breaks.
+UI extras include dark/light mode, breadcrumbs, back-to-top, article share buttons, a tutorial overlay for first-time visitors, and a floating contact form if something breaks.
 
 ---
 
@@ -77,11 +70,11 @@ Dark mode. Light mode. Breadcrumbs. Back-to-top. Article share buttons. Tutorial
 
 ## Getting started
 
-You need Node.js 18+, a Supabase account (free tier is fine), and a Cloudflare Turnstile account.
+You need Node.js 20.9.0+, a Supabase account (free tier is fine), and a Cloudflare Turnstile account.
 
 ```bash
 git clone https://github.com/PankajSingh34/AlgoBuddy.git
-cd algobuddy
+cd AlgoBuddy
 npm install
 ```
 
@@ -125,7 +118,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Route | Method | What it does |
 |---|---|---|
-| `/api/auth` | POST | Verifies Turnstile CAPTCHA, handles Supabase signup and login |
+| `/api/auth` | POST | Verifies Turnstile CAPTCHA and handles Supabase signup; login is completed client-side with `supabase.auth.signInWithPassword` |
 | `/api/contact` | POST | Contact form sends email via Nodemailer |
 | `/api/send-review` | POST | Review form sends email with rating |
 
@@ -147,7 +140,7 @@ Tracks module completion per user.
 
 ### `user_activity`
 
-Daily visit logs — feeds the heatmap and streak counter.
+Daily visit logs that feed the heatmap and streak counter.
 
 | Column | Type |
 |---|---|
@@ -174,7 +167,7 @@ The full list of modules on the platform.
 ```
 app/
   page.jsx                        # Homepage
-  layout.jsx                      # Root — analytics, providers, auth
+  layout.jsx                      # Root - analytics, providers, auth
   not-found.jsx                   # 404 page
   globals.css                     # Tailwind + custom styles
 
@@ -227,19 +220,19 @@ public/
 
 ## What is next
 
-Graph algorithms — BFS, DFS, Dijkstra, Prim's, Kruskal's, Topological Sort. More tree content — Pre-order, Post-order, Level-order, Morris Traversal, Red-Black Trees, B-Trees, Trie, Segment Trees, Fenwick Trees. Heap Sort. Huffman Coding. Better mobile support. More community features.
+Graph algorithms: BFS, DFS, Dijkstra, Prim's, Kruskal's, Topological Sort. More tree content: Pre-order, Post-order, Level-order, Morris Traversal, Red-Black Trees, B-Trees, Trie, Segment Trees, Fenwick Trees. Heap Sort. Huffman Coding. Better mobile support. More community features.
 
 ---
 
 ## CI
 
-A GitHub Actions workflow runs on every PR to main. It installs deps, lints, and builds across Ubuntu, macOS, and Windows with Node 20.
+A GitHub Actions workflow runs on every PR to main. It installs dependencies and runs the repository's configured CI checks across Ubuntu, macOS, and Windows with Node 20.
 
 ---
 
 ## Contributing
 
-Bug reports, feature ideas, docs improvements, pull requests — all welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) and follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
+Bug reports, feature ideas, docs improvements, and pull requests are all welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) and follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ---
 
