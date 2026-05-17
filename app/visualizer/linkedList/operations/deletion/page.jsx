@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/linkedList/operations/deletion/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 
 export const metadata = {
     title: 'Linked List Deletion Algorithm | Interactive Visualization & Step-by-Step Guide',

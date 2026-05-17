@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/searching/binarysearch/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import ExploreOther from "@/app/components/ui/exploreOther";

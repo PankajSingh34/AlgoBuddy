@@ -1,9 +1,14 @@
 import "./globals.css";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { AuthProvider } from "@/app/contexts/AuthContext";
-import { UserProvider } from "@/app/contexts/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "next-themes"
+import { Sora, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
+
+const sora = Sora({ subsets: ['latin'], variable: '--font-display', display: 'swap' })
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-body', display: 'swap' })
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' })
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
@@ -59,16 +64,13 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const session = null; // auth is handled client-side via AuthContext
-
   return (
-    <html lang="en">
-      <head>
+    <html lang="en" className={`${sora.variable} ${jakarta.variable} ${mono.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
+      <body>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />
         <link rel="icon" href="/favicon.ico?v=2" />
 
-        {/* Google Analytics Script */}
         {GA_ID && (
           <>
             <Script
@@ -87,15 +89,17 @@ export default async function RootLayout({ children }) {
             </Script>
           </>
         )}
-      </head>
-      <body>
-        <AuthProvider session={session}>
-          <UserProvider>
+
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-[hsl(var(--primary-foreground))] focus:rounded-md focus:shadow-lg">
+          Skip to content
+        </a>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <TooltipProvider>
             <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
-          </UserProvider>
-        </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+        <SpeedInsights />
       </body>
-      <SpeedInsights />
     </html>
   );
 }

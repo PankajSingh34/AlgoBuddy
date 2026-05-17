@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/linkedList/types/doubly/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 
 export const metadata = {
   title: 'Doubly Linked List Implementation | Visualize Doubly Linked List in JS, C, Python, Java',

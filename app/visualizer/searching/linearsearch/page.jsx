@@ -1,5 +1,5 @@
 import LinearSearchAnimation from "@/app/visualizer/searching/linearsearch/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import BackToTopButton from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 import ExploreOther from "@/app/components/ui/exploreOther";

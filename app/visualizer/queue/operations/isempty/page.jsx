@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/queue/operations/isempty/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/queue/operations/isempty/content";

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { FaCheck, FaTimes, FaArrowRight, FaArrowLeft, FaInfoCircle, FaRedo, FaTrophy, FaStar, FaAward } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -184,30 +185,39 @@ const StackQuiz = () => {
   const calculateWeakAreas = () => {
     const weakAreas = [];
     if (answers[0] !== questions[0].correctAnswer) {
-      weakAreas.push("understanding the basic principle of Selection Sort");
+      weakAreas.push("understanding the basic principle of prefix notation");
     }
     if (answers[1] !== questions[1].correctAnswer) {
-      weakAreas.push("time complexity analysis");
+      weakAreas.push("converting infix expressions with parentheses");
     }
     if (answers[2] !== questions[2].correctAnswer) {
-      weakAreas.push("counting swaps in Selection Sort");
+      weakAreas.push("the reversal step in infix-to-prefix conversion");
     }
     if (answers[3] !== questions[3].correctAnswer) {
-      weakAreas.push("comparison with other simple sorts");
+      weakAreas.push("handling right-associative operators");
     }
     if (answers[4] !== questions[4].correctAnswer) {
-      weakAreas.push("space complexity");
+      weakAreas.push("why prefix eliminates parentheses");
     }
     if (answers[5] !== questions[5].correctAnswer) {
-      weakAreas.push("stability characteristics");
+      weakAreas.push("operator precedence in prefix conversion");
     }
     if (answers[6] !== questions[6].correctAnswer) {
-      weakAreas.push("practical applications");
+      weakAreas.push("the data structure used for conversion");
+    }
+    if (answers[7] !== questions[7].correctAnswer) {
+      weakAreas.push("converting complex expressions with multiple operators");
+    }
+    if (answers[8] !== questions[8].correctAnswer) {
+      weakAreas.push("parentheses swapping during infix reversal");
+    }
+    if (answers[9] !== questions[9].correctAnswer) {
+      weakAreas.push("evaluating prefix expressions");
     }
     
     return weakAreas.length > 0 
       ? `Focus on improving: ${weakAreas.join(', ')}. Review the corresponding sections above.`
-      : "Perfect! You've mastered all Selection Sort concepts!";
+      : "Perfect! You've mastered all Prefix Notation concepts!";
   };
 
   const startQuiz = () => {

@@ -1,95 +1,22 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useUser } from "@/app/contexts/UserContext";
 import { toast } from "react-hot-toast";
-import { TriangleAlert } from "lucide-react";
-import { useEffect } from "react";
-
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
-  const { user } = useUser();
-  const [isDone, setIsDone] = useState(initialDone);
-  
-  useEffect(() => {
-  const fetchUserProgress = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("is_done")
-      .eq("user_id", user.id)
-      .eq("module_id", moduleId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching user progress:", error);
-      return;
+  const storageKey = `module_done_${moduleId}`;
+  const [isDone, setIsDone] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      return saved !== null ? saved === "true" : !!initialDone;
     }
+    return !!initialDone;
+  });
 
-    setIsDone(data?.is_done ?? false);
-  };
-
-  fetchUserProgress();
-}, [user, moduleId]);
-
-  async function toggleCompletion() {
-    if (!user) {
-      toast.custom((t) => (
-        <div className="max-w-sm w-full bg-neutral-100 dark:bg-zinc-800 border border-blue-500 rounded-lg shadow-xl p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <TriangleAlert size={50} className="dark:text-yellow-500 text-red-500" />
-            <span className="text-sm text-gray-800 dark:text-gray-100">
-              You are in guest mode. Login or signup to track your progress.
-            </span>
-          </div>
-          <div className="flex justify-end gap-2 mt-2">
-            <button
-              onClick={() => {
-                window.location.href = "/login";
-                toast.dismiss(t.id);
-              }}
-              className="px-4 py-2 rounded-full font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition duration-300 shadow-md flex items-center gap-2"
-            >
-              Login/Signup
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="px-4 py-2 rounded-full font-medium bg-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-900 dark:bg-neutral-800 border border-blue-500 dark:text-white text-black transition duration-300 shadow-lg flex items-center"
-            >
-              Continue as Guest
-            </button>
-          </div>
-        </div>
-      ));
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            module_id: moduleId,
-            is_done: !isDone,
-            updated_at: new Date(),
-          },
-          { onConflict: ["user_id", "module_id"] }
-        );
-
-      if (error) {
-        console.error("Error updating progress:", error.message, error.details);
-        toast.error(`Failed to update progress: ${error.message}`);
-        return;
-      }
-
-      setIsDone(!isDone);
-      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
-    } catch (err) {
-      console.error("Unexpected error during progress update:", err);
-      toast.error("Unexpected error. Please try again.");
-    }
+  function toggleCompletion() {
+    const next = !isDone;
+    setIsDone(next);
+    localStorage.setItem(storageKey, next.toString());
+    toast.success(next ? "Module marked as completed!" : "Module marked as incomplete.");
   }
 
   return (

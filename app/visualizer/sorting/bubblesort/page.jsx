@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/sorting/bubblesort/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import BackToTopButton from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";

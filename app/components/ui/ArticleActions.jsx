@@ -31,13 +31,13 @@ export default function ArticleActions() {
   };
 
   return (
-    <div className="flex gap-4 mt-6">
+    <div className="flex gap-3 mt-6">
       <button
         onClick={handleCopy}
-        className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-4 py-2 text-sm font-medium text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-muted))] transition-all duration-200"
       >
         {copied ? (
-          <Check className="w-4 h-4 text-green-600" />
+          <Check className="w-4 h-4 text-[hsl(var(--success))]" />
         ) : (
           <Copy className="w-4 h-4" />
         )}
@@ -45,7 +45,7 @@ export default function ArticleActions() {
       </button>
       <button
         onClick={handleShare}
-        className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-4 py-2 text-sm font-medium text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-muted))] transition-all duration-200"
       >
         <Share2 className="w-4 h-4" />
         <span>Share</span>

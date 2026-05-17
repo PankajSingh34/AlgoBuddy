@@ -1,7 +1,9 @@
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/stack/implementation/usingArray/content";
+import Animation from "@/app/visualizer/stack/implementation/usingArray/animation";
+import Quiz from "@/app/visualizer/stack/implementation/usingArray/quiz";
 import Code from "@/app/visualizer/stack/implementation/usingArray/codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import { MODULE_MAPS } from "@/lib/modulesMap";
@@ -74,6 +76,17 @@ export default function Page() {
           </div>
           <div className="h-px max-w-4xl mx-auto my-10 bg-gradient-to-r from-transparent via-[#d1d7dc] dark:via-[#333] to-transparent"></div>
           <Content />
+        </section>
+
+        <section>
+          <Animation />
+        </section>
+
+        <section className="px-6">
+          <p className="text-lg text-center text-[#6b7280] dark:text-[#9ca3af] mb-2">
+            Test Your Knowledge before moving forward!
+          </p>
+          <Quiz />
         </section>
 
         <section className="px-6">

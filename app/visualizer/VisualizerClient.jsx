@@ -394,23 +394,17 @@ function DSCard({ section, theme, onClick, delay }) {
               {theme.icon(theme.color)}
             </div>
             <div>
-              <h3
-                className="text-[18px] font-extrabold text-[#1a1a1a] dark:text-[#f7f9fa]"
-                style={{
-                  letterSpacing: "-0.02em",
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                {section.title}
-              </h3>
-              <p className="text-[12px] text-[#6b7280] dark:text-[#9e9e9e] font-medium">
-                {count} algorithm{count !== 1 ? "s" : ""} to explore
-              </p>
+              <h3 className="font-display text-lg font-bold text-[hsl(var(--text))]">
+                  {section.title}
+                </h3>
+                <p className="text-xs text-[hsl(var(--text-muted))] font-medium">
+                  {count} algorithm{count !== 1 ? "s" : ""} to explore
+                </p>
             </div>
           </div>
 
           {/* description */}
-          <p className="text-[13px] text-[#4b5563] dark:text-[#9e9e9e] leading-relaxed mb-4">
+          <p className="text-sm text-[hsl(var(--text-muted))] leading-relaxed mb-4 font-body">
             {section.desc}
           </p>
 
@@ -475,18 +469,11 @@ function ModuleView({ section, theme, onBack }) {
             {theme.icon(theme.color)}
           </div>
           <div>
-            <h2
-              className="text-[2rem] sm:text-[2.8rem] font-black text-[#1a1a1a] dark:text-[#f7f9fa]"
-              style={{
-                letterSpacing: "-0.03em",
-                lineHeight: 1.1,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-[hsl(var(--text))]">
               {section.title}
             </h2>
-            <p className="text-[14px] text-[#4b5563] dark:text-[#9e9e9e] mt-1">
-              {count} algorithm{count !== 1 ? "s" : ""} · {section.desc}
+            <p className="text-sm text-[hsl(var(--text-muted))] mt-1 font-body">
+              {count} algorithm{count !== 1 ? "s" : ""} &middot; {section.desc}
             </p>
           </div>
         </div>
@@ -526,10 +513,7 @@ function ModuleView({ section, theme, onBack }) {
                     >
                       {ii + 1}
                     </div>
-                    <span
-                      className="text-[14px] font-semibold text-[#1a1a1a] dark:text-[#f7f9fa]
-                      group-hover/item:text-[#a435f0] transition-colors"
-                    >
+                    <span className="text-sm font-semibold text-[hsl(var(--text))] group-hover/item:text-[hsl(var(--primary))] transition-colors">
                       {item.name}
                     </span>
                   </div>
@@ -597,29 +581,16 @@ export default function VisualizerClient({ initialSections }) {
   }, [search, initialSections]);
 
   return (
-    <div style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}>
+    <div>
       {/* ═══════ CONTENT AREA ═══════ */}
-      <section
-        className="px-5 pt-28 pb-20 min-h-screen"
-        style={{
-          background:
-            "linear-gradient(180deg, #ffffff 0%, #eef2ff 20%, #f0fdf4 60%, #faf5ff 100%)",
-          fontFamily: "'Inter', 'Source Sans 3', sans-serif",
-        }}
-      >
-        <div className="max-w-[1100px] mx-auto">
+      <section className="section container-app min-h-screen">
+        <div className="mx-auto">
           {/* page heading + search */}
           <div className="text-center mb-14">
-            <h1
-              className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-extrabold leading-[1.08] text-[#1c1d1f] dark:text-[#f7f9fa] mb-4"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                letterSpacing: "-0.03em",
-              }}
-            >
-              Algorithm <span className="text-[#a435f0]">Visualizer</span>
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[hsl(var(--text))] mb-4">
+              Algorithm <span className="text-[hsl(var(--primary))]">Visualizer</span>
             </h1>
-            <p className="text-[1.1rem] text-[#4b5563] dark:text-[#9e9e9e] leading-relaxed max-w-[480px] mx-auto">
+            <p className="text-base sm:text-lg text-[hsl(var(--text-muted))] leading-relaxed max-w-[480px] mx-auto font-body">
               Pick any data structure, tap an algorithm, and watch it run step
               by step. Learning DSA has never been this fun.
             </p>
@@ -659,7 +630,7 @@ export default function VisualizerClient({ initialSections }) {
                               {t.icon(t.color)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-[14px] font-semibold text-[#1a1a1a] group-hover/r:text-[#a435f0] transition-colors">
+                              <span className="text-sm font-semibold text-[hsl(var(--text))] group-hover/r:text-[hsl(var(--primary))] transition-colors">
                                 {item.name}
                               </span>
                               <span className="block text-[11px] text-[#6b7280]">
@@ -674,14 +645,15 @@ export default function VisualizerClient({ initialSections }) {
                   </div>
                 ) : (
                   <div className="text-center py-16">
-                    <span className="text-[48px] block mb-4">🔍</span>
-                    <h3
-                      className="text-2xl font-bold text-[#1a1a1a] mb-2"
-                      style={{ letterSpacing: "-0.02em" }}
-                    >
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-[hsl(var(--primary-subtle))] flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-[hsl(var(--primary))]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-[hsl(var(--text))]">
                       No results found
                     </h3>
-                    <p className="text-[#6b7280] text-[15px]">
+                    <p className="text-[hsl(var(--text-muted))] text-sm mt-2">
                       Try a different search term
                     </p>
                   </div>
@@ -717,13 +689,15 @@ export default function VisualizerClient({ initialSections }) {
                 </div>
 
                 {filtered.length === 0 && (
-                  <div className="text-center py-16">
-                    <span className="text-[48px] block mb-4">🔍</span>
-                    <h3 className="text-2xl font-bold text-[#1a1a1a] mb-2">
-                      No topics found
-                    </h3>
-                    <p className="text-[#6b7280]">
-                      Try a different search term
+                  <div className="col-span-full flex flex-col items-center py-24 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--primary-subtle))] flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-[hsl(var(--primary))]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-[hsl(var(--text))]">No topics found</h3>
+                    <p className="text-[hsl(var(--text-muted))] mt-2 max-w-sm font-body">
+                      Try a different search term.
                     </p>
                   </div>
                 )}

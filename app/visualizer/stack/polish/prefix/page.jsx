@@ -1,9 +1,9 @@
 import Animation from "@/app/visualizer/stack/polish/prefix/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/stack/polish/prefix/content";
-import Quiz from "@/app/visualizer/stack/polish/postfix/quiz";
+import Quiz from "@/app/visualizer/stack/polish/prefix/quiz";
 import Code from "@/app/visualizer/stack/polish/prefix/codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import { MODULE_MAPS } from "@/lib/modulesMap";

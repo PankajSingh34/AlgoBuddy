@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/linkedList/operations/reverse/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 
 export const metadata = {
     title: 'Linked List Reverse Algorithm | Interactive Visualization & Step-by-Step Guide',

@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/linkedList/types/singly/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 
 export const metadata = {
   title: 'Singly Linked List Implementation | Visualize Linked List in JS, C, Python, Java',

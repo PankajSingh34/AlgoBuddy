@@ -1,5 +1,5 @@
 import Animation from "@/app/visualizer/linkedList/operations/merge/animation";
-import Navbar from "@/app/components/navbarinner";
+import Navbar from "@/app/components/navbar";
 
 export const metadata = {
     title: 'Linked List Merge Algorithm | Interactive Visualization & Step-by-Step Guide',
