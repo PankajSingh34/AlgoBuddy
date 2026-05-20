@@ -373,19 +373,19 @@ const sections = [
       {
         title: "Traversal",
         items: [
-          { name: "Pre-order", path: "/visualizer/trees/traversal/pre-order" },
-          { name: "In-order", path: "/visualizer/trees/traversal/in-order" },
+          { name: "Pre-order", path: "/visualizer/trees/traversing/pre-order" },
+          { name: "In-order", path: "/visualizer/trees/traversing/in-order" },
           {
             name: "Post-order",
-            path: "/visualizer/trees/traversal/post-order",
+            path: "/visualizer/trees/traversing/post-order",
           },
           {
             name: "Level-order (BFS)",
-            path: "/visualizer/trees/traversal/level-order",
+            path: "/visualizer/trees/traversing/level-order",
           },
           {
             name: "Morris Traversal",
-            path: "/visualizer/trees/traversal/morris",
+            path: "/visualizer/trees/traversing/morris",
           },
         ],
       },
