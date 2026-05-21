@@ -4,7 +4,6 @@
 
 AlgoBuddy is an open-source, interactive DSA learning platform that brings algorithms to life through step-by-step animations, structured learning paths, and progress tracking — built for students, developers, and interview candidates.
 
-Live: [algobuddy.in](https://algobuddy.in)
 
 ---
 **Join our community**
