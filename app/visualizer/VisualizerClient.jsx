@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Search, ChevronRight } from "lucide-react";
-import { VISUALIZER_THEMES, getVisualizerTheme } from "@/lib/visualizerThemes";
+import { FiArrowLeft, FiSearch, FiChevronRight } from "react-icons/fi";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
