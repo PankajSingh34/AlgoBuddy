@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/operations/deletion/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/operations/deletion/content";
+import Quiz from "@/app/visualizer/linkedList/operations/deletion/quiz";
+import Code from "@/app/visualizer/linkedList/operations/deletion/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
     title: 'Linked List Deletion Algorithm | Interactive Visualization & Step-by-Step Guide',
@@ -29,10 +32,33 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Deletion", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Linked List Deletion"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Remove the last node and watch the list update the previous node so its next pointer becomes NULL."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Types",
+        links: [
+          { text: "Insertion", url: "./insertion" },
+          { text: "Searching", url: "./search" },
+          { text: "Merge Lists", url: "./merge" },
+          { text: "Comparison", url: "./comparison" },
+        ],
+      }}
+    />
   );
 };

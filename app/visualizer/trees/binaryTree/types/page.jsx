@@ -1,5 +1,7 @@
 import Animation from "@/app/visualizer/trees/binaryTree/types/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/trees/binaryTree/types/content";
+import Code from "@/app/visualizer/trees/binaryTree/types/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
   title: 'Binary Tree Types | Learn Full, Complete, and Degenerate Binary Trees in DSA',
@@ -24,10 +26,24 @@ export const metadata = {
 };
 
 export default function Page(){
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Tree", href: "/visualizer" },
+    { name: "Types of Binary Trees", href: "" },
+  ];
+
   return(
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Tree"
+      title="Types of Binary Trees"
+      content={<Content />}
+      code={<Code />}
+      relatedTopics={{
+        title: "Explore other implementation",
+        links: [{ text: "Structure & Properties", url: "./properties" }],
+      }}
+    />
   );
 };

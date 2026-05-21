@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/operations/traversal/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/operations/traversal/content";
+import Quiz from "@/app/visualizer/linkedList/operations/traversal/quiz";
+import Code from "@/app/visualizer/linkedList/operations/traversal/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
     title: 'Linked List Traversal Algorithm | Interactive Visualization & Step-by-Step Guide',
@@ -28,10 +31,35 @@ export const metadata = {
     robots: 'index, follow',
 };
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Traversal", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Linked List Traversal"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Generate a list and animate the traversal process as each node and pointer gets highlighted in sequence."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Operations",
+        links: [
+          { text: "Insertion", url: "./insertion" },
+          { text: "Deletion", url: "./deletion" },
+          { text: "Compare", url: "./comparison" },
+          { text: "Merge", url: "./merge" },
+          { text: "Searching", url: "./search" },
+          { text: "Reverse", url: "./reverse" },
+        ],
+      }}
+    />
   );
 };

@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/types/doubly/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/types/doubly/content";
+import Quiz from "@/app/visualizer/linkedList/types/doubly/quiz";
+import Code from "@/app/visualizer/linkedList/types/doubly/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
   title: 'Doubly Linked List Implementation | Visualize Doubly Linked List in JS, C, Python, Java',
@@ -24,10 +27,31 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Doubly Linked List", href: "" },
+  ];
+
   return (
-    <>
-    <Navbar/>
-    <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Doubly Linked List"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="See how each node keeps track of both the previous and next pointer in a doubly linked list."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Types",
+        links: [
+          { text: "Singly Linked List", url: "./singly" },
+          { text: "Circular Linked List", url: "./circular" },
+        ],
+      }}
+    />
   );
 };

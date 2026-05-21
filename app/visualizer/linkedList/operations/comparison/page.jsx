@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/operations/comparison/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/operations/comparison/content";
+import Quiz from "@/app/visualizer/linkedList/operations/comparison/quiz";
+import Code from "@/app/visualizer/linkedList/operations/comparison/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
     title: 'Linked List Comparison Algorithm | Interactive Visualization & Step-by-Step Guide',
@@ -29,10 +32,35 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Comparison", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Linked List Comparison"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Generate two lists and compare them node by node to see where their values diverge."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Operations",
+        links: [
+          { text: "Insertion", url: "./insertion" },
+          { text: "Deletion", url: "./deletion" },
+          { text: "Traversal", url: "./traversal" },
+          { text: "Merging", url: "./merge" },
+          { text: "Searching", url: "./search" },
+          { text: "Reverse", url: "./reverse" },
+        ],
+      }}
+    />
   );
 };

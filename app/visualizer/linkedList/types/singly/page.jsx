@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/types/singly/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/types/singly/content";
+import Quiz from "@/app/visualizer/linkedList/types/singly/quiz";
+import Code from "@/app/visualizer/linkedList/types/singly/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
   title: 'Singly Linked List Implementation | Visualize Linked List in JS, C, Python, Java',
@@ -25,10 +28,31 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Singly Linked List", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Singly Linked List"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Add nodes and follow how each node stores its data together with the next pointer."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Types",
+        links: [
+          { text: "Doubly Linked List", url: "./doubly" },
+          { text: "Circular Linked List", url: "./circular" },
+        ],
+      }}
+    />
   );
 };

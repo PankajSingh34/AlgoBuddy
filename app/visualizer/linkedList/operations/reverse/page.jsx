@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/operations/reverse/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/operations/reverse/content";
+import Quiz from "@/app/visualizer/linkedList/operations/reverse/quiz";
+import Code from "@/app/visualizer/linkedList/operations/reverse/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
     title: 'Linked List Reverse Algorithm | Interactive Visualization & Step-by-Step Guide',
@@ -29,10 +32,35 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Reverse", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Reverse Linked List"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Follow the current, previous, and next pointers as each link gets rewired during reversal."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Operations",
+        links: [
+          { text: "Insertion", url: "./insertion" },
+          { text: "Deletion", url: "./deletion" },
+          { text: "Traversal", url: "./traversal" },
+          { text: "Comparison", url: "./comparison" },
+          { text: "Searching", url: "./search" },
+          { text: "Merging", url: "./merge" },
+        ],
+      }}
+    />
   );
 };

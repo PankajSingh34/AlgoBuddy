@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/types/circular/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/types/circular/content";
+import Quiz from "@/app/visualizer/linkedList/types/circular/quiz";
+import Code from "@/app/visualizer/linkedList/types/circular/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
   title: 'Circular Linked List Algorithm | Interactive Learning & Step-by-Step Animation',
@@ -23,10 +26,31 @@ export const metadata = {
   robots: 'index, follow',
 };
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Circular Linked List", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Circular Linked List"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Visualize how the tail reconnects to the head to form a loop in a circular linked list."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Types",
+        links: [
+          { text: "Singly Linked List", url: "./singly" },
+          { text: "Doubly Linked List", url: "./doubly" },
+        ],
+      }}
+    />
   );
 };

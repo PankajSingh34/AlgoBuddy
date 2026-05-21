@@ -1,13 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import Footer from '@/app/components/footer';
-import ExploreOther from '@/app/components/ui/exploreOther';
-import Content from "@/app/visualizer/linkedList/operations/traversal/content";
-import Quiz from '@/app/visualizer/linkedList/operations/traversal/quiz';
-import CodeBlock from "@/app/visualizer/linkedList/operations/traversal/codeBlock";
-import BackToTop from '@/app/components/ui/backtotop';
-import GoBackButton from "@/app/components/ui/goback";
 
 const LinkedListTraversal = () => {
   const [list, setList] = useState([]);
@@ -138,20 +131,10 @@ const LinkedListTraversal = () => {
   }, [list]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-zinc-950 text-gray-800 dark:text-gray-200 flex flex-col">
-      <main className="container mx-auto px-2 sm:px-6 pt-16 pb-4 flex-1">
-        <div className="mt-8 sm:mt-10">
-          <GoBackButton />
-        </div>
-
-        <h1 className="text-3xl sm:text-4xl mt-6 ml-2 sm:ml-10 font-bold text-left text-gray-900 dark:text-white mb-0">
-          Linked List Traversal
-        </h1>
-        <div className="bg-black dark:bg-gray-600 w-full h-[2px] rounded-xl mt-2 mb-5"></div>
-        <Content />
-        <p className="text-base sm:text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
-          Visualize how we traverse through each node in a linked list
-        </p>
+    <div className="space-y-8 text-gray-800 dark:text-gray-200">
+      <p className="text-center text-base text-gray-600 dark:text-gray-400 sm:text-lg">
+        Visualize how we traverse through each node in a linked list
+      </p>
 
         {/* Controls - Responsive */}
         <div className="flex justify-center mb-8">
@@ -278,27 +261,7 @@ const LinkedListTraversal = () => {
           </div>
         </div>
 
-        <p className="text-lg text-center text-gray-600 dark:text-gray-400 mt-8 mb-8">
-          Test Your Knowledge Before Moving Forward!
-        </p>
-        <Quiz />
-
-        <CodeBlock />
-
-        <ExploreOther
-          title="Explore Other Operations"
-          links={[
-            { text: "Insertion", url: "./insertion" },
-            { text: "Deletion", url: "./deletion" },
-            { text: "Compare", url: "./comparison" },
-            { text: "Merge", url: "./merge" },
-            { text: "Searching", url: "./search" },
-            { text: "Reverse", url: "./reverse" },
-          ]}
-        />
-      </main>
-      <BackToTop />
-      <Footer />
+      
     </div>
   );
 };

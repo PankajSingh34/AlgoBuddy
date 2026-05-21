@@ -1,5 +1,8 @@
 import Animation from "@/app/visualizer/linkedList/operations/merge/animation";
-import Navbar from "@/app/components/navbarinner";
+import Content from "@/app/visualizer/linkedList/operations/merge/content";
+import Quiz from "@/app/visualizer/linkedList/operations/merge/quiz";
+import Code from "@/app/visualizer/linkedList/operations/merge/codeBlock";
+import { StandardAlgorithmPage } from "@/app/components/ui/algorithm-page";
 
 export const metadata = {
     title: 'Linked List Merge Algorithm | Interactive Visualization & Step-by-Step Guide',
@@ -29,10 +32,35 @@ export const metadata = {
 };
 
 export default function Page() {
+  const paths = [
+    { name: "Home", href: "/" },
+    { name: "Visualizer", href: "/visualizer" },
+    { name: "Linked List", href: "/visualizer" },
+    { name: "Merge", href: "" },
+  ];
+
   return (
-    <>
-      <Navbar/>
-      <Animation/>
-    </>
+    <StandardAlgorithmPage
+      paths={paths}
+      category="Linked List"
+      title="Merge Linked Lists"
+      visualizerTitle="Interactive Visualizer"
+      visualizerDescription="Merge two sorted linked lists while tracking the active pointers and the growing merged result."
+      visualizer={<Animation />}
+      content={<Content />}
+      code={<Code />}
+      quiz={<Quiz />}
+      relatedTopics={{
+        title: "Explore Other Operations",
+        links: [
+          { text: "Insertion", url: "./insertion" },
+          { text: "Deletion", url: "./deletion" },
+          { text: "Traversal", url: "./traversal" },
+          { text: "Comparison", url: "./comparison" },
+          { text: "Searching", url: "./search" },
+          { text: "Reverse", url: "./reverse" },
+        ],
+      }}
+    />
   );
 };
