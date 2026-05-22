@@ -14,7 +14,7 @@ const BinarySearch = () => {
   const [foundIndex, setFoundIndex] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // "success" | "error" | "warning"
+  const [messageType, setMessageType] = useState(""); // FIX: "success" | "error" | "warning"
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
   const animationRef = useRef(null);
@@ -30,7 +30,7 @@ const BinarySearch = () => {
     setMid(-1);
     setFoundIndex(-1);
     setMessage("");
-    setMessageType("");
+    setMessageType(""); // FIX: reset message type
     setIsAnimating(false);
     setArrayElements("");
     setTarget("");
@@ -62,7 +62,7 @@ const BinarySearch = () => {
 
     if (!arrayElements || !target) {
       setMessage("Please fill in all fields.");
-      setMessageType("warning");
+      setMessageType("warning"); // FIX: validation error → warning
       return;
     }
 
@@ -81,7 +81,7 @@ const BinarySearch = () => {
 
     if (elements.some(isNaN) || isNaN(targetValue)) {
       setMessage("Invalid array elements or target.");
-      setMessageType("warning");
+      setMessageType("warning"); // FIX: validation error → warning
       return;
     }
 
@@ -90,7 +90,7 @@ const BinarySearch = () => {
     );
     if (!isSorted) {
       setMessage("Array must be sorted in ascending order.");
-      setMessageType("warning");
+      setMessageType("warning"); // FIX: validation error → warning
       return;
     }
 
@@ -119,7 +119,7 @@ const BinarySearch = () => {
 
     if (l > h) {
       setMessage(`Element ${targetValue} not found in the array.`);
-      setMessageType("error");
+      setMessageType("error"); // FIX: search result "not found" → red
       setIsAnimating(false);
       return;
     }
@@ -155,7 +155,7 @@ const BinarySearch = () => {
       if (arr[m] === targetValue) {
         setFoundIndex(m);
         setMessage(`Element ${targetValue} found at index ${m}!`);
-        setMessageType("success");
+        setMessageType("success"); // FIX: found → green
         setIsAnimating(false);
         gsap.to(elementRefs.current[m], {
           backgroundColor: "#22C55E",
@@ -194,6 +194,7 @@ const BinarySearch = () => {
     };
   }, []);
 
+  // FIX: derive message box classes from messageType instead of foundIndex
   const messageClass =
     messageType === "success"
       ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"

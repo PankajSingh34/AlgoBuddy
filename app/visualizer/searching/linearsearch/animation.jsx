@@ -12,7 +12,7 @@ const LinearSearch = () => {
   const [foundIndex, setFoundIndex] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // "success" | "error" | "warning"
+  const [messageType, setMessageType] = useState(""); // FIX: "success" | "error" | "warning"
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
   const animationRef = useRef(null);
@@ -31,7 +31,7 @@ const LinearSearch = () => {
     setCurrentIndex(-1);
     setFoundIndex(-1);
     setMessage("");
-    setMessageType("");
+    setMessageType(""); // FIX: reset message type
     setIsAnimating(false);
     setArrayElements("");
     setTarget("");
@@ -62,7 +62,7 @@ const LinearSearch = () => {
 
     if (!arrayElements || !target) {
       setMessage("Please fill in all fields.");
-      setMessageType("warning");
+      setMessageType("warning"); // FIX: validation error → warning
       return;
     }
 
@@ -89,7 +89,7 @@ const targetValue = parseInt(target);
 
     if (elements.some(isNaN) || isNaN(targetValue)) {
       setMessage("Invalid array elements or target.");
-      setMessageType("warning");
+      setMessageType("warning"); // FIX: validation error → warning
       return;
     }
 
@@ -110,7 +110,7 @@ const targetValue = parseInt(target);
     const step = () => {
       if (index >= arr.length) {
         setMessage(`Element ${targetValue} not found in the array.`);
-        setMessageType("error");
+        setMessageType("error"); // FIX: search result "not found" → red
         setIsAnimating(false);
         return;
       }
@@ -134,7 +134,7 @@ const targetValue = parseInt(target);
         if (arr[index] === targetValue) {
           setFoundIndex(index);
           setMessage(`Element ${targetValue} found at index ${index}!`);
-          setMessageType("success");
+          setMessageType("success"); // FIX: found → green
           setIsAnimating(false);
           gsap.to(elementRefs.current[index], { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0.3 });
         } else {
@@ -163,6 +163,7 @@ const targetValue = parseInt(target);
     });
   };
 
+  // FIX: derive message box classes from messageType instead of foundIndex
   const messageClass =
     messageType === "success"
       ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
