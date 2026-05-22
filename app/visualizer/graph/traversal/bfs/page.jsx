@@ -1,7 +1,6 @@
 import Animation from "./animation";
 import GraphTopicPage from "@/app/visualizer/graph/components/GraphTopicPage";
 import { graphTopics } from "@/app/visualizer/graph/data";
-
 const topic = graphTopics.bfs;
 
 export const metadata = {

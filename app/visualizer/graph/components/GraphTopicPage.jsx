@@ -6,7 +6,7 @@ import ArticleActions from "@/app/components/ui/ArticleActions";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import { getGraphRelatedLinks } from "@/app/visualizer/graph/data";
 
-export default function GraphTopicPage({ topic, Animation }) {
+export default function GraphTopicPage({ topic, Animation, startNode }) {
   const paths = [
     { name: "Home", href: "/" },
     { name: "Visualizer", href: "/visualizer" },
@@ -75,7 +75,7 @@ export default function GraphTopicPage({ topic, Animation }) {
         </section>
 
         <section className="container-app">
-          <Animation />
+          <Animation startNode={startNode} />
         </section>
 
         <section className="container-app">
