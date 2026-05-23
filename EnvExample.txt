@@ -2,13 +2,16 @@ EMAIL_USER=Your App Email
 EMAIL_PASSWORD=Your Google App Password
 NEXT_PUBLIC_GA_ID=Your Google Analytics ID
 
-NEXT_PUBLIC_SUPABASE_URL=Your supabase Url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=Your Anon Key
+NEXT_PUBLIC_SUPABASE_URL=Your Supabase project URL (required for auth features)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=Your Supabase anon/public key (required for auth features)
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=Your Cloudfare Captcha Key
 
 TURNSTILE_SECRET_KEY=Your Cloudfare backend route api key
-SUPABASE_SERVICE_KEY=Your supabase service key
+SUPABASE_SERVICE_KEY=Your Supabase service role key (required for signup)
 REVIEW_INBOX_EMAIL=Optional: fixed inbox for review emails (defaults to EMAIL_USER)
+
+# If the Supabase values are missing, the app can still start in a limited mode,
+# but auth/login and activity persistence stay disabled until these values are set.
 
 # AI Chatbot (AlgoBuddy Assistant)
 OPENAI_API_KEY=Your OpenAI or OpenRouter API Key

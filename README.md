@@ -131,6 +131,10 @@ Create a `.env.local` file at the root with the following keys (see `EnvExample.
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key |
 
+If the Supabase variables are missing, the app still boots in a limited mode,
+but auth, activity tracking, and related session features show a clear setup
+message until Supabase is configured.
+
 Never commit `.env.local` to version control. It is listed in `.gitignore`.
 
 ---

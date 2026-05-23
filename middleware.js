@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { getSupabaseConfig } from "@/lib/supabaseConfig";
 
 export async function middleware(request) {
   let supabaseResponse = NextResponse.next({ request });
+  const { publicConfigured } = getSupabaseConfig();
+
+  if (!publicConfigured) {
+    return supabaseResponse;
+  }
 
   // A server client is created per-request so that session cookies can be
   // refreshed when the access token is close to expiry. The setAll callback

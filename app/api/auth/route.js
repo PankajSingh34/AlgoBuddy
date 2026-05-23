@@ -1,14 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-
-// Service-role client is only used for signup so it can create users regardless
-// of RLS policies. It is never used for login — that goes through the anon client
-// so that Supabase's own per-user RLS applies from the first request.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-  process.env.SUPABASE_SERVICE_KEY || "placeholder-key",
-);
+import { getSupabaseConfig } from "@/lib/supabaseConfig";
 
 async function verifyTurnstile(captchaToken) {
   if (!process.env.TURNSTILE_SECRET_KEY) {
@@ -41,6 +34,16 @@ async function verifyTurnstile(captchaToken) {
 
 export async function POST(req) {
   try {
+    const {
+      supabaseUrl,
+      supabaseAnonKey,
+      supabaseServiceKey,
+      publicConfigured,
+      serviceConfigured,
+      publicMessage,
+      serviceMessage,
+    } = getSupabaseConfig();
+
     let body;
     try {
       body = await req.json();
@@ -76,6 +79,15 @@ export async function POST(req) {
     }
 
     if (action === "signup") {
+      if (!serviceConfigured) {
+        return new Response(
+          JSON.stringify({ success: false, message: serviceMessage }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
       const { error } = await supabaseAdmin.auth.signUp({
         email,
         password,
@@ -102,13 +114,20 @@ export async function POST(req) {
     }
 
     if (action === "login") {
+      if (!publicConfigured) {
+        return new Response(
+          JSON.stringify({ success: false, message: publicMessage }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
       const cookieStore = await cookies();
 
       // createServerClient writes the session into cookies automatically when
       // signInWithPassword resolves. Tokens are never placed in the response body.
       const client = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key",
+        supabaseUrl,
+        supabaseAnonKey,
         {
           cookies: {
             getAll() {
