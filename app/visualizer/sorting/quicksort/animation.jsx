@@ -18,6 +18,8 @@ const QuickSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
     pivot: -1,
     left: -1,
@@ -34,6 +36,8 @@ const QuickSortVisualizer = () => {
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({
       pivot: -1,
       left: -1,
@@ -121,6 +125,9 @@ const QuickSortVisualizer = () => {
     isSortingRef.current = true;
     setSorting(true);
     let arr = [...array];
+    const n = arr.length;
+    setTotalSteps(Math.floor((n * (n - 1)) / 2));
+    setCurrentStep(0);
     let stack = [];
     let low = 0;
     let high = arr.length - 1;
@@ -165,6 +172,7 @@ const QuickSortVisualizer = () => {
         }));
       }
     }
+        setCurrentStep((prev) => prev + 1);
 
     setArray([...arr]);
     isSortingRef.current = false;
@@ -341,6 +349,19 @@ const QuickSortVisualizer = () => {
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Swaps:</div>
               <div className="text-2xl">{swaps}</div>
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">
+              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {currentStep > 0 && !sorted
+                ? `Partitioning around pivot at index ${currentIndices.pivot}`
+                : sorted
+                ? "Sorting complete!"
+                : "Start sorting to see steps"}
             </div>
           </div>
         </div>

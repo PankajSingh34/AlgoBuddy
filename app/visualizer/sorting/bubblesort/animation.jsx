@@ -23,6 +23,8 @@ const BubbleSortVisualizer = () => {
   const [speed, setSpeed] = useState(() =>
     loadFromStorage("bubble-speed", 1)
   );
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
 
   useEffect(() => {
     saveToStorage("bubble-array", array);
@@ -49,6 +51,8 @@ const BubbleSortVisualizer = () => {
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
     if (animationRef.current) {
       clearTimeout(animationRef.current);
@@ -72,6 +76,8 @@ const BubbleSortVisualizer = () => {
     let n = arr.length;
     let tempSwaps = 0;
     let tempComparisons = 0;
+    setTotalSteps(Math.floor((n * (n - 1)) / 2));
+    setCurrentStep(0);
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
@@ -81,6 +87,7 @@ const BubbleSortVisualizer = () => {
         setCurrentIndices({ i: j, j: j + 1 });
         tempComparisons++;
         setComparisons(tempComparisons);
+        setCurrentStep((prev) => prev + 1);
 
         await cancellableDelay();
         if (!isSortingRef.current) return;
@@ -223,6 +230,19 @@ const BubbleSortVisualizer = () => {
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Swaps:</div>
               <div className="text-xl sm:text-2xl">{swaps}</div>
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">
+              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {currentStep > 0 && !sorted
+                ? `Comparing index ${currentIndices.i} and ${currentIndices.j}`
+                : sorted
+                ? "Sorting complete!"
+                : "Start sorting to see steps"}
             </div>
           </div>
         </div>

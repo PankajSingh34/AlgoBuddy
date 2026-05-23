@@ -18,6 +18,8 @@ const InsertionSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [shifts, setShifts] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ current: -1, comparing: -1, sortedUpTo: -1 });
   const animationRef = useRef(null);
   const barRefs = useRef([]);
@@ -34,6 +36,8 @@ const InsertionSortVisualizer = () => {
   const resetStats = () => {
     setComparisons(0);
     setShifts(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
     if (animationRef.current) clearTimeout(animationRef.current);
   };
@@ -45,6 +49,8 @@ const InsertionSortVisualizer = () => {
     setSorting(true);
     let arr = [...array];
     const n = arr.length;
+    setTotalSteps(Math.floor((n * (n - 1)) / 2));
+    setCurrentStep(0);
 
     // reset bar positions
     barRefs.current.forEach((bar) => bar && gsap.set(bar, { x: 0, y: 0 }));
@@ -62,6 +68,7 @@ const InsertionSortVisualizer = () => {
 
       while (j >= 0 && arr[j] > current) {
         setComparisons((c) => c + 1);
+        setCurrentStep((prev) => prev + 1);
         arr[j + 1] = arr[j];
         setShifts((s) => s + 1);
         setArray([...arr]);
@@ -150,6 +157,11 @@ const InsertionSortVisualizer = () => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Comparisons:</div><div className="text-2xl">{comparisons}</div></div>
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Shifts:</div><div className="text-2xl">{shifts}</div></div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
+            <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Inserting element at index ${currentIndices.current}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
           </div>
         </div>
         {/* Visualization */}

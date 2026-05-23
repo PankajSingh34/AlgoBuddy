@@ -18,6 +18,8 @@ const MergeSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
     left: -1,
     right: -1,
@@ -47,6 +49,8 @@ const MergeSortVisualizer = () => {
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
     setCurrentIndices({
       left: -1,
       right: -1,
@@ -88,6 +92,7 @@ const MergeSortVisualizer = () => {
       }));
 
       setComparisons((prev) => prev + 1);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay(1000 / speed);
       if (!isSortingRef.current) return;
 
@@ -184,6 +189,9 @@ const MergeSortVisualizer = () => {
     isSortingRef.current = true;
     setSorting(true);
     let arr = [...array];
+    const n = arr.length;
+    setTotalSteps(Math.floor(n * Math.ceil(Math.log2(n || 1))));
+    setCurrentStep(0);
     await mergeSortHelper(arr, 0, arr.length - 1);
     if (!isSortingRef.current) return;
     setArray([...arr]);
@@ -329,6 +337,19 @@ const MergeSortVisualizer = () => {
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Merges:</div>
               <div className="text-2xl">{swaps}</div>
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">
+              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {currentStep > 0 && !sorted
+                ? `Merging elements at index ${currentIndices.mergeStart} to ${currentIndices.mergeEnd}`
+                : sorted
+                ? 'Sorting complete!'
+                : 'Start sorting to see steps'}
             </div>
           </div>
         </div>
