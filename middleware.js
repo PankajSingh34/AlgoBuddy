@@ -1,13 +1,37 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-export async function middleware(request) {
-  let supabaseResponse = NextResponse.next({ request });
+const SUPABASE_ENV_ERROR =
+  "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy EnvExample.txt to .env.local and add your Supabase project URL and anon key.";
 
+function isValidHttpUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseAnonKey || !isValidHttpUrl(supabaseUrl)) {
+    return null;
+  }
+
+  return { supabaseUrl, supabaseAnonKey };
+}
+
+export async function middleware(request) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabaseConfig = getSupabaseConfig();
+  if (!supabaseConfig) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(SUPABASE_ENV_ERROR);
+    }
     return supabaseResponse;
   }
 
@@ -16,8 +40,8 @@ export async function middleware(request) {
   // propagates the new cookies into both the outgoing request and response so
   // that server components and client components see consistent session state.
   const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
+    supabaseConfig.supabaseUrl,
+    supabaseConfig.supabaseAnonKey,
     {
       cookies: {
         getAll() {

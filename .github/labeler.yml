@@ -1,0 +1,39 @@
+gssoc:approved:
+  - ".*"
+
+mentor:PankajSingh34:
+  - ".*"
+
+level:beginner:
+  - "(?i).*beginner.*"
+  - "(?i).*easy.*"
+  - "(?i).*simple.*"
+
+level:intermediate:
+  - "(?i).*medium.*"
+  - "(?i).*intermediate.*"
+
+level:advanced:
+  - "(?i).*hard.*"
+  - "(?i).*advanced.*"
+  - "(?i).*complex.*"
+
+type:bug:
+  - "(?i).*bug.*"
+  - "(?i).*error.*"
+  - "(?i).*fix.*"
+
+type:docs:
+  - "(?i).*documentation.*"
+  - "(?i).*docs.*"
+  - "(?i).*readme.*"
+
+type:feature:
+  - "(?i).*feature.*"
+  - "(?i).*enhancement.*"
+  - "(?i).*add.*"
+
+type:design:
+  - "(?i).*ui.*"
+  - "(?i).*ux.*"
+  - "(?i).*design.*"
