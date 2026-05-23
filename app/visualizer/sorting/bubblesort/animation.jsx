@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
-import { saveToStorage, loadFromStorage,removeFromStorage, } from "@/utils/storage";
+import {saveToStorage,loadFromStorage,} from "@/utils/storage";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -13,7 +13,6 @@ const getFontSize = (value) => {
 };
 
 const BubbleSortVisualizer = () => {
-  
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
   const [array, setArray] = useState(() =>
@@ -24,7 +23,15 @@ const BubbleSortVisualizer = () => {
     loadFromStorage("bubble-speed", 1)
   );
   const [currentStep, setCurrentStep] = useState(0);
+  const [timeline, setTimeline] = useState([]);
   const [totalSteps, setTotalSteps] = useState(0);
+  const [comparisons, setComparisons] = useState(0);
+  const [swaps, setSwaps] = useState(0);
+  const [currentIndices, setCurrentIndices] = useState({i: -1, j: -1,});
+  const timelineContainerRef = useRef(null);
+  const animationRef = useRef(null);
+  const isSortingRef = useRef(false);
+  const resolveRef = useRef(null);
 
   useEffect(() => {
     saveToStorage("bubble-array", array);
@@ -33,40 +40,44 @@ const BubbleSortVisualizer = () => {
   useEffect(() => {
     saveToStorage("bubble-speed", speed);
   }, [speed]);
-  const [comparisons, setComparisons] = useState(0);
-  const [swaps, setSwaps] = useState(0);
-  const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
-  const animationRef = useRef(null);
-  const isSortingRef = useRef(false);
-  const resolveRef = useRef(null);
 
-  // Handle array generation from child component
+  // Auto-scroll timeline
+  useEffect(() => {
+  if (timelineContainerRef.current) {
+    timelineContainerRef.current.scrollTop =
+      timelineContainerRef.current.scrollHeight;
+  }
+}, [timeline]);
+
+  // Handle array generation
   const handleArrayGenerated = (newArray) => {
     setArray(newArray);
     setSorted(false);
     resetStats();
   };
 
-  // Reset all stats and state
+  // Reset stats
   const resetStats = () => {
     setComparisons(0);
     setSwaps(0);
     setCurrentStep(0);
+    setTimeline([]);
     setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
+
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
   };
 
-  // Helper: cancellable delay
+  // Delay helper
   const cancellableDelay = () =>
     new Promise((resolve) => {
       resolveRef.current = resolve;
       animationRef.current = setTimeout(resolve, 1000 / speed);
     });
 
-  // Optimized bubble sort
+  // Bubble Sort
   const bubbleSort = async () => {
     if (sorted || sorting || array.length === 0) return;
 
@@ -78,6 +89,7 @@ const BubbleSortVisualizer = () => {
     let tempComparisons = 0;
     setTotalSteps(Math.floor((n * (n - 1)) / 2));
     setCurrentStep(0);
+    setTimeline([]);
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
@@ -88,7 +100,10 @@ const BubbleSortVisualizer = () => {
         tempComparisons++;
         setComparisons(tempComparisons);
         setCurrentStep((prev) => prev + 1);
-
+        setTimeline((prev) => [
+          ...prev,
+          `Comparing index ${j} and ${j + 1}`,
+        ]);
         await cancellableDelay();
         if (!isSortingRef.current) return;
 
@@ -112,12 +127,16 @@ const BubbleSortVisualizer = () => {
               duration: 0,
             });
           }
-
+          const first = arr[j];
+          const second = arr[j + 1];
           [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
           swapped = true;
           tempSwaps++;
           setSwaps(tempSwaps);
           setArray([...arr]);
+          setTimeline((prev) => [
+            ...prev,
+          `Swapped ${first} with ${second}`,]);
 
           await cancellableDelay();
           if (!isSortingRef.current) return;
@@ -130,11 +149,14 @@ const BubbleSortVisualizer = () => {
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setTimeline((prev) => [
+      ...prev,
+      "Sorting completed successfully!",
+    ]);
   };
 
   // Reset everything
   const reset = () => {
-    // Unblock any suspended async loop immediately
     isSortingRef.current = false;
     if (resolveRef.current) {
       resolveRef.current();
@@ -149,7 +171,7 @@ const BubbleSortVisualizer = () => {
     resetStats();
   };
 
-  // Clean up on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       if (animationRef.current) {
@@ -235,7 +257,9 @@ const BubbleSortVisualizer = () => {
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Step:</div>
             <div className="text-xl font-bold">
-              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+              {totalSteps > 0
+                ? `${currentStep} / ${totalSteps}`
+                : "—"}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {currentStep > 0 && !sorted
@@ -256,20 +280,27 @@ const BubbleSortVisualizer = () => {
             <div className="flex flex-wrap gap-2 sm:gap-4 justify-center">
               {array.map((value, index) => {
                 const isComparing =
-                  index === currentIndices.i || index === currentIndices.j;
+                  index === currentIndices.i ||
+                  index === currentIndices.j;
+
                 const isSorted = sorted;
 
                 return (
-                  <div key={index} className="flex flex-col items-center">
+                  <div
+                    key={index}
+                    className="flex flex-col items-center"
+                  >
                     <div
-                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 ${getFontSize(value)} font-bold
-                            ${
-                              isComparing
-                                ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-900"
-                                : isSorted
-                                ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-900"
-                                : "bg-blue-400 dark:bg-blue-400 border-blue-600 dark:border-blue-600 dark:text-gray-900"
-                            }`}
+                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 ${getFontSize(
+                        value
+                      )} font-bold
+                      ${
+                        isComparing
+                          ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-900"
+                          : isSorted
+                          ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-900"
+                          : "bg-blue-400 dark:bg-blue-400 border-blue-600 dark:border-blue-600 dark:text-gray-900"
+                      }`}
                     >
                       {value}
                     </div>
@@ -283,8 +314,39 @@ const BubbleSortVisualizer = () => {
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
-              {sorting ? "Sorting..." : "Generate or enter an array to begin"}
+              {sorting
+                ? "Sorting..."
+                : "Generate or enter an array to begin"}
             </div>
+          )}
+        </div>
+        {/* Execution Timeline */}
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mt-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">
+            Execution Timeline
+          </h2>
+          {timeline.length > 0 ? (
+            <div
+  ref={timelineContainerRef}
+  className="max-h-64 overflow-y-auto space-y-2"
+>
+              {timeline.map((step, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-100 dark:bg-neutral-900 px-3 py-2 rounded text-sm"
+                >
+                  <span className="font-semibold mr-2">
+                    Step {index + 1}:
+                  </span>
+
+                  {step}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">
+              Start sorting to see execution steps
+            </p>
           )}
         </div>
       </div>
