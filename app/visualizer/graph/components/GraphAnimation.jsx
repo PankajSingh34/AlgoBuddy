@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 
 const nodes = [
@@ -21,6 +21,14 @@ const edges = [
   { from: "D", to: "E", weight: 4 },
 ];
 
+const bfsAdjacency = {
+  A: ["B", "D"],
+  B: ["A", "C", "D", "E"],
+  C: ["B", "E"],
+  D: ["A", "B", "E"],
+  E: ["B", "C", "D"],
+};
+
 const sequences = {
   matrix: ["A", "B", "D", "E"],
   list: ["A", "B", "C", "E"],
@@ -40,19 +48,135 @@ function edgeId(edge) {
   return `${edge.from}-${edge.to}`;
 }
 
-export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
+function normalizeNode(value) {
+  return value.trim().toUpperCase();
+}
+
+function isValidNode(value) {
+  return nodes.some((node) => node.id === value);
+}
+
+function buildSelectedEdges(parentMap) {
+  const selected = new Set();
+
+  for (const [child, parentNode] of parentMap.entries()) {
+    if (!parentNode) continue;
+
+    const direct = `${parentNode}-${child}`;
+    const reverse = `${child}-${parentNode}`;
+    const found = edges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
+
+    if (found) {
+      selected.add(edgeId(found));
+    }
+  }
+
+  return selected;
+}
+
+function buildBfsSteps(startNode) {
+  const records = [];
+  const visited = [];
+  const visitedSet = new Set();
+  const queuedSet = new Set([startNode]);
+  const queue = [startNode];
+  const parentMap = new Map([[startNode, null]]);
+
+  records.push({
+    currentNode: startNode,
+    queue: [startNode],
+    visited: [],
+    selectedEdges: new Set(),
+    explanation: `Enqueue start vertex ${startNode}. BFS always begins with a FIFO queue.`,
+  });
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift();
+    queuedSet.delete(currentNode);
+
+    if (!visitedSet.has(currentNode)) {
+      visitedSet.add(currentNode);
+      visited.push(currentNode);
+    }
+
+    records.push({
+      currentNode,
+      queue: [...queue],
+      visited: [...visited],
+      selectedEdges: buildSelectedEdges(parentMap),
+      explanation: `Dequeue ${currentNode} and visit it.`,
+    });
+
+    for (const neighbor of bfsAdjacency[currentNode] || []) {
+      if (visitedSet.has(neighbor) || queuedSet.has(neighbor)) {
+        continue;
+      }
+
+      parentMap.set(neighbor, currentNode);
+      queue.push(neighbor);
+      queuedSet.add(neighbor);
+
+      records.push({
+        currentNode,
+        queue: [...queue],
+        visited: [...visited],
+        selectedEdges: buildSelectedEdges(parentMap),
+        explanation: `Discover ${neighbor} from ${currentNode} and enqueue it.`,
+      });
+    }
+  }
+
+  return records;
+}
+
+export default function GraphAnimation({ type = "bfs", title = "Graph", startNode }) {
   const [step, setStep] = useState(0);
-  const sequence = sequences[type] || sequences.bfs;
-  const current = sequence[Math.min(step, sequence.length - 1)];
+  const isBfs = type === "bfs";
+  const bfsStartNode = useMemo(() => {
+    const candidate = typeof startNode === "string" ? normalizeNode(startNode) : "A";
+    return isValidNode(candidate) ? candidate : "A";
+  }, [startNode]);
+
+  const bfsSteps = useMemo(() => {
+    if (!isBfs) {
+      return [];
+    }
+
+    return buildBfsSteps(bfsStartNode);
+  }, [bfsStartNode, isBfs]);
+
+  const sequence = useMemo(() => {
+    if (isBfs) {
+      return bfsSteps;
+    }
+
+    return sequences[type] || sequences.bfs;
+  }, [bfsSteps, isBfs, type]);
+
+  useEffect(() => {
+    setStep(0);
+  }, [sequence]);
+
+  const current = sequence[step];
+
+  const bfsState = isBfs ? current : null;
 
   const activeNodes = useMemo(() => {
+    if (isBfs) {
+      return new Set(bfsState?.visited || []);
+    }
+
     if (type === "kruskal") {
       return new Set(sequence.slice(0, step + 1).flatMap((item) => item.split("-")));
     }
     return new Set(sequence.slice(0, step + 1));
-  }, [sequence, step, type]);
+  }, [bfsState, isBfs, sequence, step, type]);
 
   const activeEdges = useMemo(() => {
+    if (isBfs) {
+      return new Set(bfsState?.selectedEdges || []);
+    }
+
     if (type === "kruskal") return new Set(sequence.slice(0, step + 1));
     const selected = new Set();
     const active = sequence.slice(0, step + 1);
@@ -65,7 +189,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
       if (found) selected.add(edgeId(found));
     }
     return selected;
-  }, [sequence, step, type]);
+  }, [bfsState, isBfs, sequence, step, type]);
 
   const advance = () => setStep((value) => (value + 1) % sequence.length);
   const reset = () => setStep(0);
@@ -145,30 +269,85 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
           })}
         </svg>
 
-        <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
-          <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
-            Step {step + 1} of {sequence.length}
-          </p>
-          <div className="space-y-2">
-            {sequence.map((item, index) => (
-              <div
-                key={item}
-                className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  index === step
-                    ? "border-primary bg-primary/10 text-primary"
-                    : index < step
-                      ? "border-success/40 bg-success/10 text-surface-700 dark:text-surface-200"
-                      : "border-surface-200 bg-white text-surface-500 dark:border-surface-800 dark:bg-surface-900"
-                }`}
-              >
-                {type === "kruskal" ? `Choose edge ${item}` : `Visit vertex ${item}`}
-              </div>
-            ))}
+          <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
+            {isBfs ? (
+              <>
+                <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
+                  Step {step + 1} of {sequence.length}
+                </p>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Queue</p>
+                    <div className="flex flex-wrap gap-2">
+                      {bfsState?.queue.length ? (
+                        bfsState.queue.map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary"
+                          >
+                            {item}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-surface-500 dark:text-surface-400">Queue is empty.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Visited order</p>
+                    <div className="flex flex-wrap gap-2">
+                      {bfsState?.visited.length ? (
+                        bfsState.visited.map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-success"
+                          >
+                            {item}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-surface-500 dark:text-surface-400">Nothing visited yet.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="rounded-lg border border-surface-200 bg-white px-3 py-2 text-surface-600 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300">
+                    {bfsState?.explanation}
+                  </p>
+
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    Current node: <span className="font-semibold text-surface-800 dark:text-white">{bfsState?.currentNode}</span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
+                  Step {step + 1} of {sequence.length}
+                </p>
+                <div className="space-y-2">
+                  {sequence.map((item, index) => (
+                    <div
+                      key={item}
+                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        index === step
+                          ? "border-primary bg-primary/10 text-primary"
+                          : index < step
+                            ? "border-success/40 bg-success/10 text-surface-700 dark:text-surface-200"
+                            : "border-surface-200 bg-white text-surface-500 dark:border-surface-800 dark:bg-surface-900"
+                      }`}
+                    >
+                      {type === "kruskal" ? `Choose edge ${item}` : `Visit vertex ${item}`}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
+                  Current focus: <span className="font-semibold text-surface-800 dark:text-white">{current}</span>
+                </p>
+              </>
+            )}
           </div>
-          <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
-            Current focus: <span className="font-semibold text-surface-800 dark:text-white">{current}</span>
-          </p>
-        </div>
       </div>
     </div>
   );
