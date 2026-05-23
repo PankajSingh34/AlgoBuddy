@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Animation from "./animation";
+import { graphNodeIds } from "@/app/visualizer/graph/components/graphData";
 
-const startNodes = ["A", "B", "C", "D", "E"];
-
-export default function BfsAnimationSection({ Animation }) {
+export default function BfsAnimationSection() {
   const [startNode, setStartNode] = useState("A");
 
   return (
@@ -32,7 +32,7 @@ export default function BfsAnimationSection({ Animation }) {
                 onChange={(event) => setStartNode(event.target.value)}
                 className="rounded-xl border border-surface-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary dark:border-surface-700 dark:bg-surface-950"
               >
-                {startNodes.map((node) => (
+                {graphNodeIds.map((node) => (
                   <option key={node} value={node}>
                     {node}
                   </option>

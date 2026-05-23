@@ -11,5 +11,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <GraphTopicPage topic={topic} Animation={Animation} animationSection={<BfsAnimationSection Animation={Animation} />} />;
+  return <GraphTopicPage topic={topic} Animation={Animation} animationSection={<BfsAnimationSection />} />;
 }

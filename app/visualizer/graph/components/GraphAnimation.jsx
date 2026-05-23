@@ -2,32 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
-
-const nodes = [
-  { id: "A", x: 18, y: 32 },
-  { id: "B", x: 42, y: 16 },
-  { id: "C", x: 70, y: 28 },
-  { id: "D", x: 28, y: 72 },
-  { id: "E", x: 62, y: 70 },
-];
-
-const edges = [
-  { from: "A", to: "B", weight: 2 },
-  { from: "A", to: "D", weight: 6 },
-  { from: "B", to: "C", weight: 3 },
-  { from: "B", to: "D", weight: 8 },
-  { from: "B", to: "E", weight: 5 },
-  { from: "C", to: "E", weight: 7 },
-  { from: "D", to: "E", weight: 4 },
-];
-
-const bfsAdjacency = {
-  A: ["B", "D"],
-  B: ["A", "C", "D", "E"],
-  C: ["B", "E"],
-  D: ["A", "B", "E"],
-  E: ["B", "C", "D"],
-};
+import {
+  buildUndirectedAdjacency,
+  edgeId,
+  getNodeById,
+  graphEdges,
+  graphNodes,
+} from "./graphData";
 
 const sequences = {
   matrix: ["A", "B", "D", "E"],
@@ -40,31 +21,25 @@ const sequences = {
   topological: ["A", "B", "D", "C", "E"],
 };
 
-function getNode(id) {
-  return nodes.find((node) => node.id === id);
-}
-
-function edgeId(edge) {
-  return `${edge.from}-${edge.to}`;
-}
-
 function normalizeNode(value) {
   return value.trim().toUpperCase();
 }
 
 function isValidNode(value) {
-  return nodes.some((node) => node.id === value);
+  return graphNodes.some((node) => node.id === value);
 }
 
 function buildSelectedEdges(parentMap) {
   const selected = new Set();
 
   for (const [child, parentNode] of parentMap.entries()) {
-    if (!parentNode) continue;
+    if (!parentNode) {
+      continue;
+    }
 
     const direct = `${parentNode}-${child}`;
     const reverse = `${child}-${parentNode}`;
-    const found = edges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
+    const found = graphEdges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
 
     if (found) {
       selected.add(edgeId(found));
@@ -81,6 +56,7 @@ function buildBfsSteps(startNode) {
   const queuedSet = new Set([startNode]);
   const queue = [startNode];
   const parentMap = new Map([[startNode, null]]);
+  const adjacency = buildUndirectedAdjacency(graphEdges);
 
   records.push({
     currentNode: startNode,
@@ -107,7 +83,7 @@ function buildBfsSteps(startNode) {
       explanation: `Dequeue ${currentNode} and visit it.`,
     });
 
-    for (const neighbor of bfsAdjacency[currentNode] || []) {
+    for (const neighbor of adjacency.get(currentNode) || []) {
       if (visitedSet.has(neighbor) || queuedSet.has(neighbor)) {
         continue;
       }
@@ -132,6 +108,7 @@ function buildBfsSteps(startNode) {
 export default function GraphAnimation({ type = "bfs", title = "Graph", startNode }) {
   const [step, setStep] = useState(0);
   const isBfs = type === "bfs";
+
   const bfsStartNode = useMemo(() => {
     const candidate = typeof startNode === "string" ? normalizeNode(startNode) : "A";
     return isValidNode(candidate) ? candidate : "A";
@@ -158,7 +135,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
   }, [sequence]);
 
   const current = sequence[step];
-
   const bfsState = isBfs ? current : null;
 
   const activeNodes = useMemo(() => {
@@ -169,6 +145,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
     if (type === "kruskal") {
       return new Set(sequence.slice(0, step + 1).flatMap((item) => item.split("-")));
     }
+
     return new Set(sequence.slice(0, step + 1));
   }, [bfsState, isBfs, sequence, step, type]);
 
@@ -177,17 +154,25 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
       return new Set(bfsState?.selectedEdges || []);
     }
 
-    if (type === "kruskal") return new Set(sequence.slice(0, step + 1));
+    if (type === "kruskal") {
+      return new Set(sequence.slice(0, step + 1));
+    }
+
     const selected = new Set();
     const active = sequence.slice(0, step + 1);
-    for (let i = 1; i < active.length; i += 1) {
-      const prev = active[i - 1];
-      const next = active[i];
-      const direct = `${prev}-${next}`;
-      const reverse = `${next}-${prev}`;
-      const found = edges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
-      if (found) selected.add(edgeId(found));
+
+    for (let index = 1; index < active.length; index += 1) {
+      const previous = active[index - 1];
+      const next = active[index];
+      const direct = `${previous}-${next}`;
+      const reverse = `${next}-${previous}`;
+      const found = graphEdges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
+
+      if (found) {
+        selected.add(edgeId(found));
+      }
     }
+
     return selected;
   }, [bfsState, isBfs, sequence, step, type]);
 
@@ -206,11 +191,19 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
           </h2>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={advance} className="btn-base bg-primary text-white hover:bg-primary-dark">
+          <button
+            type="button"
+            onClick={advance}
+            className="btn-base bg-primary text-white hover:bg-primary-dark"
+          >
             <Play className="h-4 w-4" />
             Next step
           </button>
-          <button type="button" onClick={reset} className="btn-base border border-surface-300 text-surface-800 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200">
+          <button
+            type="button"
+            onClick={reset}
+            className="btn-base border border-surface-300 text-surface-800 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200"
+          >
             <RotateCcw className="h-4 w-4" />
             Reset
           </button>
@@ -218,11 +211,17 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-        <svg viewBox="0 0 100 90" role="img" aria-label={`${title} graph animation`} className="min-h-[280px] w-full rounded-xl bg-surface-50 dark:bg-surface-950">
-          {edges.map((edge) => {
-            const start = getNode(edge.from);
-            const end = getNode(edge.to);
+        <svg
+          viewBox="0 0 100 90"
+          role="img"
+          aria-label={`${title} graph animation`}
+          className="min-h-[280px] w-full rounded-xl bg-surface-50 dark:bg-surface-950"
+        >
+          {graphEdges.map((edge) => {
+            const start = getNodeById(edge.from);
+            const end = getNodeById(edge.to);
             const active = activeEdges.has(edgeId(edge));
+
             return (
               <g key={edgeId(edge)}>
                 <line
@@ -244,8 +243,9 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
               </g>
             );
           })}
-          {nodes.map((node) => {
+          {graphNodes.map((node) => {
             const active = activeNodes.has(node.id);
+
             return (
               <g key={node.id}>
                 <circle
@@ -269,85 +269,85 @@ export default function GraphAnimation({ type = "bfs", title = "Graph", startNod
           })}
         </svg>
 
-          <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
-            {isBfs ? (
-              <>
-                <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
-                  Step {step + 1} of {sequence.length}
-                </p>
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Queue</p>
-                    <div className="flex flex-wrap gap-2">
-                      {bfsState?.queue.length ? (
-                        bfsState.queue.map((item) => (
-                          <span
-                            key={item}
-                            className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary"
-                          >
-                            {item}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-surface-500 dark:text-surface-400">Queue is empty.</span>
-                      )}
-                    </div>
+        <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
+          {isBfs ? (
+            <>
+              <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
+                Step {step + 1} of {sequence.length}
+              </p>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Queue</p>
+                  <div className="flex flex-wrap gap-2">
+                    {bfsState?.queue.length ? (
+                      bfsState.queue.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary"
+                        >
+                          {item}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-surface-500 dark:text-surface-400">Queue is empty.</span>
+                    )}
                   </div>
+                </div>
 
-                  <div>
-                    <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Visited order</p>
-                    <div className="flex flex-wrap gap-2">
-                      {bfsState?.visited.length ? (
-                        bfsState.visited.map((item) => (
-                          <span
-                            key={item}
-                            className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-success"
-                          >
-                            {item}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-surface-500 dark:text-surface-400">Nothing visited yet.</span>
-                      )}
-                    </div>
+                <div>
+                  <p className="mb-2 font-semibold text-surface-700 dark:text-surface-300">Visited order</p>
+                  <div className="flex flex-wrap gap-2">
+                    {bfsState?.visited.length ? (
+                      bfsState.visited.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-success"
+                        >
+                          {item}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-surface-500 dark:text-surface-400">Nothing visited yet.</span>
+                    )}
                   </div>
-
-                  <p className="rounded-lg border border-surface-200 bg-white px-3 py-2 text-surface-600 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300">
-                    {bfsState?.explanation}
-                  </p>
-
-                  <p className="text-sm text-surface-500 dark:text-surface-400">
-                    Current node: <span className="font-semibold text-surface-800 dark:text-white">{bfsState?.currentNode}</span>
-                  </p>
                 </div>
-              </>
-            ) : (
-              <>
-                <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
-                  Step {step + 1} of {sequence.length}
+
+                <p className="rounded-lg border border-surface-200 bg-white px-3 py-2 text-surface-600 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300">
+                  {bfsState?.explanation}
                 </p>
-                <div className="space-y-2">
-                  {sequence.map((item, index) => (
-                    <div
-                      key={item}
-                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-                        index === step
-                          ? "border-primary bg-primary/10 text-primary"
-                          : index < step
-                            ? "border-success/40 bg-success/10 text-surface-700 dark:text-surface-200"
-                            : "border-surface-200 bg-white text-surface-500 dark:border-surface-800 dark:bg-surface-900"
-                      }`}
-                    >
-                      {type === "kruskal" ? `Choose edge ${item}` : `Visit vertex ${item}`}
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
-                  Current focus: <span className="font-semibold text-surface-800 dark:text-white">{current}</span>
+
+                <p className="text-sm text-surface-500 dark:text-surface-400">
+                  Current node: <span className="font-semibold text-surface-800 dark:text-white">{bfsState?.currentNode}</span>
                 </p>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
+                Step {step + 1} of {sequence.length}
+              </p>
+              <div className="space-y-2">
+                {sequence.map((item, index) => (
+                  <div
+                    key={item}
+                    className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      index === step
+                        ? "border-primary bg-primary/10 text-primary"
+                        : index < step
+                          ? "border-success/40 bg-success/10 text-surface-700 dark:text-surface-200"
+                          : "border-surface-200 bg-white text-surface-500 dark:border-surface-800 dark:bg-surface-900"
+                    }`}
+                  >
+                    {type === "kruskal" ? `Choose edge ${item}` : `Visit vertex ${item}`}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
+                Current focus: <span className="font-semibold text-surface-800 dark:text-white">{current}</span>
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
