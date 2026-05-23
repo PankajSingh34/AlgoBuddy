@@ -1,6 +1,7 @@
 import BlogPage from "@/app/blogs/blogPage";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
+import BackToTop from "../components/ui/backtotop";
 
 export const metadata = {
   title: 'DSA Blogs & Guides | Learn Data Structures and Algorithms Effectively',
@@ -41,6 +42,7 @@ const page = () => {
     <>
       <Navbar/>
       <BlogPage/>
+      <BackToTop/>
       <Footer/>
     </>
   );

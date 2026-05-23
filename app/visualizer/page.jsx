@@ -9,6 +9,7 @@ import LinkedListModal from "@/app/components/models/LinkedListModal";
 import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
+import BackToTop from "../components/ui/backtotop";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -576,6 +577,8 @@ const Visualizer = () => {
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
       <div className="w-full relative z-10">
+        
+        <BackToTop />
         <Footer />
       </div>
     </div>
