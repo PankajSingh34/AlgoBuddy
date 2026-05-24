@@ -111,7 +111,7 @@ const TerminalPopup = ({ isOpen, onClose, email }) => {
       if (cursorInterval) clearInterval(cursorInterval);
       clearTimeout(autoCloseTimeout);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
