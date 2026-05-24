@@ -15,7 +15,7 @@ const Footer = () => {
       <div className="border-t border-udemy-dark-surface" />
 
       <div className="container-app section-app flex flex-col items-center text-center space-y-6">
-        <span className="text-xl font-bold font-serif text-udemy-dark-text tracking-tight">
+        <span className="text-[26px] font-black text-white tracking-tighter">
           Algo<span className="text-primary">Buddy</span>
         </span>
 

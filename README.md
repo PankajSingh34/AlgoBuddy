@@ -106,7 +106,9 @@ npm install
 
 # 3. Set up environment variables
 cp EnvExample.txt .env.local
-# Fill in the values — see Environment Variables section below
+# Fill in the values — especially NEXT_PUBLIC_SUPABASE_URL and
+# NEXT_PUBLIC_SUPABASE_ANON_KEY. The app will start without them, but auth,
+# dashboard, and middleware session refresh will be disabled until they are set.
 
 # 4. Run the development server
 npm run dev
@@ -130,6 +132,15 @@ Create a `.env.local` file at the root with the following keys (see `EnvExample.
 | `SUPABASE_SERVICE_KEY` | Supabase service role key (server-side only) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key |
+
+Minimum required for Supabase auth and dashboard features:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+If those values are missing or invalid, the app now falls back to a safe no-op
+Supabase client for startup, and middleware skips session refresh instead of
+crashing the dev server.
 
 Never commit `.env.local` to version control. It is listed in `.gitignore`.
 

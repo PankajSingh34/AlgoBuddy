@@ -4,6 +4,7 @@ import ConceptsSection from "@/app/components/ConceptsSection";
 import PersonalizedSection from "@/app/components/PersonalizedSection";
 import Footer from "@/app/components/footer";
 import BottomAd from "./components/ads/bottom";
+import BackToTop from "./components/ui/backtotop";
 
 export const metadata = {
   title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
@@ -49,6 +50,7 @@ export default function Home() {
         </div>
         <PersonalizedSection />
         <ConceptsSection />
+        <BackToTop />
         <Footer />
       </div>
     </>

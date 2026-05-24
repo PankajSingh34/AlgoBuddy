@@ -101,6 +101,13 @@ export default function LoginPage() {
       >
         {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
+          <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
+            <Link
+              href="/"
+            >
+            ← Back To Home
+            </Link>
+          </div>
           <div>
             <h1 className="text-2xl font-bold font-serif">
               {isLogin ? "Welcome Back" : "Create Account"}

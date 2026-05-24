@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import {
@@ -31,6 +32,7 @@ const BinarySearch = () => {
   const [mid, setMid] = useState(-1);
   const [foundIndex, setFoundIndex] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
@@ -39,8 +41,8 @@ const BinarySearch = () => {
   );
 
   const speedRef = useRef(speed);
-
   const animationRef = useRef(null);
+  const isPausedRef = useRef(false);
 
   const searchStateRef = useRef({
     l: 0,
@@ -81,6 +83,8 @@ const BinarySearch = () => {
     setMessage("");
     setMessageType("");
     setIsAnimating(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
 
     setArrayElements("");
     setTarget("");
@@ -177,6 +181,8 @@ const BinarySearch = () => {
     setMessage("");
     setMessageType("");
     setIsAnimating(true);
+    setIsPaused(false);
+    isPausedRef.current = false;
 
     searchStateRef.current = {
       l: 0,
@@ -248,15 +254,56 @@ const BinarySearch = () => {
           borderColor: "#15803D",
           duration: 0.3,
         });
-      } else if (arr[m] < targetValue) {
-        searchStateRef.current.l = m + 1;
-        animateBinarySearch();
       } else {
-        searchStateRef.current.h = m - 1;
-        animateBinarySearch();
+        if (arr[m] < targetValue) {
+          searchStateRef.current.l = m + 1;
+        } else {
+          searchStateRef.current.h = m - 1;
+        }
+
+        if (!isPausedRef.current) {
+          animateBinarySearch();
+        }
       }
     }, delay);
   };
+
+  const togglePlayPause = () => {
+    setIsPaused((prev) => {
+      const newPaused = !prev;
+      isPausedRef.current = newPaused;
+      if (!newPaused) {
+        animateBinarySearch();
+      }
+      return newPaused;
+    });
+  };
+
+  const togglePlayPauseRef = useRef(togglePlayPause);
+  useEffect(() => {
+    togglePlayPauseRef.current = togglePlayPause;
+  });
+
+  const isAnimatingRef = useRef(isAnimating);
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (
+        e.code === "Space" &&
+        isAnimatingRef.current &&
+        document.activeElement.tagName !== "INPUT" &&
+        document.activeElement.tagName !== "BUTTON"
+      ) {
+        e.preventDefault();
+        togglePlayPauseRef.current();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const increaseSpeed = () => {
     setSpeed((prev) => Math.min(prev + 0.5, 5));
@@ -360,28 +407,39 @@ const BinarySearch = () => {
         </div>
 
         {isAnimating && (
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
             <button
               type="button"
-              onClick={decreaseSpeed}
-              className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded-lg transition-colors"
-              disabled={speed <= 0.5}
+              onClick={togglePlayPause}
+              className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
             >
-              -
+              {isPaused ? <Play size={20} /> : <Pause size={20} />}
+              {isPaused ? "Play" : "Pause"}
             </button>
 
-            <span className="text-gray-700 dark:text-gray-300">
-              Speed: {speed}x
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={decreaseSpeed}
+                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                disabled={speed <= 0.5}
+              >
+                -
+              </button>
 
-            <button
-              type="button"
-              onClick={increaseSpeed}
-              className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded-lg transition-colors"
-              disabled={speed >= 5}
-            >
-              +
-            </button>
+              <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center">
+                Speed: {speed}x
+              </span>
+
+              <button
+                type="button"
+                onClick={increaseSpeed}
+                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                disabled={speed >= 5}
+              >
+                +
+              </button>
+            </div>
           </div>
         )}
       </form>
