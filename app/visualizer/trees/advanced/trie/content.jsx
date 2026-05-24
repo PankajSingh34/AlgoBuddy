@@ -1,29 +1,7 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
-import { useEffect, useState } from "react";
 
 const TrieContent = () => {
-  const [theme, setTheme] = useState("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
-    updateTheme();
-    setMounted(true);
-
-    window.addEventListener("storage", updateTheme);
-    window.addEventListener("themeChange", updateTheme);
-
-    return () => {
-      window.removeEventListener("storage", updateTheme);
-      window.removeEventListener("themeChange", updateTheme);
-    };
-  }, []);
-
   const paragraphs = [
     `A Trie (pronounced "try"), also known as a prefix tree, is an advanced tree-like data structure used to store a dynamic set of strings, where keys are usually strings. Unlike a standard binary search tree, no node in the tree stores the key associated with that node. Instead, its position in the tree defines the key with which it is associated.`,
     `Tries are highly optimized for fast retrieval. They allow strings to be inserted and searched in O(L) time, where L is the length of the string. This makes them significantly faster than balanced binary trees or hash tables for prefix matching, auto-complete features, and dictionary lookups.`,
@@ -60,39 +38,8 @@ const TrieContent = () => {
   ];
 
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-6 mt-8">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="100%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-        <div className="flex justify-center mt-2">
-          <span className="text-xs hidden md:block">
-            Daily DSA Challenge By{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8 shadow-sm">
+    <main className="max-w-7xl mx-auto mt-8">
+      <article className="max-w-4xl mx-auto bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8 shadow-sm">
         {/* What is a Trie */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
@@ -199,36 +146,6 @@ const TrieContent = () => {
           </div>
         </section>
       </article>
-
-      {/* Mobile iframe at bottom */}
-      <div className="block md:hidden w-full col-span-5 px-4">
-        {mounted && (
-          <iframe
-            key={theme}
-            src={
-              theme === "dark"
-                ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-            }
-            width="100%"
-            height="320"
-            title="Daily DSA Challenge"
-          ></iframe>
-        )}
-        <div className="flex justify-center pb-8 mt-2">
-          <span className="text-xs">
-            Daily DSA Challenge By{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
     </main>
   );
 };

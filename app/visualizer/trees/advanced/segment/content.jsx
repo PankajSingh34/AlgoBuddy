@@ -1,47 +1,11 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
-import { useEffect, useState } from "react";
 
 const SegmentContent = () => {
-  const [theme, setTheme] = useState("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-    updateTheme();
-    setMounted(true);
-    window.addEventListener("storage", updateTheme);
-    window.addEventListener("themeChange", updateTheme);
-    return () => {
-      window.removeEventListener("storage", updateTheme);
-      window.removeEventListener("themeChange", updateTheme);
-    };
-  }, []);
-
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-6 mt-8">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="105%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-      </div>
+    <main className="max-w-4xl mx-auto mt-8 mb-8">
+      <article className="bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden shadow-sm">
 
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8 shadow-sm">
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
             <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
@@ -49,10 +13,14 @@ const SegmentContent = () => {
           </h2>
           <div className="prose dark:prose-invert max-w-none text-[#374151] dark:text-[#d1d5db] leading-relaxed space-y-4">
             <p>
-              A **Segment Tree** is a binary tree data structure used for storing intervals or segments. It allows querying which of the stored segments contain a given point, or performing aggregate queries over subsegments (such as finding sum, minimum, or maximum in a range).
+              A Segment Tree is a binary tree data structure used to store intervals or segments. It
+              lets you efficiently answer range aggregate queries (sum, min, max) and apply point or
+              range updates on an underlying array.
             </p>
             <p>
-              While standard prefix sum arrays allow $O(1)$ range queries, they require $O(N)$ time to perform updates. A Segment Tree solves this by supporting **both** Range Queries and Point Updates in extremely efficient $O(\log N)$ time.
+              While a prefix-sum array answers range sum queries in O(1), any update costs O(N) to
+              recompute. A Segment Tree solves this by supporting both range queries and point updates
+              in O(log N) time.
             </p>
           </div>
         </section>
@@ -64,10 +32,36 @@ const SegmentContent = () => {
           </h2>
           <div className="prose dark:prose-invert max-w-none text-[#374151] dark:text-[#d1d5db] leading-relaxed">
             <ul className="space-y-3 list-disc pl-5 marker:text-gray-500">
-              <li><strong>Leaf Nodes:</strong> Represent the individual elements of the base 1D array.</li>
-              <li><strong>Internal Nodes:</strong> Represent the merged aggregation of their left and right children segments.</li>
-              <li><strong>Tree Size:</strong> For a base array of size $N$, a Segment Tree is usually represented as a 1D array of size $4N$ to accommodate all leaf and padding branches.</li>
+              <li><strong>Leaf Nodes:</strong> Store individual elements of the base array.</li>
+              <li>
+                <strong>Internal Nodes:</strong> Store the merged aggregate of their left and right
+                children.
+              </li>
+              <li>
+                <strong>Tree Size:</strong> For an array of size N, the Segment Tree needs an array
+                of size 4N to accommodate all leaves and padding branches.
+              </li>
             </ul>
+          </div>
+        </section>
+
+        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+          <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
+            Three Core Operations
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-3 text-[#374151] dark:text-[#d1d5db]">
+            {[
+              { op: "Build", cost: "O(N)", desc: "Recursively construct the tree by merging leaves up to the root." },
+              { op: "Range Query", cost: "O(log N)", desc: "Traverse overlapping segments, accumulating the result at each matching node." },
+              { op: "Point Update", cost: "O(log N)", desc: "Walk from the root to the target leaf, recomputing ancestor nodes on the way back." },
+            ].map(({ op, cost, desc }) => (
+              <div key={op} className="p-4 rounded-xl bg-gray-50 dark:bg-[#1b1b1b] border border-gray-200 dark:border-gray-800">
+                <p className="font-bold text-[#1a1a1a] dark:text-white">{op}</p>
+                <p className="text-xs font-mono text-purple-600 dark:text-purple-400 mb-1">{cost}</p>
+                <p className="text-xs leading-relaxed">{desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -93,6 +87,7 @@ const SegmentContent = () => {
             </div>
           </div>
         </section>
+
       </article>
     </main>
   );

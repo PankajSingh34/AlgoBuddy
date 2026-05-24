@@ -1,47 +1,10 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
-import { useEffect, useState } from "react";
 
 const FenwickContent = () => {
-  const [theme, setTheme] = useState("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-    updateTheme();
-    setMounted(true);
-    window.addEventListener("storage", updateTheme);
-    window.addEventListener("themeChange", updateTheme);
-    return () => {
-      window.removeEventListener("storage", updateTheme);
-      window.removeEventListener("themeChange", updateTheme);
-    };
-  }, []);
-
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-6 mt-8">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="105%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-      </div>
-
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8 shadow-sm">
+    <main className="max-w-7xl mx-auto mt-8">
+      <article className="max-w-4xl mx-auto bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8 shadow-sm">
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
             <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
@@ -69,9 +32,9 @@ const FenwickContent = () => {
             <div className="bg-gray-50 dark:bg-[#1b1b1b] p-4 rounded-xl border border-gray-200 dark:border-gray-800 font-mono text-sm">
               LSB(i) = i & (-i)
             </div>
-            <ul className="space-y-3 list-disc pl-5 marker:text-gray-500">
-              <li><strong>Update key step:</strong> To propagate a point update at index $i$, we repeatedly add its LSB ($i \leftarrow i + \text{LSB}(i)$) to correct dependent node values up the array bounds.</li>
-              <li><strong>Query prefix sum step:</strong> To query the sum from index $1$ to $i$, we repeatedly subtract its LSB ($i \leftarrow i - \text{LSB}(i)$) to merge segment ranges backwards.</li>
+              <ul className="space-y-3 list-disc pl-5 marker:text-gray-500">
+              <li><strong>Update key step:</strong> To propagate a point update at index i, we repeatedly add its LSB (i ← i + LSB(i)) to correct dependent node values up the array bounds.</li>
+              <li><strong>Query prefix sum step:</strong> To query the sum from index 1 to i, we repeatedly subtract its LSB (i ← i - LSB(i)) to merge segment ranges backwards.</li>
             </ul>
           </div>
         </section>
