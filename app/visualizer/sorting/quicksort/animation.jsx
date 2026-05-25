@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -18,6 +20,8 @@ const QuickSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [executionTime, setExecutionTime] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
@@ -46,6 +50,8 @@ const QuickSortVisualizer = () => {
       stack: [],
       partitions: [],
     });
+    setShowSummary(false);
+    setExecutionTime(0);
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -128,6 +134,32 @@ const QuickSortVisualizer = () => {
     const n = arr.length;
     setTotalSteps(Math.floor((n * (n - 1)) / 2));
     setCurrentStep(0);
+
+    const tempArr = [...array];
+    const startTime = performance.now();
+    const syncPartition = (arr, low, high) => {
+      let pivot = arr[high];
+      let i = low - 1;
+      for (let j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+          i++;
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      }
+      [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+      return i + 1;
+    };
+    const syncQuickSort = (arr, low, high) => {
+      if (low < high) {
+        let pi = syncPartition(arr, low, high);
+        syncQuickSort(arr, low, pi - 1);
+        syncQuickSort(arr, pi + 1, high);
+      }
+    };
+    syncQuickSort(tempArr, 0, tempArr.length - 1);
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
+
     let stack = [];
     let low = 0;
     let high = arr.length - 1;
@@ -178,6 +210,7 @@ const QuickSortVisualizer = () => {
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     setCurrentIndices({
       pivot: -1,
       left: -1,
@@ -426,6 +459,19 @@ const QuickSortVisualizer = () => {
           {renderPartitions()}
         </div>
       </div>
+      <AnimatePresence>
+        {sorted && showSummary && (
+          <ExecutionSummaryCard
+            title="Quick Sort Complete!"
+            metrics={[
+              { label: "Elements Sorted", value: array.length },
+              { label: "Total Comparisons", value: comparisons },
+              { label: "Total Swaps", value: swaps }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

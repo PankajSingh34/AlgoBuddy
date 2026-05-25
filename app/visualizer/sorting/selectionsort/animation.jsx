@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -18,6 +20,8 @@ const SelectionSortVisualizer = () => {
     const [speed, setSpeed] = useState(1);
     const [comparisons, setComparisons] = useState(0);
     const [swaps, setSwaps] = useState(0);
+    const [showSummary, setShowSummary] = useState(false);
+    const [executionTime, setExecutionTime] = useState(0);
     const [currentStep, setCurrentStep] = useState(0);
     const [totalSteps, setTotalSteps] = useState(0);
     const [currentIndices, setCurrentIndices] = useState({ 
@@ -48,6 +52,8 @@ const SelectionSortVisualizer = () => {
       setCurrentStep(0);
       setTotalSteps(0);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
+      setShowSummary(false);
+      setExecutionTime(0);
       if (animationRef.current) {
         clearTimeout(animationRef.current);
       }
@@ -64,6 +70,22 @@ const SelectionSortVisualizer = () => {
       let tempComparisons = 0;
       setTotalSteps(Math.floor((n * (n - 1)) / 2));
       setCurrentStep(0);
+      
+      const tempArr = [...array];
+      const startTime = performance.now();
+      for (let i = 0; i < n - 1; i++) {
+        let minIndex = i;
+        for (let j = i + 1; j < n; j++) {
+          if (tempArr[j] < tempArr[minIndex]) {
+            minIndex = j;
+          }
+        }
+        if (minIndex !== i) {
+          [tempArr[i], tempArr[minIndex]] = [tempArr[minIndex], tempArr[i]];
+        }
+      }
+      const endTime = performance.now();
+      setExecutionTime(endTime - startTime);
       
       for (let i = 0; i < n - 1; i++) {
         let minIndex = i;
@@ -139,6 +161,7 @@ const SelectionSortVisualizer = () => {
       
       setSorting(false);
       setSorted(true);
+      setShowSummary(true);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
     };
   
@@ -286,6 +309,19 @@ const SelectionSortVisualizer = () => {
               )}
             </div>
           </div>
+          <AnimatePresence>
+            {sorted && showSummary && (
+              <ExecutionSummaryCard
+                title="Selection Sort Complete!"
+                metrics={[
+                  { label: "Elements Sorted", value: array.length },
+                  { label: "Total Comparisons", value: comparisons },
+                  { label: "Total Swaps", value: swaps }
+                ]}
+                onClose={() => setShowSummary(false)}
+              />
+            )}
+          </AnimatePresence>
         </main>
     );
   };

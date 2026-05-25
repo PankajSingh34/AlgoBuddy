@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import RandomArray from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -18,6 +20,8 @@ const InsertionSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [shifts, setShifts] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [executionTime, setExecutionTime] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ current: -1, comparing: -1, sortedUpTo: -1 });
@@ -39,6 +43,8 @@ const InsertionSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
+    setShowSummary(false);
+    setExecutionTime(0);
     if (animationRef.current) clearTimeout(animationRef.current);
   };
 
@@ -51,6 +57,20 @@ const InsertionSortVisualizer = () => {
     const n = arr.length;
     setTotalSteps(Math.floor((n * (n - 1)) / 2));
     setCurrentStep(0);
+
+    const tempArr = [...array];
+    const startTime = performance.now();
+    for (let i = 1; i < n; i++) {
+      let current = tempArr[i];
+      let j = i - 1;
+      while (j >= 0 && tempArr[j] > current) {
+        tempArr[j + 1] = tempArr[j];
+        j--;
+      }
+      tempArr[j + 1] = current;
+    }
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
 
     // reset bar positions
     barRefs.current.forEach((bar) => bar && gsap.set(bar, { x: 0, y: 0 }));
@@ -103,6 +123,7 @@ const InsertionSortVisualizer = () => {
 
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     isSortingRef.current = false;
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: n - 1 });
   };
@@ -200,6 +221,20 @@ const InsertionSortVisualizer = () => {
           )}
         </div>
       </div>
+      
+      <AnimatePresence>
+        {sorted && showSummary && (
+          <ExecutionSummaryCard
+            title="Insertion Sort Complete!"
+            metrics={[
+              { label: "Elements Sorted", value: array.length },
+              { label: "Total Comparisons", value: comparisons },
+              { label: "Total Shifts", value: shifts }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

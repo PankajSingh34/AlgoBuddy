@@ -6,6 +6,8 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/storage";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";       // ← NEW
 import KeyboardShortcutsLegend from "@/app/components/ui/KeyboardShortcutsLegend"; // ← NEW
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -27,6 +29,8 @@ const BubbleSortVisualizer = () => {
 
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [executionTime, setExecutionTime] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
@@ -44,6 +48,8 @@ const BubbleSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
+    setShowSummary(false);
+    setExecutionTime(0);
     if (animationRef.current) clearTimeout(animationRef.current);
   };
 
@@ -64,6 +70,21 @@ const BubbleSortVisualizer = () => {
     let tempComparisons = 0;
     setTotalSteps(Math.floor((n * (n - 1)) / 2));
     setCurrentStep(0);
+
+    // Measure actual execution time
+    const tempArr = [...array];
+    const startTime = performance.now();
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = 0; j < n - i - 1; j++) {
+        if (tempArr[j] > tempArr[j + 1]) {
+          let temp = tempArr[j];
+          tempArr[j] = tempArr[j + 1];
+          tempArr[j + 1] = temp;
+        }
+      }
+    }
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
@@ -105,6 +126,7 @@ const BubbleSortVisualizer = () => {
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
   };
 
   const reset = () => {
@@ -271,6 +293,20 @@ const BubbleSortVisualizer = () => {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {sorted && showSummary && (
+          <ExecutionSummaryCard
+            title="Bubble Sort Complete!"
+            metrics={[
+              { label: "Elements Sorted", value: array.length },
+              { label: "Total Comparisons", value: comparisons },
+              { label: "Total Swaps", value: swaps }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

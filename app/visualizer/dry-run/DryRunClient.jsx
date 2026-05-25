@@ -15,7 +15,8 @@ import {
 import Link from "next/link";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
-
+import Editor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];
 let minIndex = 0;
@@ -341,8 +342,11 @@ function DataPreview({ title, values, variant = "array" }) {
 }
 
 export default function DryRunClient() {
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   const { user } = useUser();
   const [language, setLanguage] = useState("JavaScript");
+  const monacoLanguage = language.toLowerCase() === "c++" ? "cpp" : language.toLowerCase();
   const [source, setSource] = useState(SAMPLES.JavaScript);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);

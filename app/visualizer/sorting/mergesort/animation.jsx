@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -18,6 +20,8 @@ const MergeSortVisualizer = () => {
   const [speed, setSpeed] = useState(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [executionTime, setExecutionTime] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
@@ -60,6 +64,8 @@ const MergeSortVisualizer = () => {
       levels: [],
       currentLevel: -1,
     });
+    setShowSummary(false);
+    setExecutionTime(0);
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -192,11 +198,40 @@ const MergeSortVisualizer = () => {
     const n = arr.length;
     setTotalSteps(Math.floor(n * Math.ceil(Math.log2(n || 1))));
     setCurrentStep(0);
+
+    const tempArr = [...array];
+    const startTime = performance.now();
+    const syncMerge = (arr, l, m, r) => {
+      let n1 = m - l + 1, n2 = r - m;
+      let L = new Array(n1), R = new Array(n2);
+      for (let i = 0; i < n1; i++) L[i] = arr[l + i];
+      for (let j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+      let i = 0, j = 0, k = l;
+      while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) { arr[k] = L[i]; i++; }
+        else { arr[k] = R[j]; j++; }
+        k++;
+      }
+      while (i < n1) { arr[k] = L[i]; i++; k++; }
+      while (j < n2) { arr[k] = R[j]; j++; k++; }
+    };
+    const syncMergeSort = (arr, l, r) => {
+      if (l >= r) return;
+      let mid = l + Math.floor((r - l) / 2);
+      syncMergeSort(arr, l, mid);
+      syncMergeSort(arr, mid + 1, r);
+      syncMerge(arr, l, mid, r);
+    };
+    syncMergeSort(tempArr, 0, tempArr.length - 1);
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
+
     await mergeSortHelper(arr, 0, arr.length - 1);
     if (!isSortingRef.current) return;
     setArray([...arr]);
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     isSortingRef.current = false;
     setCurrentIndices({
       left: -1,
@@ -398,6 +433,19 @@ const MergeSortVisualizer = () => {
           )}
         </div>
       </div>
+      <AnimatePresence>
+        {sorted && showSummary && (
+          <ExecutionSummaryCard
+            title="Merge Sort Complete!"
+            metrics={[
+              { label: "Elements Sorted", value: array.length },
+              { label: "Total Comparisons", value: comparisons },
+              { label: "Total Merges", value: swaps }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

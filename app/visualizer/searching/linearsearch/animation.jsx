@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -20,6 +22,9 @@ const LinearSearch = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // FIX: "success" | "error" | "warning"
+  const [showSummary, setShowSummary] = useState(false);
+  const [comparisons, setComparisons] = useState(0);
+  const [executionTime, setExecutionTime] = useState(0);
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
   const animationRef = useRef(null);
@@ -39,6 +44,9 @@ const LinearSearch = () => {
     setFoundIndex(-1);
     setMessage("");
     setMessageType(""); // FIX: reset message type
+    setShowSummary(false);
+    setComparisons(0);
+    setExecutionTime(0);
     setIsAnimating(false);
     setArrayElements("");
     setTarget("");
@@ -106,6 +114,18 @@ const targetValue = parseInt(target);
     setFoundIndex(-1);
     setMessage("");
     setMessageType("");
+    setShowSummary(false);
+    setComparisons(0);
+
+    const tempArr = [...elements];
+    const startTime = performance.now();
+    for (let i = 0; i < tempArr.length; i++) {
+      if (tempArr[i] === targetValue) {
+        break;
+      }
+    }
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
 
     // start animation
     animateLinearSearch(elements, targetValue);
@@ -119,6 +139,7 @@ const targetValue = parseInt(target);
         setMessage(`Element ${targetValue} not found in the array.`);
         setMessageType("error"); // FIX: search result "not found" → red
         setIsAnimating(false);
+        setShowSummary(true);
         return;
       }
 
@@ -138,11 +159,13 @@ const targetValue = parseInt(target);
 
       const delay = 1500 / speedRef.current;
       animationRef.current = setTimeout(() => {
+        setComparisons((prev) => prev + 1);
         if (arr[index] === targetValue) {
           setFoundIndex(index);
           setMessage(`Element ${targetValue} found at index ${index}!`);
           setMessageType("success"); // FIX: found → green
           setIsAnimating(false);
+          setShowSummary(true);
           gsap.to(elementRefs.current[index], { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0.3 });
         } else {
           index++;
@@ -311,6 +334,20 @@ const targetValue = parseInt(target);
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {!isAnimating && showSummary && (
+          <ExecutionSummaryCard
+            title="Search Complete!"
+            metrics={[
+              { label: "Array Size", value: array.length },
+              { label: "Target Found", value: foundIndex !== -1 ? "Yes" : "No" },
+              { label: "Total Comparisons", value: comparisons }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

@@ -4,6 +4,8 @@ import { gsap } from "gsap";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
+import { AnimatePresence } from "framer-motion";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import {
   saveToStorage,
   loadFromStorage,
@@ -35,6 +37,9 @@ const BinarySearch = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [showSummary, setShowSummary] = useState(false);
+  const [comparisons, setComparisons] = useState(0);
+  const [executionTime, setExecutionTime] = useState(0);
 
   const [speed, setSpeed] = useState(() =>
     loadFromStorage("binary-speed", 1)
@@ -82,6 +87,9 @@ const BinarySearch = () => {
     setFoundIndex(-1);
     setMessage("");
     setMessageType("");
+    setShowSummary(false);
+    setComparisons(0);
+    setExecutionTime(0);
     setIsAnimating(false);
     setIsPaused(false);
     isPausedRef.current = false;
@@ -127,6 +135,8 @@ const BinarySearch = () => {
     setFoundIndex(-1);
     setMessage("");
     setMessageType("");
+    setShowSummary(false);
+    setComparisons(0);
     setIsAnimating(false);
 
     if (!arrayElements || !target) {
@@ -191,6 +201,22 @@ const BinarySearch = () => {
       targetValue,
     };
 
+    const startTime = performance.now();
+    let left = 0;
+    let right = elements.length - 1;
+    while (left <= right) {
+      let m = Math.floor((left + right) / 2);
+      if (elements[m] === targetValue) {
+        break;
+      } else if (elements[m] < targetValue) {
+        left = m + 1;
+      } else {
+        right = m - 1;
+      }
+    }
+    const endTime = performance.now();
+    setExecutionTime(endTime - startTime);
+
     animateBinarySearch();
   };
 
@@ -207,6 +233,7 @@ const BinarySearch = () => {
 
       setMessageType("error");
       setIsAnimating(false);
+      setShowSummary(true);
       return;
     }
 
@@ -239,6 +266,7 @@ const BinarySearch = () => {
     });
 
     animationRef.current = setTimeout(() => {
+      setComparisons((prev) => prev + 1);
       if (arr[m] === targetValue) {
         setFoundIndex(m);
 
@@ -248,6 +276,7 @@ const BinarySearch = () => {
 
         setMessageType("success");
         setIsAnimating(false);
+        setShowSummary(true);
 
         gsap.to(elementRefs.current[m], {
           backgroundColor: "#22C55E",
@@ -499,6 +528,20 @@ const BinarySearch = () => {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {!isAnimating && showSummary && (
+          <ExecutionSummaryCard
+            title="Search Complete!"
+            metrics={[
+              { label: "Array Size", value: array.length },
+              { label: "Target Found", value: foundIndex !== -1 ? "Yes" : "No" },
+              { label: "Total Comparisons", value: comparisons }
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };
