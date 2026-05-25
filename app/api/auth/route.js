@@ -3,6 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
 // Service-role client is only used for signup so it can create users regardless
 // of RLS policies. It is never used for login — that goes through the anon client
@@ -51,17 +53,6 @@ const redis =
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
-}
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
 }
 
 function lockKey(email) {
@@ -139,35 +130,6 @@ function genericAuthError() {
   return "Invalid email or password.";
 }
 
-async function verifyTurnstile(captchaToken) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return { ok: false, message: "Server misconfigured: TURNSTILE_SECRET_KEY is not set" };
-  }
-
-  let res;
-  try {
-    res = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY,
-          response: captchaToken,
-        }),
-      },
-    );
-  } catch {
-    return { ok: false, message: "Captcha verification request failed" };
-  }
-
-  const data = await res.json();
-  if (!data.success) {
-    return { ok: false, message: "Captcha verification failed" };
-  }
-  return { ok: true };
-}
-
 export async function POST(req) {
   try {
     let body;
@@ -196,15 +158,15 @@ export async function POST(req) {
       );
     }
 
-    const captcha = await verifyTurnstile(String(captchaToken));
+    const ip = getClientIp(req.headers);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return new Response(
-        JSON.stringify({ success: false, message: captcha.message }),
+        JSON.stringify({ success: false, message: captcha.error }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    const ip = getClientIp(req.headers);
     const normalizedEmail = normalizeEmail(email);
     const actionName = action === "signup" ? "signup" : "login";
 

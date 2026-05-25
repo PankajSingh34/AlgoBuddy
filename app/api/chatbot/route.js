@@ -1,53 +1,43 @@
 import OpenAI from "openai";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 const MAX_MESSAGES_PER_REQUEST = 20;
 const MAX_TOTAL_CHARS = 4000;
 const MAX_PER_MESSAGE_LENGTH = 2000;
 const VALID_ROLES = new Set(["user", "assistant"]);
 
-async function verifyTurnstile(captchaToken) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return { ok: false, message: "Server misconfigured: TURNSTILE_SECRET_KEY is not set" };
-  }
-
-  let res;
-  try {
-    res = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY,
-          response: captchaToken,
-        }),
-      },
-    );
-  } catch {
-    return { ok: false, message: "Captcha verification request failed" };
-  }
-
-  const data = await res.json();
-  if (!data.success) {
-    return { ok: false, message: "Captcha verification failed" };
-  }
-  return { ok: true };
-}
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
-
 export async function POST(req) {
   try {
+    // 0. Authentication: require a valid Supabase session cookie
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return Response.json({ error: "Service unavailable." }, { status: 503 });
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      return Response.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     // 1. Parse Request Body
     let body;
     try {
@@ -65,10 +55,11 @@ export async function POST(req) {
         { status: 403 }
       );
     }
-    const captcha = await verifyTurnstile(String(captchaToken));
+    const ip = getClientIp(req.headers);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return Response.json(
-        { error: captcha.message },
+        { error: captcha.error },
         { status: 403 }
       );
     }
@@ -115,7 +106,6 @@ export async function POST(req) {
     }
 
     // 4. Rate Limiting Check (global via Upstash in prod, in-memory fallback locally)
-    const ip = getClientIp(req.headers);
     const { allowed } = await checkRateLimit(`chatbot:${ip}`);
     if (!allowed) {
       return Response.json(
@@ -127,7 +117,7 @@ export async function POST(req) {
     // 5. Validate API Key
     if (!process.env.OPENAI_API_KEY) {
       return Response.json(
-        { error: "OpenAI API Key is missing. Please add OPENAI_API_KEY to your .env.local file." },
+        { error: "Service unavailable." },
         { status: 500 }
       );
     }
@@ -184,7 +174,7 @@ Capabilities & Guidelines:
   } catch (error) {
     console.error("Chatbot API error:", error);
     return Response.json(
-      { error: error.message || "An error occurred while processing your request." },
+      { error: "An error occurred while processing your request." },
       { status: 500 }
     );
   }

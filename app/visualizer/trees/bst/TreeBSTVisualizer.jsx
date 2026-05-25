@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "@/app/components/navbarinner";
 import Footer from "@/app/components/footer";
 import {
@@ -25,6 +25,45 @@ class TreeNode {
     this.right = null;
   }
 }
+
+// functional BST insertion
+const insertNodeFunctional = (node, value) => {
+  if (!node) return new TreeNode(value);
+  if (value < node.value) {
+    return { ...node, left: insertNodeFunctional(node.left, value) };
+  } else if (value > node.value) {
+    return { ...node, right: insertNodeFunctional(node.right, value) };
+  }
+  return node;
+};
+
+// functional BST deletion
+const deleteNodeFunctional = (node, value) => {
+  if (!node) return null;
+  if (value < node.value) {
+    return { ...node, left: deleteNodeFunctional(node.left, value) };
+  } else if (value > node.value) {
+    return { ...node, right: deleteNodeFunctional(node.right, value) };
+  } else {
+    if (!node.left) return node.right;
+    if (!node.right) return node.left;
+
+    let succ = node.right;
+    while (succ.left) {
+      succ = succ.left;
+    }
+    const updatedNode = { ...node, value: succ.value };
+    updatedNode.right = deleteNodeFunctional(node.right, succ.value);
+    return updatedNode;
+  }
+};
+
+const hasDuplicate = (node, value) => {
+  if (!node) return false;
+  if (value === node.value) return true;
+  if (value < node.value) return hasDuplicate(node.left, value);
+  return hasDuplicate(node.right, value);
+};
 
 const pseudocode = {
   searching: [
@@ -157,43 +196,19 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
   const timerRef = useRef(null);
 
+  const resetPlayback = useCallback(() => {
+    setIsAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setSteps([]);
+    setMessage("Playback reset. Click Start to begin operations.");
+  }, []);
+
   // Sync mode changes
   useEffect(() => {
     setMode(initialMode);
     resetPlayback();
-  }, [initialMode]);
-
-  // functional BST insertion
-  const insertNodeFunctional = (node, value) => {
-    if (!node) return new TreeNode(value);
-    if (value < node.value) {
-      return { ...node, left: insertNodeFunctional(node.left, value) };
-    } else if (value > node.value) {
-      return { ...node, right: insertNodeFunctional(node.right, value) };
-    }
-    return node;
-  };
-
-  // functional BST deletion
-  const deleteNodeFunctional = (node, value) => {
-    if (!node) return null;
-    if (value < node.value) {
-      return { ...node, left: deleteNodeFunctional(node.left, value) };
-    } else if (value > node.value) {
-      return { ...node, right: deleteNodeFunctional(node.right, value) };
-    } else {
-      if (!node.left) return node.right;
-      if (!node.right) return node.left;
-
-      let succ = node.right;
-      while (succ.left) {
-        succ = succ.left;
-      }
-      const updatedNode = { ...node, value: succ.value };
-      updatedNode.right = deleteNodeFunctional(node.right, succ.value);
-      return updatedNode;
-    }
-  };
+  }, [initialMode, resetPlayback]);
 
   const handleInsert = (customValue) => {
     const val = customValue !== undefined ? customValue : parseInt(inputValue);
@@ -271,14 +286,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     setInputValue("");
   };
 
-  const hasDuplicate = (node, value) => {
-    if (!node) return false;
-    if (value === node.value) return true;
-    if (value < node.value) return hasDuplicate(node.left, value);
-    return hasDuplicate(node.right, value);
-  };
-
-  const generateRandomTree = () => {
+  const generateRandomTree = useCallback(() => {
     resetPlayback();
     const trees = [
       [40, 20, 60, 10, 30, 50, 70],
@@ -293,7 +301,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     setRoot(newRoot);
     setTargetTreeRoot(newRoot);
     setMessage(`Generated beautiful BST with ${sequence.length} nodes.`);
-  };
+  }, [resetPlayback]);
 
   const generateSearchSteps = (treeRoot, val) => {
     const records = [];
@@ -692,14 +700,6 @@ export default function TreeBSTVisualizer({ initialMode }) {
     }
   };
 
-  const resetPlayback = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
-    setSteps([]);
-    setMessage("Playback reset. Click Start to begin operations.");
-  };
-
   const handleResetTree = () => {
     setRoot(null);
     setTargetTreeRoot(null);
@@ -811,8 +811,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [generateRandomTree]);
 
   const currentStep = steps[currentStepIdx] || null;
   const currentHighlightLine = currentStep ? currentStep.codeLine : -1;

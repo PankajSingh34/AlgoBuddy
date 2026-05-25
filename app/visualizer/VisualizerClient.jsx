@@ -481,13 +481,13 @@ export default function VisualizerClient({ initialSections }) {
   const handleCardClick = (section) => {
     // Save grid scroll position before entering the module view
     sessionStorage.setItem("visualizerGridScrollPosition", window.scrollY.toString());
-
+    
     // Update URL to include category search query in browser history
     window.history.pushState(null, "", `?category=${encodeURIComponent(section.title.toLowerCase())}`);
-
+    
     // Reset module scroll position to top
     sessionStorage.setItem("visualizerModuleScrollPosition", "0");
-
+    
     setActiveSection(section);
     window.scrollTo(0, 0);
   };
@@ -495,20 +495,20 @@ export default function VisualizerClient({ initialSections }) {
   const handleBackToGrid = () => {
     // Revert URL to base visualizer path
     window.history.pushState(null, "", "/visualizer");
-
+    
     setActiveSection(null);
 
-    // Restore grid scroll position
+    // Restore grid scroll position after transition stabilizes
     const savedGridPos = sessionStorage.getItem("visualizerGridScrollPosition");
     if (savedGridPos) {
       const scrollPos = parseInt(savedGridPos, 10);
-      if (!isNaN(scrollPos) && scrollPos > 0) {
+      if (!isNaN(scrollPos)) {
         setTimeout(() => {
           window.scrollTo({
             top: scrollPos,
             behavior: "instant",
           });
-        }, 50);
+        }, 100);
       }
     }
   };

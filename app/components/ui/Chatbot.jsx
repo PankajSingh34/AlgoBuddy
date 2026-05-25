@@ -30,6 +30,17 @@ export default function Chatbot() {
   const [captchaToken, setCaptchaToken] = useState(null);
 
   const messagesEndRef = useRef(null);
+  const turnstileRef = useRef(null);
+
+  const refreshCaptcha = () => {
+    setCaptchaToken(null);
+    try {
+      turnstileRef.current?.reset?.();
+      turnstileRef.current?.execute?.();
+    } catch {
+      // Best-effort: different Turnstile wrappers expose different imperative APIs.
+    }
+  };
 
   // Load chat history from sessionStorage on mount
   useEffect(() => {
@@ -41,6 +52,12 @@ export default function Chatbot() {
         console.error("Failed to load chat history:", e);
       }
     }
+  }, []);
+
+  // Pre-fetch a Turnstile token so the first message doesn't require a reload.
+  useEffect(() => {
+    refreshCaptcha();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save chat history to sessionStorage
@@ -95,6 +112,12 @@ export default function Chatbot() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Please log in to use the AI assistant.");
+        }
+        if (res.status === 403) {
+          refreshCaptcha();
+        }
         throw new Error(data.error || "Failed to get AI response.");
       }
 
@@ -107,6 +130,8 @@ export default function Chatbot() {
       console.error("Error sending chat message:", err);
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
+      // Turnstile tokens are single-use; refresh after every attempt.
+      refreshCaptcha();
       setIsLoading(false);
     }
   };
@@ -326,6 +351,7 @@ export default function Chatbot() {
       {/* Turnstile captcha (invisible) */}
       <div className="w-0 h-0 overflow-hidden" aria-hidden="true">
         <Turnstile
+          ref={turnstileRef}
           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
           onSuccess={(token) => setCaptchaToken(token)}
           options={{ size: "invisible" }}
