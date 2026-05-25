@@ -13,6 +13,77 @@ const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
   { ssr: false },
 );
+const evaluatePasswordStrength = (pwd) => {
+  if (!pwd) {
+    return { score: 0, label: "Too Short", color: "bg-gray-300 dark:bg-gray-600", textColor: "text-gray-400 dark:text-gray-500" };
+  }
+  if (pwd.length < 6) {
+    return { score: 0, label: "Too Short", color: "bg-gray-300 dark:bg-gray-600", textColor: "text-gray-400 dark:text-gray-500" };
+  }
+
+  // Check for simple sequential/common patterns
+  const isSequentialOrSimple = (str) => {
+    const s = str.toLowerCase();
+    
+    // Check for keyboard runs / sequential sequences of 4+ characters
+    let incCount = 1;
+    let decCount = 1;
+    for (let i = 1; i < s.length; i++) {
+      const diff = s.charCodeAt(i) - s.charCodeAt(i - 1);
+      if (diff === 1) {
+        incCount++;
+        decCount = 1;
+      } else if (diff === -1) {
+        decCount++;
+        incCount = 1;
+      } else {
+        incCount = 1;
+        decCount = 1;
+      }
+      if (incCount >= 4 || decCount >= 4) return true;
+    }
+
+    // Common keyboard patterns / repeating sequences
+    const commonPatterns = ["qwerty", "asdfgh", "zxcvbn", "123456", "abcdef", "password"];
+    if (commonPatterns.some(pattern => s.includes(pattern))) return true;
+
+    // Repeating characters (e.g. "aaaa", "1111")
+    let repeatCount = 1;
+    for (let i = 1; i < s.length; i++) {
+      if (s[i] === s[i - 1]) {
+        repeatCount++;
+      } else {
+        repeatCount = 1;
+      }
+      if (repeatCount >= 4) return true;
+    }
+
+    return false;
+  };
+
+  if (pwd.length < 8 || isSequentialOrSimple(pwd)) {
+    return { score: 1, label: "Weak", color: "bg-red-500", textColor: "text-red-500" };
+  }
+
+  const hasUppercase = /[A-Z]/.test(pwd);
+  const hasLowercase = /[a-z]/.test(pwd);
+  const hasNumbers = /[0-9]/.test(pwd);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+
+  // Strong: 10+ characters, mixes letters, numbers, and special symbols
+  const hasLetters = hasUppercase || hasLowercase;
+  if (pwd.length >= 10 && hasLetters && hasNumbers && hasSpecial) {
+    return { score: 4, label: "Strong", color: "bg-green-500", textColor: "text-green-500" };
+  }
+
+  // Good: 8+ characters, mixes uppercase, lowercase, and numbers
+  if (pwd.length >= 8 && hasUppercase && hasLowercase && hasNumbers) {
+    return { score: 3, label: "Good", color: "bg-yellow-500", textColor: "text-yellow-500" };
+  }
+
+  // Fair: 8+ characters, only lowercase letters or numbers
+  return { score: 2, label: "Fair", color: "bg-orange-500", textColor: "text-orange-500" };
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -177,6 +248,36 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+
+            {!isLogin && password && (
+              <div className="space-y-2 mt-1 px-1">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">Password strength:</span>
+                  <span className={`font-semibold transition-colors duration-300 ${evaluatePasswordStrength(password).textColor}`}>
+                    {evaluatePasswordStrength(password).label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+                  {[1, 2, 3, 4].map((step) => {
+                    const strength = evaluatePasswordStrength(password);
+                    return (
+                      <div
+                        key={step}
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          step <= strength.score ? strength.color : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 flex flex-wrap gap-x-2 gap-y-0.5">
+                  <span className={password.length >= 8 ? "text-green-500 font-medium" : ""}>Min 8 characters</span>
+                  <span className={/[A-Z]/.test(password) && /[a-z]/.test(password) ? "text-green-500 font-medium" : ""}>A-Z & a-z</span>
+                  <span className={/[0-9]/.test(password) ? "text-green-500 font-medium" : ""}>Numbers</span>
+                  <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-500 font-medium" : ""}>Special chars</span>
+                </div>
+              </div>
+            )}
 
             {!isLogin && (
               <div className="relative">
