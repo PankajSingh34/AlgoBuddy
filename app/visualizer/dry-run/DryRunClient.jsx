@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
+import Editor from "@monaco-editor/react";
 
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];
