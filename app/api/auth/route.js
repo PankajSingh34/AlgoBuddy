@@ -3,14 +3,38 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
 // Service-role client is only used for signup so it can create users regardless
 // of RLS policies. It is never used for login — that goes through the anon client
 // so that Supabase's own per-user RLS applies from the first request.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-  process.env.SUPABASE_SERVICE_KEY || "placeholder-key",
-);
+function getValidUrl(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed || trimmed.startsWith("Your ")) return null;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
+function getValidKey(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  return trimmed && !trimmed.startsWith("Your ") ? trimmed : null;
+}
+
+const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
+
+const supabaseAdmin =
+  supabaseUrl && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey)
+    : null;
 
 const AUTH_RATE_LIMIT_PREFIX = "auth";
 
@@ -29,17 +53,6 @@ const redis =
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
-}
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
 }
 
 function lockKey(email) {
@@ -117,35 +130,6 @@ function genericAuthError() {
   return "Invalid email or password.";
 }
 
-async function verifyTurnstile(captchaToken) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return { ok: false, message: "Server misconfigured: TURNSTILE_SECRET_KEY is not set" };
-  }
-
-  let res;
-  try {
-    res = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY,
-          response: captchaToken,
-        }),
-      },
-    );
-  } catch {
-    return { ok: false, message: "Captcha verification request failed" };
-  }
-
-  const data = await res.json();
-  if (!data.success) {
-    return { ok: false, message: "Captcha verification failed" };
-  }
-  return { ok: true };
-}
-
 export async function POST(req) {
   try {
     let body;
@@ -174,15 +158,15 @@ export async function POST(req) {
       );
     }
 
-    const captcha = await verifyTurnstile(String(captchaToken));
+    const ip = getClientIp(req.headers);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return new Response(
-        JSON.stringify({ success: false, message: captcha.message }),
+        JSON.stringify({ success: false, message: captcha.error }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    const ip = getClientIp(req.headers);
     const normalizedEmail = normalizeEmail(email);
     const actionName = action === "signup" ? "signup" : "login";
 
@@ -202,6 +186,13 @@ export async function POST(req) {
     }
 
     if (action === "signup") {
+      if (!supabaseAdmin) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Auth server is not configured." }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
       const { error } = await supabaseAdmin.auth.signUp({
         email,
         password,
@@ -236,13 +227,20 @@ export async function POST(req) {
         );
       }
 
+      if (!supabaseUrl || !supabaseAnonKey) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Auth server is not configured." }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
       const cookieStore = await cookies();
 
       // createServerClient writes the session into cookies automatically when
       // signInWithPassword resolves. Tokens are never placed in the response body.
       const client = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key",
+        supabaseUrl,
+        supabaseAnonKey,
         {
           cookies: {
             getAll() {
