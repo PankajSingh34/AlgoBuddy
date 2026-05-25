@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { checkRateLimit } from "@/lib/rateLimit";
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
 function escapeHtml(value) {
   return String(value)
@@ -33,39 +24,6 @@ function clampInt(value, min, max) {
   const int = Math.trunc(num);
   if (int < min || int > max) return null;
   return int;
-}
-
-async function verifyTurnstile(captchaToken, ip) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return {
-      ok: false,
-      error: "Server misconfigured: TURNSTILE_SECRET_KEY is not set",
-    };
-  }
-
-  const response = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        secret: process.env.TURNSTILE_SECRET_KEY,
-        response: captchaToken,
-        ...(ip && ip !== "unknown" ? { remoteip: ip } : {}),
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    return { ok: false, error: "Captcha verification request failed" };
-  }
-
-  const data = await response.json();
-  if (!data?.success) {
-    return { ok: false, error: "Captcha verification failed" };
-  }
-
-  return { ok: true };
 }
 
 export async function POST(request) {
@@ -102,7 +60,7 @@ export async function POST(request) {
       );
     }
 
-    const captcha = await verifyTurnstile(String(captchaToken), ip);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return NextResponse.json(
         { success: false, error: captcha.error },

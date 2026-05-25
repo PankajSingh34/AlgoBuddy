@@ -1,52 +1,44 @@
 import OpenAI from "openai";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 15; // 15 requests per minute for active chatting
-const rateLimitBuckets = new Map();
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
-
-function allowRequest(ip) {
-  const now = Date.now();
-  const bucket = rateLimitBuckets.get(ip);
-  if (!bucket || bucket.resetAt <= now) {
-    rateLimitBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) return false;
-  bucket.count += 1;
-  return true;
-}
+const MAX_MESSAGES_PER_REQUEST = 20;
+const MAX_TOTAL_CHARS = 4000;
+const MAX_PER_MESSAGE_LENGTH = 2000;
+const VALID_ROLES = new Set(["user", "assistant"]);
 
 export async function POST(req) {
   try {
-    // 1. Rate Limiting Check
-    const ip = getClientIp(req.headers);
-    if (!allowRequest(ip)) {
-      return Response.json(
-        { error: "Too many messages. Please wait a minute and try again." },
-        { status: 429 }
-      );
+    // 0. Authentication: require a valid Supabase session cookie
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return Response.json({ error: "Service unavailable." }, { status: 503 });
     }
 
-    // 2. Validate API Key
-    if (!process.env.OPENAI_API_KEY) {
-      return Response.json(
-        { error: "OpenAI API Key is missing. Please add OPENAI_API_KEY to your .env.local file." },
-        { status: 500 }
-      );
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      return Response.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    // 3. Parse and Validate Request Body
+    // 1. Parse Request Body
     let body;
     try {
       body = await req.json();
@@ -54,12 +46,83 @@ export async function POST(req) {
       return Response.json({ error: "Invalid JSON request body." }, { status: 400 });
     }
 
-    const { messages } = body || {};
+    const { messages, captchaToken } = body || {};
+
+    // 2. Turnstile Captcha Verification
+    if (!captchaToken) {
+      return Response.json(
+        { error: "Captcha token missing." },
+        { status: 403 }
+      );
+    }
+    const ip = getClientIp(req.headers);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
+    if (!captcha.ok) {
+      return Response.json(
+        { error: captcha.error },
+        { status: 403 }
+      );
+    }
+
+    // 3. Validate Messages Payload
     if (!messages || !Array.isArray(messages)) {
       return Response.json({ error: "Invalid or missing 'messages' array." }, { status: 400 });
     }
 
-    // 4. Initialize OpenAI Client
+    if (messages.length === 0 || messages.length > MAX_MESSAGES_PER_REQUEST) {
+      return Response.json(
+        { error: `Messages count must be between 1 and ${MAX_MESSAGES_PER_REQUEST}.` },
+        { status: 400 }
+      );
+    }
+
+    for (const [i, msg] of messages.entries()) {
+      if (!msg || typeof msg !== "object") {
+        return Response.json({ error: `Message at index ${i} is not a valid object.` }, { status: 400 });
+      }
+      if (!VALID_ROLES.has(msg.role)) {
+        return Response.json(
+          { error: `Invalid role "${msg.role}" at index ${i}. Must be "user" or "assistant".` },
+          { status: 400 }
+        );
+      }
+      if (typeof msg.content !== "string") {
+        return Response.json({ error: `Message content at index ${i} must be a string.` }, { status: 400 });
+      }
+      if (msg.content.length > MAX_PER_MESSAGE_LENGTH) {
+        return Response.json(
+          { error: `Message at index ${i} exceeds ${MAX_PER_MESSAGE_LENGTH} characters.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
+    if (totalChars > MAX_TOTAL_CHARS) {
+      return Response.json(
+        { error: `Total message content exceeds ${MAX_TOTAL_CHARS} characters.` },
+        { status: 400 }
+      );
+    }
+
+    // 4. Rate Limiting Check (global via Upstash in prod, in-memory fallback locally)
+    const { allowed } = await checkRateLimit(`chatbot:${ip}`);
+    if (!allowed) {
+      return Response.json(
+        { error: "Too many messages. Please wait a minute and try again." },
+        { status: 429 }
+      );
+    }
+
+    // 5. Validate API Key
+    if (!process.env.OPENAI_API_KEY) {
+      return Response.json(
+        { error: "Service unavailable." },
+        { status: 500 }
+      );
+    }
+
+    // 6. Initialize OpenAI Client
     const apiKey = process.env.OPENAI_API_KEY;
     const isOpenRouter = apiKey.startsWith("sk-or-");
 
@@ -78,7 +141,7 @@ export async function POST(req) {
 
     const modelName = isOpenRouter ? "openai/gpt-4o-mini" : "gpt-4o-mini";
 
-    // 5. Call Chat Completions API
+    // 7. Call Chat Completions API
     const response = await openai.chat.completions.create({
       model: modelName,
       messages: [
@@ -111,7 +174,7 @@ Capabilities & Guidelines:
   } catch (error) {
     console.error("Chatbot API error:", error);
     return Response.json(
-      { error: error.message || "An error occurred while processing your request." },
+      { error: "An error occurred while processing your request." },
       { status: 500 }
     );
   }

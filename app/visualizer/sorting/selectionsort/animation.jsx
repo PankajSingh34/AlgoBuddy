@@ -18,6 +18,8 @@ const SelectionSortVisualizer = () => {
     const [speed, setSpeed] = useState(1);
     const [comparisons, setComparisons] = useState(0);
     const [swaps, setSwaps] = useState(0);
+    const [currentStep, setCurrentStep] = useState(0);
+    const [totalSteps, setTotalSteps] = useState(0);
     const [currentIndices, setCurrentIndices] = useState({ 
       i: -1,    // Current outer loop index
       j: -1,    // Current inner loop index
@@ -43,6 +45,8 @@ const SelectionSortVisualizer = () => {
     const resetStats = () => {
       setComparisons(0);
       setSwaps(0);
+      setCurrentStep(0);
+      setTotalSteps(0);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
       if (animationRef.current) {
         clearTimeout(animationRef.current);
@@ -58,6 +62,8 @@ const SelectionSortVisualizer = () => {
       let n = arr.length;
       let tempSwaps = 0;
       let tempComparisons = 0;
+      setTotalSteps(Math.floor((n * (n - 1)) / 2));
+      setCurrentStep(0);
       
       for (let i = 0; i < n - 1; i++) {
         let minIndex = i;
@@ -67,6 +73,7 @@ const SelectionSortVisualizer = () => {
           setCurrentIndices(prev => ({ ...prev, j, min: minIndex }));
           tempComparisons++;
           setComparisons(tempComparisons);
+          setCurrentStep((prev) => prev + 1);
   
           await new Promise(resolve => 
             animationRef.current = setTimeout(resolve, 1000 / speed)
@@ -225,6 +232,11 @@ const SelectionSortVisualizer = () => {
                   <div className="font-medium">Swaps:</div>
                   <div className="text-2xl">{swaps}</div>
                 </div>
+              </div>
+              <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+                <div className="font-medium">Step:</div>
+                <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
+                <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Finding minimum from index ${currentIndices.i}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
               </div>
             </div>
 
