@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import RandomArray from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import InteractiveChallengeModal from "@/app/components/ui/InteractiveChallengeModal";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -21,12 +22,22 @@ const InsertionSortVisualizer = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ current: -1, comparing: -1, sortedUpTo: -1 });
+  const [challengeStats, setChallengeStats] = useState({ questionsAsked: 0, correctAnswers: 0 });
+  const [challengeState, setChallengeState] = useState({
+    open: false,
+    question: "",
+    options: [],
+    selectedOption: null,
+    answerIndex: 0,
+    feedback: "",
+  });
+
   const animationRef = useRef(null);
   const barRefs = useRef([]);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  const challengeResolveRef = useRef(null);
 
-  // Helper: cancellable delay
   const cancellableDelay = () =>
     new Promise((resolve) => {
       resolveRef.current = resolve;
@@ -39,7 +50,76 @@ const InsertionSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
+    setChallengeStats({ questionsAsked: 0, correctAnswers: 0 });
     if (animationRef.current) clearTimeout(animationRef.current);
+  };
+
+  const closeChallenge = () => {
+    setChallengeState({
+      open: false,
+      question: "",
+      options: [],
+      selectedOption: null,
+      answerIndex: 0,
+      feedback: "",
+    });
+  };
+
+  const askChallenge = (question, options, answerIndex = 0) =>
+    new Promise((resolve) => {
+      setChallengeState({
+        open: true,
+        question,
+        options,
+        selectedOption: null,
+        answerIndex,
+        feedback: "",
+      });
+      challengeResolveRef.current = resolve;
+    });
+
+  const onChallengeSelect = (selectedOption) => {
+    setChallengeState((prev) => ({ ...prev, selectedOption }));
+  };
+
+  const onChallengeSubmit = () => {
+    if (challengeState.selectedOption === null) return;
+
+    const isCorrect = challengeState.selectedOption === challengeState.answerIndex;
+    const feedback = isCorrect
+      ? "Correct! Resume the insertion step."
+      : `Not quite. The correct answer was option ${challengeState.answerIndex + 1}.`;
+
+    setChallengeStats((prev) => ({
+      questionsAsked: prev.questionsAsked + 1,
+      correctAnswers: prev.correctAnswers + (isCorrect ? 1 : 0),
+    }));
+
+    setChallengeState((prev) => ({
+      ...prev,
+      open: false,
+      feedback,
+    }));
+
+    challengeResolveRef.current?.(isCorrect);
+    challengeResolveRef.current = null;
+  };
+
+  const getInsertionOptions = (arr, keyIndex, comparisonIndex, currentValue) => {
+    const optionLabel = (index, valueOverride = null) => {
+      if (index < 0 || index >= arr.length) return "No element";
+      return `Index ${index}: ${valueOverride ?? arr[index]}`;
+    };
+
+    return {
+      question: "Which element is being inserted now?",
+      options: [
+        optionLabel(keyIndex, currentValue),
+        optionLabel(comparisonIndex),
+        optionLabel(keyIndex - 1),
+        optionLabel(keyIndex + 1),
+      ],
+    };
   };
 
   const insertionSort = async () => {
@@ -52,7 +132,6 @@ const InsertionSortVisualizer = () => {
     setTotalSteps(Math.floor((n * (n - 1)) / 2));
     setCurrentStep(0);
 
-    // reset bar positions
     barRefs.current.forEach((bar) => bar && gsap.set(bar, { x: 0, y: 0 }));
 
     setCurrentIndices({ current: 1, comparing: 0, sortedUpTo: 0 });
@@ -72,7 +151,7 @@ const InsertionSortVisualizer = () => {
         arr[j + 1] = arr[j];
         setShifts((s) => s + 1);
         setArray([...arr]);
-        // animate shift
+
         const movingBar = barRefs.current[j + 1];
         if (movingBar) {
           await gsap.to(movingBar, { y: -20, duration: 0.2 });
@@ -80,15 +159,20 @@ const InsertionSortVisualizer = () => {
           await gsap.to(movingBar, { y: 0, duration: 0.2 });
           gsap.set(movingBar, { clearProps: "transform" });
         }
+
         await cancellableDelay();
         if (!isSortingRef.current) return;
         j--;
         setCurrentIndices({ current: i, comparing: j, sortedUpTo: i - 1 });
       }
 
-      // place the current element
+      const insertQuestion = getInsertionOptions(arr, i, j, current);
+      await askChallenge(insertQuestion.question, insertQuestion.options, 0);
+      if (!isSortingRef.current) return;
+
       arr[j + 1] = current;
       setArray([...arr]);
+
       const insertBar = barRefs.current[i];
       if (insertBar) {
         const moveX = (j + 1 - i) * 70;
@@ -97,6 +181,7 @@ const InsertionSortVisualizer = () => {
         await gsap.to(insertBar, { y: 0, duration: 0.2 });
         gsap.set(insertBar, { clearProps: "transform" });
       }
+
       await cancellableDelay();
       if (!isSortingRef.current) return;
     }
@@ -109,6 +194,12 @@ const InsertionSortVisualizer = () => {
 
   const reset = () => {
     isSortingRef.current = false;
+    if (challengeResolveRef.current) {
+      challengeResolveRef.current(false);
+      challengeResolveRef.current = null;
+    }
+    closeChallenge();
+
     if (resolveRef.current) {
       resolveRef.current();
       resolveRef.current = null;
@@ -126,8 +217,24 @@ const InsertionSortVisualizer = () => {
     };
   }, []);
 
+  const accuracy = challengeStats.questionsAsked === 0
+    ? 0
+    : Math.round((challengeStats.correctAnswers / challengeStats.questionsAsked) * 100);
+
   return (
     <main className="container mx-auto px-6 pb-6">
+      <InteractiveChallengeModal
+        open={challengeState.open}
+        question={challengeState.question}
+        options={challengeState.options}
+        selectedOption={challengeState.selectedOption}
+        onSelect={onChallengeSelect}
+        onSubmit={onChallengeSubmit}
+        totalQuestions={challengeStats.questionsAsked}
+        correctAnswers={challengeStats.correctAnswers}
+        feedback={challengeState.feedback}
+      />
+
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
         Visualize how Insertion Sort builds the final sorted array.
       </p>
@@ -147,24 +254,28 @@ const InsertionSortVisualizer = () => {
               </button>
             </div>
           </div>
-          {/* Speed controls */}
           <div className="flex items-center gap-4 mb-4">
             <span className="text-gray-700 dark:text-gray-300">Speed:</span>
             <input type="range" min="0.5" max="5" step="0.5" value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-32" disabled={sorting} />
             <span className="text-gray-700 dark:text-gray-300">{speed}x</span>
           </div>
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Comparisons:</div><div className="text-2xl">{comparisons}</div></div>
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Shifts:</div><div className="text-2xl">{shifts}</div></div>
+            <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded">
+              <div className="font-medium">Challenge Score</div>
+              <div className="text-2xl">{accuracy}%</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {challengeStats.questionsAsked} asked • {challengeStats.correctAnswers} correct
+              </div>
+            </div>
           </div>
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Step:</div>
-            <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
-            <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Inserting element at index ${currentIndices.current}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
+            <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}</div>
+            <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Inserting element at index ${currentIndices.current}` : sorted ? "Sorting complete!" : "Start sorting to see steps"}</div>
           </div>
         </div>
-        {/* Visualization */}
         <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Array Visualization</h2>
           {array.length > 0 ? (

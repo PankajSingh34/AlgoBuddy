@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import CodeBlock from '@/app/components/ui/CodeBlock';
 
 const codeExamples = {
@@ -12,137 +12,101 @@ function quickSort(arr, left = 0, right = arr.length - 1) {
   return arr;
 }
 
-function partition(arr,left,right){
+function partition(arr, left, right) {
+  const pivot = arr[right];
+  let i = left;
 
-    const pivot=arr[right];
-
-    let i=left;
-
-    for(let j=left;j<right;j++){
-
-        if(arr[j]<pivot){
-
-            [arr[i],arr[j]]=[arr[j],arr[i]];
-            i++;
-        }
+  for (let j = left; j < right; j++) {
+    if (arr[j] < pivot) {
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      i++;
     }
+  }
 
-    [arr[i],arr[right]]=[arr[right],arr[i]];
-
-    return i;
+  [arr[i], arr[right]] = [arr[right], arr[i]];
+  return i;
 }
 
-// Usage example
-const numbers=[10,7,8,9,1,5];
-
-console.log("Before sorting:",numbers);
-
-const result=quickSort([...numbers]);
-
-console.log("After sorting:",result);`,
-
-  python: `# Quick Sort in Python
-def quick_sort(arr,low=0,high=None):
+const numbers = [10, 7, 8, 9, 1, 5];
+console.log("Before sorting:", numbers);
+const result = quickSort([...numbers]);
+console.log("After sorting:", result);`,
 
   python: `# Quick Sort in Python
 def quick_sort(arr, low=0, high=None):
     if high is None:
-        high=len(arr)-1
+        high = len(arr) - 1
 
-    if low<high:
-
-        pivot_index=partition(arr,low,high)
-
-        quick_sort(arr,low,pivot_index-1)
-        quick_sort(arr,pivot_index+1,high)
+    if low < high:
+        pivot_index = partition(arr, low, high)
+        quick_sort(arr, low, pivot_index - 1)
+        quick_sort(arr, pivot_index + 1, high)
 
     return arr
 
 
-def partition(arr,low,high):
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low
 
-    pivot=arr[high]
+    for j in range(low, high):
+        if arr[j] < pivot:
+            arr[i], arr[j] = arr[j], arr[i]
+            i += 1
 
-    i=low
-
-    for j in range(low,high):
-
-        if arr[j]<pivot:
-
-            arr[i],arr[j]=arr[j],arr[i]
-            i+=1
-
-    arr[i],arr[high]=arr[high],arr[i]
-
+    arr[i], arr[high] = arr[high], arr[i]
     return i
 
 
+numbers = [10, 7, 8, 9, 1, 5]
+print("Before sorting:", numbers)
+result = quick_sort(numbers)
+print("After sorting:", result)`,
+
   java: `// Quick Sort in Java
 public class QuickSort {
-
-    public static void quickSort(
-            int[] arr,
-            int low,
-            int high){
-
-        if(low<high){
-
-            int pivotIndex=partition(arr,low,high);
-
-            quickSort(arr,low,pivotIndex-1);
-            quickSort(arr,pivotIndex+1,high);
+    public static void quickSort(int[] arr, int low, int high) {
+        if (low < high) {
+            int pivotIndex = partition(arr, low, high);
+            quickSort(arr, low, pivotIndex - 1);
+            quickSort(arr, pivotIndex + 1, high);
         }
     }
 
-    public static int partition(
-            int[] arr,
-            int low,
-            int high){
+    public static int partition(int[] arr, int low, int high) {
+        int pivot = arr[high];
+        int i = low;
 
-        int pivot=arr[high];
-
-        int i=low;
-
-        for(int j=low;j<high;j++){
-
-            if(arr[j]<pivot){
-
-                swap(arr,i,j);
+        for (int j = low; j < high; j++) {
+            if (arr[j] < pivot) {
+                swap(arr, i, j);
                 i++;
             }
         }
 
-        swap(arr,i,high);
-
+        swap(arr, i, high);
         return i;
     }
 
-    public static void swap(
-            int[] arr,
-            int i,
-            int j){
-
-        int temp=arr[i];
-        arr[i]=arr[j];
-        arr[j]=temp;
+    public static void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
     }
 
-    public static void main(String[] args){
-
-        int[] numbers={10,7,8,9,1,5};
+    public static void main(String[] args) {
+        int[] numbers = {10, 7, 8, 9, 1, 5};
 
         System.out.print("Before sorting: ");
-
-        for(int num:numbers){
-            System.out.print(num+" ");
+        for (int num : numbers) {
+            System.out.print(num + " ");
         }
 
-        quickSort(numbers,0,numbers.length-1);
+        quickSort(numbers, 0, numbers.length - 1);
 
         System.out.print("\\nAfter sorting: ");
-
-        for(int num:numbers){
-            System.out.print(num+" ");
+        for (int num : numbers) {
+            System.out.print(num + " ");
         }
     }
 }`,
@@ -150,64 +114,52 @@ public class QuickSort {
   c: `// Quick Sort in C
 #include <stdio.h>
 
-    int temp=*a;
-    *a=*b;
-    *b=temp;
+void swap(int* a, int* b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
-int partition(int arr[],int low,int high){
+int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = low;
 
-    int pivot=arr[high];
-
-    int i=low;
-
-    for(int j=low;j<high;j++){
-
-        if(arr[j]<pivot){
-
-            swap(&arr[i],&arr[j]);
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            swap(&arr[i], &arr[j]);
             i++;
         }
     }
 
-    swap(&arr[i],&arr[high]);
-
+    swap(&arr[i], &arr[high]);
     return i;
 }
 
-void quickSort(int arr[],int low,int high){
-
-    if(low<high){
-
-        int pivotIndex=partition(arr,low,high);
-
-        quickSort(arr,low,pivotIndex-1);
-        quickSort(arr,pivotIndex+1,high);
+void quickSort(int arr[], int low, int high) {
+    if (low < high) {
+        int pivotIndex = partition(arr, low, high);
+        quickSort(arr, low, pivotIndex - 1);
+        quickSort(arr, pivotIndex + 1, high);
     }
 }
 
-void printArray(int arr[],int size){
-
-    for(int i=0;i<size;i++){
-        printf("%d ",arr[i]);
+void printArray(int arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        printf("%d ", arr[i]);
     }
 }
 
-int main(){
-
-    int numbers[]={10,7,8,9,1,5};
-
-    int size=sizeof(numbers)/sizeof(numbers[0]);
+int main() {
+    int numbers[] = {10, 7, 8, 9, 1, 5};
+    int size = sizeof(numbers) / sizeof(numbers[0]);
 
     printf("Before sorting: ");
+    printArray(numbers, size);
 
-    printArray(numbers,size);
-
-    quickSort(numbers,0,size-1);
+    quickSort(numbers, 0, size - 1);
 
     printf("\\nAfter sorting: ");
-
-    printArray(numbers,size);
+    printArray(numbers, size);
 
     return 0;
 }`,
@@ -217,70 +169,48 @@ int main(){
 #include <vector>
 using namespace std;
 
-int partition(
-    vector<int>& arr,
-    int low,
-    int high){
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low;
 
-    int pivot=arr[high];
-
-    int i=low;
-
-    for(int j=low;j<high;j++){
-
-        if(arr[j]<pivot){
-
-            swap(arr[i],arr[j]);
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            swap(arr[i], arr[j]);
             i++;
         }
     }
 
-    swap(arr[i],arr[high]);
-
+    swap(arr[i], arr[high]);
     return i;
 }
 
-void quickSort(
-        vector<int>& arr,
-        int low,
-        int high){
-
-    if(low<high){
-
-        int pivotIndex=partition(arr,low,high);
-
-        quickSort(arr,low,pivotIndex-1);
-        quickSort(arr,pivotIndex+1,high);
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pivotIndex = partition(arr, low, high);
+        quickSort(arr, low, pivotIndex - 1);
+        quickSort(arr, pivotIndex + 1, high);
     }
 }
 
-void printArray(vector<int>& arr){
-
-    for(int num:arr){
-        cout<<num<<" ";
+void printArray(vector<int>& arr) {
+    for (int num : arr) {
+        cout << num << " ";
     }
 }
 
-int main(){
+int main() {
+    vector<int> numbers = {10, 7, 8, 9, 1, 5};
 
-    vector<int> numbers={10,7,8,9,1,5};
-
-    cout<<"Before sorting: ";
-
+    cout << "Before sorting: ";
     printArray(numbers);
 
-    quickSort(
-        numbers,
-        0,
-        numbers.size()-1
-    );
+    quickSort(numbers, 0, numbers.size() - 1);
 
-    cout<<"\\nAfter sorting: ";
-
+    cout << "\\nAfter sorting: ";
     printArray(numbers);
 
     return 0;
-}`,
+}`
 };
 
 const QuickSortCode = () => (

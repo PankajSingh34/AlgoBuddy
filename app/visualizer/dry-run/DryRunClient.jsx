@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Editor from "@monaco-editor/react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -51,6 +52,13 @@ const LANGUAGE_HINTS = {
   Python: "Traces lists, assignments, if branches, swap calls, and print output.",
   "C++": "Traces vector declarations, scalar assignments, if branches, swap calls, and cout output.",
   Java: "Traces primitive types, array declarations, if branches, swap calls, and System.out.println output.",
+};
+
+const MONACO_LANGUAGE = {
+  JavaScript: "javascript",
+  Python: "python",
+  "C++": "cpp",
+  Java: "java",
 };
 
 function cloneVariables(variables) {
@@ -347,6 +355,7 @@ export default function DryRunClient() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(900);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [sessionTitle, setSessionTitle] = useState("Dry-run study room");
   const [sessionVisibility, setSessionVisibility] = useState("public");
   const [sessionPassword, setSessionPassword] = useState("");
@@ -405,6 +414,11 @@ export default function DryRunClient() {
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
   const sourceLines = source.split("\n");
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    setIsDarkMode(document.documentElement.classList.contains("dark"));
+  }, []);
 
   useEffect(() => {
     setStep(0);
@@ -628,7 +642,7 @@ export default function DryRunClient() {
           <div className="overflow-hidden rounded-b-xl">
             <Editor
               height="420px"
-              language={monacoLanguage}
+              language={MONACO_LANGUAGE[language] || "javascript"}
               theme={isDarkMode ? "vs-dark" : "light"}
               value={source}
               onChange={(value) => setSource(value || "")}
