@@ -13,7 +13,7 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
-
+import Editor from "@monaco-editor/react";
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];
 let minIndex = 0;
