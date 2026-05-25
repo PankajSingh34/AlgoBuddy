@@ -16,7 +16,7 @@ const SyntaxTreesContent = () => {
               An Abstract Syntax Tree (AST), or just Syntax Tree, is a tree representation of the abstract syntactic structure of source code written in a programming language. Each node of the tree denotes a construct occurring in the source code.
             </p>
             <p>
-              ASTs are widely used in compilers to check code for accuracy (syntax analysis) and to convert the code into machine language or intermediate code (code generation). They are "abstract" because they do not represent every detail appearing in the real syntax, but rather just the structural or content-related details.
+              ASTs are widely used in compilers to check code for accuracy (syntax analysis) and to convert the code into machine language or intermediate code (code generation). They are &quot;abstract&quot; because they do not represent every detail appearing in the real syntax, but rather just the structural or content-related details.
             </p>
           </div>
         </section>
@@ -83,7 +83,7 @@ const SyntaxTreesContent = () => {
                   <div>
                     <p className="font-bold text-lg mb-1 text-[#1a1a1a] dark:text-white">2. Syntax Analysis (Parsing)</p>
                     <p className="text-sm text-[#6b7280] dark:text-[#9ca3af] leading-relaxed">
-                      The parser takes the tokens and arranges them into an Abstract Syntax Tree based on the rules of the programming language's grammar.
+                      The parser takes the tokens and arranges them into an Abstract Syntax Tree based on the rules of the programming language&apos;s grammar.
                     </p>
                   </div>
                 </div>
@@ -117,7 +117,7 @@ const SyntaxTreesContent = () => {
               </h2>
               <ul className="list-disc pl-5 space-y-2 text-sm text-purple-800 dark:text-purple-200/80 leading-relaxed">
                 <li>Operator precedence is naturally enforced by the structure of the AST (operators lower in the tree are evaluated first).</li>
-                <li>ASTs strip away syntax details like parentheses, semi-colons, and whitespace that aren't strictly necessary for execution.</li>
+                <li>ASTs strip away syntax details like parentheses, semi-colons, and whitespace that aren&apos;t strictly necessary for execution.</li>
               </ul>
             </div>
           </div>

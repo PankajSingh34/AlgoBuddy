@@ -13,7 +13,7 @@ const DecisionTreesContent = () => {
           </h2>
           <div className="prose dark:prose-invert max-w-none text-[#374151] dark:text-[#d1d5db] leading-relaxed space-y-4">
             <p>
-              A Decision Tree is a supervised machine learning algorithm that is used for both classification and regression tasks. It builds a flowchart-like tree structure where each internal node represents a "test" on an attribute (e.g., whether a coin flip comes up heads or tails), each branch represents the outcome of the test, and each leaf node represents a class label or continuous value.
+              A Decision Tree is a supervised machine learning algorithm that is used for both classification and regression tasks. It builds a flowchart-like tree structure where each internal node represents a &quot;test&quot; on an attribute (e.g., whether a coin flip comes up heads or tails), each branch represents the outcome of the test, and each leaf node represents a class label or continuous value.
             </p>
             <p>
               It is a highly interpretable model, meaning it is easy to understand exactly how the model arrived at a particular decision.

@@ -56,7 +56,7 @@ const HuffmanContent = () => {
             </svg>
           </div>
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            A: 1, B: 00, C: 01. The most frequent character 'A' has the shortest code.
+            A: 1, B: 00, C: 01. The most frequent character &apos;A&apos; has the shortest code.
           </p>
         </section>
 
@@ -89,7 +89,7 @@ const HuffmanContent = () => {
                   <div>
                     <p className="font-bold text-lg mb-1 text-[#1a1a1a] dark:text-white">2. Build Tree</p>
                     <p className="text-sm text-[#6b7280] dark:text-[#9ca3af] leading-relaxed">
-                      Extract two nodes with the minimum frequency from the min-heap. Create a new internal node with a frequency equal to the sum of the two nodes' frequencies. Insert this new node back into the min-heap. Repeat until one node remains.
+                      Extract two nodes with the minimum frequency from the min-heap. Create a new internal node with a frequency equal to the sum of the two nodes&apos; frequencies. Insert this new node back into the min-heap. Repeat until one node remains.
                     </p>
                   </div>
                 </div>
@@ -103,7 +103,7 @@ const HuffmanContent = () => {
                   <div>
                     <p className="font-bold text-lg mb-1 text-[#1a1a1a] dark:text-white">3. Generate Codes</p>
                     <p className="text-sm text-[#6b7280] dark:text-[#9ca3af] leading-relaxed">
-                      Traverse the constructed tree from root to leaves. Assign '0' for a left branch and '1' for a right branch. The sequence of bits from root to a leaf node is the code for that character.
+                      Traverse the constructed tree from root to leaves. Assign &apos;0&apos; for a left branch and &apos;1&apos; for a right branch. The sequence of bits from root to a leaf node is the code for that character.
                     </p>
                   </div>
                 </div>
