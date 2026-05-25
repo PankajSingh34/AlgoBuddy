@@ -21,7 +21,7 @@ function drawTree(
     line.setAttribute('y1', nodes[from].y);
     line.setAttribute('x2', nodes[to].x);
     line.setAttribute('y2', nodes[to].y);
-    line.setAttribute('stroke', '#3b82f6'); // blue-500
+    line.setAttribute('stroke', '#3b82f6'); // purple-500
     line.setAttribute('stroke-width', '2');
     svg.appendChild(line);
   });
@@ -35,8 +35,8 @@ function drawTree(
     circle.setAttribute('cx', x);
     circle.setAttribute('cy', y);
     circle.setAttribute('r', radius);
-    circle.setAttribute('fill', '#3b82f6'); // blue-500
-    circle.setAttribute('stroke', '#1e40af'); // blue-800
+    circle.setAttribute('fill', '#3b82f6'); // purple-500
+    circle.setAttribute('stroke', '#1e40af'); // purple-800
     circle.setAttribute('stroke-width', '2');
 
     text.setAttribute('x', x);

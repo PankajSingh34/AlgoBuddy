@@ -321,7 +321,11 @@ const InsertionSortVisualizer = () => {
                                 ? "bg-red-400 dark:bg-red-400 border-red-600 dark:border-red-600 dark:text-gray-800"
                                 : isSorted
                                 ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-800"
+<<<<<<< HEAD
                                 : "bg-primary/80 dark:bg-primary/80 border-primary dark:border-primary dark:text-gray-800"
+=======
+                                : "bg-purple-400 dark:bg-purple-400 border-purple-600 dark:border-purple-600 dark:text-gray-800"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                             }`}
                     >
                       {value}

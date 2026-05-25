@@ -24,7 +24,11 @@ const DoublyLinkedListVisualizer = () => {
 
   const PointerBridge = ({ direction, label, color, reversed = false }) => {
     const laneClass = direction === 'next'
+<<<<<<< HEAD
       ? 'text-primary dark:text-[#c27cf7]'
+=======
+      ? 'text-purple-600 dark:text-purple-400'
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
       : 'text-purple-600 dark:text-purple-400';
 
     const markerId = `${direction}-bridge-arrow`;
@@ -137,7 +141,7 @@ const DoublyLinkedListVisualizer = () => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="w-full p-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full p-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                   placeholder="Enter value"
                   disabled={isAnimating}
                   onKeyDown={(e) => e.key === 'Enter' && addNode()}
@@ -157,7 +161,7 @@ const DoublyLinkedListVisualizer = () => {
             <div className="flex gap-3">
               <button
                 onClick={addNode}
-                className={`flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-1 ${isAnimating ? 'cursor-not-allowed' : ''}`}
+                className={`flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-1 ${isAnimating ? 'cursor-not-allowed' : ''}`}
                 disabled={isAnimating || !inputValue}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -172,15 +176,24 @@ const DoublyLinkedListVisualizer = () => {
           {/* Linked List Visualization */}
           <div className="bg-white max-w-4xl mx-auto dark:bg-gray-800 px-4 pt-4 pb-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-visible">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 text-center flex items-center justify-center gap-2">
+<<<<<<< HEAD
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+=======
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Doubly Linked List Representation
             </h2>
 
             <div className="mb-3 flex flex-wrap items-center justify-center gap-4 text-xs font-medium">
+<<<<<<< HEAD
               <div className="flex items-center gap-2 text-primary dark:text-[#c27cf7]">
                 <span className="h-2.5 w-6 rounded-full bg-primary" />
+=======
+              <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                <span className="h-2.5 w-6 rounded-full bg-purple-500" />
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                 <span>next pointer</span>
               </div>
               <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
@@ -201,12 +214,20 @@ const DoublyLinkedListVisualizer = () => {
                 {list.map((node, index) => (
                   <React.Fragment key={node.id}>
                     <div className="w-full max-w-xs relative group z-10">
+<<<<<<< HEAD
                     <div className={`relative flex flex-col rounded-lg p-3 bg-white dark:bg-gray-700 border ${index === 0 ? 'border-green-500' : 'border-primary'} shadow-sm transition-all duration-200 overflow-hidden`}>
+=======
+                    <div className={`relative flex flex-col rounded-lg p-3 bg-white dark:bg-gray-700 border ${index === 0 ? 'border-green-500' : 'border-purple-500'} shadow-sm transition-all duration-200 overflow-hidden`}>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-mono text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
                           {node.address}
                         </span>
+<<<<<<< HEAD
                         <span className={`text-xs px-1.5 py-0.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-blue-100 dark:bg-blue-900/50 text-primary-dark dark:text-blue-200'}`}>
+=======
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200'}`}>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                           {index === 0 ? 'HEAD' : index === list.length - 1 ? 'TAIL' : `Node ${index}`}
                         </span>
                       </div>

@@ -237,7 +237,11 @@ const content = () => {
         <section className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Implementation Notes</h2>
           <div className="prose dark:prose-invert max-w-none">
+<<<<<<< HEAD
             <ul className="list-disc pl-5 space-y-2 marker:text-primary dark:marker:text-[#c27cf7]">
+=======
+            <ul className="list-disc pl-5 space-y-2 marker:text-purple-500 dark:marker:text-purple-400">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
               <li className="text-[#374151] dark:text-[#d1d5db]">
                 <strong>Cycle Detection:</strong> Be cautious of loops in the list during traversal, consider Floyd’s algorithm for detection
               </li>

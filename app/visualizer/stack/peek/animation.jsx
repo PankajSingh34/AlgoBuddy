@@ -138,8 +138,18 @@ const StackVisualizer = () => {
           ]}
         />
 
+<<<<<<< HEAD
         <div ref={stackRef} className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold mb-4 text-center">Stack Visualization</h2>
+=======
+        <button
+          onClick={addRandomStack}
+          disabled={isAnimating || stack.length}
+          className="w-full mb-4 bg-purple-500 hover:bg-purple-600 text-white dark:text-black px-4 py-2 rounded disabled:opacity-50"
+        >
+          Add Random Stack
+        </button>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
 
           {capacity === null ? (
             <div className="flex flex-col items-center justify-center min-h-[300px] border border-dashed border-slate-700/50 rounded-2xl p-8 bg-slate-900/5">
@@ -219,6 +229,34 @@ const StackVisualizer = () => {
               </div>
             </div>
           )}
+<<<<<<< HEAD
+=======
+
+          {/* vertical stack */}
+          <div className="flex flex-col items-center min-h-[200px]">
+            <div className="w-full max-w-xs">
+              {stack.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
+                  Stack is empty
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {stack.map((num, idx) => (
+                    <div
+                      key={idx}
+                      ref={(el) => (itemRefs.current[idx] = el)}
+                      className={`p-4 rounded-lg border-2 text-center font-medium transition-all ${
+                        idx === 0 ? "bg-purple-100 dark:bg-purple-900 border-purple-300 dark:border-purple-700" : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                      }`}
+                    >
+                      {num}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
         </div>
       </div>
     </main>

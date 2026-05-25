@@ -203,6 +203,7 @@ const Content = () => {
           </div>
         </section>
 
+<<<<<<< HEAD
         {/* Key Characteristics */}
         <section className="p-8 border-t border-gray-100 dark:border-gray-800">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
@@ -221,6 +222,45 @@ const Content = () => {
                 <div className="w-2 h-2 rounded-full bg-[#a435f0]"></div>
                 <span className="text-gray-600 dark:text-gray-400 font-medium">{text}</span>
               </div>
+=======
+    {/* Time Complexity */}
+    <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
+      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
+        Time Complexity
+      </h1>
+      <div className="prose dark:prose-invert max-w-none overflow-x-auto">
+        <table className="min-w-full border-collapse border border-gray-400">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-purple-900">
+              <th className="border border-purple-400 p-3 font-semibold">Operation</th>
+              <th className="border border-purple-400 p-3 font-semibold">Complexity</th>
+              <th className="border border-purple-400 p-3 font-semibold hidden sm:table-cell">
+                Reason
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["push()", "O(1)", "Only head pointer modification"],
+              ["pop()", "O(1)", "Only head pointer modification"],
+              ["peek()", "O(1)", "Single node access"],
+              ["isEmpty()", "O(1)", "Head pointer check"],
+              ["size()", "O(1) or O(n)", "Depends on counter implementation"],
+            ].map(([op, comp, reason], index) => (
+              <tr
+                key={op}
+                className={index % 2 === 0 ? "bg-white dark:bg-neutral-950" : "bg-purple-50 dark:bg-neutral-900"}
+              >
+                <td className="border border-purple-400 p-3">{op}</td>
+                <td className="border border-purple-400 p-3 font-mono">
+                  {comp}
+                </td>
+                <td className="border border-purple-400 p-3 hidden sm:table-cell">
+                  {reason}
+                </td>
+              </tr>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             ))}
           </div>
         </section>
@@ -263,4 +303,53 @@ const Content = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Content;
+=======
+    {/* Comparison Section */}
+    <section className="p-6">
+      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
+        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
+        Linked List vs Array Implementation
+      </h1>
+      <div className="prose dark:prose-invert max-w-none overflow-x-auto">
+        <table className="min-w-full border-collapse border border-gray-400">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-purple-900">
+              <th className="border border-purple-400 p-3 font-semibold">Feature</th>
+              <th className="border border-purple-400 p-3 font-semibold">Linked List</th>
+              <th className="border border-purple-400 p-3 font-semibold">Array</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["Memory Usage", "Extra for pointers", "Fixed size, may be wasted"],
+              ["Dynamic Size", "Yes", "No (unless resized)"],
+              ["Memory Allocation", "Dynamic", "Static (usually)"],
+              ["Access Time", "O(1) for top", "O(1) for all"],
+              ["Implementation Complexity", "Slightly more complex", "Simpler"],
+            ].map(([feature, ll, arr], index) => (
+              <tr
+                key={feature}
+                className={index % 2 === 0 ? "bg-white dark:bg-neutral-950" : "bg-gray-50 dark:bg-neutral-900"}
+              >
+                <td className="border border-purple-400 p-3">{feature}</td>
+                <td className="border border-purple-400 p-3 font-mono">
+                  {ll}
+                </td>
+                <td className="border border-purple-400 p-3 font-mono">
+                  {arr}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </article>
+</main>
+    );
+  };
+  
+  export default Content;
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)

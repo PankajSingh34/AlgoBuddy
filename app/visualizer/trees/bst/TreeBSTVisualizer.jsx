@@ -980,8 +980,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950"></span>
                   <span className="text-slate-400">Comparing (visiting)</span>
                 </div>
+<<<<<<< HEAD
                 <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-md shadow-purple-950"></span>
+=======
+                <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950"></span>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                   <span className="text-slate-400">Path Traversed</span>
                 </div>
                 {mode === "searching" && (
@@ -1059,7 +1064,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                         fillHex = "#a855f7"; // purple-500
                         strokeHex = "#c084fc";
                       } else if (isVisited) {
-                        fillHex = "#3b82f6"; // blue-500
+                        fillHex = "#3b82f6"; // purple-500
                         strokeHex = "#60a5fa";
                       }
 

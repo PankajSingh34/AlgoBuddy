@@ -16,7 +16,11 @@ const AnimatedStackItem = ({ char, isTop }) => (
     transition={{ type: "spring", stiffness: 300, damping: 20 }}
     className={`p-3 border-2 rounded text-center font-medium ${
       isTop
+<<<<<<< HEAD
         ? "bg-blue-100 dark:bg-blue-900 border-[#c27cf7]"
+=======
+        ? "bg-purple-100 dark:bg-purple-900 border-purple-300"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
         : "bg-white dark:bg-gray-700 border-gray-200"
     }`}
   >
@@ -267,6 +271,7 @@ const InfixToPrefixVisualizer = () => {
       </p>
       <div className="max-w-4xl mx-auto">
         {/* Input & Controls */}
+<<<<<<< HEAD
         <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
           <div className="mb-4">
             <label className="block text-gray-700 dark:text-gray-300 mb-2">
@@ -294,12 +299,28 @@ const InfixToPrefixVisualizer = () => {
             <button
               onClick={reset}
               className="flex-1 border-2 border-[#1a1a1a] dark:border-[#f7f9fa] text-[#1a1a1a] dark:text-[#f7f9fa] font-bold py-[10px] rounded-lg hover:bg-[#1a1a1a] hover:text-white dark:hover:bg-white dark:hover:text-[#1a1a1a] disabled:opacity-50 transition-all duration-200"
+=======
+        <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <input
+              type="text"
+              value={infix}
+              onChange={(e) => setInfix(e.target.value)}
+              placeholder="Enter infix expression (e.g., (A+B)*C)"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-neutral-900 dark:text-white"
+            />
+            <button
+              onClick={convertInfixToPrefix}
+              disabled={isProcessing}
+              className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             >
               Reset
             </button>
           </div>
 
           {steps.length > 0 && (
+<<<<<<< HEAD
             <div className="mt-6">
               <PlaybackControls
                 isPaused={!isPlaying}
@@ -313,6 +334,52 @@ const InfixToPrefixVisualizer = () => {
                 onReset={reset}
                 progressText={`Step ${currentStep + 1} of ${steps.length}`}
               />
+=======
+            <div className="flex flex-col gap-4 mt-4">
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={playPrevStep}
+                  disabled={currentStep === 0 || isAnimating}
+                  className="px-4 py-2 bg-gray-200 dark:bg-neutral-900 rounded-md disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button onClick={togglePlayPause} className="px-4 py-2 bg-purple-600 text-white rounded-md">
+                  {isPlaying ? "Pause" : "Play"}
+                </button>
+                <button
+                  onClick={playNextStep}
+                  disabled={currentStep >= steps.length - 1 || isAnimating}
+                  className="px-4 py-2 bg-gray-200 dark:bg-neutral-900 rounded-md disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm">Speed:</span>
+                <select
+                  value={speed}
+                  onChange={(e) => setSpeed(Number(e.target.value))}
+                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-neutral-900"
+                >
+                  <option value={2000}>Slow</option>
+                  <option value={1000}>Normal</option>
+                  <option value={500}>Fast</option>
+                  <option value={250}>Very Fast</option>
+                </select>
+                <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
+                  Step {currentStep + 1} of {steps.length}
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-neutral-900 rounded-full h-2.5">
+                <motion.div
+                  className="bg-purple-600 h-2.5 rounded-full"
+                  initial={false}
+                  animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                  transition={{ type: "spring", stiffness: 80 }}
+                />
+              </div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             </div>
           )}
         </div>
@@ -321,8 +388,12 @@ const InfixToPrefixVisualizer = () => {
         <div ref={statusRef} className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-semibold mb-4">Conversion Status</h2>
           {operation && (
+<<<<<<< HEAD
             <div className="mb-4 p-3 rounded-lg bg-[#a435f0]/10 dark:bg-[#a435f0]/20 text-[#a435f0] border border-[#a435f0]/20">
               <span className="font-semibold uppercase text-xs tracking-wider mr-2">Status:</span>
+=======
+            <div className="mb-4 p-3 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
               {operation}
             </div>
           )}
@@ -420,7 +491,7 @@ const InfixToPrefixVisualizer = () => {
                       key={idx}
                       onClick={() => jumpToStep(idx)}
                       className={`cursor-pointer ${
-                        currentStep === idx ? "bg-blue-50 dark:bg-neutral-950" : "hover:bg-gray-50 dark:hover:bg-neutral-950"
+                        currentStep === idx ? "bg-purple-50 dark:bg-neutral-950" : "hover:bg-gray-50 dark:hover:bg-neutral-950"
                       }`}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}

@@ -190,7 +190,11 @@ const LinkedListTraversal = () => {
           <button
             onClick={animateTraversal}
             disabled={isAnimating || list.length === 0}
+<<<<<<< HEAD
             className="flex-1 rounded-lg bg-primary px-6 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400"
+=======
+            className="flex-1 rounded-lg bg-purple-600 px-6 py-3 text-white transition hover:bg-purple-700 disabled:bg-gray-400"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
           >
             {isAnimating ? "Traversing..." : "Animate Traversal"}
           </button>
@@ -206,7 +210,11 @@ const LinkedListTraversal = () => {
       <VisualizerCard>
         <div className="mb-6 flex flex-wrap justify-center gap-3 text-sm sm:gap-6 sm:text-base">
           <div className="flex items-center">
+<<<<<<< HEAD
             <div className="mr-2 h-4 w-4 rounded-full bg-primary"></div>
+=======
+            <div className="mr-2 h-4 w-4 rounded-full bg-purple-500"></div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             <span>Node</span>
           </div>
           <div className="flex items-center">
@@ -214,7 +222,11 @@ const LinkedListTraversal = () => {
             <span>Visited</span>
           </div>
           <div className="flex items-center">
+<<<<<<< HEAD
             <div className="mr-2 h-4 w-4 rounded-full bg-[#c27cf7]"></div>
+=======
+            <div className="mr-2 h-4 w-4 rounded-full bg-purple-300"></div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             <span>Address</span>
           </div>
           <div className="flex items-center">
@@ -246,12 +258,16 @@ const LinkedListTraversal = () => {
                     </div>
                     <div
                       ref={(el) => (nodeRefs.current[index] = el)}
+<<<<<<< HEAD
                       className="node flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-full bg-primary text-3xl text-white shadow-md transition-all hover:shadow-lg"
+=======
+                      className="node flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-full bg-purple-500 text-3xl text-white shadow-md transition-all hover:shadow-lg"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                       onClick={animateTraversal}
                     >
                       {node.value}
                     </div>
-                    <div className="rounded bg-blue-100 px-2 py-1 text-xs font-mono dark:bg-blue-900">
+                    <div className="rounded bg-purple-100 px-2 py-1 text-xs font-mono dark:bg-purple-900">
                       Next: {node.next}
                     </div>
                   </div>

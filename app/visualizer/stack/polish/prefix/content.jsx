@@ -101,6 +101,7 @@ const Content = () => {
             Operator Precedence Table
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
+<<<<<<< HEAD
             <table className="min-w-full border-collapse border border-primary">
               <thead>
                 <tr className="bg-blue-50 dark:bg-blue-900/20">
@@ -111,12 +112,25 @@ const Content = () => {
                     Meaning
                   </th>
                   <th className="border border-primary px-4 py-2 font-semibold">
+=======
+            <table className="min-w-full border-collapse border border-purple-500">
+              <thead>
+                <tr className="bg-purple-50 dark:bg-purple-900/20">
+                  <th className="border border-purple-500 px-4 py-2 font-semibold">
+                    Operator
+                  </th>
+                  <th className="border border-purple-500 px-4 py-2 font-semibold">
+                    Meaning
+                  </th>
+                  <th className="border border-purple-500 px-4 py-2 font-semibold">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     Precedence
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
+<<<<<<< HEAD
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ( )
                   </td>
@@ -124,10 +138,20 @@ const Content = () => {
                     Parentheses
                   </td>
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+=======
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    ( )
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    Parentheses
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     Highest
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
+<<<<<<< HEAD
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ^ %
                   </td>
@@ -135,10 +159,20 @@ const Content = () => {
                     Exponentiation / Modulus
                   </td>
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+=======
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    ^ %
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    Exponentiation / Modulus
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     2
                   </td>
                 </tr>
                 <tr>
+<<<<<<< HEAD
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     * /
                   </td>
@@ -146,10 +180,20 @@ const Content = () => {
                     Multiplication / Division
                   </td>
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+=======
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    * /
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    Multiplication / Division
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     3
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
+<<<<<<< HEAD
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     + -
                   </td>
@@ -157,6 +201,15 @@ const Content = () => {
                     Addition / Subtraction
                   </td>
                   <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+=======
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    + -
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                    Addition / Subtraction
+                  </td>
+                  <td className="border border-purple-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     4 (Lowest)
                   </td>
                 </tr>

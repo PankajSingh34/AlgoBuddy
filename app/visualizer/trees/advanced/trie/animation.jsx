@@ -709,6 +709,7 @@ export default function TrieAnimation() {
                   let textClass = "fill-gray-800 dark:fill-white";
                   let strokeWidth = "2";
 
+<<<<<<< HEAD
                   if (isCurr) {
                     nodeClass = "fill-emerald-50 stroke-emerald-500 dark:fill-emerald-900/30 dark:stroke-emerald-400";
                     textClass = "fill-emerald-700 dark:fill-emerald-300";
@@ -726,6 +727,21 @@ export default function TrieAnimation() {
                     textClass = "fill-blue-700 dark:fill-blue-300";
                     strokeWidth = "3";
                   }
+=======
+                if (isCurr) {
+                  fillHex = "#10b981"; // emerald-500
+                  strokeHex = "#34d399";
+                } else if (isMatch) {
+                  fillHex = "#8b5cf6"; // purple-600
+                  strokeHex = "#c084fc";
+                } else if (isError) {
+                  fillHex = "#ef4444"; // red-500
+                  strokeHex = "#f87171";
+                } else if (isActivePath) {
+                  fillHex = "#3b82f6"; // purple-500
+                  strokeHex = "#60a5fa";
+                }
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
 
                   return (
                     <g key={`node-g-${idx}`} className="transition-all duration-300">

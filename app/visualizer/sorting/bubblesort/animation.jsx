@@ -350,17 +350,25 @@ const BubbleSortVisualizer = () => {
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 ${getFontSize(value)} font-bold
+                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-purple-900 transition-all duration-300 ${getFontSize(value)} font-bold
                         ${isComparing
                           ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-900"
                           : isSorted
                           ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-900"
+<<<<<<< HEAD
                           : "bg-primary/80 dark:bg-primary/80 border-primary dark:border-primary dark:text-gray-900"
+=======
+                          : "bg-purple-400 dark:bg-purple-400 border-purple-600 dark:border-purple-600 dark:text-gray-900"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                         }`}
                     >
                       {value}
                     </div>
+<<<<<<< HEAD
                     <div className="mt-1 text-xs text-gray-700 dark:text-[#c27cf7] font-semibold">
+=======
+                    <div className="mt-1 text-xs text-gray-700 dark:text-purple-300 font-semibold">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                       {index === currentIndices.i && "i"}
                       {index === currentIndices.j && "j"}
                     </div>

@@ -1343,7 +1343,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                         fillHex = '#f59e0b'; // amber-500
                         strokeHex = '#fbbf24';
                       } else if (isActive) {
-                        fillHex = '#3b82f6'; // blue-500
+                        fillHex = '#3b82f6'; // purple-500
                         strokeHex = '#60a5fa';
                       }
 

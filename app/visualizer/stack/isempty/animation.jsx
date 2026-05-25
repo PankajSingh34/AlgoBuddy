@@ -228,6 +228,7 @@ const StackVisualizer = () => {
         Visualize Push, Pop, Peek, and IsEmpty operations
       </p>
 
+<<<<<<< HEAD
       <div className="max-w-4xl mx-auto">
         <LinearMemoryControls
           inputValue={inputValue}
@@ -239,11 +240,80 @@ const StackVisualizer = () => {
           onSpeedChange={setSpeed}
           actions={actions}
         />
+=======
+      <div className="max-w-md mx-auto">
+        {/* Controls */}
+        <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md mb-8 border border-gray-200 dark:border-gray-700">
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Enter a value"
+              className="flex-1 p-2 rounded dark:bg-neutral-900 border"
+              disabled={isAnimating}
+            />
+            <button
+              onClick={push}
+              disabled={isAnimating}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              Push
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={checkEmpty}
+              disabled={isAnimating}
+              className="text-black bg-green-500 px-4 py-2 rounded disabled:opacity-50"
+            >
+              IsEmpty
+            </button>
+            <button
+              onClick={reset}
+              disabled={isAnimating}
+              className="bg-red-500 dark:text-black text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
 
         {/* Stack Visualization */}
         <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold mb-4 text-center">Stack Visualization</h2>
 
+<<<<<<< HEAD
+=======
+          {/* Operation Status */}
+          {operation && (
+            <div className="mb-4 p-3 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+              {operation}
+            </div>
+          )}
+
+          {/* Message Display */}
+          {message && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-sm ${
+                message.includes("pushed")
+                  ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                  : message.includes("popped")
+                  ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
+                  : message.includes("Top element")
+                  ? "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
+                  : isEmptyStatus !== null
+                  ? "bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          {/* Vertical Stack */}
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
           <div className="flex flex-col items-center min-h-[300px]">
             {/* Stack status and pointers details */}
             <div className="mb-6 text-center text-sm font-semibold text-slate-500">
@@ -254,6 +324,7 @@ const StackVisualizer = () => {
               {" | "}Capacity: <span className="text-slate-300 font-bold">{stack.length}</span>/<span className="text-slate-400 font-bold">{capacity}</span>
             </div>
 
+<<<<<<< HEAD
             {/* Stack physical slots visualizer */}
             <div className="w-full max-w-md space-y-1.5">
               {slots.map((slot) => {
@@ -263,6 +334,26 @@ const StackVisualizer = () => {
                     {/* Index display */}
                     <div className="w-16 text-right text-xs font-bold text-slate-400 dark:text-slate-500">
                       Index [{slot.index}]
+=======
+            <div className="w-32 relative">
+              {stack.length === 0 ? (
+                <EmptyCloud />
+              ) : (
+                <div className="space-y-1">
+                  {stack.map((item, index) => (
+                    <div
+                      key={index}
+                      ref={(el) => (itemRefs.current[index] = el)}
+                      className={`p-3 border-2 rounded text-center font-medium transition-all ${
+                        index === 0 && peekedItem !== null
+                          ? "bg-purple-200 dark:bg-purple-800 border-purple-400 dark:border-purple-600"
+                          : index === 0
+                          ? "bg-purple-100 dark:bg-purple-900 border-purple-300 dark:border-purple-700"
+                          : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                      }`}
+                    >
+                      {item}
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     </div>
 
                     {/* Slot element box */}

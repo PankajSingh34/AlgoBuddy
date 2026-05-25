@@ -179,7 +179,11 @@ const Content = () => {
               <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 {paragraph[2]}
               </p>
+<<<<<<< HEAD
               <ul className="mt-2 space-y-1 list-disc pl-5 marker:text-primary dark:marker:text-[#c27cf7]">
+=======
+              <ul className="mt-2 space-y-1 list-disc pl-5 marker:text-purple-500 dark:marker:text-purple-400">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                 <li className="text-[#374151] dark:text-[#d1d5db]">When the maximum queue size is unpredictable</li>
                 <li className="text-[#374151] dark:text-[#d1d5db]">When memory efficiency is more important than cache performance</li>
                 <li className="text-[#374151] dark:text-[#d1d5db]">In applications with frequent dynamic memory allocation/deallocation</li>

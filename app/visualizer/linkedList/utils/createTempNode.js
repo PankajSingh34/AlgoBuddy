@@ -15,11 +15,11 @@ export function createLinkedListTempNode({
   tempNode.className = "node absolute flex border border-gray-300";
 
   const dataPart = documentRef.createElement("div");
-  dataPart.className = "data-part rounded-l-lg bg-blue-500 p-4 text-white";
+  dataPart.className = "data-part rounded-l-lg bg-purple-500 p-4 text-white";
   dataPart.textContent = String(value ?? "");
 
   const nextPart = documentRef.createElement("div");
-  nextPart.className = "next-part rounded-r-lg bg-blue-300 p-4";
+  nextPart.className = "next-part rounded-r-lg bg-purple-300 p-4";
   nextPart.textContent = String(nextText ?? "");
 
   tempNode.appendChild(dataPart);

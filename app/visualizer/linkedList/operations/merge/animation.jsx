@@ -216,7 +216,11 @@ const LinkedListMerge = () => {
           <button
             onClick={animateMerge}
             disabled={isAnimating || list1.length === 0 || list2.length === 0}
+<<<<<<< HEAD
             className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400 sm:px-6"
+=======
+            className="flex-1 rounded-lg bg-purple-600 px-4 py-3 text-white transition hover:bg-purple-700 disabled:bg-gray-400 sm:px-6"
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
           >
             {isAnimating ? "Merging..." : "Merge Lists"}
           </button>
@@ -240,7 +244,11 @@ const LinkedListMerge = () => {
             <span>List 2</span>
           </div>
           <div className="flex items-center">
+<<<<<<< HEAD
             <div className="mr-2 h-4 w-4 rounded-md bg-primary"></div>
+=======
+            <div className="mr-2 h-4 w-4 rounded-md bg-purple-600"></div>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             <span>Merged</span>
           </div>
           <div className="flex items-center">
@@ -331,7 +339,11 @@ const LinkedListMerge = () => {
           </div>
 
           <div className="flex flex-col items-center">
+<<<<<<< HEAD
             <h3 className="mb-3 text-lg font-medium text-primary">Merged List</h3>
+=======
+            <h3 className="mb-3 text-lg font-medium text-purple-600">Merged List</h3>
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
             <div
               ref={containerRef}
               className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]"
@@ -348,7 +360,11 @@ const LinkedListMerge = () => {
                     <React.Fragment key={`merged-${node.id}`}>
                       <div
                         ref={(el) => (mergedRefs.current[index] = el)}
+<<<<<<< HEAD
                         className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-primary text-lg text-white shadow-md ${
+=======
+                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-purple-600 text-lg text-white shadow-md ${
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                           index === mergedList.length - 1 && isAnimating ? "animate-pulse" : ""
                         }`}
                       >

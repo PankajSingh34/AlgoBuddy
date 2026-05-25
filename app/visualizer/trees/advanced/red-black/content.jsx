@@ -69,7 +69,7 @@ const RedBlackContent = () => {
             <div className="mt-4 grid sm:grid-cols-3 gap-3">
               {[
                 { case: "Case 1", desc: "Uncle is RED → Recolor parent, uncle, and grandparent. Move z up.", color: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800" },
-                { case: "Case 2", desc: "Uncle is BLACK, z is right child → Left-rotate parent. Convert to Case 3.", color: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800" },
+                { case: "Case 2", desc: "Uncle is BLACK, z is right child → Left-rotate parent. Convert to Case 3.", color: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800" },
                 { case: "Case 3", desc: "Uncle is BLACK, z is left child → Recolor + Right-rotate grandparent. Done.", color: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800" },
               ].map(({ case: c, desc, color }) => (
                 <div key={c} className={`p-4 rounded-xl border ${color}`}>

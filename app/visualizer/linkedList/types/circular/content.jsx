@@ -133,7 +133,11 @@ const content = () => {
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
+<<<<<<< HEAD
                   <div className="w-64 h-32 rounded-full border-2 border-primary/80 flex items-center justify-center">
+=======
+                  <div className="w-64 h-32 rounded-full border-2 border-purple-400 flex items-center justify-center">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">head</div>
                     <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[A]</div>
                     <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[B]</div>
@@ -142,7 +146,11 @@ const content = () => {
                 </div>
                 <div className="text-center text-gray-600 dark:text-gray-300">↓ Insert X at head ↓</div>
                 <div className="relative">
+<<<<<<< HEAD
                   <div className="w-64 h-32 rounded-full border-2 border-primary/80 flex items-center justify-center">
+=======
+                  <div className="w-64 h-32 rounded-full border-2 border-purple-400 flex items-center justify-center">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">head</div>
                     <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[X]</div>
                     <div className="absolute top-3/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[A]</div>
@@ -170,7 +178,11 @@ const content = () => {
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
+<<<<<<< HEAD
                   <div className="w-64 h-32 rounded-full border-2 border-primary/80 flex items-center justify-center">
+=======
+                  <div className="w-64 h-32 rounded-full border-2 border-purple-400 flex items-center justify-center">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">head</div>
                     <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[X]</div>
                     <div className="absolute top-3/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[A]</div>
@@ -180,7 +192,11 @@ const content = () => {
                 </div>
                 <div className="text-center text-gray-600 dark:text-gray-300">↓ Delete X (head) ↓</div>
                 <div className="relative">
+<<<<<<< HEAD
                   <div className="w-64 h-32 rounded-full border-2 border-primary/80 flex items-center justify-center">
+=======
+                  <div className="w-64 h-32 rounded-full border-2 border-purple-400 flex items-center justify-center">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">head</div>
                     <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[A]</div>
                     <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-600 px-3 py-1 rounded">[B]</div>
@@ -276,7 +292,11 @@ const content = () => {
         <section className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Applications</h2>
           <div className="prose dark:prose-invert max-w-none">
+<<<<<<< HEAD
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc pl-5 marker:text-primary dark:marker:text-[#c27cf7]">
+=======
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc pl-5 marker:text-purple-500 dark:marker:text-purple-400">
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
               {applications.map((app, index) => (
                 <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {app}

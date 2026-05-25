@@ -63,7 +63,11 @@ const TrieContent = () => {
             <div className="bg-gray-50 dark:bg-[#1b1b1b] p-4 rounded-xl border border-gray-200 dark:border-gray-800 font-mono text-sm">
               <span className="text-purple-600 dark:text-purple-400">struct</span> TrieNode {"{"} <br />
               &nbsp;&nbsp;TrieNode* children[26]; <span className="text-gray-400">{"// Pointers to character children"}</span><br />
+<<<<<<< HEAD
               &nbsp;&nbsp;<span className="text-primary dark:text-[#c27cf7]">bool</span> isEndOfWord; <span className="text-gray-400">{"// True if node is the end of a word"}</span><br />
+=======
+              &nbsp;&nbsp;<span className="text-purple-600 dark:text-purple-400">bool</span> isEndOfWord; <span className="text-gray-400">{"// True if node is the end of a word"}</span><br />
+>>>>>>> c8abb0c (Refactor color scheme from blue to purple across visualizer components for a cohesive design update)
               {"}"};
             </div>
           </div>
