@@ -13,6 +13,8 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
+import { Editor } from "@monaco-editor/react";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
 
@@ -340,9 +342,19 @@ function DataPreview({ title, values, variant = "array" }) {
   );
 }
 
+const MONACO_LANGUAGE_MAP = {
+  JavaScript: "javascript",
+  Python: "python",
+  "C++": "cpp",
+  Java: "java",
+};
+
 export default function DryRunClient() {
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
   const { user } = useUser();
   const [language, setLanguage] = useState("JavaScript");
+  const monacoLanguage = MONACO_LANGUAGE_MAP[language] ?? "javascript";
   const [source, setSource] = useState(SAMPLES.JavaScript);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);

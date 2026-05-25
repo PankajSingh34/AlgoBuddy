@@ -42,9 +42,6 @@ const result=quickSort([...numbers]);
 console.log("After sorting:",result);`,
 
   python: `# Quick Sort in Python
-def quick_sort(arr,low=0,high=None):
-
-  python: `# Quick Sort in Python
 def quick_sort(arr, low=0, high=None):
     if high is None:
         high=len(arr)-1
@@ -76,6 +73,14 @@ def partition(arr,low,high):
 
     return i
 
+
+numbers=[10,7,8,9,1,5]
+
+print("Before sorting:",numbers)
+
+quick_sort(numbers)
+
+print("After sorting:",numbers)`,
 
   java: `// Quick Sort in Java
 public class QuickSort {
@@ -149,6 +154,8 @@ public class QuickSort {
 
   c: `// Quick Sort in C
 #include <stdio.h>
+
+void swap(int *a, int *b){
 
     int temp=*a;
     *a=*b;
