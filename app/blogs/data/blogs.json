@@ -42,5 +42,16 @@
       "category": "DSA",
       "tags": ["Data Structures", "DSA", "Algorithms", "Beginner Programming"],
       "image": "/blog/timeRequired.png"
+    },
+    {
+      "id": 5,
+      "title": "Common Mistakes Beginners Make While Learning DSA",
+      "excerpt": "Many beginners struggle with DSA because they focus on memorizing code instead of understanding logic and problem-solving. Learn the most common mistakes and how to avoid them effectively.",
+      "date": "May 26, 2026",
+      "readTime": "7 min read",
+      "slug": "/blogs/Content/commonDSAMistakes",
+      "category": "DSA",
+      "tags": ["DSA", "Beginner Programming", "Problem Solving", "Algorithms"],
+      "image": "/blog/commonDSAMistakes.png"
     }
-  ]
+]
