@@ -32,6 +32,7 @@ AlgoBuddy is an open-source, interactive DSA learning platform that brings algor
 - Queue: Enqueue/Dequeue, Peek Front, isEmpty, isFull, Single-ended, Double-ended, Circular, Priority Queue, Array and Linked List implementations
 - Linked List: Singly, Doubly, Circular — with Insertion, Deletion, Traversal, Merge, Reverse, and Comparison
 - Trees: Binary Tree types, In-order Traversal
+-- HashMap: Insert, Search, Delete operations with collision handling visualization
 
 **User System**
 - Email/password auth with Cloudflare Turnstile captcha verification
@@ -166,4 +167,4 @@ Licensed under the [Apache 2.0 License](./LICENSE).
 
 ---
 
-Made with care by [Sohan Rout](https://www.linkedin.com/in/sohan-rout) and contributors.
+Made with care by [Pankaj Singh](https://www.linkedin.com/in/pankaj-singh-2a968b212/) and contributors.

@@ -2,7 +2,7 @@
 import ComplexityGraph from "@/app/components/ui/graph";
 import { useEffect, useState } from "react";
 
-const content = () => {
+const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
 
@@ -58,42 +58,13 @@ const content = () => {
   ];
 
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-4">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="100%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-        <div className="flex justify-center">
-          <span className="text-xs hidden md:block">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
+    <main className="max-w-4xl mx-auto">
+      <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is the "Is Full" Operation? */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
             <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-            What is the "Is Full" Operation?
+            What is the &quot;Is Full&quot; Operation?
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
@@ -130,7 +101,7 @@ const content = () => {
           </h1>
           <div className="prose dark:prose-invert max-w-none">
             <p className="text-[#374151] dark:text-[#d1d5db] mb-4 leading-relaxed">
-              Here's the time and space complexity analysis for stack
+              Here&apos;s the time and space complexity analysis for stack
               operations:
             </p>
             <ul className="space-y-3 list-disc pl-5 marker:text-gray-500 dark:marker:text-gray-400">
@@ -239,37 +210,8 @@ const content = () => {
           </div>
         </section>
       </article>
-
-        {/* Mobile iframe at bottom */}
-      <div className="block md:hidden w-full">
-        {mounted && (
-          <iframe
-            key={theme}
-            src={
-              theme === "dark"
-                ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-            }
-            width="100%"
-            height="320"
-            title="Daily DSA Challenge"
-          ></iframe>
-        )}
-        <div className="flex justify-center pb-8">
-          <span className="text-xs">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-    </main>
+</main>
   );
 };
 
-export default content;
+export default Content;
