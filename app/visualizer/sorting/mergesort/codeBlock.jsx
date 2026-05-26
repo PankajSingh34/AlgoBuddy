@@ -55,7 +55,7 @@ def merge(left, right):
     rightIndex = 0
 
     while leftIndex < len(left) and rightIndex < len(right):
-        if left[leftIndex] < right[leftIndex]:
+        if left[leftIndex] < right[rightIndex]:
             result.append(left[leftIndex])
             leftIndex += 1
         else:
