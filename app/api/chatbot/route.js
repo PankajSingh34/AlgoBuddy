@@ -23,25 +23,29 @@ Capabilities & Guidelines:
 
 export async function POST(req) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return Response.json({ error: "Service unavailable." }, { status: 503 });
+    // Turnstile bot verification
+    const turnstileToken = req.headers.get("x-turnstile-token");
+    const turnstileValid = await verifyTurnstile(turnstileToken);
+    if (!turnstileValid) {
+      return Response.json({ error: "Bot verification failed." }, { status: 403 });
     }
 
+    // Supabase auth client
     const cookieStore = await cookies();
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        },
-      },
-    });
+      }
+    );
 
     const { data: authData } = await supabase.auth.getUser();
     if (!authData?.user) {
