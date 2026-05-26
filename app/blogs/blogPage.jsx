@@ -235,7 +235,10 @@ const BlogPage = () => {
             {categories.map((category) => (
               <button
                 key={category}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => {
+                  setActiveCategory(category);
+                  setSearchQuery("");
+                }}
                 className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
                   activeCategory === category
                     ? "bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg"
