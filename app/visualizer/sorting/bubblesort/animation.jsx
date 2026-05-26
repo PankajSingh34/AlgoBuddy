@@ -7,6 +7,10 @@ import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/stora
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ChallengeModePanel, {
+  createOptions,
+  useSortingChallenge,
+} from "@/app/visualizer/sorting/components/ChallengeMode";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -15,10 +19,27 @@ const getFontSize = (value) => {
   return "text-xs";
 };
 
+const createBubbleSwapQuestion = (arr, j) => {
+  const correctLabel = `${arr[j]} and ${arr[j + 1]} (indices ${j} and ${j + 1})`;
+  const options = createOptions(correctLabel, [
+    j > 0 ? `${arr[j - 1]} and ${arr[j]} (indices ${j - 1} and ${j})` : null,
+    j + 2 < arr.length ? `${arr[j + 1]} and ${arr[j + 2]} (indices ${j + 1} and ${j + 2})` : null,
+    "No swap will happen",
+  ]);
+
+  return {
+    prompt: "Which two elements will swap next?",
+    options,
+    correctOptionId: "correct",
+    explanation: `${arr[j]} is greater than ${arr[j + 1]}, so Bubble Sort swaps adjacent indices ${j} and ${j + 1}.`,
+  };
+};
+
 const BubbleSortVisualizer = () => {
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
   const [array, setArray] = useState(() => loadFromStorage("bubble-array", []));
+  const [challengeEnabled, setChallengeEnabled] = useState(false);
   const {
     isPaused,
     speed,
@@ -41,6 +62,13 @@ const BubbleSortVisualizer = () => {
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  const {
+    activeQuestion,
+    askChallenge,
+    resetChallengeStats,
+    stats: challengeStats,
+    submitAnswer,
+  } = useSortingChallenge(challengeEnabled);
 
   const handleArrayGenerated = (newArray) => {
     setArray(newArray);
@@ -54,6 +82,7 @@ const BubbleSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
+    resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
 
@@ -91,6 +120,9 @@ const BubbleSortVisualizer = () => {
         if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
+          await askChallenge(createBubbleSwapQuestion(arr, j));
+          if (!isSortingRef.current) return;
+
           const bars = document.querySelectorAll(".bar");
           const bar1 = bars[j];
           const bar2 = bars[j + 1];
@@ -229,6 +261,16 @@ const BubbleSortVisualizer = () => {
               <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
             </div>
           )}
+
+          <ChallengeModePanel
+            activeQuestion={activeQuestion}
+            disabled={sorting}
+            enabled={challengeEnabled}
+            onEnabledChange={setChallengeEnabled}
+            onResetStats={resetChallengeStats}
+            onSubmitAnswer={submitAnswer}
+            stats={challengeStats}
+          />
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm sm:text-base">

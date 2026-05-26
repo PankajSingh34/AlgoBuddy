@@ -6,6 +6,10 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ChallengeModePanel, {
+  createOptions,
+  useSortingChallenge,
+} from "@/app/visualizer/sorting/components/ChallengeMode";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -14,10 +18,27 @@ const getFontSize = (value) => {
   return "text-xs";
 };
 
+const createSelectionMinimumQuestion = (arr, minIndex, passIndex) => {
+  const correctLabel = `${arr[minIndex]} (index ${minIndex})`;
+  const options = createOptions(correctLabel, [
+    passIndex !== minIndex ? `${arr[passIndex]} (index ${passIndex})` : null,
+    minIndex + 1 < arr.length ? `${arr[minIndex + 1]} (index ${minIndex + 1})` : null,
+    passIndex + 1 < arr.length ? `${arr[passIndex + 1]} (index ${passIndex + 1})` : null,
+  ]);
+
+  return {
+    prompt: "Which element is currently minimum for this pass?",
+    options,
+    correctOptionId: "correct",
+    explanation: `${arr[minIndex]} is the minimum from index ${passIndex} to the end, so it will be placed at index ${passIndex}.`,
+  };
+};
+
 const SelectionSortVisualizer = () => {
     const [array, setArray] = useState([]);
     const [sorting, setSorting] = useState(false);
     const [sorted, setSorted] = useState(false);
+    const [challengeEnabled, setChallengeEnabled] = useState(false);
     const {
       isPaused,
       speed,
@@ -40,6 +61,13 @@ const SelectionSortVisualizer = () => {
     const animationRef = useRef(null);
     const resolveRef = useRef(null);
     const isSortingRef = useRef(false);
+    const {
+      activeQuestion,
+      askChallenge,
+      resetChallengeStats,
+      stats: challengeStats,
+      submitAnswer,
+    } = useSortingChallenge(challengeEnabled);
 
     const cancellableDelay = async () => {
       await new Promise((resolve) => {
@@ -70,6 +98,7 @@ const SelectionSortVisualizer = () => {
       setCurrentStep(0);
       setTotalSteps(0);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
+      resetChallengeStats();
       if (animationRef.current) {
         clearTimeout(animationRef.current);
       }
@@ -103,8 +132,6 @@ const SelectionSortVisualizer = () => {
           setComparisons(tempComparisons);
           setCurrentStep((prev) => prev + 1);
   
-          setCurrentStep((prev) => prev + 1);
-  
           await cancellableDelay();
           if (!isSortingRef.current) return;
   
@@ -118,6 +145,9 @@ const SelectionSortVisualizer = () => {
             if (!isSortingRef.current) return;
           }
         }
+
+        await askChallenge(createSelectionMinimumQuestion(arr, minIndex, i));
+        if (!isSortingRef.current) return;
         
         if (minIndex !== i) {
           [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
@@ -273,6 +303,16 @@ const SelectionSortVisualizer = () => {
                   <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
                 </div>
               )}
+
+              <ChallengeModePanel
+                activeQuestion={activeQuestion}
+                disabled={sorting}
+                enabled={challengeEnabled}
+                onEnabledChange={setChallengeEnabled}
+                onResetStats={resetChallengeStats}
+                onSubmitAnswer={submitAnswer}
+                stats={challengeStats}
+              />
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 text-sm">

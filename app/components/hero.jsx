@@ -5,17 +5,18 @@ import { event } from "@/lib/gtag";
 import { ArrowRight } from "lucide-react";
 
 const TOPICS = [
-  { label: "Sorting Algorithms", color: "#a435f0", bg: "#faf5ff" },
-  { label: "Binary Search", color: "#2563eb", bg: "#eff6ff" },
-  { label: "Graph Traversal", color: "#059669", bg: "#f0fdf4" },
-  { label: "Linked Lists", color: "#d97706", bg: "#fffbeb" },
-  { label: "Dynamic Programming", color: "#dc2626", bg: "#fef2f2" },
-  { label: "Stack & Queue", color: "#7c3aed", bg: "#f5f3ff" },
+  { label: "Sorting Algorithms",  color: "#a435f0", bg: "#faf5ff", darkBg: "#2e1a47", darkColor: "#c27cf7" },
+  { label: "Binary Search",       color: "#2563eb", bg: "#eff6ff", darkBg: "#1a2744", darkColor: "#60a5fa" },
+  { label: "Graph Traversal",     color: "#059669", bg: "#f0fdf4", darkBg: "#0f2e22", darkColor: "#34d399" },
+  { label: "Linked Lists",        color: "#d97706", bg: "#fffbeb", darkBg: "#2e1f0a", darkColor: "#fbbf24" },
+  { label: "Dynamic Programming", color: "#dc2626", bg: "#fef2f2", darkBg: "#2e0f0f", darkColor: "#f87171" },
+  { label: "Stack & Queue",       color: "#7c3aed", bg: "#f5f3ff", darkBg: "#1e1535", darkColor: "#a78bfa" },
 ];
 
 const HeroSection = () => {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,6 +29,15 @@ const HeroSection = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const check = () => setIsDark(root.classList.contains("dark"));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   const handleStart = () => {
     event({
       action: "click_start_visualizing",
@@ -36,18 +46,16 @@ const HeroSection = () => {
     });
   };
 
+  const topic = TOPICS[index];
+
   return (
-    <main
-      className="bg-white dark:bg-surface-900"
-    >
+    <main className="bg-white dark:bg-surface-900">
       <section className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
         <div className="relative z-10 w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* ══ LEFT — text ══ */}
           <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">
             {/* headline */}
-            <h1
-              className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-extrabold leading-[1.1] tracking-tighter text-surface-900 dark:text-surface-50"
-            >
+            <h1 className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-extrabold leading-[1.1] tracking-tighter text-surface-900 dark:text-surface-50">
               The smartest way
               <br />
               to learn DSA — <span className="text-primary">visually.</span>
@@ -58,18 +66,18 @@ const HeroSection = () => {
               <span
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[14px] font-bold transition-all duration-300"
                 style={{
-                  background: visible ? TOPICS[index].bg : "transparent",
-                  color: visible ? TOPICS[index].color : "transparent",
-                  opacity: visible ? 1 : 0,
-                  transform: visible ? "translateY(0px)" : "translateY(6px)",
-                  border: `1.5px solid ${visible ? TOPICS[index].color + "33" : "transparent"}`,
+                  background: visible ? (isDark ? topic.darkBg  : topic.bg)    : "transparent",
+                  color:      visible ? (isDark ? topic.darkColor : topic.color) : "transparent",
+                  opacity:    visible ? 1 : 0,
+                  transform:  visible ? "translateY(0px)" : "translateY(6px)",
+                  border: `1.5px solid ${visible ? (isDark ? topic.darkColor + "55" : topic.color + "33") : "transparent"}`,
                 }}
               >
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: TOPICS[index].color }}
+                  style={{ background: isDark ? topic.darkColor : topic.color }}
                 />
-                {TOPICS[index].label}
+                {topic.label}
               </span>
             </div>
 
@@ -196,41 +204,33 @@ const HeroSection = () => {
                     {/* array bars */}
                     <div className="flex items-end gap-1.5 h-[60px]">
                       {[2, 5, 8, 12, 16, 23, 38, 45, 56, 72].map((v, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 flex flex-col items-center gap-1"
-                        >
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
                           <div
                             className="w-full rounded-sm transition-all"
                             style={{
                               height: `${(v / 72) * 52}px`,
                               background:
                                 i === 5
-                                  ? "#a435f0" // mid — purple
+                                  ? "#a435f0"
                                   : i >= 5
-                                    ? "#3e4143" // right half — dimmed
-                                    : "#6a6f73", // left half
+                                    ? "#3e4143"
+                                    : "#6a6f73",
                             }}
                           />
-                          <span className="text-[9px] text-[#9e9e9e] font-mono">
-                            {v}
-                          </span>
+                          <span className="text-[9px] text-[#9e9e9e] font-mono">{v}</span>
                         </div>
                       ))}
                     </div>
                     {/* legend */}
                     <div className="flex items-center gap-4 mt-3">
                       <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0]" />{" "}
-                        mid
+                        <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0]" /> mid
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-[#6a6f73]" />{" "}
-                        active
+                        <span className="w-2.5 h-2.5 rounded-sm bg-[#6a6f73]" /> active
                       </span>
                       <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-[#3e4143]" />{" "}
-                        eliminated
+                        <span className="w-2.5 h-2.5 rounded-sm bg-[#3e4143]" /> eliminated
                       </span>
                     </div>
                   </div>

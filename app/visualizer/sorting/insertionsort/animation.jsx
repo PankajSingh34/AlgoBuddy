@@ -6,6 +6,10 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ChallengeModePanel, {
+  createOptions,
+  useSortingChallenge,
+} from "@/app/visualizer/sorting/components/ChallengeMode";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -14,10 +18,27 @@ const getFontSize = (value) => {
   return "text-xs";
 };
 
+const createInsertionKeyQuestion = (arr, index) => {
+  const correctLabel = `${arr[index]} (index ${index})`;
+  const options = createOptions(correctLabel, [
+    index > 0 ? `${arr[index - 1]} (index ${index - 1})` : null,
+    index + 1 < arr.length ? `${arr[index + 1]} (index ${index + 1})` : null,
+    "The first element",
+  ]);
+
+  return {
+    prompt: "Which element will be inserted next?",
+    options,
+    correctOptionId: "correct",
+    explanation: `Insertion Sort takes the element at index ${index}, ${arr[index]}, and inserts it into the sorted left side.`,
+  };
+};
+
 const InsertionSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
+  const [challengeEnabled, setChallengeEnabled] = useState(false);
   const {
     isPaused,
     speed,
@@ -37,6 +58,13 @@ const InsertionSortVisualizer = () => {
   const barRefs = useRef([]);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  const {
+    activeQuestion,
+    askChallenge,
+    resetChallengeStats,
+    stats: challengeStats,
+    submitAnswer,
+  } = useSortingChallenge(challengeEnabled);
 
   // Helper: cancellable delay
   const cancellableDelay = async () => {
@@ -53,6 +81,7 @@ const InsertionSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
+    resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
 
@@ -77,6 +106,8 @@ const InsertionSortVisualizer = () => {
       let current = arr[i];
       let j = i - 1;
       setCurrentIndices({ current: i, comparing: j, sortedUpTo: i - 1 });
+      await askChallenge(createInsertionKeyQuestion(arr, i));
+      if (!isSortingRef.current) return;
       await cancellableDelay();
       if (!isSortingRef.current) return;
 
@@ -200,6 +231,15 @@ const InsertionSortVisualizer = () => {
               <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
             </div>
           )}
+          <ChallengeModePanel
+            activeQuestion={activeQuestion}
+            disabled={sorting}
+            enabled={challengeEnabled}
+            onEnabledChange={setChallengeEnabled}
+            onResetStats={resetChallengeStats}
+            onSubmitAnswer={submitAnswer}
+            stats={challengeStats}
+          />
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Comparisons:</div><div className="text-2xl">{comparisons}</div></div>

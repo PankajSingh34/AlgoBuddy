@@ -5,38 +5,38 @@ import Link from "next/link";
 /* DSA topic map — rows of topic cards, some completed, some locked */
 const TOPIC_ROWS = [
   [
-    { label: "Arrays", color: "#f87171", done: true },
-    { label: "Strings", color: "#fb923c", done: true },
-    { label: "Hashing", color: "#a78bfa", done: true },
-    { label: "Recursion", color: "#34d399", done: true },
+    { label: "Arrays",        color: "#f87171", done: true },
+    { label: "Strings",       color: "#fb923c", done: true },
+    { label: "Hashing",       color: "#a78bfa", done: true },
+    { label: "Recursion",     color: "#34d399", done: true },
   ],
   [
-    { label: "Linked List", color: "#f87171", done: true },
-    { label: "Stack", color: "#60a5fa", done: true },
-    { label: "Queue", color: "#a78bfa", done: true },
+    { label: "Linked List",   color: "#f87171", done: true },
+    { label: "Stack",         color: "#60a5fa", done: true },
+    { label: "Queue",         color: "#a78bfa", done: true },
     { label: "Binary Search", color: "#34d399", done: true },
-    { label: "Two Pointers", color: "#fb923c", done: false, lock: true },
+    { label: "Two Pointers",  color: "#fb923c", done: false, lock: true },
   ],
   [
-    { label: "Trees", color: "#f87171", done: true },
-    { label: "BST", color: "#60a5fa", done: true },
-    { label: "Heaps", color: "#a78bfa", done: false, lock: false },
-    { label: "Tries", color: "#34d399", done: false, lock: false },
-    { label: "Graphs", color: "#fb923c", done: false, lock: true },
-    { label: "Sorting", color: "#f472b6", done: false, lock: true },
+    { label: "Trees",         color: "#f87171", done: true },
+    { label: "BST",           color: "#60a5fa", done: true },
+    { label: "Heaps",         color: "#a78bfa", done: false, lock: false },
+    { label: "Tries",         color: "#34d399", done: false, lock: false },
+    { label: "Graphs",        color: "#fb923c", done: false, lock: true },
+    { label: "Sorting",       color: "#f472b6", done: false, lock: true },
   ],
   [
-    { label: "BFS / DFS", color: "#f87171", done: false, lock: false },
-    { label: "Backtracking", color: "#60a5fa", done: false, lock: true },
-    { label: "Greedy", color: "#a78bfa", done: false, lock: true },
+    { label: "BFS / DFS",        color: "#f87171", done: false, lock: false },
+    { label: "Backtracking",     color: "#60a5fa", done: false, lock: true },
+    { label: "Greedy",           color: "#a78bfa", done: false, lock: true },
     { label: "Divide & Conquer", color: "#34d399", done: false, lock: true },
-    { label: "Dynamic Prog.", color: "#fb923c", done: false, lock: true },
+    { label: "Dynamic Prog.",    color: "#fb923c", done: false, lock: true },
   ],
   [
-    { label: "Sliding Window", color: "#f87171", done: false, lock: true },
+    { label: "Sliding Window",   color: "#f87171", done: false, lock: true },
     { label: "Bit Manipulation", color: "#60a5fa", done: false, lock: true },
-    { label: "Segment Tree", color: "#a78bfa", done: false, lock: true },
-    { label: "Disjoint Set", color: "#34d399", done: false, lock: true },
+    { label: "Segment Tree",     color: "#a78bfa", done: false, lock: true },
+    { label: "Disjoint Set",     color: "#34d399", done: false, lock: true },
   ],
 ];
 
@@ -67,7 +67,7 @@ function TopicCard({ label, color, done, lock }) {
 export default function PersonalizedSection() {
   return (
     <section
-      className="py-24 px-6 overflow-hidden bg-gradient-to-b from-white via-[#eef2ff] to-[#faf5ff] dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300"
+      className="py-24 px-6 overflow-hidden bg-gradient-to-b from-white via-[#eef2ff] to-[#faf5ff] dark:from-[#1c1d1f] dark:via-[#1c1d1f] dark:to-[#1c1d1f] transition-colors duration-300"
       style={{
         fontFamily: "'Inter', 'Source Sans 3', sans-serif",
       }}
@@ -88,14 +88,14 @@ export default function PersonalizedSection() {
             progress across Arrays, Trees, Graphs and beyond — so you always
             know exactly where to go next.
           </p>
-          
+
           <Link
             href="/visualizer"
-            className="inline-flex items-center gap-2 h-[46px] px-7 rounded-full bg-[#1a1a1a] text-white text-[15px] font-bold hover:bg-[#a435f0] transition-all duration-200"
+            className="inline-flex items-center gap-2 h-[46px] px-7 rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] text-[15px] font-bold hover:bg-[#a435f0] dark:hover:bg-[#a435f0] dark:hover:text-white transition-all duration-200"
           >
             Start your path
             <svg
-              className="w-4 h-4"
+              className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
               fill="none"
               stroke="currentColor"
               strokeWidth={2.5}
@@ -112,25 +112,26 @@ export default function PersonalizedSection() {
 
         {/* ── RIGHT: topic map ── */}
         <div className="flex-1 relative w-full overflow-hidden">
-          {/* fade edges left & right */}
+
+          {/* fade edge LEFT — matches section bg in both modes */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-            style={{
-              background: "linear-gradient(to right, #eef2ff, transparent)",
-            }}
+            className="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none
+                        bg-gradient-to-r from-[#eef2ff] to-transparent
+                        dark:from-[#1c1d1f] dark:to-transparent"
           />
+
+          {/* fade edge RIGHT — matches section bg in both modes */}
           <div
-            className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-            style={{
-              background: "linear-gradient(to left, #faf5ff, transparent)",
-            }}
+            className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none
+                        bg-gradient-to-l from-[#faf5ff] to-transparent
+                        dark:from-[#1c1d1f] dark:to-transparent"
           />
-          {/* fade bottom */}
+
+          {/* fade BOTTOM — matches section bg in both modes */}
           <div
-            className="absolute left-0 right-0 bottom-0 h-20 z-10 pointer-events-none"
-            style={{
-              background: "linear-gradient(to top, #f0fdf4, transparent)",
-            }}
+            className="absolute left-0 right-0 bottom-0 h-20 z-10 pointer-events-none
+                        bg-gradient-to-t from-[#f0fdf4] to-transparent
+                        dark:from-[#1c1d1f] dark:to-transparent"
           />
 
           <div className="flex flex-col gap-3 py-2">
