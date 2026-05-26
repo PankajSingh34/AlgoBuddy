@@ -76,6 +76,16 @@ const DS_THEME = {
       </svg>
     ),
   },
+  Recursion: {
+    color: "#0f766e",
+    bg: "#f0fdfa",
+    border: "#ccfbf1",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+      </svg>
+    ),
+  },
 };
 
 const getTheme = (t) =>
@@ -251,6 +261,28 @@ function HashMapMiniViz({ color }) {
   );
 }
 
+function RecursionMiniViz({ color }) {
+  const frames = ["f(3)", "f(2)", "f(1)"];
+  return (
+    <div className="flex flex-col gap-1 items-center justify-center h-[48px] w-full">
+      {frames.map((v, i) => (
+        <div
+          key={i}
+          className={`h-[12px] rounded text-[8px] font-mono font-bold flex items-center justify-center border transition-all duration-300 ${i === 0 ? '' : 'mini-viz-inactive'}`}
+          style={{
+            width: `${60 - i * 12}px`,
+            background: i === 0 ? color : color + "15",
+            color: i === 0 ? "#fff" : color,
+            borderColor: i === 0 ? color : color + "40",
+          }}
+        >
+          {v}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const MINI_VIZ = {
   Array: ArrayMiniViz,
   Stack: StackMiniViz,
@@ -259,6 +291,7 @@ const MINI_VIZ = {
   Tree: TreeMiniViz,
   Graph: GraphMiniViz,
   HashMap: HashMapMiniViz,
+  Recursion: RecursionMiniViz,
 };
 
 /* ═══════════════════════════════════════
@@ -609,6 +642,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Tree"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
+        .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
 
         /* Dark mode solid card headers & icons */
         .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
@@ -619,6 +653,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Tree"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
+        .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
 
         /* Mini Viz Overrides for Dark Mode (Rich saturated colors) */
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
@@ -628,6 +663,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Linked List"] .mini-viz-inactive { background: #92400e !important; color: #fcd34d !important; }
         .dark [data-theme-card="Tree"] .mini-viz-inactive-node { fill: #5b21b6 !important; }
         .dark [data-theme-card="Graph"] .mini-viz-inactive-node { fill: #991b1b !important; }
+        .dark [data-theme-card="Recursion"] .mini-viz-inactive { background: #115e59 !important; color: #99f6e4 !important; border-color: #115e59 !important; }
         .dark .mini-viz-line { stroke: #4b5563 !important; }
       `}</style>
       
