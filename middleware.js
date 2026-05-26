@@ -28,6 +28,7 @@ export async function middleware(request) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabaseConfig = getSupabaseConfig();
+
   if (!supabaseConfig) {
     if (process.env.NODE_ENV !== "production") {
       console.warn(SUPABASE_ENV_ERROR);
@@ -35,10 +36,6 @@ export async function middleware(request) {
     return supabaseResponse;
   }
 
-  // A server client is created per-request so that session cookies can be
-  // refreshed when the access token is close to expiry. The setAll callback
-  // propagates the new cookies into both the outgoing request and response so
-  // that server components and client components see consistent session state.
   const supabase = createServerClient(
     supabaseConfig.supabaseUrl,
     supabaseConfig.supabaseAnonKey,
@@ -49,27 +46,43 @@ export async function middleware(request) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
+            request.cookies.set(name, value)
           );
+
           supabaseResponse = NextResponse.next({ request });
+
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
-    },
+    }
   );
 
-  // Calling getUser() triggers a token refresh if the access token is expired.
-  // This must not be removed — without it, sessions silently expire mid-browse.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const protectedRoutes = ["/visualizer", "/blogs", "/dashboard"];
+
+  const currentPath = request.nextUrl.pathname;
+
+  const isProtectedRoute = protectedRoutes.some(
+    (route) =>
+      currentPath === route || currentPath.startsWith(route + "/")
+  );
+
+  if (isProtectedRoute && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: [
-    // Run on all routes except Next.js internals and static file extensions.
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  matcher: [ 
+    "/visualizer/:path*",
+    "/blogs/:path*",
+    "/dashboard/:path*",
   ],
 };
