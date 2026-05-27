@@ -175,14 +175,15 @@ export default function LoginPage() {
                 <Lock size={18} className="text-gray-400 dark:text-gray-500" />
               </div>
               <input
-                type="password"
-                aria-label="Password"
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+  type="password"
+  autoComplete="current-password"
+  aria-label="Password"
+  disabled={loading}
+  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+  placeholder="Password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
             </div>
 
             {!isLogin && (
@@ -204,10 +205,17 @@ export default function LoginPage() {
 
             {/* Turnstile for both login and signup */}
             <div className="flex justify-center">
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setCaptchaToken(token)}
-              />
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+  <Turnstile
+    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+    onSuccess={(token) => setCaptchaToken(token)}
+    onError={() => console.warn("Turnstile failed to load")}
+  />
+) : (
+  <p style={{ color: "orange", fontSize: "12px" }}>
+    Captcha unavailable: sitekey not configured
+  </p>
+)}
             </div>
 
             <button
