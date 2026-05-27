@@ -259,7 +259,7 @@ const BlogPage = () => {
             </span>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {filteredBlogs.length > 0 ? (
               filteredBlogs.map((post) => (
                 <motion.article
@@ -268,18 +268,18 @@ const BlogPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   whileHover={{ y: -3 }}
-                  className="bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
+                  className="h-full flex flex-col bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
                 >
                   <Link href={post.slug}>
                     <div className="flex flex-col h-full">
-                      <div className="aspect-video overflow-hidden relative">
+                      <div className="w-full h-52 overflow-hidden relative flex-shrink-0">
                         <img
                           src={post.image}
                           alt={post.title}
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                         />
                       </div>
-                      <div className="p-5 flex flex-col gap-3 flex-grow">
+                      <div className="p-5 flex flex-col gap-3 flex-1">
                         <div className="flex items-center justify-between text-sm text-surface-500 dark:text-surface-400">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1.5" />
@@ -292,10 +292,10 @@ const BlogPage = () => {
                         <span className="inline-block text-xs font-medium px-3 py-1 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light rounded-full w-fit">
                           {post.category}
                         </span>
-                        <h3 className="text-lg font-bold text-surface-800 dark:text-white">
+                        <h3 className="text-lg font-bold text-surface-800 dark:text-white line-clamp-2 min-h-[56px]">
                           {post.title}
                         </h3>
-                        <div className="flex flex-wrap gap-2 mt-auto">
+                        <div className="flex flex-wrap gap-2 mt-auto overflow-hidden">
                           {post.tags.map((tag, i) => (
                             <span
                               key={i}
