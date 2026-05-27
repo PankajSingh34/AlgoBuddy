@@ -70,6 +70,7 @@ export default function Page() {
               url: "/visualizer/sorting/insertionsort",
             },
             { text: "Merge Sort", url: "/visualizer/sorting/mergesort" },
+            { text: "Counting Sort", url: "/visualizer/sorting/countingsort" },
             { text: "Heap Sort", url: "/algorithms/sorting/heap" },
           ]}
         />

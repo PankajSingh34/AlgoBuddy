@@ -139,43 +139,57 @@ export async function POST(req) {
       );
     }
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    // Send request to OpenRouter using Gemma model
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          contents: createGeminiContents(messages),
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-          },
-        }),
+  model: "openai/gpt-3.5-turbo",
+  messages: messages,
+}),
       }
     );
 
-    if (!geminiRes.ok) {
-      const errData = await geminiRes.json();
-      throw new Error(errData?.error?.message || "Gemini API request failed.");
+    const data = await response.json();
+
+    console.log("OpenRouter Response:", data);
+
+    // Handle API errors
+    if (!response.ok) {
+      return Response.json(
+        {
+          error:
+            data?.error?.message ||
+            "OpenRouter request failed.",
+        },
+        { status: 500 }
+      );
     }
 
-    const geminiData = await geminiRes.json();
-    const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!replyText) {
-      throw new Error("No response received from Gemini API.");
-    }
+    // Extract assistant reply
+    const replyText =
+      data?.choices?.[0]?.message?.content;
 
     return Response.json({
       message: {
         role: "assistant",
-        content: replyText,
+        content: replyText || "No response generated.",
       },
     });
   } catch (error) {
     console.error("Chatbot API error:", error);
+
     return Response.json(
-      { error: "An error occurred while processing your request." },
+      {
+        error:
+          error.message ||
+          "An error occurred while processing your request.",
+      },
       { status: 500 }
     );
   }

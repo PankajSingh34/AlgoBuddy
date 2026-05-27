@@ -43,7 +43,7 @@ const TOPIC_ROWS = [
 function TopicCard({ label, color, done, lock }) {
   return (
     <div
-      className="relative flex flex-col gap-1 px-3 py-2 rounded-xl bg-white dark:bg-[#2d2f31] border border-[#e5e7eb] dark:border-[#3e4143] shadow-sm select-none transition-colors duration-300"
+      className="relative flex flex-col gap-1 px-3 py-2 rounded-xl bg-white dark:bg-[#2d2f31] border border-[#e5e7eb] dark:border-[#3e4143] shadow-sm select-none transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#f9fafb] hover:border-[#c7d2fe] hover:shadow-lg hover:shadow-indigo-200/40 dark:hover:bg-[#333638] dark:hover:border-[#565b60] dark:hover:shadow-black/30"
       style={{
         filter: lock ? "blur(3px)" : "none",
         opacity: lock ? 0.55 : 1,

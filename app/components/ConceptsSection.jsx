@@ -34,7 +34,7 @@ function SortingVisual() {
   const bars = [65, 30, 80, 45, 55, 20, 70, 40, 90, 35];
   const active = [2, 6];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#d1fae5] dark:border-[#166534] bg-white dark:bg-[#122b19] shadow-xl overflow-hidden transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#d1fae5] dark:border-[#166534] bg-white dark:bg-[#122b19] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fbfffd] hover:border-[#86efac] hover:shadow-2xl hover:shadow-emerald-200/50 dark:hover:bg-[#173820] dark:hover:border-[#22c55e] dark:hover:shadow-black/30">
       <div className="flex items-center gap-2 px-4 py-3 bg-[#f0fdf4] dark:bg-[#173820] border-b border-[#d1fae5] dark:border-[#166534] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
@@ -75,7 +75,7 @@ function SearchVisual() {
   const mid = 4;
   const eliminated = [0, 1, 2, 3];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] dark:border-[#5b21b6] bg-white dark:bg-[#1a0e2d] shadow-xl overflow-hidden transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] dark:border-[#5b21b6] bg-white dark:bg-[#1a0e2d] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fdfaff] hover:border-[#c084fc] hover:shadow-2xl hover:shadow-purple-200/50 dark:hover:bg-[#23133d] dark:hover:border-[#a855f7] dark:hover:shadow-black/30">
       <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] dark:bg-[#23133d] border-b border-[#e9d5ff] dark:border-[#5b21b6] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
@@ -127,7 +127,7 @@ function StackVisual() {
     "bg-[#2563eb] dark:bg-[#3b82f6] text-white dark:text-white shadow-[0_2px_12px_#2563eb44]"
   ];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#bfdbfe] dark:border-[#1e3a8a] bg-white dark:bg-[#111d33] shadow-xl overflow-hidden transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#bfdbfe] dark:border-[#1e3a8a] bg-white dark:bg-[#111d33] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#f8fbff] hover:border-[#60a5fa] hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:bg-[#182847] dark:hover:border-[#3b82f6] dark:hover:shadow-black/30">
       <div className="flex items-center gap-2 px-4 py-3 bg-[#eff6ff] dark:bg-[#182847] border-b border-[#bfdbfe] dark:border-[#1e3a8a] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
@@ -166,7 +166,7 @@ function AppMockup() {
 
   return (
     <div
-      className="w-full max-w-[320px] rounded-[2rem] bg-white shadow-2xl border border-surface-200 overflow-hidden"
+      className="w-full max-w-[320px] rounded-[2rem] bg-white shadow-2xl border border-surface-200 overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fbfffd] hover:border-[#86efac] hover:shadow-2xl hover:shadow-emerald-200/50"
     >
       {/* top bar */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3">

@@ -7,6 +7,7 @@ export async function generateStaticParams() {
     { algorithm: "bfs" },
     { algorithm: "dfs" },
     { algorithm: "dijkstra" },
+    { algorithm: "floyd-warshall" },
     { algorithm: "prim" },
     { algorithm: "kruskal" },
     { algorithm: "topological-sort" },
