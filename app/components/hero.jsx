@@ -9,6 +9,7 @@ const TOPICS = [
   { label: "Binary Search",       color: "#2563eb", bg: "#eff6ff", darkBg: "#1a2744", darkColor: "#60a5fa" },
   { label: "Graph Traversal",     color: "#059669", bg: "#f0fdf4", darkBg: "#0f2e22", darkColor: "#34d399" },
   { label: "Linked Lists",        color: "#d97706", bg: "#fffbeb", darkBg: "#2e1f0a", darkColor: "#fbbf24" },
+  { label: "Hashmap",             color: "#0ea5e9", bg: "#f0f9ff", darkBg: "#0a2434", darkColor: "#38bdf8" },
   { label: "Dynamic Programming", color: "#dc2626", bg: "#fef2f2", darkBg: "#2e0f0f", darkColor: "#f87171" },
   { label: "Stack & Queue",       color: "#7c3aed", bg: "#f5f3ff", darkBg: "#1e1535", darkColor: "#a78bfa" },
 ];
@@ -62,22 +63,37 @@ const HeroSection = () => {
             </h1>
 
             {/* animated topic pill */}
-            <div className="flex items-center gap-3 h-10">
+            <div className="flex items-center gap-3 h-12">
               <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[14px] font-bold transition-all duration-300"
+                key={topic.label}
+                className="topic-chip relative inline-flex items-center gap-2 px-5 py-2 rounded-full text-[14px] font-bold backdrop-blur-sm transition-colors transition-opacity duration-300 ease-in-out"
                 style={{
-                  background: visible ? (isDark ? topic.darkBg  : topic.bg)    : "transparent",
-                  color:      visible ? (isDark ? topic.darkColor : topic.color) : "transparent",
-                  opacity:    visible ? 1 : 0,
-                  transform:  visible ? "translateY(0px)" : "translateY(6px)",
-                  border: `1.5px solid ${visible ? (isDark ? topic.darkColor + "55" : topic.color + "33") : "transparent"}`,
+                  "--chip-bg": visible ? (isDark ? topic.darkBg : topic.bg) : "transparent",
+                  "--chip-bg-hover": visible ? (isDark ? topic.darkColor + "22" : topic.color + "1a") : "transparent",
+                  "--chip-text": visible ? (isDark ? topic.darkColor : topic.color) : "transparent",
+                  "--chip-text-hover": visible ? (isDark ? "#e7f0ff" : "#111827") : "transparent",
+                  backgroundColor: "var(--chip-bg)",
+                  color: "var(--chip-text)",
+                  opacity: visible ? 1 : 0,
+                  border: `1.5px solid ${visible ? (isDark ? topic.darkColor + "66" : topic.color + "44") : "transparent"}`,
+                  boxShadow: visible ? `0 10px 24px ${isDark ? topic.darkColor + "24" : topic.color + "26"}` : "none",
                 }}
               >
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: isDark ? topic.darkColor : topic.color }}
+                  style={{
+                    background: isDark ? topic.darkColor : topic.color,
+                    boxShadow: `0 0 0 6px ${(isDark ? topic.darkColor : topic.color)}22`,
+                  }}
                 />
                 {topic.label}
+                <span
+                  className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 ease-in-out"
+                  style={{
+                    background: "linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.55) 50%, transparent 80%)",
+                    animation: visible ? "pillShine 2.2s linear infinite" : "none",
+                  }}
+                />
               </span>
             </div>
 
@@ -86,15 +102,15 @@ const HeroSection = () => {
               <Link
                 href="/visualizer"
                 onClick={handleStart}
-                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
+                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-colors duration-200"
               >
                 Start Visualizing
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
 
               <Link
                 href="/blogs"
-                className="inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-surface-50 text-surface-900 dark:text-surface-50 text-[15px] font-bold hover:bg-surface-900 hover:text-white dark:hover:bg-white dark:hover:text-surface-900 transition-all duration-200"
+                className="inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-surface-50 text-surface-900 dark:text-surface-50 text-[15px] font-bold hover:bg-surface-900 hover:text-white dark:hover:bg-white dark:hover:text-surface-900 transition-colors duration-200"
               >
                 Read Blogs
               </Link>
@@ -206,7 +222,7 @@ const HeroSection = () => {
                       {[2, 5, 8, 12, 16, 23, 38, 45, 56, 72].map((v, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
                           <div
-                            className="w-full rounded-sm transition-all"
+                            className="w-full rounded-sm transition-colors duration-200"
                             style={{
                               height: `${(v / 72) * 52}px`,
                               background:
@@ -259,6 +275,21 @@ const HeroSection = () => {
           </div>
         </div>
       </section>
+      <style jsx>{`
+        @keyframes pillShine {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(120%); }
+        }
+
+        .topic-chip:hover {
+          background-color: var(--chip-bg-hover);
+          color: var(--chip-text-hover);
+        }
+
+        .topic-chip:hover > span:last-child {
+          opacity: 0.28;
+        }
+      `}</style>
     </main>
   );
 };

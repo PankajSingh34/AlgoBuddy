@@ -77,6 +77,7 @@ export default function Page() {
             },
             { text: "Merge Sort", url: "/visualizer/sorting/mergesort" },
             { text: "Quick Sort", url: "/visualizer/sorting/quicksort" },
+            { text: "Counting Sort", url: "/visualizer/sorting/countingsort" },
             { text: "Heap Sort", url: "/algorithms/sorting/heap" },
           ]}
         />

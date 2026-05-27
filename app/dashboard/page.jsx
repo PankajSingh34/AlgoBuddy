@@ -1,5 +1,6 @@
 "use client";
 import Navbar from "@/app/components/navbar";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -100,9 +101,11 @@ export default function Dashboard() {
                         className="card-surface p-4 flex flex-col justify-between"
                       >
                         <div>
-                          <img
+                          <Image
                             src={`/modules/${mod.image}`}
                             alt={mod.title}
+                            width={400}
+                            height={160}
                             className="w-full h-40 object-cover rounded-md mb-2"
                           />
                           <h3 className="text-md font-semibold text-surface-800 dark:text-surface-200 py-2">{mod.title}</h3>
