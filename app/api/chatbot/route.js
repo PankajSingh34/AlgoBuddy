@@ -36,6 +36,7 @@ function validatePayload(messages) {
     if (msg.content.length > MAX_PER_MESSAGE_LENGTH) {
       return `Message at index ${i} exceeds ${MAX_PER_MESSAGE_LENGTH} characters.`;
     }
+    totalChars += msg.content.length;
   }
 
   const totalChars = messages.reduce((sum, message) => sum + message.content.length, 0);
@@ -83,7 +84,7 @@ export async function POST(req) {
     if (!captchaToken) {
       return Response.json({ error: "Captcha token missing." }, { status: 403 });
     }
-    
+
     const ip = getClientIp(req.headers);
     const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
