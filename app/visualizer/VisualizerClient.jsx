@@ -667,9 +667,9 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Linked List"] { background: #2b1a08 !important; border-color: #92400e !important; }
         .dark [data-theme-card="Tree"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
-        .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
+        .dark [data-theme-card="HashMap"] { background: #231527 !important; border-color: #c026d3 !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
-
+        
         /* Dark mode solid card headers & icons */
         .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
@@ -678,7 +678,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Linked List"] { background: #3d240a !important; border-color: #92400e !important; }
         .dark [data-theme-header="Tree"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
-        .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
+        .dark [data-theme-header="HashMap"] { background: #341a3e !important; border-color: #d946ef !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
 
         /* Mini Viz Overrides for Dark Mode (Rich saturated colors) */
