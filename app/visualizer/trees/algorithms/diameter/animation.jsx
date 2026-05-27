@@ -1,6 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import { Play, RotateCcw, Info, Scan } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, RotateCcw, Info, Scan, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const NODES = [
   { id: "A", x: 400, y: 50, parent: null },
@@ -23,25 +30,58 @@ export default function DiameterAnimation() {
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("Click 'Find Diameter' to calculate subtree heights.");
   
-  // Animation states
-  const [activeNodes, setActiveNodes] = useState([]);
-  const [calculatedHeights, setCalculatedHeights] = useState({});
-  const [maxDiameter, setMaxDiameter] = useState(0);
-  const [diameterPathEdges, setDiameterPathEdges] = useState([]);
-  const [diameterPathNodes, setDiameterPathNodes] = useState([]);
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
+
+  const currentStep = steps[currentStepIdx] || null;
+  const activeNodes = currentStep ? currentStep.activeNodes : [];
+  const calculatedHeights = currentStep ? currentStep.calculatedHeights : {};
+  const maxDiameter = currentStep ? currentStep.maxDiameter : 0;
+  const diameterPathEdges = currentStep ? currentStep.diameterPathEdges : [];
+  const diameterPathNodes = currentStep ? currentStep.diameterPathNodes : [];
 
   // Diameter path is explicitly: F-D-B-E-H-I
   const finalDiameterNodes = ["F", "D", "B", "E", "H", "I"];
   const finalDiameterEdges = ["D-F", "B-D", "B-E", "E-H", "H-I"];
   const finalMaxDiameter = 5;
 
-  const handleFindDiameter = () => {
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
+
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
     setAnimating(true);
-    setActiveNodes([]);
-    setCalculatedHeights({});
-    setMaxDiameter(0);
-    setDiameterPathEdges([]);
-    setDiameterPathNodes([]);
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
+    setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
+  };
+
+  const handleFindDiameter = () => {
+    setAnimating(false);
 
     const seq = [
       { msg: "Computing heights of leaves (F, G, I, C)...", nodes: ["F", "G", "I", "C"], heights: {"F":1, "G":1, "I":1, "C":1}, maxD: 0 },
@@ -51,72 +91,111 @@ export default function DiameterAnimation() {
       { msg: "Computing height of Root A...", nodes: ["A"], heights: {"F":1, "G":1, "I":1, "C":1, "H":2, "D":2, "E":3, "B":4, "A":5}, maxD: 5 },
     ];
 
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < seq.length) {
-        setActiveNodes(seq[step].nodes);
-        setCalculatedHeights(seq[step].heights);
-        setMaxDiameter(seq[step].maxD);
-        setMessage(seq[step].msg);
-        step++;
-      } else {
-        clearInterval(interval);
-        setActiveNodes([]);
-        setMessage(`Complete! The maximum diameter is ${finalMaxDiameter}. (Highlighted path)`);
-        setDiameterPathEdges(finalDiameterEdges);
-        setDiameterPathNodes(finalDiameterNodes);
-      }
-    }, 1500);
+    const newSteps = [];
+    
+    for (const curr of seq) {
+      newSteps.push({
+        activeNodes: curr.nodes,
+        calculatedHeights: curr.heights,
+        maxDiameter: curr.maxD,
+        message: curr.msg,
+        diameterPathEdges: [],
+        diameterPathNodes: []
+      });
+    }
+
+    newSteps.push({
+      activeNodes: [],
+      calculatedHeights: seq[seq.length - 1].heights,
+      maxDiameter: finalMaxDiameter,
+      message: `Complete! The maximum diameter is ${finalMaxDiameter}. (Highlighted path)`,
+      diameterPathEdges: finalDiameterEdges,
+      diameterPathNodes: finalDiameterNodes
+    });
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
-    setActiveNodes([]);
-    setCalculatedHeights({});
-    setMaxDiameter(0);
-    setDiameterPathEdges([]);
-    setDiameterPathNodes([]);
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Click 'Find Diameter' to calculate subtree heights.");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto selection:bg-[#a435f0]/30 selection:text-[#c27cf7]">
-      
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-wrap gap-4 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex items-center gap-4 text-cyan-300 font-mono bg-slate-950/50 px-4 py-2 rounded-lg border border-cyan-900/50">
-          Max Diameter: <span className="text-xl font-bold ml-2 text-[#a435f0]">{maxDiameter}</span>
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4 text-cyan-600 dark:text-cyan-400 font-mono bg-cyan-50 dark:bg-cyan-950/30 px-4 py-2 rounded-lg border border-cyan-200 dark:border-cyan-900/50">
+            Max Diameter: <span className="text-xl font-bold ml-2 text-cyan-700 dark:text-cyan-300">{maxDiameter}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleFindDiameter} 
+              disabled={animating}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+            >
+              <Scan className="w-4 h-4" /> Find Diameter
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleFindDiameter} 
-            disabled={animating && diameterPathEdges.length === 0}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <Scan className="w-4 h-4" /> Find Diameter
-          </button>
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-[#a435f0] bg-[#a435f0]/10 hover:bg-[#a435f0]/20 rounded-xl transition-all border border-[#a435f0]/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
-        </div>
-      </div>
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
 
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
+      <VisualizerCard
+        className={
+          diameterPathEdges.length > 0
+            ? "border-cyan-200 bg-cyan-50 dark:border-cyan-900 dark:bg-cyan-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
           <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
         </div>
-        <div className="text-sm font-medium text-cyan-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
 
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[500px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="800" height="420" viewBox="0 0 800 420" className="max-w-full h-auto drop-shadow-xl">
+      <VisualizerCard>
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[500px]">
+          <svg width="800" height="420" viewBox="0 0 800 420" className="max-w-full h-auto drop-shadow-sm">
             {/* Edges */}
             {EDGES.map(e => {
               const isPath = diameterPathEdges.includes(e.id) || diameterPathEdges.includes(`${e.child}-${e.parent}`);
@@ -125,9 +204,9 @@ export default function DiameterAnimation() {
                 <line 
                   key={e.id} 
                   x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} 
-                  stroke={isPath ? "#06b6d4" : "#334155"} 
+                  stroke={isPath ? "#06b6d4" : "#cbd5e1"} 
                   strokeWidth={isPath ? "5" : "2"}
-                  className="transition-all duration-500"
+                  className={`transition-all duration-500 ${!isPath && 'dark:stroke-slate-700'}`}
                 />
               );
             })}
@@ -138,44 +217,47 @@ export default function DiameterAnimation() {
               const isPath = diameterPathNodes.includes(node.id);
               const h = calculatedHeights[node.id];
               
-              let fill = "#0f172a";
-              let stroke = "#475569";
+              let fill = "var(--background)";
+              let stroke = "#94a3b8"; // slate-400
               let r = "20";
+              let textFill = "var(--foreground)";
 
               if (isPath) {
-                fill = "#164e63";
-                stroke = "#22d3ee";
+                fill = "#cffafe"; // cyan-100
+                stroke = "#06b6d4"; // cyan-500
                 r = "26";
+                textFill = "#164e63"; // cyan-900
               } else if (isActive) {
-                fill = "#083344";
+                fill = "#ecfeff"; // cyan-50
                 stroke = "#06b6d4";
                 r = "24";
+                textFill = "#164e63";
               } else if (h !== undefined) {
-                stroke = "#0891b2";
+                stroke = "#0891b2"; // cyan-600
               }
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#67e8f9" strokeWidth="2" className="opacity-80 animate-ping" />}
+                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#22d3ee" strokeWidth="2" className="opacity-80 animate-ping" />}
                   {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#06b6d4" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
                     fill={fill} stroke={stroke} strokeWidth="2.5" 
-                    className="shadow-xl transition-all duration-500" 
+                    className="shadow-sm transition-all duration-500 dark:stroke-slate-600" 
                   />
-                  <text x={node.x} y={node.y + 4} textAnchor="middle" fill="#ffffff" fontSize="12" fontWeight="bold">{node.id}</text>
+                  <text x={node.x} y={node.y + 4} textAnchor="middle" fill={textFill} fontSize="12" fontWeight="bold" className="transition-colors">{node.id}</text>
                   
                   {/* Height Indicator Label */}
                   {h !== undefined && (
-                    <text x={node.x + 28} y={node.y + 4} fill="#67e8f9" fontSize="12" fontWeight="bold">h:{h}</text>
+                    <text x={node.x + 28} y={node.y + 4} fill="#06b6d4" fontSize="12" fontWeight="bold">h:{h}</text>
                   )}
                 </g>
               );
             })}
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

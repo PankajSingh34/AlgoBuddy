@@ -1,15 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  Sparkles,
   RefreshCw
 } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const DEFAULT_ARRAY = [0, 5, 3, 7, 2, 6, 4, 8, 1]; // 1-indexed, index 0 unused
 
@@ -37,7 +37,7 @@ export default function FenwickAnimation() {
   const [steps, setSteps] = useState([]);
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const { speed, setSpeed } = usePlayback(1);
   const [message, setMessage] = useState("Enter an index & value to perform a point update, or query a range prefix sum.");
   const [highlightedBIT, setHighlightedBIT] = useState({}); // {index: state}
   const [highlightedBase, setHighlightedBase] = useState({});
@@ -248,182 +248,187 @@ export default function FenwickAnimation() {
     setIsAnimating(true);
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: isAnimating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: isAnimating,
+    sorted: false,
+    enabled: true,
+  });
+
   // Color helpers
   const getBITColor = (i) => {
     const state = highlightedBIT[i];
     if (state === "active") return { fill: "#10b981", stroke: "#34d399", text: "#fff" };
-    if (state === "visiting") return { fill: "#8b5cf6", stroke: "#c084fc", text: "#fff" };
+    if (state === "visiting") return { fill: "#a435f0", stroke: "#d38cff", text: "#fff" };
     if (state === "matched") return { fill: "#f59e0b", stroke: "#fbbf24", text: "#1a1a1a" };
-    return { fill: "#1e293b", stroke: "#475569", text: "#e2e8f0" };
+    return { fill: "var(--background)", stroke: "#64748b", text: "var(--foreground)" };
   };
 
   const getBaseColor = (i) => {
     const state = highlightedBase[i];
-    if (state === "active") return "border-emerald-500 bg-emerald-900/50 text-emerald-100";
-    if (state === "visiting") return "border-purple-500 bg-purple-900/50 text-purple-100";
-    if (state === "matched") return "border-amber-500 bg-amber-900/50 text-amber-100";
-    return "border-slate-700 bg-slate-900 text-slate-300";
+    if (state === "active") return "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400";
+    if (state === "visiting") return "border-[#a435f0] bg-[#a435f0]/10 text-[#a435f0] dark:text-[#d38cff]";
+    if (state === "matched") return "border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400";
+    return "border-gray-300 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300";
   };
 
   const cellW = 72;
-  const cellH = 46;
   const svgPaddingX = 30;
   const svgWidth = n * cellW + svgPaddingX * 2 + 20;
 
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto selection:bg-purple-500/30 selection:text-purple-200">
-
-      {/* Mode Tabs */}
-      <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl w-fit border border-slate-800">
-        <button
-          onClick={() => { setMode("update"); resetPlayback(); }}
-          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === "update" ? "bg-purple-600 text-white shadow-md shadow-purple-950" : "text-slate-400 hover:text-slate-200"}`}
-        >
-          Point Update
-        </button>
-        <button
-          onClick={() => { setMode("query"); resetPlayback(); }}
-          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === "query" ? "bg-purple-600 text-white shadow-md shadow-purple-950" : "text-slate-400 hover:text-slate-200"}`}
-        >
-          Range Query
-        </button>
-      </div>
-
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          {mode === "update" ? (
-            <>
-              <input
-                type="number"
-                value={inputIndex}
-                onChange={(e) => setInputIndex(e.target.value)}
-                placeholder={`Index (1-${n})`}
-                className="w-full sm:w-28 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating}
-              />
-              <input
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Delta (e.g. +3)"
-                className="w-full sm:w-28 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating}
-                onKeyDown={(e) => e.key === "Enter" && triggerUpdate()}
-              />
-              <button
-                onClick={triggerUpdate}
-                disabled={isAnimating}
-                className="px-4 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all shadow-md shadow-purple-950/20"
-              >
-                Update
-              </button>
-            </>
-          ) : (
-            <>
-              <input
-                type="number"
-                value={queryL}
-                onChange={(e) => setQueryL(e.target.value)}
-                placeholder={`L (1-${n})`}
-                className="w-full sm:w-24 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating}
-              />
-              <input
-                type="number"
-                value={queryR}
-                onChange={(e) => setQueryR(e.target.value)}
-                placeholder={`R (1-${n})`}
-                className="w-full sm:w-24 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating}
-                onKeyDown={(e) => e.key === "Enter" && triggerQuery()}
-              />
-              <button
-                onClick={triggerQuery}
-                disabled={isAnimating}
-                className="px-4 py-2 text-xs font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
-              >
-                Query Sum
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Playback Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-            <button onClick={stepBackward} disabled={currentStepIdx <= 0 || steps.length === 0} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg" title="Previous Step">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={isAnimating ? pauseVisualizer : startVisualizer}
-              disabled={steps.length === 0}
-              className={`p-2 rounded-xl transition-all ${isAnimating ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/35 border border-amber-800/40" : "bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-950 disabled:opacity-30"}`}
-            >
-              {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
-            </button>
-            <button onClick={stepForward} disabled={steps.length > 0 && currentStepIdx >= steps.length - 1} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg" title="Next Step">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button onClick={resetPlayback} disabled={steps.length === 0} className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg disabled:opacity-30" title="Reset Playback">
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-
-          <button onClick={handleReset} className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30 flex items-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" /> Reset
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl w-fit dark:bg-gray-800">
+          <button
+            onClick={() => { setMode("update"); resetPlayback(); }}
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === "update" ? "bg-[#a435f0] text-white shadow-md" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"}`}
+          >
+            Point Update
+          </button>
+          <button
+            onClick={() => { setMode("query"); resetPlayback(); }}
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === "query" ? "bg-[#a435f0] text-white shadow-md" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"}`}
+          >
+            Range Query
           </button>
         </div>
 
-        {/* Speed */}
-        <div className="flex items-center gap-3 w-full md:w-36 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Speed</span>
-          <input type="range" min="0.5" max="3" step="0.5" value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-full accent-purple-500 h-1 bg-slate-800 rounded-lg cursor-pointer" />
-          <span className="text-xs font-bold text-purple-400 w-8">{speed}x</span>
-        </div>
-      </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {mode === "update" ? (
+              <>
+                <input
+                  type="number"
+                  value={inputIndex}
+                  onChange={(e) => setInputIndex(e.target.value)}
+                  placeholder={`Index (1-${n})`}
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating}
+                />
+                <input
+                  type="number"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Delta (e.g. +3)"
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating}
+                  onKeyDown={(e) => e.key === "Enter" && triggerUpdate()}
+                />
+                <button
+                  onClick={triggerUpdate}
+                  disabled={isAnimating}
+                  className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
+                >
+                  Update
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  value={queryL}
+                  onChange={(e) => setQueryL(e.target.value)}
+                  placeholder={`L (1-${n})`}
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating}
+                />
+                <input
+                  type="number"
+                  value={queryR}
+                  onChange={(e) => setQueryR(e.target.value)}
+                  placeholder={`R (1-${n})`}
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating}
+                  onKeyDown={(e) => e.key === "Enter" && triggerQuery()}
+                />
+                <button
+                  onClick={triggerQuery}
+                  disabled={isAnimating}
+                  className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
+                >
+                  Query Sum
+                </button>
+              </>
+            )}
+          </div>
 
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-purple-400" /> Step Explanation
-          </span>
-          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">
+          <div className="flex justify-end gap-2 items-start">
+            <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <PlaybackControls 
+            isPlaying={isAnimating}
+            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={resetPlayback}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            disabled={steps.length === 0}
+            showPlayPause={true}
+          />
+        </div>
+      </VisualizerCard>
+
+      <VisualizerCard
+        className={
+          message.includes("complete") || message.includes("✅")
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : message.includes("⚠️") || message.includes("error")
+              ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+              : isAnimating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+          <span>Step Explanation</span>
+          <span className="font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
             Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
           </span>
         </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[40px] flex items-center gap-3">
-          {message}
+        <div className="flex items-center gap-3">
+          <p className="font-medium text-lg min-h-[28px]">{message}</p>
           {resultBox && (
-            <span className="ml-auto shrink-0 bg-amber-500/20 border border-amber-700/40 text-amber-300 px-3 py-1 rounded-xl text-xs font-bold">
+            <span className="ml-auto shrink-0 bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-xl text-sm font-bold dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400">
               {resultBox}
             </span>
           )}
         </div>
-      </div>
+      </VisualizerCard>
 
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-6 min-h-[420px]">
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-2 text-xs absolute top-4 left-4">
-          {[
-            { color: "bg-purple-500", label: "Visiting" },
-            { color: "bg-emerald-500", label: "Processing" },
-            { color: "bg-amber-500", label: "Matched" },
-          ].map(({ color, label }) => (
-            <div key={label} className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-              <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-              <span className="text-slate-400">{label}</span>
-            </div>
-          ))}
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Fenwick Tree (BIT) Visualization</h2>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {[
+              { color: "bg-[#a435f0]", label: "Visiting" },
+              { color: "bg-emerald-500", label: "Processing" },
+              { color: "bg-amber-500", label: "Matched" },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+                <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
+                <span className="text-gray-500 dark:text-gray-400">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-8 overflow-auto items-center">
+        <div className="flex flex-col gap-8 overflow-auto items-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 min-h-[420px] relative">
+          
           {/* Source Array Display */}
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Source Array (1-indexed)</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Source Array (1-indexed)</span>
             <div className="flex gap-1.5">
               {baseArray.slice(1).map((val, i) => {
                 const idx = i + 1;
@@ -432,8 +437,8 @@ export default function FenwickAnimation() {
                     <div className={`w-14 h-10 flex items-center justify-center border-2 rounded-xl text-sm font-bold transition-all duration-300 ${getBaseColor(idx)}`}>
                       {val}
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono">[{idx}]</span>
-                    <span className="text-[9px] text-slate-600 font-mono">{idx.toString(2).padStart(4, '0')}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">[{idx}]</span>
+                    <span className="text-[9px] text-gray-400 font-mono">{idx.toString(2).padStart(4, '0')}</span>
                   </div>
                 );
               })}
@@ -442,7 +447,7 @@ export default function FenwickAnimation() {
 
           {/* BIT Array Display as bars + labeled cells */}
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">BIT Array — Implicit Fenwick Structure</span>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">BIT Array — Implicit Fenwick Structure</span>
             <div className="overflow-auto">
               <svg width={svgWidth} height={220} viewBox={`0 0 ${svgWidth} 220`} className="max-w-full h-auto">
                 {bit.slice(1).map((val, i) => {
@@ -454,6 +459,11 @@ export default function FenwickAnimation() {
                   const y = 130 - barH;
                   const colors = getBITColor(idx);
 
+                  let fillStyle = colors.fill;
+                  if (fillStyle === "var(--background)") {
+                    fillStyle = "currentColor";
+                  }
+
                   return (
                     <g key={idx}>
                       {/* Bar */}
@@ -463,35 +473,44 @@ export default function FenwickAnimation() {
                         width={cellW - 16}
                         height={barH}
                         rx="4"
-                        fill={colors.fill}
+                        fill={fillStyle}
                         stroke={colors.stroke}
                         strokeWidth="1.5"
-                        className="transition-all duration-300"
+                        className={`transition-all duration-300 ${colors.fill === 'var(--background)' ? 'fill-white dark:fill-gray-900' : ''}`}
                       />
                       {/* Value inside bar */}
-                      <text x={x + cellW / 2} y={y + barH / 2 + 4} textAnchor="middle" fill={colors.text} fontSize="11" fontWeight="bold">{val}</text>
+                      <text 
+                        x={x + cellW / 2} y={y + barH / 2 + 4} 
+                        textAnchor="middle" 
+                        fill={colors.text} 
+                        fontSize="11" 
+                        fontWeight="bold"
+                        className={colors.text === 'var(--foreground)' ? 'fill-gray-900 dark:fill-gray-100' : ''}
+                      >
+                        {val}
+                      </text>
                       {/* Index label */}
                       <text x={x + cellW / 2} y="153" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold">[{idx}]</text>
                       {/* Binary label */}
-                      <text x={x + cellW / 2} y="170" textAnchor="middle" fill="#475569" fontSize="8.5">{idx.toString(2).padStart(4, '0')}</text>
+                      <text x={x + cellW / 2} y="170" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="8.5">{idx.toString(2).padStart(4, '0')}</text>
                       {/* LSB label */}
-                      <text x={x + cellW / 2} y="185" textAnchor="middle" fill="#6366f1" fontSize="8.5" fontWeight="bold">LSB:{lsb}</text>
+                      <text x={x + cellW / 2} y="185" textAnchor="middle" fill="#a435f0" fontSize="8.5" fontWeight="bold">LSB:{lsb}</text>
                       {/* Range covered */}
-                      <text x={x + cellW / 2} y="200" textAnchor="middle" fill="#334155" fontSize="7.5">[{idx - lsb + 1}..{idx}]</text>
+                      <text x={x + cellW / 2} y="200" textAnchor="middle" className="fill-gray-600 dark:fill-gray-400" fontSize="7.5">[{idx - lsb + 1}..{idx}]</text>
                     </g>
                   );
                 })}
               </svg>
             </div>
           </div>
+          
+          {/* LSB formula reminder */}
+          <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs font-mono shadow-sm">
+            <span className="text-[#a435f0] font-bold">LSB(i)</span>
+            <span className="text-gray-600 dark:text-gray-400"> = i & (-i)</span>
+          </div>
         </div>
-
-        {/* LSB formula reminder */}
-        <div className="absolute bottom-4 right-4 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono">
-          <span className="text-purple-400 font-bold">LSB(i)</span>
-          <span className="text-slate-400"> = i & (-i)</span>
-        </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

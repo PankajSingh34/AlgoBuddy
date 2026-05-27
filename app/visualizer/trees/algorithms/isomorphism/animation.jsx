@@ -1,6 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import { Play, RotateCcw, Info, ArrowLeftRight } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, RotateCcw, Info, ArrowLeftRight, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 // Tree 1 Setup
 const NODES1 = [
@@ -34,15 +41,51 @@ export default function IsomorphismAnimation() {
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("Click 'Check Isomorphism' to compare the two trees step-by-step.");
   
-  const [activePairs, setActivePairs] = useState([]);
-  const [matchStatus, setMatchStatus] = useState({}); // { "1-1_2-1": "match", ... }
-  const [isomorphic, setIsomorphic] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
+
+  const currentStep = steps[currentStepIdx] || null;
+  const activePairs = currentStep ? currentStep.activePairs : [];
+  const matchStatus = currentStep ? currentStep.matchStatus : {};
+  const isomorphic = currentStep ? currentStep.isomorphicResult : null;
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
+
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
+    setAnimating(true);
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
+    setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
+  };
 
   const handleCheck = () => {
-    setAnimating(true);
-    setActivePairs([]);
-    setMatchStatus({});
-    setIsomorphic(null);
+    setAnimating(false);
 
     const seq = [
       { msg: "Comparing Root Nodes (1, 1). They match.", pair: ["1-1", "2-1"], status: "match" },
@@ -54,118 +97,158 @@ export default function IsomorphismAnimation() {
       { msg: "Comparing Right(2) with Left(5): (5, 5). Match!", pair: ["1-5", "2-5"], status: "match" },
     ];
 
-    let step = 0;
-    let newStatus = {};
+    const newSteps = [];
+    let currentMatchStatus = {};
 
-    const interval = setInterval(() => {
-      if (step < seq.length) {
-        const curr = seq[step];
-        setActivePairs(curr.pair);
-        newStatus = { ...newStatus, [`${curr.pair[0]}_${curr.pair[1]}`]: curr.status };
-        setMatchStatus(newStatus);
-        setMessage(curr.msg);
-        step++;
-      } else {
-        clearInterval(interval);
-        setActivePairs([]);
-        setIsomorphic(true);
-        setMessage("Complete! The trees are isomorphic.");
-      }
-    }, 1800);
+    for (const curr of seq) {
+      currentMatchStatus = { ...currentMatchStatus, [`${curr.pair[0]}_${curr.pair[1]}`]: curr.status };
+      newSteps.push({
+        activePairs: curr.pair,
+        matchStatus: currentMatchStatus,
+        message: curr.msg,
+        isomorphicResult: null
+      });
+    }
+    
+    // Add completion step
+    newSteps.push({
+      activePairs: [],
+      matchStatus: currentMatchStatus,
+      message: "Complete! The trees are isomorphic.",
+      isomorphicResult: true
+    });
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
-    setActivePairs([]);
-    setMatchStatus({});
-    setIsomorphic(null);
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Click 'Check Isomorphism' to compare the two trees step-by-step.");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto selection:bg-[#a435f0]/30 selection:text-[#c27cf7]">
-      
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-wrap gap-4 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex items-center gap-4 text-green-300 font-mono bg-slate-950/50 px-4 py-2 rounded-lg border border-green-900/50">
-          Result: <span className="text-xl font-bold ml-2 text-[#a435f0]">{isomorphic === null ? "?" : (isomorphic ? "True" : "False")}</span>
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4 text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-50 dark:bg-emerald-950/30 px-4 py-2 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+            Result: <span className="text-xl font-bold ml-2 text-emerald-700 dark:text-emerald-300">{isomorphic === null ? "?" : (isomorphic ? "True" : "False")}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleCheck} 
+              disabled={animating}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+            >
+              <Play className="w-4 h-4 fill-white" /> Check Isomorphism
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleCheck} 
-            disabled={animating && isomorphic === null}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <Play className="w-4 h-4 fill-white" /> Check Isomorphism
-          </button>
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-[#a435f0] bg-[#a435f0]/10 hover:bg-[#a435f0]/20 rounded-xl transition-all border border-[#a435f0]/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
-        </div>
-      </div>
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
 
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
+      <VisualizerCard
+        className={
+          isomorphic !== null
+            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
           <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
         </div>
-        <div className="text-sm font-medium text-green-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
 
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[500px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="800" height="350" viewBox="0 0 800 350" className="max-w-full h-auto drop-shadow-xl">
+      <VisualizerCard>
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[500px]">
+          <svg width="800" height="350" viewBox="0 0 800 350" className="max-w-full h-auto drop-shadow-sm">
             {/* Divider */}
-            <line x1="400" y1="0" x2="400" y2="350" stroke="#334155" strokeWidth="2" strokeDasharray="5,5" />
-            <text x="200" y="20" fill="#94a3b8" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 1</text>
-            <text x="600" y="20" fill="#94a3b8" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 2</text>
+            <line x1="400" y1="0" x2="400" y2="350" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="5,5" className="dark:stroke-slate-700" />
+            <text x="200" y="20" fill="var(--foreground)" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 1</text>
+            <text x="600" y="20" fill="var(--foreground)" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 2</text>
 
             {/* Tree 1 Edges */}
-            {EDGES1.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#334155" strokeWidth="2" />)}
+            {EDGES1.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#cbd5e1" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
             {/* Tree 2 Edges */}
-            {EDGES2.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#334155" strokeWidth="2" />)}
+            {EDGES2.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#cbd5e1" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
 
             {/* Active Comparison Indicator */}
             {activePairs.length === 2 && (
               <path 
                 d={`M ${NODES1.find(n => n.id === activePairs[0]).x} ${NODES1.find(n => n.id === activePairs[0]).y} Q 400 0 ${NODES2.find(n => n.id === activePairs[1]).x} ${NODES2.find(n => n.id === activePairs[1]).y}`}
                 fill="none"
-                stroke="#22c55e"
+                stroke="#a435f0"
                 strokeWidth="2"
                 strokeDasharray="5,5"
-                className="opacity-50 animate-pulse"
+                className="opacity-60 animate-pulse"
               />
             )}
 
             {/* Tree 1 Nodes */}
             {NODES1.map(node => {
               const isActive = activePairs[0] === node.id;
-              let stroke = "#475569";
-              let fill = "#0f172a";
+              let stroke = "#94a3b8"; // slate-400
+              let fill = "var(--background)";
+              let textFill = "var(--foreground)";
               
               if (isActive) {
-                stroke = "#22c55e";
-                fill = "#14532d";
+                stroke = "#a435f0";
+                fill = "#f3e8ff"; // purple-100
+                textFill = "#6b21a8"; // purple-800
               }
 
               // Check if involved in a match/mismatch
               Object.entries(matchStatus).forEach(([pairKey, status]) => {
                 if (pairKey.startsWith(node.id + "_")) {
-                  if (status === "match") { stroke = "#4ade80"; fill = "#064e3b"; }
-                  if (status === "mismatch") { stroke = "#f87171"; }
+                  if (status === "match") { stroke = "#10b981"; fill = "#d1fae5"; textFill = "#047857"; } // emerald
+                  if (status === "mismatch") { stroke = "#ef4444"; fill = "#fee2e2"; textFill = "#b91c1c"; } // red
                 }
               });
 
               return (
                 <g key={node.id} className="transition-all duration-300">
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-                  <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-xl" />
-                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">{node.val}</text>
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-300 dark:stroke-slate-600" />
+                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill={textFill} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                 </g>
               );
             })}
@@ -173,32 +256,34 @@ export default function IsomorphismAnimation() {
             {/* Tree 2 Nodes */}
             {NODES2.map(node => {
               const isActive = activePairs[1] === node.id;
-              let stroke = "#475569";
-              let fill = "#0f172a";
+              let stroke = "#94a3b8";
+              let fill = "var(--background)";
+              let textFill = "var(--foreground)";
               
               if (isActive) {
-                stroke = "#22c55e";
-                fill = "#14532d";
+                stroke = "#a435f0";
+                fill = "#f3e8ff";
+                textFill = "#6b21a8";
               }
 
               Object.entries(matchStatus).forEach(([pairKey, status]) => {
                 if (pairKey.endsWith("_" + node.id)) {
-                  if (status === "match") { stroke = "#4ade80"; fill = "#064e3b"; }
-                  if (status === "mismatch") { stroke = "#f87171"; }
+                  if (status === "match") { stroke = "#10b981"; fill = "#d1fae5"; textFill = "#047857"; }
+                  if (status === "mismatch") { stroke = "#ef4444"; fill = "#fee2e2"; textFill = "#b91c1c"; }
                 }
               });
 
               return (
                 <g key={node.id} className="transition-all duration-300">
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#22c55e" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-                  <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-xl" />
-                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">{node.val}</text>
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-300 dark:stroke-slate-600" />
+                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill={textFill} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                 </g>
               );
             })}
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

@@ -1,6 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import { Play, RotateCcw, Info, FileDown, FileUp } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, RotateCcw, Info, FileDown, FileUp, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const NODES = [
   { id: "1", val: "1", x: 400, y: 60, parent: null },
@@ -15,8 +22,6 @@ const EDGES = NODES.filter(n => n.parent).map(n => {
   return { id: `${p.id}-${n.id}`, x1: p.x, y1: p.y + 20, x2: n.x, y2: n.y - 20, parent: p.id, child: n.id };
 });
 
-// Pre-order traversal with nulls
-// 1 -> 2 -> N -> N -> 3 -> 4 -> N -> N -> 5 -> N -> N
 const SEQUENCE = [
   { type: "node", id: "1", val: "1" },
   { type: "node", id: "2", val: "2" },
@@ -33,149 +38,232 @@ const SEQUENCE = [
 
 export default function SerializationAnimation() {
   const [animating, setAnimating] = useState(false);
-  const [mode, setMode] = useState("idle"); // idle, serializing, deserializing
+  const [mode, setMode] = useState("idle"); 
   const [message, setMessage] = useState("Click 'Serialize' to start flattening the tree into a string.");
   
-  const [activeStep, setActiveStep] = useState(-1);
-  const [serializedArray, setSerializedArray] = useState([]);
-  
-  // Deserialization specific
-  const [builtNodes, setBuiltNodes] = useState([]);
-  const [builtEdges, setBuiltEdges] = useState([]);
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
+
+  const currentStep = steps[currentStepIdx] || null;
+  const activeStep = currentStep ? currentStep.activeStep : -1;
+  const serializedArray = currentStep ? currentStep.serializedArray : (mode === "deserializing" ? SEQUENCE.map(s => s.val || "N") : []);
+  const builtNodes = currentStep ? currentStep.builtNodes : [];
+  const builtEdges = currentStep ? currentStep.builtEdges : [];
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
+
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
+    setAnimating(true);
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
+    setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
+  };
 
   const handleSerialize = () => {
-    setAnimating(true);
+    setAnimating(false);
     setMode("serializing");
-    setActiveStep(-1);
-    setSerializedArray([]);
-    setBuiltNodes([]);
-    setBuiltEdges([]);
-
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < SEQUENCE.length) {
-        setActiveStep(step);
-        setSerializedArray(prev => [...prev, SEQUENCE[step].val || "N"]);
-        
-        if (SEQUENCE[step].type === "node") {
-            setMessage(`Visiting Node ${SEQUENCE[step].val}. Appending to string.`);
-        } else {
-            setMessage(`Visiting Null child of Node ${SEQUENCE[step].parent}. Appending 'N'.`);
-        }
-        
-        step++;
+    const newSteps = [];
+    
+    for (let step = 0; step < SEQUENCE.length; step++) {
+      let msg = "";
+      if (SEQUENCE[step].type === "node") {
+        msg = `Visiting Node ${SEQUENCE[step].val}. Appending to string.`;
       } else {
-        clearInterval(interval);
-        setAnimating(false);
-        setActiveStep(-1);
-        setMessage("Serialization Complete! Click 'Deserialize' to reconstruct the tree from the string.");
+        msg = `Visiting Null child of Node ${SEQUENCE[step].parent}. Appending 'N'.`;
       }
-    }, 1000);
+      
+      newSteps.push({
+        activeStep: step,
+        message: msg,
+        serializedArray: SEQUENCE.slice(0, step + 1).map(s => s.val || "N"),
+        builtNodes: [],
+        builtEdges: []
+      });
+    }
+    
+    newSteps.push({
+      activeStep: -1,
+      message: "Serialization Complete! Click 'Deserialize' to reconstruct the tree from the string.",
+      serializedArray: SEQUENCE.map(s => s.val || "N"),
+      builtNodes: [],
+      builtEdges: []
+    });
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleDeserialize = () => {
-    setAnimating(true);
+    setAnimating(false);
     setMode("deserializing");
-    setActiveStep(-1);
-    setBuiltNodes([]);
-    setBuiltEdges([]);
 
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < SEQUENCE.length) {
-        setActiveStep(step);
-        
-        if (SEQUENCE[step].type === "node") {
-            setMessage(`Reading '${SEQUENCE[step].val}'. Creating Node ${SEQUENCE[step].val}.`);
-            setBuiltNodes(prev => [...prev, SEQUENCE[step].id]);
-            if (SEQUENCE[step].parent) {
-                setBuiltEdges(prev => [...prev, `${SEQUENCE[step].parent}-${SEQUENCE[step].id}`]);
-            }
-        } else {
-            setMessage(`Reading 'N'. Returning null to parent ${SEQUENCE[step].parent}.`);
+    const newSteps = [];
+    let bNodes = [];
+    let bEdges = [];
+
+    for (let step = 0; step < SEQUENCE.length; step++) {
+      let msg = "";
+      if (SEQUENCE[step].type === "node") {
+        msg = `Reading '${SEQUENCE[step].val}'. Creating Node ${SEQUENCE[step].val}.`;
+        bNodes = [...bNodes, SEQUENCE[step].id];
+        if (SEQUENCE[step].parent) {
+          bEdges = [...bEdges, `${SEQUENCE[step].parent}-${SEQUENCE[step].id}`];
         }
-        
-        step++;
       } else {
-        clearInterval(interval);
-        setAnimating(false);
-        setActiveStep(-1);
-        setMessage("Deserialization Complete! The tree has been reconstructed.");
+        msg = `Reading 'N'. Returning null to parent ${SEQUENCE[step].parent}.`;
       }
-    }, 1000);
+
+      newSteps.push({
+        activeStep: step,
+        message: msg,
+        serializedArray: SEQUENCE.map(s => s.val || "N"), 
+        builtNodes: [...bNodes],
+        builtEdges: [...bEdges]
+      });
+    }
+
+    newSteps.push({
+      activeStep: -1,
+      message: "Deserialization Complete! The tree has been reconstructed.",
+      serializedArray: SEQUENCE.map(s => s.val || "N"),
+      builtNodes: [...bNodes],
+      builtEdges: [...bEdges]
+    });
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
     setMode("idle");
-    setActiveStep(-1);
-    setSerializedArray([]);
-    setBuiltNodes([]);
-    setBuiltEdges([]);
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Click 'Serialize' to start flattening the tree into a string.");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto selection:bg-[#a435f0]/30 selection:text-[#c27cf7]">
-      
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-wrap gap-4 justify-between items-center shadow-lg shadow-black/20">
-        
-        {/* Output Array Visualization */}
-        <div className="flex-1 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center gap-2 overflow-x-auto min-h-[60px]">
-            {serializedArray.length === 0 && mode === "idle" && <span className="text-slate-500 text-sm italic">Serialized string will appear here...</span>}
-            {serializedArray.map((val, idx) => (
-                <div key={idx} className={`w-8 h-8 flex items-center justify-center font-mono font-bold rounded shadow-sm text-sm shrink-0 transition-all ${
-                    idx === activeStep 
-                    ? "bg-orange-500 text-white scale-110" 
-                    : val === "N" 
-                        ? "bg-slate-800 text-slate-400" 
-                        : "bg-orange-950/50 text-[#a435f0] border border-orange-900/50"
-                }`}>
-                    {val}
-                </div>
-            ))}
-            {serializedArray.length > 0 && <span className="text-orange-500 font-mono text-xl ml-2 animate-pulse">_</span>}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleSerialize} 
-            disabled={animating || mode === "serializing" || serializedArray.length === SEQUENCE.length}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <FileDown className="w-4 h-4" /> Serialize
-          </button>
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleSerialize} 
+                disabled={animating || mode === "serializing" || serializedArray.length === SEQUENCE.length}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+              >
+                <FileDown className="w-4 h-4" /> Serialize
+              </button>
+              
+              <button 
+                onClick={handleDeserialize} 
+                disabled={animating || (mode === "idle" && serializedArray.length !== SEQUENCE.length) || mode === "deserializing"}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+              >
+                <FileUp className="w-4 h-4" /> Deserialize
+              </button>
+            </div>
+            
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
           
-          <button 
-            onClick={handleDeserialize} 
-            disabled={animating || serializedArray.length !== SEQUENCE.length || mode === "deserializing"}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <FileUp className="w-4 h-4" /> Deserialize
-          </button>
-
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-[#a435f0] bg-[#a435f0]/10 hover:bg-[#a435f0]/20 rounded-xl transition-all border border-[#a435f0]/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
+          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto min-h-[70px] shadow-inner">
+              {serializedArray.length === 0 && mode === "idle" && <span className="text-gray-400 dark:text-gray-500 text-sm italic">Serialized string will appear here...</span>}
+              {serializedArray.map((val, idx) => (
+                  <div key={idx} className={`w-10 h-10 flex items-center justify-center font-mono font-bold rounded-lg shadow-sm text-sm shrink-0 transition-all ${
+                      idx === activeStep 
+                      ? "bg-amber-500 text-white scale-110 shadow-amber-500/30 shadow-lg" 
+                      : val === "N" 
+                          ? "bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-500" 
+                          : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50"
+                  }`}>
+                      {val}
+                  </div>
+              ))}
+              {serializedArray.length > 0 && <span className="text-amber-500 font-mono text-xl ml-2 animate-pulse">_</span>}
+          </div>
         </div>
-      </div>
 
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
+
+      <VisualizerCard
+        className={
+          message.includes("Complete") 
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
           <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
         </div>
-        <div className="text-sm font-medium text-orange-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
 
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[400px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="800" height="350" viewBox="0 0 800 350" className="max-w-full h-auto drop-shadow-xl">
+      <VisualizerCard>
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[400px]">
+          <svg width="800" height="350" viewBox="0 0 800 350" className="max-w-full h-auto drop-shadow-sm">
             
             {/* Edges */}
             {EDGES.map(e => {
@@ -191,9 +279,9 @@ export default function SerializationAnimation() {
                 <line 
                   key={e.id} 
                   x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} 
-                  stroke={isActive ? "#f97316" : "#334155"} 
+                  stroke={isActive ? "#f59e0b" : "#cbd5e1"} 
                   strokeWidth={isActive ? "4" : "2"}
-                  className="transition-all duration-500"
+                  className={`transition-all duration-500 ${!isActive && 'dark:stroke-slate-700'}`}
                 />
               );
             })}
@@ -206,21 +294,24 @@ export default function SerializationAnimation() {
               
               if (!isVisible) return null;
 
-              let stroke = "#475569";
-              let fill = "#0f172a";
+              let stroke = "#94a3b8"; // slate-400
+              let fill = "var(--background)";
+              let textFill = "var(--foreground)";
               
               if (isActive || isDeserializingActive) {
-                stroke = "#f97316";
-                fill = "#7c2d12";
+                stroke = "#f59e0b"; // amber-500
+                fill = "#fef3c7"; // amber-50
+                textFill = "#92400e"; // amber-800
               } else if (builtNodes.includes(node.id)) {
-                 stroke = "#ea580c";
+                 stroke = "#f59e0b"; // amber-500
+                 fill = "var(--background)";
               }
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {(isActive || isDeserializingActive) && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#f97316" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-                  <circle cx={node.x} cy={node.y} r="26" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-xl" />
-                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">{node.val}</text>
+                  {(isActive || isDeserializingActive) && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#fcd34d" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  <circle cx={node.x} cy={node.y} r="26" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-500 dark:stroke-slate-600" />
+                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill={isActive || isDeserializingActive ? textFill : "var(--foreground)"} fontSize="14" fontWeight="bold" className="transition-all duration-500">{node.val}</text>
                 </g>
               );
             })}
@@ -234,9 +325,9 @@ export default function SerializationAnimation() {
                         const dy = 50;
                         return (
                             <>
-                                <line x1={parentNode.x} y1={parentNode.y + 20} x2={parentNode.x + dx} y2={parentNode.y + dy} stroke="#f97316" strokeWidth="2" strokeDasharray="4,4" className="animate-pulse"/>
-                                <circle cx={parentNode.x + dx} cy={parentNode.y + dy} r="15" fill="#0f172a" stroke="#f97316" strokeWidth="2" />
-                                <text x={parentNode.x + dx} y={parentNode.y + dy + 4} textAnchor="middle" fill="#f97316" fontSize="12" fontWeight="bold" fontFamily="monospace">N</text>
+                                <line x1={parentNode.x} y1={parentNode.y + 20} x2={parentNode.x + dx} y2={parentNode.y + dy} stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,4" className="animate-pulse"/>
+                                <circle cx={parentNode.x + dx} cy={parentNode.y + dy} r="15" fill="var(--background)" stroke="#f59e0b" strokeWidth="2" />
+                                <text x={parentNode.x + dx} y={parentNode.y + dy + 4} textAnchor="middle" fill="#f59e0b" fontSize="12" fontWeight="bold" fontFamily="monospace">N</text>
                             </>
                         )
                     })()}
@@ -245,7 +336,7 @@ export default function SerializationAnimation() {
 
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

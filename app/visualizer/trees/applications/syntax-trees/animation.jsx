@@ -1,161 +1,250 @@
 "use client";
-import React, { useState } from "react";
-import { Play, RotateCcw, Info } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, RotateCcw, Info, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 export default function SyntaxTreesAnimation() {
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("Click 'Evaluate AST' to evaluate: 3 + (5 * 2)");
-  const [activeNode, setActiveNode] = useState(null);
-  const [activeEdge, setActiveEdge] = useState(null);
-  const [nodeValues, setNodeValues] = useState({
-    N1: "?", N2: "3", N3: "?", N4: "5", N5: "2"
-  });
+  
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
 
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Derived state from steps
+  const currentStep = steps[currentStepIdx] || null;
+  const activeNode = currentStep ? currentStep.activeNode : null;
+  const activeEdge = currentStep ? currentStep.activeEdge : null;
+  const nodeValues = currentStep && currentStep.nodeValues ? currentStep.nodeValues : { N1: "?", N2: "3", N3: "?", N4: "5", N5: "2" };
 
-  const evaluateAST = async () => {
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
+
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
     setAnimating(true);
-    setMessage("Starting Post-Order Traversal to evaluate AST...");
-    await delay(1500);
-
-    // Root is +, go left to 3
-    setActiveNode("N2");
-    setActiveEdge("E1");
-    setMessage("Visiting left leaf node: 3. Return 3.");
-    await delay(1500);
-
-    // Go right from + to *
-    setActiveNode("N3");
-    setActiveEdge("E2");
-    setMessage("Visiting right subtree (*). Must evaluate its children first.");
-    await delay(1500);
-
-    // Go left from * to 5
-    setActiveNode("N4");
-    setActiveEdge("E3");
-    setMessage("Visiting left leaf node: 5. Return 5.");
-    await delay(1500);
-
-    // Go right from * to 2
-    setActiveNode("N5");
-    setActiveEdge("E4");
-    setMessage("Visiting right leaf node: 2. Return 2.");
-    await delay(1500);
-
-    // Evaluate *
-    setActiveNode("N3");
-    setActiveEdge(null);
-    setMessage("Evaluating Node (*): 5 * 2 = 10.");
-    setNodeValues(prev => ({ ...prev, N3: "10" }));
-    await delay(2000);
-
-    // Evaluate +
-    setActiveNode("N1");
-    setMessage("Evaluating Root (+): 3 + 10 = 13.");
-    setNodeValues(prev => ({ ...prev, N1: "13" }));
-    await delay(2000);
-
-    setActiveNode(null);
-    setMessage("AST Evaluation Complete. Final Result: 13.");
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
     setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
+  };
+
+  const evaluateAST = () => {
+    setAnimating(false);
+    const newSteps = [];
+    
+    let vals = { N1: "?", N2: "3", N3: "?", N4: "5", N5: "2" };
+
+    newSteps.push({
+      activeNode: null, activeEdge: null, nodeValues: { ...vals },
+      message: "Starting Post-Order Traversal to evaluate AST..."
+    });
+
+    newSteps.push({
+      activeNode: "N2", activeEdge: "E1", nodeValues: { ...vals },
+      message: "Visiting left leaf node: 3. Return 3."
+    });
+
+    newSteps.push({
+      activeNode: "N3", activeEdge: "E2", nodeValues: { ...vals },
+      message: "Visiting right subtree (*). Must evaluate its children first."
+    });
+
+    newSteps.push({
+      activeNode: "N4", activeEdge: "E3", nodeValues: { ...vals },
+      message: "Visiting left leaf node: 5. Return 5."
+    });
+
+    newSteps.push({
+      activeNode: "N5", activeEdge: "E4", nodeValues: { ...vals },
+      message: "Visiting right leaf node: 2. Return 2."
+    });
+
+    vals = { ...vals, N3: "10" };
+    newSteps.push({
+      activeNode: "N3", activeEdge: null, nodeValues: { ...vals },
+      message: "Evaluating Node (*): 5 * 2 = 10."
+    });
+
+    vals = { ...vals, N1: "13" };
+    newSteps.push({
+      activeNode: "N1", activeEdge: null, nodeValues: { ...vals },
+      message: "Evaluating Root (+): 3 + 10 = 13."
+    });
+
+    newSteps.push({
+      activeNode: null, activeEdge: null, nodeValues: { ...vals },
+      message: "AST Evaluation Complete. Final Result: 13."
+    });
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
-    setActiveNode(null);
-    setActiveEdge(null);
-    setNodeValues({
-      N1: "?", N2: "3", N3: "?", N4: "5", N5: "2"
-    });
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Click 'Evaluate AST' to evaluate: 3 + (5 * 2)");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   const getNodeFill = (id, isLeaf) => {
-    if (activeNode === id) return "#a855f7";
-    if (nodeValues[id] !== "?") return "#4c1d95";
-    return isLeaf ? "#1e1b4b" : "#0f172a";
+    if (activeNode === id) return "#a435f0";
+    if (nodeValues[id] !== "?") return "var(--background)";
+    return isLeaf ? "var(--background)" : "var(--background)";
   };
 
   const getStroke = (id) => {
-    if (activeNode === id) return "#d8b4fe";
-    return "#7e22ce";
+    if (activeNode === id) return "#d38cff";
+    if (nodeValues[id] !== "?") return "#a435f0";
+    return "#64748b";
+  };
+  
+  const getTextColor = (id) => {
+    if (activeNode === id) return "#ffffff";
+    return "var(--foreground)";
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto">
-      
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-lg shadow-black/20">
-        <div className="text-sm font-bold text-slate-400">Expression: 3 + (5 * 2)</div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={evaluateAST} 
-            disabled={animating || nodeValues.N1 !== "?"}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <Play className="w-4 h-4" /> Evaluate AST
-          </button>
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-purple-400 bg-purple-950/20 hover:bg-purple-950/40 rounded-xl transition-all border border-purple-900/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm font-bold text-gray-700 dark:text-gray-300">Expression: 3 + (5 * 2)</div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={evaluateAST} 
+              disabled={animating || nodeValues.N1 !== "?"}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+            >
+              <Play className="w-4 h-4" /> Evaluate AST
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
-          <Info className="w-4 h-4 text-purple-400" /> Animation Status
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
+
+      <VisualizerCard
+        className={
+          message.includes("Complete") 
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
+          <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
         </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
 
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[350px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="500" height="300" viewBox="0 0 500 300" className="max-w-full h-auto drop-shadow-xl">
+      <VisualizerCard>
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[350px]">
+          <svg width="500" height="300" viewBox="0 0 500 300" className="max-w-full h-auto drop-shadow-sm">
             {/* Edges */}
             <g>
-              <line x1="250" y1="50" x2="150" y2="120" stroke={activeEdge === "E1" ? "#a855f7" : "#475569"} strokeWidth={activeEdge === "E1" ? "4" : "2"} className="transition-all duration-500" />
-              <line x1="250" y1="50" x2="350" y2="120" stroke={activeEdge === "E2" ? "#a855f7" : "#475569"} strokeWidth={activeEdge === "E2" ? "4" : "2"} className="transition-all duration-500" />
-              <line x1="350" y1="120" x2="280" y2="190" stroke={activeEdge === "E3" ? "#a855f7" : "#475569"} strokeWidth={activeEdge === "E3" ? "4" : "2"} className="transition-all duration-500" />
-              <line x1="350" y1="120" x2="420" y2="190" stroke={activeEdge === "E4" ? "#a855f7" : "#475569"} strokeWidth={activeEdge === "E4" ? "4" : "2"} className="transition-all duration-500" />
+              <line x1="250" y1="50" x2="150" y2="120" stroke={activeEdge === "E1" ? "#a435f0" : "#cbd5e1"} strokeWidth={activeEdge === "E1" ? "4" : "2"} className="transition-all duration-500 dark:stroke-slate-700" />
+              <line x1="250" y1="50" x2="350" y2="120" stroke={activeEdge === "E2" ? "#a435f0" : "#cbd5e1"} strokeWidth={activeEdge === "E2" ? "4" : "2"} className="transition-all duration-500 dark:stroke-slate-700" />
+              <line x1="350" y1="120" x2="280" y2="190" stroke={activeEdge === "E3" ? "#a435f0" : "#cbd5e1"} strokeWidth={activeEdge === "E3" ? "4" : "2"} className="transition-all duration-500 dark:stroke-slate-700" />
+              <line x1="350" y1="120" x2="420" y2="190" stroke={activeEdge === "E4" ? "#a435f0" : "#cbd5e1"} strokeWidth={activeEdge === "E4" ? "4" : "2"} className="transition-all duration-500 dark:stroke-slate-700" />
             </g>
 
             {/* Nodes */}
             <g className="transition-all duration-500">
-              {activeNode === "N1" && <circle cx="250" cy="50" r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-              <circle cx="250" cy="50" r="24" fill={getNodeFill("N1", false)} stroke={getStroke("N1")} strokeWidth="2.5" className="shadow-xl transition-all duration-500" />
-              <text x="250" y="55" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="bold">+</text>
-              <text x="250" y="90" textAnchor="middle" fill="#94a3b8" fontSize="12" fontWeight="bold">{nodeValues.N1}</text>
+              {activeNode === "N1" && <circle cx="250" cy="50" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              <circle cx="250" cy="50" r="24" fill={getNodeFill("N1", false)} stroke={getStroke("N1")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
+              <text x="250" y="55" textAnchor="middle" fill={getTextColor("N1")} fontSize="16" fontWeight="bold">+</text>
+              <text x="250" y="90" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="12" fontWeight="bold">{nodeValues.N1}</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N2" && <circle cx="150" cy="120" r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-              <circle cx="150" cy="120" r="24" fill={getNodeFill("N2", true)} stroke={getStroke("N2")} strokeWidth="2.5" className="shadow-xl transition-all duration-500" />
-              <text x="150" y="125" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">3</text>
+              {activeNode === "N2" && <circle cx="150" cy="120" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              <circle cx="150" cy="120" r="24" fill={getNodeFill("N2", true)} stroke={getStroke("N2")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
+              <text x="150" y="125" textAnchor="middle" fill={getTextColor("N2")} fontSize="14" fontWeight="bold">3</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N3" && <circle cx="350" cy="120" r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-              <circle cx="350" cy="120" r="24" fill={getNodeFill("N3", false)} stroke={getStroke("N3")} strokeWidth="2.5" className="shadow-xl transition-all duration-500" />
-              <text x="350" y="125" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="bold">*</text>
-              <text x="350" y="160" textAnchor="middle" fill="#94a3b8" fontSize="12" fontWeight="bold">{nodeValues.N3}</text>
+              {activeNode === "N3" && <circle cx="350" cy="120" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              <circle cx="350" cy="120" r="24" fill={getNodeFill("N3", false)} stroke={getStroke("N3")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
+              <text x="350" y="125" textAnchor="middle" fill={getTextColor("N3")} fontSize="16" fontWeight="bold">*</text>
+              <text x="350" y="160" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="12" fontWeight="bold">{nodeValues.N3}</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N4" && <circle cx="280" cy="190" r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-              <circle cx="280" cy="190" r="24" fill={getNodeFill("N4", true)} stroke={getStroke("N4")} strokeWidth="2.5" className="shadow-xl transition-all duration-500" />
-              <text x="280" y="195" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">5</text>
+              {activeNode === "N4" && <circle cx="280" cy="190" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              <circle cx="280" cy="190" r="24" fill={getNodeFill("N4", true)} stroke={getStroke("N4")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
+              <text x="280" y="195" textAnchor="middle" fill={getTextColor("N4")} fontSize="14" fontWeight="bold">5</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N5" && <circle cx="420" cy="190" r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
-              <circle cx="420" cy="190" r="24" fill={getNodeFill("N5", true)} stroke={getStroke("N5")} strokeWidth="2.5" className="shadow-xl transition-all duration-500" />
-              <text x="420" y="195" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">2</text>
+              {activeNode === "N5" && <circle cx="420" cy="190" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              <circle cx="420" cy="190" r="24" fill={getNodeFill("N5", true)} stroke={getStroke("N5")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
+              <text x="420" y="195" textAnchor="middle" fill={getTextColor("N5")} fontSize="14" fontWeight="bold">2</text>
             </g>
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

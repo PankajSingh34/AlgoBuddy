@@ -5,6 +5,9 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 class TreeNode {
   constructor(value) {
@@ -21,9 +24,9 @@ export default function InOrderVisualizer() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
   const [traversalResult, setTraversalResult] = useState([]);
-  const [speed, setSpeed] = useState(1);
   const [steps, setSteps] = useState(0);
   const animationRef = useRef(null);
+  const { speed, setSpeed } = usePlayback(1);
 
   const insertNode = (node, value) => {
     if (!node) return new TreeNode(value);
@@ -130,6 +133,15 @@ export default function InOrderVisualizer() {
     animateStep();
   };
 
+  useVisualizerKeyboard({
+    onReset: reset,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: isAnimating,
+    sorted: false,
+    enabled: true,
+  });
+
   const renderTree = (node, x = 400, y = 50, level = 0, nodes = [], edges = []) => {
     if (!node) return { nodes, edges };
 
@@ -204,7 +216,7 @@ export default function InOrderVisualizer() {
             <button
               onClick={generateRandomTree}
               disabled={isAnimating}
-              className="mb-2 w-full rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+              className="mb-2 w-full rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
             >
               Generate Random Tree
             </button>
@@ -214,14 +226,14 @@ export default function InOrderVisualizer() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Enter number"
-                className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
                 disabled={isAnimating}
                 onKeyDown={(e) => e.key === "Enter" && handleInsert()}
               />
               <button
                 onClick={handleInsert}
                 disabled={isAnimating}
-                className="rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+                className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
               >
                 Insert
               </button>
@@ -231,7 +243,7 @@ export default function InOrderVisualizer() {
             <button
               onClick={visualizeInOrder}
               disabled={!root || isAnimating}
-              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
             >
               {isAnimating ? "Traversing..." : "Start Traversal"}
             </button>
@@ -244,21 +256,13 @@ export default function InOrderVisualizer() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-700 dark:text-gray-300">Speed:</span>
-            <input
-              type="range"
-              min="0.5"
-              max="5"
-              step="0.5"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              className="flex-1"
-              disabled={isAnimating}
-            />
-            <span className="w-8 text-sm text-gray-700 dark:text-gray-300">{speed}x</span>
-          </div>
+        <div className="mt-6 flex flex-col gap-4">
+          <PlaybackControls 
+            showPlayPause={false}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            disabled={isAnimating}
+          />
           <div className="flex gap-4">
             <div className="flex-1 rounded-lg bg-gray-100 p-2 text-center dark:bg-gray-700">
               <div className="text-xs text-gray-500 dark:text-gray-400">Nodes</div>
@@ -277,11 +281,11 @@ export default function InOrderVisualizer() {
           message.includes("complete")
             ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
             : isAnimating
-              ? "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30"
+              ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
               : ""
         }
       >
-        <p className="text-center">{message}</p>
+        <p className="text-center font-medium">{message}</p>
       </VisualizerCard>
 
       <VisualizerCard>
@@ -313,8 +317,8 @@ export default function InOrderVisualizer() {
                       cx={node.x}
                       cy={node.y}
                       r="22"
-                      fill={node.highlighted ? "#f59e0b" : "#3b82f6"}
-                      stroke={node.highlighted ? "#d97706" : "#1d4ed8"}
+                      fill={node.highlighted ? "#a435f0" : "#d38cff"}
+                      stroke={node.highlighted ? "#8710d8" : "#a435f0"}
                       strokeWidth="2"
                       className={`transition-colors ${node.highlighted ? "animate-pulse" : ""}`}
                     />
@@ -322,7 +326,7 @@ export default function InOrderVisualizer() {
                       x={node.x}
                       y={node.y + 5}
                       textAnchor="middle"
-                      fill="white"
+                      fill={node.highlighted ? "white" : "black"}
                       fontSize="13"
                       fontWeight="600"
                     >
@@ -340,9 +344,9 @@ export default function InOrderVisualizer() {
         </div>
 
         {traversalResult.length > 0 && (
-          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-center dark:border-green-800 dark:bg-green-900/20">
+          <div className="mt-4 rounded-lg border border-[#a435f0]/30 bg-[#a435f0]/10 p-3 text-center dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20">
             <span className="font-medium">Path: </span>
-            <span className="text-green-700 dark:text-green-300">
+            <span className="text-[#a435f0] dark:text-[#d38cff] font-bold">
               [{traversalResult.join(", ")}]
             </span>
           </div>
@@ -362,9 +366,9 @@ export default function InOrderVisualizer() {
             <p className="mt-2">For BSTs, this produces nodes in sorted order.</p>
           </div>
 
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-primary-dark dark:bg-blue-900/20">
-            <h3 className="mb-2 text-sm font-medium text-primary-dark dark:text-blue-200">Algorithm:</h3>
-            <pre className="overflow-x-auto rounded bg-gray-100 p-2 text-xs dark:bg-gray-700">
+          <div className="rounded-lg border border-[#a435f0]/30 bg-[#a435f0]/10 p-3 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20">
+            <h3 className="mb-2 text-sm font-medium text-[#a435f0] dark:text-[#d38cff]">Algorithm:</h3>
+            <pre className="overflow-x-auto rounded bg-white dark:bg-gray-800 p-2 text-xs">
 {`function inOrder(node) {
   if (node !== null) {
     inOrder(node.left);

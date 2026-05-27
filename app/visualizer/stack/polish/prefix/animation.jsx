@@ -292,8 +292,6 @@ const InfixToPrefixVisualizer = () => {
                 onTogglePlayPause={togglePlayPause}
                 speed={speed}
                 onSpeedChange={setSpeed}
-                onIncreaseSpeed={() => setSpeed(Math.min(speed + 0.5, 5))}
-                onDecreaseSpeed={() => setSpeed(Math.max(speed - 0.5, 0.5))}
                 disabled={isAnimating && !isPlaying}
                 showShortcuts={true}
                 onStepForward={currentStep < steps.length - 1 ? playNextStep : undefined}

@@ -820,7 +820,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const activeQuestion = activeQuizList[quizIdx];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-udemy-dark-bg text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
       <Navbar />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
@@ -866,13 +866,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
           {/* LEFT: Tree Workspace & Control cards */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
+            <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
               {/* Insert / Search / Delete input controls */}
               <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
                 <button
                   onClick={generateRandomTree}
                   disabled={isAnimating}
-                  className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all border border-slate-700/60 disabled:opacity-40"
+                  className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
                 >
                   🎲 Random BST
                 </button>
@@ -882,7 +882,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={mode === "searching" ? "Find key (1-99)" : mode === "deletion" ? "Delete key" : "Insert key (1-99)"}
-                    className="w-full sm:w-28 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full sm:w-28 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     disabled={isAnimating}
                     onKeyDown={(e) => e.key === "Enter" && (mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
                   />
@@ -959,12 +959,12 @@ export default function TreeBSTVisualizer({ initialMode }) {
             </div>
 
             {/* Explanation Area */}
-            <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
+            <div className="bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-col gap-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400 font-semibold flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
                 </span>
-                <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">
+                <span className="text-slate-400 font-bold bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-[#333]">
                   Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
                 </span>
               </div>
@@ -974,37 +974,37 @@ export default function TreeBSTVisualizer({ initialMode }) {
             </div>
 
             {/* Trees SVG Render Canvas */}
-            <div className="bg-slate-900/30 border border-slate-850 rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+            <div className="bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
               
               {/* Dynamic Legend Labels */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2 text-xs">
-                <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950"></span>
                   <span className="text-slate-400">Comparing (visiting)</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-md shadow-purple-950"></span>
                   <span className="text-slate-400">Path Traversed</span>
                 </div>
                 {mode === "searching" && (
-                  <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                  <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-950"></span>
                     <span className="text-slate-400">Node Found!</span>
                   </div>
                 )}
                 {mode === "insertion" && (
-                  <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                  <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950 animate-pulse"></span>
                     <span className="text-slate-400">Newly Placed Leaf</span>
                   </div>
                 )}
                 {mode === "deletion" && (
                   <>
-                    <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-950"></span>
                       <span className="text-slate-400">Deleted (removal)</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
+                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
                       <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950"></span>
                       <span className="text-slate-400">Inorder Successor</span>
                     </div>
@@ -1175,7 +1175,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                 <BookOpen className="w-4 h-4 text-indigo-400" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Pseudocode</h2>
               </div>
-              <div className="flex flex-col gap-1 font-mono text-xs text-slate-400 bg-slate-950/80 p-4 rounded-xl border border-slate-900 overflow-x-auto leading-relaxed">
+              <div className="flex flex-col gap-1 font-mono text-xs text-slate-400 bg-[#1a1a1a] p-4 rounded-xl border border-[#333] overflow-x-auto leading-relaxed">
                 {pseudocode[mode].map((line, idx) => {
                   const isHighlighted = idx === currentHighlightLine;
                   return (
@@ -1203,7 +1203,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
               </div>
               
               <div className="flex flex-col gap-3.5">
-                <div className="text-xs font-semibold text-slate-300 leading-normal bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                <div className="text-xs font-semibold text-slate-300 leading-normal bg-[#111] p-3 rounded-xl border border-[#222]">
                   {activeQuestion.question}
                 </div>
 
@@ -1213,7 +1213,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     const isSelected = selectedOption === oIdx;
                     const isCorrect = oIdx === activeQuestion.answer;
                     
-                    let btnColor = "bg-slate-950 hover:bg-slate-800/80 border-slate-800 text-slate-400";
+                    let btnColor = "bg-[#1a1a1a] hover:bg-[#222] border-[#333] text-slate-400";
                     if (isSelected) {
                       btnColor = "bg-indigo-950/40 border-indigo-500 text-indigo-300";
                     }
@@ -1262,7 +1262,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
                 {/* Quiz feedback explanation */}
                 {quizSubmitted && (
-                  <div className="bg-slate-950 border border-slate-850 p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
+                  <div className="bg-[#1a1a1a] border border-[#333] p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
                     <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                     <div className="text-[11px] text-slate-400 leading-normal">
                       <span className="font-semibold text-indigo-300 block mb-0.5">

@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Plus
 } from "lucide-react";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 // === Red-Black Tree Implementation ===
 const RED = "RED";
@@ -322,8 +324,20 @@ export default function RedBlackAnimation() {
 
     setSteps(newSteps);
     setCurrentStepIdx(0);
-    setIsAnimating(true);
+    setIsAnimating(false);
   };
+
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlayPause: isAnimating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: isAnimating,
+    sorted: false,
+    enabled: true,
+  });
 
   const { nodes, edges } = computeLayout(displayTree);
   const svgWidth = Math.max(800, nodes.length > 0 ? Math.max(...nodes.map(n => n.x)) + 100 : 800);
@@ -342,42 +356,37 @@ export default function RedBlackAnimation() {
     <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto selection:bg-purple-500/30 selection:text-purple-200">
 
       {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col xl:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-center">
           <input
             type="number"
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             placeholder="Value (1-999)"
-            className="w-full sm:w-36 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full sm:w-36 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#a435f0] transition-colors"
             disabled={isAnimating}
             onKeyDown={e => e.key === "Enter" && triggerInsert()}
           />
           <button onClick={triggerInsert} disabled={isAnimating}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-red-700 hover:bg-red-600 disabled:bg-red-950/40 text-white rounded-xl transition-all shadow-md">
+            className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#a435f0] hover:bg-[#8f2cd6] text-white rounded-xl transition-all shadow-md w-full sm:w-auto">
             <Plus className="w-3.5 h-3.5" /> Insert
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-            <button onClick={stepBackward} disabled={currentStepIdx <= 0 || steps.length === 0} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"><ChevronLeft className="w-4 h-4" /></button>
-            <button onClick={isAnimating ? pauseVisualizer : startVisualizer} disabled={steps.length === 0}
-              className={`p-2 rounded-xl transition-all ${isAnimating ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/35 border border-amber-800/40" : "bg-red-700 hover:bg-red-600 text-white shadow-md disabled:opacity-30"}`}>
-              {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
-            </button>
-            <button onClick={stepForward} disabled={steps.length > 0 && currentStepIdx >= steps.length - 1} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"><ChevronRight className="w-4 h-4" /></button>
-            <button onClick={resetPlayback} disabled={steps.length === 0} className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg disabled:opacity-30"><RotateCcw className="w-4 h-4" /></button>
-          </div>
-          <button onClick={handleReset} className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30 flex items-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" /> Reset
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-36 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Speed</span>
-          <input type="range" min="0.5" max="3" step="0.5" value={speed} onChange={e => setSpeed(parseFloat(e.target.value))} className="w-full accent-red-500 h-1 bg-slate-800 rounded-lg cursor-pointer" />
-          <span className="text-xs font-bold text-red-400 w-8">{speed}x</span>
+        <div className="w-full xl:w-auto flex justify-center xl:justify-end">
+          <PlaybackControls 
+            isPlaying={isAnimating}
+            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={resetPlayback}
+            onClear={handleReset}
+            clearLabel="Clear Tree"
+            speed={speed}
+            onSpeedChange={setSpeed}
+            disabled={steps.length === 0}
+            showPlayPause={true}
+          />
         </div>
       </div>
 

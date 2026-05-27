@@ -1,20 +1,17 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  Layers,
-  Sparkles,
   AlertCircle,
   Plus,
-  Search,
-  CheckCircle,
-  Times
+  Search
 } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 // Internal Trie Node Class for coordinate mapping
 class TrieNode {
@@ -33,7 +30,7 @@ export default function TrieAnimation() {
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [message, setMessage] = useState("Add some words to build your Prefix Tree! Click 'Insert' to start.");
-  const [speed, setSpeed] = useState(1);
+  const { speed, setSpeed } = usePlayback(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [steps, setSteps] = useState([]);
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
@@ -500,298 +497,295 @@ export default function TrieAnimation() {
     setIsAnimating(true);
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: isAnimating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: isAnimating,
+    sorted: false,
+    enabled: true,
+  });
+
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto selection:bg-purple-500/30 selection:text-purple-200">
-      
-      {/* Dynamic Workspace Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
-        
-        {/* User Operations */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter word (a-z)"
-            className="w-full sm:w-44 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors uppercase"
-            disabled={isAnimating}
-            onKeyDown={(e) => e.key === "Enter" && triggerInsert()}
-          />
-          <div className="flex flex-wrap gap-2">
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Enter word (a-z)"
+                className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700 uppercase"
+                disabled={isAnimating}
+                onKeyDown={(e) => e.key === "Enter" && triggerInsert()}
+              />
+              <button
+                onClick={triggerInsert}
+                disabled={isAnimating}
+                className="flex items-center gap-1 rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4" /> Insert
+              </button>
+            </div>
+            
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={triggerSearch}
+                disabled={isAnimating}
+                className="flex flex-1 justify-center items-center gap-1 rounded-lg border border-[#a435f0] text-[#a435f0] px-4 py-2 transition-colors hover:bg-[#a435f0] hover:text-white disabled:opacity-50 dark:hover:bg-[#a435f0] dark:hover:text-white"
+              >
+                <Search className="w-4 h-4" /> Search
+              </button>
+              <button
+                onClick={triggerPrefixSearch}
+                disabled={isAnimating}
+                className="flex flex-1 justify-center items-center gap-1 rounded-lg border border-[#a435f0] text-[#a435f0] px-4 py-2 transition-colors hover:bg-[#a435f0] hover:text-white disabled:opacity-50 dark:hover:bg-[#a435f0] dark:hover:text-white"
+              >
+                Prefix Match
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 min-w-[120px]">
             <button
-              onClick={triggerInsert}
-              disabled={isAnimating}
-              className="flex items-center gap-1 px-3.5 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all font-semibold shadow-md shadow-purple-950/20"
+              onClick={handleClearTree}
+              className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 h-[42px]"
             >
-              <Plus className="w-3.5 h-3.5" /> Insert
+              Clear Trie
             </button>
-            <button
-              onClick={triggerSearch}
-              disabled={isAnimating}
-              className="flex items-center gap-1 px-3.5 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl transition-all font-semibold border border-slate-700/60"
-            >
-              <Search className="w-3.5 h-3.5 text-purple-400" /> Search
-            </button>
-            <button
-              onClick={triggerPrefixSearch}
-              disabled={isAnimating}
-              className="px-3.5 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl transition-all font-semibold border border-slate-700/60"
-            >
-              Prefix Match
-            </button>
+            <div className="w-full h-full flex items-end">
+              <div className="w-full rounded-lg bg-gray-100 p-2 text-center dark:bg-gray-700">
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Nodes</div>
+                <div className="font-bold text-[#a435f0] dark:text-[#d38cff]">{nodeIdCounter}</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Playback controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-            <button
-              onClick={stepBackward}
-              disabled={currentStepIdx <= 0 || steps.length === 0}
-              className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"
-              title="Previous Step"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={isAnimating ? pauseVisualizer : startVisualizer}
-              disabled={steps.length === 0}
-              className={`p-2 rounded-xl transition-all ${
-                isAnimating
-                  ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/35 border border-amber-800/40"
-                  : "bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-950 disabled:opacity-30"
-              }`}
-            >
-              {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
-            </button>
-            <button
-              onClick={stepForward}
-              disabled={steps.length > 0 && currentStepIdx >= steps.length - 1}
-              className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"
-              title="Next Step"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={resetPlayback}
-              disabled={steps.length === 0}
-              className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg disabled:opacity-30"
-              title="Reset Playback"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-
-          <button
-            onClick={handleClearTree}
-            className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30"
-          >
-            Clear Trie
-          </button>
-        </div>
-
-        {/* Speed Controls */}
-        <div className="flex items-center gap-3 w-full md:w-36 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Speed</span>
-          <input
-            type="range"
-            min="0.5"
-            max="3"
-            step="0.5"
-            value={speed}
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
-            className="w-full accent-purple-500 h-1 bg-slate-800 rounded-lg cursor-pointer"
+        <div className="mt-6">
+          <PlaybackControls 
+            isPlaying={isAnimating}
+            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={resetPlayback}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            disabled={steps.length === 0}
+            showPlayPause={true}
           />
-          <span className="text-xs font-bold text-purple-400 w-8">{speed}x</span>
         </div>
+      </VisualizerCard>
 
-      </div>
-
-      {/* Real-time Activity Card */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-purple-400" /> Current Action Explanation
-          </span>
-          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">
+      <VisualizerCard
+        className={
+          message.includes("Success") || message.includes("complete")
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : message.includes("failed") || message.includes("missing")
+              ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+              : isAnimating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+          <span>Current Action Explanation</span>
+          <span className="font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
             Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
           </span>
         </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[40px] flex items-center">
-          {message}
-        </div>
-      </div>
+        <p className="text-center font-medium text-lg min-h-[28px]">{message}</p>
+      </VisualizerCard>
 
-      {/* SVG Canvas Area */}
-      <div className="bg-slate-900/30 border border-slate-850 rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
-        
-        {/* Glowing Legend Overlays */}
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2 text-xs">
-          <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950"></span>
-            <span className="text-slate-400">Current Node</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950"></span>
-            <span className="text-slate-400">Match Found</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-950"></span>
-            <span className="text-slate-400">Error / Not Found</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-800 border border-double border-purple-400"></span>
-            <span className="text-slate-400">End of Word</span>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Trie Visualization</h2>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span className="text-gray-500 dark:text-gray-400">Current</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#a435f0]"></span>
+              <span className="text-gray-500 dark:text-gray-400">Match Found</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+              <span className="text-gray-500 dark:text-gray-400">Error</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+              <span className="w-2.5 h-2.5 rounded-full bg-transparent border-2 border-dashed border-[#a435f0]"></span>
+              <span className="text-gray-500 dark:text-gray-400">End of Word</span>
+            </div>
           </div>
         </div>
 
-        {/* Dynamic Responsive SVG Tree */}
-        {renderNodes.length > 0 ? (
-          <div className="overflow-auto w-full flex justify-center py-6">
-            <svg
-              width={svgDimensions.width}
-              height={svgDimensions.height}
-              viewBox={`${svgDimensions.offset} 0 ${svgDimensions.width} ${svgDimensions.height}`}
-              className="max-w-full h-auto transition-transform duration-300"
-            >
-              {/* Draw Edges */}
-              {renderEdges.map((edge, idx) => {
-                let strokeColor = "#334155";
-                let strokeWidth = "2";
-                if (edge.isActive) {
-                  strokeColor = "#c084fc"; // purple-400
-                  strokeWidth = "3.5";
-                }
+        <div className="flex min-h-[440px] justify-center overflow-auto py-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
+          {renderNodes.length > 0 ? (
+            <div className="relative">
+              <svg
+                width={svgDimensions.width}
+                height={svgDimensions.height}
+                viewBox={`${svgDimensions.offset} 0 ${svgDimensions.width} ${svgDimensions.height}`}
+                className="mx-auto"
+              >
+                {/* Draw Edges */}
+                {renderEdges.map((edge, idx) => {
+                  let strokeColor = "#cbd5e1"; // gray-300
+                  let strokeWidth = "2";
+                  
+                  // In dark mode, base stroke should be darker
+                  let strokeClass = "stroke-gray-300 dark:stroke-gray-600";
+                  
+                  if (edge.isActive) {
+                    strokeColor = "#a435f0";
+                    strokeWidth = "3.5";
+                    strokeClass = ""; // Override class if active
+                  }
 
-                return (
-                  <g key={`edge-g-${idx}`}>
-                    <line
-                      x1={edge.x1}
-                      y1={edge.y1}
-                      x2={edge.x2}
-                      y2={edge.y2}
-                      stroke={strokeColor}
-                      strokeWidth={strokeWidth}
-                      className="transition-all duration-300"
-                    />
-                    {/* Edge Label character */}
-                    <rect
-                      x={(edge.x1 + edge.x2) / 2 - 8}
-                      y={(edge.y1 + edge.y2) / 2 - 10}
-                      width="16"
-                      height="16"
-                      rx="3"
-                      fill="#0b0f19"
-                      stroke={edge.isActive ? "#c084fc" : "#1e293b"}
-                      strokeWidth="0.5"
-                    />
-                    <text
-                      x={(edge.x1 + edge.x2) / 2}
-                      y={(edge.y1 + edge.y2) / 2 + 2.5}
-                      textAnchor="middle"
-                      fill={edge.isActive ? "#c084fc" : "#94a3b8"}
-                      fontSize="10"
-                      fontWeight="bold"
-                      className="uppercase"
-                    >
-                      {edge.char}
-                    </text>
-                  </g>
-                );
-              })}
+                  return (
+                    <g key={`edge-g-${idx}`}>
+                      <line
+                        x1={edge.x1}
+                        y1={edge.y1}
+                        x2={edge.x2}
+                        y2={edge.y2}
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
+                        className={`transition-all duration-300 ${strokeClass}`}
+                      />
+                      {/* Edge Label character */}
+                      <rect
+                        x={(edge.x1 + edge.x2) / 2 - 8}
+                        y={(edge.y1 + edge.y2) / 2 - 10}
+                        width="16"
+                        height="16"
+                        rx="3"
+                        fill="var(--background)"
+                        className="fill-white dark:fill-gray-900"
+                        stroke={edge.isActive ? "#a435f0" : "#94a3b8"}
+                        strokeWidth="1"
+                      />
+                      <text
+                        x={(edge.x1 + edge.x2) / 2}
+                        y={(edge.y1 + edge.y2) / 2 + 3.5}
+                        textAnchor="middle"
+                        fill={edge.isActive ? "#a435f0" : "#64748b"}
+                        fontSize="10"
+                        fontWeight="bold"
+                        className="uppercase"
+                      >
+                        {edge.char}
+                      </text>
+                    </g>
+                  );
+                })}
 
-              {/* Draw Nodes */}
-              {renderNodes.map((node, idx) => {
-                const isCurr = node.state === "visiting";
-                const isMatch = node.state === "matched";
-                const isError = node.state === "error";
-                const isActivePath = node.state === "active";
+                {/* Draw Nodes */}
+                {renderNodes.map((node, idx) => {
+                  const isCurr = node.state === "visiting";
+                  const isMatch = node.state === "matched";
+                  const isError = node.state === "error";
+                  const isActivePath = node.state === "active";
 
-                let fillHex = "#0f172a";
-                let strokeHex = "#334155";
-                let strokeWidth = "2";
+                  // Default classes for standard visualizer looks
+                  let nodeClass = "fill-white stroke-gray-400 dark:fill-gray-800 dark:stroke-gray-600";
+                  let textClass = "fill-gray-800 dark:fill-white";
+                  let strokeWidth = "2";
 
-                if (isCurr) {
-                  fillHex = "#10b981"; // emerald-500
-                  strokeHex = "#34d399";
-                } else if (isMatch) {
-                  fillHex = "#8b5cf6"; // purple-600
-                  strokeHex = "#c084fc";
-                } else if (isError) {
-                  fillHex = "#ef4444"; // red-500
-                  strokeHex = "#f87171";
-                } else if (isActivePath) {
-                  fillHex = "#3b82f6"; // blue-500
-                  strokeHex = "#60a5fa";
-                }
+                  if (isCurr) {
+                    nodeClass = "fill-emerald-50 stroke-emerald-500 dark:fill-emerald-900/30 dark:stroke-emerald-400";
+                    textClass = "fill-emerald-700 dark:fill-emerald-300";
+                    strokeWidth = "3";
+                  } else if (isMatch) {
+                    nodeClass = "fill-[#a435f0]/10 stroke-[#a435f0] dark:fill-[#a435f0]/20 dark:stroke-[#d38cff]";
+                    textClass = "fill-[#a435f0] dark:fill-[#d38cff]";
+                    strokeWidth = "3";
+                  } else if (isError) {
+                    nodeClass = "fill-red-50 stroke-red-500 dark:fill-red-900/30 dark:stroke-red-400";
+                    textClass = "fill-red-700 dark:fill-red-300";
+                    strokeWidth = "3";
+                  } else if (isActivePath) {
+                    nodeClass = "fill-blue-50 stroke-blue-500 dark:fill-blue-900/30 dark:stroke-blue-400";
+                    textClass = "fill-blue-700 dark:fill-blue-300";
+                    strokeWidth = "3";
+                  }
 
-                return (
-                  <g key={`node-g-${idx}`} className="transition-all duration-300">
-                    {/* Glowing outer rings for active/searching states */}
-                    {(isCurr || isMatch || isError) && (
+                  return (
+                    <g key={`node-g-${idx}`} className="transition-all duration-300">
+                      {/* Glowing outer rings for active/searching states */}
+                      {(isCurr || isMatch || isError) && (
+                        <circle
+                          cx={node.x}
+                          cy={node.y}
+                          r="25"
+                          fill="none"
+                          className={isCurr ? "stroke-emerald-400" : isMatch ? "stroke-[#a435f0]" : "stroke-red-400"}
+                          strokeWidth="1.5"
+                          strokeDasharray="4,2"
+                        >
+                          <animateTransform
+                            attributeName="transform"
+                            type="rotate"
+                            from={`0 ${node.x} ${node.y}`}
+                            to={`360 ${node.x} ${node.y}`}
+                            dur="4s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      )}
+
+                      {/* Double stroke ring for end of word */}
+                      {node.isEndOfWord && (
+                        <circle
+                          cx={node.x}
+                          cy={node.y}
+                          r="22"
+                          fill="none"
+                          className={isMatch ? "stroke-[#a435f0]" : "stroke-[#a435f0]/50 dark:stroke-[#a435f0]/70"}
+                          strokeWidth="1.5"
+                          strokeDasharray="4,4"
+                        />
+                      )}
+
+                      {/* Node Core */}
                       <circle
                         cx={node.x}
                         cy={node.y}
-                        r="25"
-                        fill="none"
-                        stroke={strokeHex}
-                        strokeWidth="1.5"
-                        strokeDasharray="4,2"
-                        className="animate-spin-slow opacity-65"
+                        r="18"
+                        strokeWidth={node.isEndOfWord ? "3" : strokeWidth}
+                        className={`transition-all duration-300 shadow-sm ${nodeClass}`}
                       />
-                    )}
 
-                    {/* Double stroke ring for end of word */}
-                    {node.isEndOfWord && (
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r="22"
-                        fill="none"
-                        stroke={isMatch ? "#c084fc" : "#c084fc"}
-                        strokeWidth="1.5"
-                        strokeDasharray="2,2"
-                        className="opacity-80"
-                      />
-                    )}
-
-                    {/* Node Core */}
-                    <circle
-                      cx={node.x}
-                      cy={node.y}
-                      r="18"
-                      fill={fillHex}
-                      stroke={strokeHex}
-                      strokeWidth={node.isEndOfWord ? "3.5" : strokeWidth}
-                      className="shadow-lg transition-all duration-300"
-                    />
-
-                    {/* Node Text character */}
-                    <text
-                      x={node.x}
-                      y={node.y + 4.5}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="12"
-                      fontWeight="bold"
-                      className="uppercase"
-                    >
-                      {node.char || "Root"}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 text-slate-500 py-12">
-            <AlertCircle className="w-10 h-10 text-slate-700 animate-bounce" />
-            <span className="text-sm font-semibold">Workspace is Empty</span>
-          </div>
-        )}
-
-      </div>
-
-    </div>
+                      {/* Node Text character */}
+                      <text
+                        x={node.x}
+                        y={node.y + 4.5}
+                        textAnchor="middle"
+                        fontSize="12"
+                        fontWeight="bold"
+                        className={`uppercase ${textClass}`}
+                      >
+                        {node.char || "R"}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
+              <AlertCircle className="w-10 h-10 animate-pulse text-gray-300 dark:text-gray-600" />
+              <span className="text-sm font-medium">Workspace is Empty</span>
+            </div>
+          )}
+        </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

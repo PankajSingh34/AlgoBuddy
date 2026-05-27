@@ -259,8 +259,6 @@ const targetValue = parseInt(target);
             isPaused={isPaused}
             onTogglePlayPause={togglePlayPause}
             speed={speed}
-            onIncreaseSpeed={increaseSpeed}
-            onDecreaseSpeed={decreaseSpeed}
             onSpeedChange={setSpeed}
           />
         )}

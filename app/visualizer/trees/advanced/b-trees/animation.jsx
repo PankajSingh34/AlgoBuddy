@@ -1,16 +1,17 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Info,
   RefreshCw,
   Plus,
   Search
 } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 // === B-Tree Implementation (order t, min t-1 keys, max 2t-1 keys) ===
 const T = 2; // Min degree (B-Tree of order 4: max 3 keys per node, max 4 children)
@@ -189,7 +190,6 @@ function layoutTree(root) {
   if (!root) return { nodes: [], edges: [] };
   const nodes = [];
   const edges = [];
-  let leafPos = 0;
   const NODE_W = 100;
   const HGAP = 20;
   const VERT_GAP = 100;
@@ -238,7 +238,7 @@ export default function BTreeAnimation() {
   const [steps, setSteps] = useState([]);
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const { speed, setSpeed } = usePlayback(1);
   const [message, setMessage] = useState(`B-Tree pre-loaded (order ${2 * T}, max ${2 * T - 1} keys/node)! Insert or Search keys.`);
   const [highlighted, setHighlighted] = useState({});
 
@@ -322,6 +322,18 @@ export default function BTreeAnimation() {
     setIsAnimating(true);
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: isAnimating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: isAnimating,
+    sorted: false,
+    enabled: true,
+  });
+
   // Layout
   const { nodes, edges } = layoutTree(displayRoot);
   const svgWidth = nodes.length > 0 ? Math.max(800, Math.max(...nodes.map(n => n.x + n.w)) + 60) : 800;
@@ -329,150 +341,177 @@ export default function BTreeAnimation() {
 
   const getNodeStyle = (nodeId) => {
     const state = highlighted[nodeId];
-    if (state === "visiting") return { fill: "#8b5cf6", stroke: "#c084fc" };
+    if (state === "visiting") return { fill: "#a435f0", stroke: "#d38cff" };
     if (state === "active")   return { fill: "#10b981", stroke: "#34d399" };
     if (state === "matched")  return { fill: "#f59e0b", stroke: "#fbbf24" };
     if (state === "error")    return { fill: "#ef4444", stroke: "#f87171" };
-    return { fill: "#1e293b", stroke: "#475569" };
+    return { fill: "var(--background)", stroke: "#64748b" };
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto selection:bg-purple-500/30 selection:text-purple-200">
-
-      {/* Mode Tabs */}
-      <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl w-fit border border-slate-800">
-        {[["insert", "Insert"], ["search", "Search"]].map(([val, label]) => (
-          <button key={val} onClick={() => { setMode(val); resetPlayback(); }}
-            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === val ? "bg-purple-600 text-white shadow-md shadow-purple-950" : "text-slate-400 hover:text-slate-200"}`}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          {mode === "insert" ? (
-            <>
-              <input type="number" value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Key (1-999)"
-                className="w-full sm:w-32 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating} onKeyDown={e => e.key === "Enter" && triggerInsert()} />
-              <button onClick={triggerInsert} disabled={isAnimating}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all shadow-md">
-                <Plus className="w-3.5 h-3.5" /> Insert Key
-              </button>
-            </>
-          ) : (
-            <>
-              <input type="number" value={searchValue} onChange={e => setSearchValue(e.target.value)} placeholder="Key to search"
-                className="w-full sm:w-32 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isAnimating} onKeyDown={e => e.key === "Enter" && triggerSearch()} />
-              <button onClick={triggerSearch} disabled={isAnimating}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-primary hover:bg-primary-dark disabled:bg-primary-dark/40 disabled:opacity-50 text-white rounded-xl transition-all shadow-md">
-                <Search className="w-3.5 h-3.5" /> Search
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-            <button onClick={stepBackward} disabled={currentStepIdx <= 0 || steps.length === 0} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"><ChevronLeft className="w-4 h-4" /></button>
-            <button onClick={isAnimating ? pauseVisualizer : startVisualizer} disabled={steps.length === 0}
-              className={`p-2 rounded-xl transition-all ${isAnimating ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/35 border border-amber-800/40" : "bg-purple-600 hover:bg-purple-500 text-white shadow-md disabled:opacity-30"}`}>
-              {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl w-fit dark:bg-gray-800">
+          {[["insert", "Insert"], ["search", "Search"]].map(([val, label]) => (
+            <button key={val} onClick={() => { setMode(val); resetPlayback(); }}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === val ? "bg-[#a435f0] text-white shadow-md" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"}`}>
+              {label}
             </button>
-            <button onClick={stepForward} disabled={steps.length > 0 && currentStepIdx >= steps.length - 1} className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"><ChevronRight className="w-4 h-4" /></button>
-            <button onClick={resetPlayback} disabled={steps.length === 0} className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg disabled:opacity-30"><RotateCcw className="w-4 h-4" /></button>
-          </div>
-          <button onClick={handleReset} className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30 flex items-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" /> Reset
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-36 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Speed</span>
-          <input type="range" min="0.5" max="3" step="0.5" value={speed} onChange={e => setSpeed(parseFloat(e.target.value))} className="w-full accent-purple-500 h-1 bg-slate-800 rounded-lg cursor-pointer" />
-          <span className="text-xs font-bold text-purple-400 w-8">{speed}x</span>
-        </div>
-      </div>
-
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Info className="w-3.5 h-3.5 text-purple-400" /> Operation Explanation</span>
-          <div className="flex items-center gap-2">
-            <span className="text-purple-400/60 text-xs">Order {2*T} B-Tree (max {2*T-1} keys/node)</span>
-            <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}</span>
-          </div>
-        </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[40px] flex items-center">{message}</div>
-      </div>
-
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-4 relative overflow-hidden min-h-[380px] flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2 text-xs">
-          {[
-            { color: "bg-purple-600", label: "Visiting" },
-            { color: "bg-primary", label: "Split / Active" },
-            { color: "bg-amber-500", label: "Found" },
-            { color: "bg-rose-600", label: "Not Found" },
-          ].map(({ color, label }) => (
-            <div key={label} className="flex items-center gap-1.5 bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-              <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-              <span className="text-slate-400">{label}</span>
-            </div>
           ))}
         </div>
 
-        <div className="overflow-auto flex justify-center">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {mode === "insert" ? (
+              <>
+                <input type="number" value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Key (1-999)"
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating} onKeyDown={e => e.key === "Enter" && triggerInsert()} />
+                <button onClick={triggerInsert} disabled={isAnimating}
+                  className="flex items-center gap-1.5 px-4 py-2 text-white bg-[#a435f0] rounded-lg transition-colors hover:bg-[#8f2cd6] disabled:opacity-50 h-[42px]">
+                  <Plus className="w-4 h-4" /> Insert
+                </button>
+              </>
+            ) : (
+              <>
+                <input type="number" value={searchValue} onChange={e => setSearchValue(e.target.value)} placeholder="Key to search"
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700"
+                  disabled={isAnimating} onKeyDown={e => e.key === "Enter" && triggerSearch()} />
+                <button onClick={triggerSearch} disabled={isAnimating}
+                  className="flex items-center gap-1.5 px-4 py-2 text-white bg-[#a435f0] rounded-lg transition-colors hover:bg-[#8f2cd6] disabled:opacity-50 h-[42px]">
+                  <Search className="w-4 h-4" /> Search
+                </button>
+              </>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-2 items-start">
+            <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <PlaybackControls 
+            isPlaying={isAnimating}
+            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={resetPlayback}
+            speed={speed}
+            onSpeedChange={setSpeed}
+            disabled={steps.length === 0}
+            showPlayPause={true}
+          />
+        </div>
+      </VisualizerCard>
+
+      <VisualizerCard
+        className={
+          message.includes("✅") || message.includes("successfully")
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : message.includes("not found") || message.includes("error") || message.includes("⚠️")
+              ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+              : isAnimating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+          <span>Operation Explanation</span>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 font-mono">Order {2*T} B-Tree (max {2*T-1} keys/node)</span>
+            <span className="font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+              Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+            </span>
+          </div>
+        </div>
+        <p className="font-medium text-lg min-h-[28px]">{message}</p>
+      </VisualizerCard>
+
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">B-Tree Visualization</h2>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {[
+              { color: "bg-[#a435f0]", label: "Visiting" },
+              { color: "bg-emerald-500", label: "Split / Active" },
+              { color: "bg-amber-500", label: "Found" },
+              { color: "bg-red-500", label: "Not Found" },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
+                <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
+                <span className="text-gray-500 dark:text-gray-400">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="overflow-auto flex justify-center py-8 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[380px]">
           <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="max-w-full h-auto">
             {/* Edges */}
             {edges.map((e, i) => (
               <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-                stroke={highlighted[e.childId] ? "#8b5cf6" : "#334155"} strokeWidth={highlighted[e.childId] ? "2.5" : "1.5"}
-                className="transition-all duration-300" />
+                stroke={highlighted[e.childId] ? "#a435f0" : "currentColor"} strokeWidth={highlighted[e.childId] ? "2.5" : "1.5"}
+                className={`transition-all duration-300 ${highlighted[e.childId] ? '' : 'stroke-gray-300 dark:stroke-gray-600'}`} />
             ))}
 
             {/* Nodes */}
             {nodes.map(node => {
               const style = getNodeStyle(node.id);
               const keyW = node.w / Math.max(node.keys.length, 1);
+              
+              let fillStyle = style.fill;
+              if (fillStyle === "var(--background)") {
+                fillStyle = "currentColor";
+              }
+              
               return (
                 <g key={node.id} className="transition-all duration-300">
                   {/* Glow */}
-                  {highlighted[node.id] && <rect x={node.x - 4} y={node.y - 12} width={node.w + 8} height={36} rx="10" fill="none" stroke={style.stroke} strokeWidth="1.5" strokeDasharray="4,2" className="opacity-60 animate-pulse" />}
+                  {highlighted[node.id] && <rect x={node.x - 4} y={node.y - 12} width={node.w + 8} height={36} rx="10" fill="none" stroke={style.stroke} strokeWidth="1.5" strokeDasharray="4,2" className="opacity-80 animate-pulse" />}
 
                   {/* Node background */}
-                  <rect x={node.x} y={node.y - 8} width={node.w} height={28} rx="6" fill={style.fill} stroke={style.stroke} strokeWidth="1.5" className="transition-all duration-300" />
+                  <rect x={node.x} y={node.y - 8} width={node.w} height={28} rx="6" fill={fillStyle} stroke={style.stroke} strokeWidth="1.5" 
+                    className={`transition-all duration-300 ${style.fill === 'var(--background)' ? 'fill-white dark:fill-gray-900' : ''}`} />
 
                   {/* Key dividers + text */}
                   {node.keys.map((key, ki) => (
                     <g key={ki}>
-                      {ki > 0 && <line x1={node.x + ki * keyW} y1={node.y - 8} x2={node.x + ki * keyW} y2={node.y + 20} stroke={style.stroke} strokeWidth="1" opacity="0.5" />}
-                      <text x={node.x + ki * keyW + keyW / 2} y={node.y + 7} textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="bold">{key}</text>
+                      {ki > 0 && <line x1={node.x + ki * keyW} y1={node.y - 8} x2={node.x + ki * keyW} y2={node.y + 20} stroke={style.stroke} strokeWidth="1" className="opacity-50" />}
+                      <text 
+                        x={node.x + ki * keyW + keyW / 2} y={node.y + 7} 
+                        textAnchor="middle" 
+                        fill={style.fill === 'var(--background)' ? 'currentColor' : '#ffffff'} 
+                        fontSize="11" 
+                        fontWeight="bold"
+                        className={style.fill === 'var(--background)' ? 'fill-gray-900 dark:fill-gray-100' : ''}
+                      >
+                        {key}
+                      </text>
                     </g>
                   ))}
 
                   {/* Empty node */}
-                  {node.keys.length === 0 && <text x={node.x + node.w / 2} y={node.y + 7} textAnchor="middle" fill="#475569" fontSize="10">(empty)</text>}
+                  {node.keys.length === 0 && <text x={node.x + node.w / 2} y={node.y + 7} textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="10">(empty)</text>}
                 </g>
               );
             })}
 
             {/* Empty state */}
-            {nodes.length === 0 && <text x="400" y="180" textAnchor="middle" fill="#475569" fontSize="14">Insert keys to build the B-Tree</text>}
+            {nodes.length === 0 && <text x="400" y="180" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="14">Insert keys to build the B-Tree</text>}
           </svg>
+          
+          {/* B-Tree properties */}
+          <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-xs space-y-0.5 max-w-xs shadow-sm">
+            <p className="text-gray-700 dark:text-gray-300 font-bold mb-1">B-Tree Properties (t={T}):</p>
+            <p className="text-gray-500 dark:text-gray-400">Min keys: {T - 1} (root: 1)</p>
+            <p className="text-gray-500 dark:text-gray-400">Max keys: {2 * T - 1}</p>
+            <p className="text-gray-500 dark:text-gray-400">All leaves at same level</p>
+          </div>
         </div>
-
-        {/* B-Tree properties */}
-        <div className="absolute bottom-4 right-4 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 text-xs space-y-0.5 max-w-xs">
-          <p className="text-slate-400 font-bold mb-1">B-Tree Properties (t={T}):</p>
-          <p className="text-slate-500">Min keys: {T - 1} (root: 1)</p>
-          <p className="text-slate-500">Max keys: {2 * T - 1}</p>
-          <p className="text-slate-500">All leaves at same level</p>
-        </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

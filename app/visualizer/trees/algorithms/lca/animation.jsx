@@ -1,6 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import { Search, RotateCcw, Info } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Search, RotateCcw, Info, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const NODES = [
   { id: "3", val: "3", x: 400, y: 60, parent: null },
@@ -25,12 +32,50 @@ export default function LCAAnimation() {
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("Select two nodes and click 'Find LCA' to trace the paths.");
   
-  // Animation States
-  const [activeNode, setActiveNode] = useState(null);
-  const [visitedNodes, setVisitedNodes] = useState([]);
-  const [foundNodes, setFoundNodes] = useState([]);
-  const [backtrackingEdges, setBacktrackingEdges] = useState([]);
-  const [lcaNode, setLcaNode] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
+
+  const currentStep = steps[currentStepIdx] || null;
+  const activeNode = currentStep ? currentStep.activeNode : null;
+  const visitedNodes = currentStep ? currentStep.visitedNodes : [];
+  const foundNodes = currentStep ? currentStep.foundNodes : [];
+  const backtrackingEdges = currentStep ? currentStep.backtrackingEdges : [];
+  const lcaNode = currentStep ? currentStep.lcaNode : null;
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
+
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
+    setAnimating(true);
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
+    setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
+  };
 
   const generateDFSSequence = (rootId, p, q) => {
     const sequence = [];
@@ -84,169 +129,217 @@ export default function LCAAnimation() {
       setMessage("Please select two distinct nodes.");
       return;
     }
-    setAnimating(true);
-    setVisitedNodes([]);
-    setFoundNodes([]);
-    setBacktrackingEdges([]);
-    setLcaNode(null);
-    setActiveNode(null);
+    setAnimating(false);
 
     const sequence = generateDFSSequence("3", targetP, targetQ);
-    let step = 0;
+    const newSteps = [];
+    
+    let currentVisited = [];
+    let currentFound = [];
+    let currentBacktracking = [];
+    let currentLca = null;
+    let currentActiveNode = null;
     let lcaResolved = false;
+    let msg = "";
 
-    const interval = setInterval(() => {
-      if (step >= sequence.length) {
-        clearInterval(interval);
-        setAnimating(false);
-        return;
-      }
-
-      const event = sequence[step];
-      
+    for (const event of sequence) {
       switch (event.type) {
         case "VISIT":
           if (!lcaResolved) {
-            setActiveNode(event.node);
-            setVisitedNodes(prev => [...new Set([...prev, event.node])]);
-            setMessage(`Exploring node ${event.node}...`);
+            currentActiveNode = event.node;
+            if (!currentVisited.includes(event.node)) {
+              currentVisited = [...currentVisited, event.node];
+            }
+            msg = `Exploring node ${event.node}...`;
           }
           break;
         case "FOUND_TARGET":
-          setFoundNodes(prev => [...new Set([...prev, event.node])]);
+          if (!currentFound.includes(event.node)) {
+            currentFound = [...currentFound, event.node];
+          }
           if (!lcaResolved) {
-            setMessage(`Node ${event.node} matches target!`);
+            msg = `Node ${event.node} matches target!`;
           }
           break;
         case "RETURN_LEFT":
         case "RETURN_RIGHT":
           if (!lcaResolved) {
-            setActiveNode(event.node);
+            currentActiveNode = event.node;
             if (event.val) {
-              setBacktrackingEdges(prev => [...new Set([...prev, `${event.node}-${event.child}`])]);
-              setMessage(`Subtree returned ${event.val}. Propagating up to ${event.node}.`);
+              const edge = `${event.node}-${event.child}`;
+              if (!currentBacktracking.includes(edge)) currentBacktracking = [...currentBacktracking, edge];
+              msg = `Subtree returned ${event.val}. Propagating up to ${event.node}.`;
             } else {
-              setMessage(`Subtree returned null.`);
+              msg = `Subtree returned null.`;
             }
           } else if (event.val) {
-            // Still animate edge glow, but freeze the text message
-            setBacktrackingEdges(prev => [...new Set([...prev, `${event.node}-${event.child}`])]);
+            const edge = `${event.node}-${event.child}`;
+            if (!currentBacktracking.includes(edge)) currentBacktracking = [...currentBacktracking, edge];
           }
           break;
         case "LCA_FOUND":
           lcaResolved = true;
-          setLcaNode(event.node);
-          setActiveNode(null); // Clear active node glow so LCA glow takes over
-          setMessage(`Lowest Common Ancestor = ${event.node}`);
+          currentLca = event.node;
+          currentActiveNode = null; 
+          msg = `Lowest Common Ancestor = ${event.node}`;
           break;
         case "BACKTRACK":
-          if (!lcaResolved && event.node !== "3") { // Hide backtrack out of root
+          if (!lcaResolved && event.node !== "3") { 
             if (event.returnValue) {
-              setMessage(`Returning ${event.returnValue} up to parent.`);
+              msg = `Returning ${event.returnValue} up to parent.`;
             } else {
-              setMessage(`Returning null up to parent.`);
+              msg = `Returning null up to parent.`;
             }
           }
           break;
         case "FINISH":
-          setActiveNode(null);
+          currentActiveNode = null;
           if (!lcaResolved) {
               const actualLca = sequence.find(s => s.type === "BACKTRACK" && s.returnValue && s.node === s.returnValue)?.node;
-              setLcaNode(actualLca);
-              setMessage(`Lowest Common Ancestor = ${actualLca}`);
+              currentLca = actualLca;
+              msg = `Lowest Common Ancestor = ${actualLca}`;
           }
           break;
       }
       
-      step++;
-    }, 1200);
+      newSteps.push({
+        activeNode: currentActiveNode,
+        visitedNodes: [...currentVisited],
+        foundNodes: [...currentFound],
+        backtrackingEdges: [...currentBacktracking],
+        lcaNode: currentLca,
+        message: msg
+      });
+    }
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
-    setActiveNode(null);
-    setVisitedNodes([]);
-    setFoundNodes([]);
-    setBacktrackingEdges([]);
-    setLcaNode(null);
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Select two nodes and click 'Find LCA' to trace the paths.");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   // SVG Helper functions
   const getNodeFill = (nodeId) => {
-      if (lcaNode === nodeId) return "#581c87"; // Final LCA
-      if (foundNodes.includes(nodeId)) return "#3b0764"; // Target found
-      if (activeNode === nodeId) return "#2e1065"; // Currently exploring
-      return "#0f172a"; // Default or visited
+      if (lcaNode === nodeId) return "var(--background)"; 
+      if (foundNodes.includes(nodeId)) return "#fef3c7"; 
+      if (activeNode === nodeId) return "#fef3c7";
+      return "var(--background)";
   };
 
   const getNodeStroke = (nodeId) => {
-      if (lcaNode === nodeId) return "#d8b4fe"; // Final LCA
-      if (foundNodes.includes(nodeId)) return "#a855f7"; // Target found
-      if (activeNode === nodeId) return "#d8b4fe"; // Currently exploring
-      if (visitedNodes.includes(nodeId)) return "#64748b"; // Visited
-      return "#475569"; // Default
+      if (lcaNode === nodeId) return "#f59e0b"; 
+      if (foundNodes.includes(nodeId)) return "#f59e0b"; 
+      if (activeNode === nodeId) return "#f59e0b"; 
+      if (visitedNodes.includes(nodeId)) return "#94a3b8"; 
+      return "#94a3b8"; 
+  };
+  
+  const getTextColor = (nodeId) => {
+      if (lcaNode === nodeId) return "#f59e0b"; 
+      if (foundNodes.includes(nodeId)) return "#d97706"; 
+      if (activeNode === nodeId) return "#d97706"; 
+      if (visitedNodes.includes(nodeId)) return "var(--foreground)"; 
+      return "var(--foreground)"; 
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto selection:bg-purple-500/30 selection:text-purple-200">
-      
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex flex-wrap gap-4 justify-between items-center shadow-lg shadow-black/20">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-bold text-slate-400">Node p:</label>
-            <select 
-              value={targetP} 
-              onChange={e => setTargetP(e.target.value)}
-              disabled={animating}
-              className="bg-slate-800 text-purple-300 font-bold px-3 py-1.5 rounded-lg border border-slate-700 outline-none focus:border-purple-500"
-            >
-              {NODES.map(n => <option key={`p-${n.id}`} value={n.id}>{n.val}</option>)}
-            </select>
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Node p:</label>
+              <select 
+                value={targetP} 
+                onChange={e => setTargetP(e.target.value)}
+                disabled={animating}
+                className="bg-gray-50 text-amber-600 font-bold px-3 py-1.5 rounded-lg border border-gray-200 outline-none focus:border-amber-500 dark:bg-gray-800 dark:border-gray-700 dark:text-amber-500 disabled:opacity-50 transition-colors"
+              >
+                {NODES.map(n => <option key={`p-${n.id}`} value={n.id}>{n.val}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Node q:</label>
+              <select 
+                value={targetQ} 
+                onChange={e => setTargetQ(e.target.value)}
+                disabled={animating}
+                className="bg-gray-50 text-amber-600 font-bold px-3 py-1.5 rounded-lg border border-gray-200 outline-none focus:border-amber-500 dark:bg-gray-800 dark:border-gray-700 dark:text-amber-500 disabled:opacity-50 transition-colors"
+              >
+                {NODES.map(n => <option key={`q-${n.id}`} value={n.id}>{n.val}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-bold text-slate-400">Node q:</label>
-            <select 
-              value={targetQ} 
-              onChange={e => setTargetQ(e.target.value)}
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleFindLca} 
               disabled={animating}
-              className="bg-slate-800 text-purple-300 font-bold px-3 py-1.5 rounded-lg border border-slate-700 outline-none focus:border-purple-500"
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
             >
-              {NODES.map(n => <option key={`q-${n.id}`} value={n.id}>{n.val}</option>)}
-            </select>
+              <Search className="w-4 h-4" /> Find LCA
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleFindLca} 
-            disabled={animating}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <Search className="w-4 h-4" /> Find LCA
-          </button>
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-purple-400 bg-purple-950/20 hover:bg-purple-950/40 rounded-xl transition-all border border-purple-900/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
-        </div>
-      </div>
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
 
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
-          <Info className="w-4 h-4 text-purple-400" /> Animation Status
+      <VisualizerCard
+        className={
+          lcaNode 
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
+          <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
         </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
 
-      {/* SVG Canvas */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[500px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="800" height="420" viewBox="0 0 800 420" className="max-w-full h-auto drop-shadow-xl">
+      <VisualizerCard>
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[500px]">
+          <svg width="800" height="420" viewBox="0 0 800 420" className="max-w-full h-auto drop-shadow-sm">
             {/* Edges */}
             {EDGES.map(e => {
               const edgeId = `${e.parent}-${e.child}`;
@@ -256,10 +349,10 @@ export default function LCAAnimation() {
                 <line 
                   key={e.id} 
                   x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} 
-                  stroke={isBacktracking ? "#a855f7" : "#334155"} 
+                  stroke={isBacktracking ? "#f59e0b" : "#cbd5e1"} 
                   strokeWidth={isBacktracking ? "4" : "2"}
                   strokeDasharray={isBacktracking ? "6,4" : "0"}
-                  className="transition-all duration-500"
+                  className={`transition-all duration-500 ${!isBacktracking && 'dark:stroke-slate-700'}`}
                 />
               );
             })}
@@ -276,30 +369,30 @@ export default function LCAAnimation() {
               return (
                 <g key={node.id} className="transition-all duration-500">
                   {/* Active node glow */}
-                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#fcd34d" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   {/* LCA ultimate glow */}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" stroke="#d8b4fe" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" stroke="#a855f7" strokeWidth="1" className="opacity-40 animate-pulse" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" stroke="#fcd34d" strokeWidth="2" className="opacity-80 animate-ping" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" stroke="#f59e0b" strokeWidth="1" className="opacity-40 animate-pulse" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
                     fill={getNodeFill(node.id)} 
                     stroke={getNodeStroke(node.id)} 
                     strokeWidth="2.5" 
-                    className="shadow-xl transition-all duration-500" 
+                    className="shadow-sm transition-all duration-500 dark:stroke-slate-600" 
                   />
-                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">{node.val}</text>
+                  <text x={node.x} y={node.y + 5} textAnchor="middle" fill={getTextColor(node.id)} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                   
-                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#d8b4fe" fontSize="14" fontWeight="bold">p</text>}
-                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#d8b4fe" fontSize="14" fontWeight="bold">q</text>}
-                  {isLCA && <text x={node.x + 45} y={node.y + 5} fill="#d8b4fe" fontSize="16" fontWeight="black">LCA</text>}
+                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">p</text>}
+                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">q</text>}
+                  {isLCA && <text x={node.x + 45} y={node.y + 5} fill="#f59e0b" fontSize="16" fontWeight="black">LCA</text>}
                 </g>
               );
             })}
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

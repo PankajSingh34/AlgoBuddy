@@ -140,9 +140,9 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-surface-900 flex items-center transition-all duration-200 ${
+        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${
           scrolled
-            ? "border-b border-surface-200 dark:border-surface-700 shadow-sm"
+            ? "border-b border-surface-200 dark:border-udemy-dark-border shadow-sm"
             : "border-b border-transparent"
         }`}
       >

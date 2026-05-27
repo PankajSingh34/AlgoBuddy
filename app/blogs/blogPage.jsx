@@ -68,14 +68,14 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-900 dark:to-surface-950">
-      <main className="container mx-auto max-w-6xl px-6 pt-32 pb-20">
+      <main className="container mx-auto max-w-6xl px-6 pt-24 pb-20">
         {/* Hero Section */}
         <section className="mb-20 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-5xl mt-10 md:text-5xl font-bold text-surface-800 dark:text-white mb-6 leading-tight"
+            className="text-5xl md:text-5xl font-bold text-surface-800 dark:text-white mb-6 leading-tight"
           >
             Insights for{" "}
             <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">

@@ -1,138 +1,185 @@
 "use client";
-import React, { useState } from "react";
-import { Play, RotateCcw, Info } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, RotateCcw, Info, RefreshCw } from "lucide-react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+
+const INITIAL_ARRAY = [7, 1, 8, 5, 2];
 
 export default function HeapSortAnimation() {
-  const initialArray = [7, 1, 8, 5, 2];
-  const [array, setArray] = useState([...initialArray]);
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("Click 'Start Sort' to visualize Heap Sort.");
-  const [activeIndices, setActiveIndices] = useState([]);
-  const [sortedIndices, setSortedIndices] = useState([]);
-  const [heapSize, setHeapSize] = useState(initialArray.length);
+  
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
 
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const currentStep = steps[currentStepIdx] || null;
+  const array = currentStep ? currentStep.array : [...INITIAL_ARRAY];
+  const activeIndices = currentStep ? currentStep.activeIndices : [];
+  const sortedIndices = currentStep ? currentStep.sortedIndices : [];
+  const heapSize = currentStep ? currentStep.heapSize : INITIAL_ARRAY.length;
 
-  const heapify = async (arr, n, i, sorted, setArr, setMsg, setActives) => {
-    let largest = i;
-    const left = 2 * i + 1;
-    const right = 2 * i + 2;
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
-    setActives([i]);
-    setMsg(`Checking node ${arr[i]} at index ${i}`);
-    await delay(1000);
-
-    if (left < n) {
-      setActives([i, left]);
-      setMsg(`Comparing ${arr[largest]} with left child ${arr[left]}`);
-      await delay(1000);
-      if (arr[left] > arr[largest]) {
-        largest = left;
-      }
+  useEffect(() => {
+    if (currentStep) {
+      setMessage(currentStep.message);
     }
+  }, [currentStep]);
 
-    if (right < n) {
-      setActives([largest, right]);
-      setMsg(`Comparing ${arr[largest]} with right child ${arr[right]}`);
-      await delay(1000);
-      if (arr[right] > arr[largest]) {
-        largest = right;
-      }
-    }
+  useEffect(() => {
+    if (!animating || steps.length === 0) return;
+    if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
+    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [animating, currentStepIdx, steps, speed]);
 
-    if (largest !== i) {
-      setActives([i, largest]);
-      setMsg(`Swapping ${arr[i]} and ${arr[largest]}`);
-      await delay(1000);
-      
-      const temp = arr[i];
-      arr[i] = arr[largest];
-      arr[largest] = temp;
-      
-      setArr([...arr]);
-      await heapify(arr, n, largest, sorted, setArr, setMsg, setActives);
-    }
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const startVisualizer = () => {
+    if (steps.length === 0) return;
+    setAnimating(true);
+    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const resetPlayback = () => {
+    setAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setMessage("Playback reset.");
   };
 
-  const startHeapSort = async () => {
-    setAnimating(true);
-    let arr = [...array];
+  const startHeapSort = () => {
+    setAnimating(false);
+    const newSteps = [];
+    
+    const pushStep = (msg, arr, active, sorted, hs) => {
+      newSteps.push({
+        message: msg,
+        array: [...arr],
+        activeIndices: [...active],
+        sortedIndices: [...sorted],
+        heapSize: hs,
+      });
+    };
+
+    const heapify = (arr, n, i, sorted, hs) => {
+      let largest = i;
+      const left = 2 * i + 1;
+      const right = 2 * i + 2;
+
+      pushStep(`Checking node ${arr[i]} at index ${i}`, arr, [i], sorted, hs);
+
+      if (left < n) {
+        pushStep(`Comparing ${arr[largest]} with left child ${arr[left]}`, arr, [i, left], sorted, hs);
+        if (arr[left] > arr[largest]) {
+          largest = left;
+        }
+      }
+
+      if (right < n) {
+        pushStep(`Comparing ${arr[largest]} with right child ${arr[right]}`, arr, [largest, right], sorted, hs);
+        if (arr[right] > arr[largest]) {
+          largest = right;
+        }
+      }
+
+      if (largest !== i) {
+        pushStep(`Swapping ${arr[i]} and ${arr[largest]}`, arr, [i, largest], sorted, hs);
+        
+        const temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        
+        pushStep(`Swapped`, arr, [i, largest], sorted, hs);
+        heapify(arr, n, largest, sorted, hs);
+      }
+    };
+
+    let arr = [...INITIAL_ARRAY];
     let n = arr.length;
     let sorted = [];
-    
-    setSortedIndices([]);
-    setHeapSize(n);
 
-    setMessage("Phase 1: Build Max-Heap");
-    await delay(1000);
+    pushStep("Phase 1: Build Max-Heap", arr, [], [], n);
 
     for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-      await heapify(arr, n, i, sorted, setArray, setMessage, setActiveIndices);
+      heapify(arr, n, i, sorted, n);
     }
 
-    setMessage("Max-Heap built successfully!");
-    await delay(1500);
-
-    setMessage("Phase 2: Extract max and shrink heap");
-    await delay(1000);
+    pushStep("Max-Heap built successfully!", arr, [], [], n);
+    pushStep("Phase 2: Extract max and shrink heap", arr, [], [], n);
 
     for (let i = n - 1; i > 0; i--) {
-      setActiveIndices([0, i]);
-      setMessage(`Swapping root (Max: ${arr[0]}) with last heap element ${arr[i]}`);
-      await delay(1500);
+      pushStep(`Swapping root (Max: ${arr[0]}) with last heap element ${arr[i]}`, arr, [0, i], sorted, i + 1);
 
       const temp = arr[0];
       arr[0] = arr[i];
       arr[i] = temp;
 
-      setArray([...arr]);
       sorted.push(i);
-      setSortedIndices([...sorted]);
-      setHeapSize(i);
-      
-      setMessage(`Element ${arr[i]} is now in its sorted position.`);
-      await delay(1000);
+      pushStep(`Element ${arr[i]} is now in its sorted position.`, arr, [], sorted, i);
 
-      await heapify(arr, i, 0, sorted, setArray, setMessage, setActiveIndices);
+      heapify(arr, i, 0, sorted, i);
     }
     
     sorted.push(0);
-    setSortedIndices([...sorted]);
-    setHeapSize(0);
-    setActiveIndices([]);
-    setMessage("Heap Sort complete!");
-    setAnimating(false);
+    pushStep("Heap Sort complete!", arr, [], sorted, 0);
+
+    setSteps(newSteps);
+    setCurrentStepIdx(0);
+    setAnimating(true);
   };
 
   const handleReset = () => {
     setAnimating(false);
-    setArray([...initialArray]);
-    setActiveIndices([]);
-    setSortedIndices([]);
-    setHeapSize(initialArray.length);
+    setSteps([]);
+    setCurrentStepIdx(-1);
     setMessage("Click 'Start Sort' to visualize Heap Sort.");
   };
 
+  useVisualizerKeyboard({
+    onStepForward: stepForward,
+    onStepBackward: stepBackward,
+    onTogglePlay: animating ? pauseVisualizer : startVisualizer,
+    onReset: resetPlayback,
+    onSpeedChange: setSpeed,
+    speed: speed,
+    sorting: animating,
+    sorted: false,
+    enabled: true,
+  });
+
   // SVG Helper
   const getNodeColor = (index) => {
-    if (sortedIndices.includes(index)) return "#3b0764"; // sorted
-    if (activeIndices.includes(index)) return "#a855f7"; // active
-    if (index >= heapSize) return "#0f172a"; // outside heap but not sorted yet? (Shouldn't happen)
-    return "#4c1d95"; // in heap
+    if (sortedIndices.includes(index)) return "var(--background)";
+    if (activeIndices.includes(index)) return "#a435f0";
+    if (index >= heapSize) return "var(--background)";
+    return "var(--background)";
   };
   
   const getStrokeColor = (index) => {
-    if (sortedIndices.includes(index)) return "#581c87";
-    if (activeIndices.includes(index)) return "#d8b4fe";
-    return "#7e22ce";
+    if (sortedIndices.includes(index)) return "#fbbf24"; // yellow/amber for sorted
+    if (activeIndices.includes(index)) return "#d38cff";
+    return "#64748b";
+  };
+  
+  const getTextColor = (index) => {
+    if (activeIndices.includes(index)) return "#ffffff";
+    if (sortedIndices.includes(index)) return "#b45309";
+    return "var(--foreground)";
   };
 
   // Node positions for a tree of size 5
-  // 0: root
-  // 1: left child of 0
-  // 2: right child of 0
-  // 3: left child of 1
-  // 4: right child of 1
   const positions = [
     { x: 400, y: 50 },
     { x: 250, y: 140 },
@@ -142,56 +189,76 @@ export default function HeapSortAnimation() {
   ];
 
   return (
-    <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-5xl mx-auto">
-      
-      {/* Control Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-lg shadow-black/20">
-        <div className="text-sm font-bold text-slate-400">Array: [{initialArray.join(", ")}]</div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={startHeapSort} 
-            disabled={animating}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/40 text-white rounded-xl transition-all shadow-md shadow-purple-500/20"
-          >
-            <Play className="w-4 h-4" /> Start Sort
-          </button>
-          <button 
-            onClick={handleReset} 
-            className="px-4 py-2.5 text-sm font-bold text-purple-400 bg-purple-950/20 hover:bg-purple-950/40 rounded-xl transition-all border border-purple-900/30 flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
-        </div>
-      </div>
-
-      {/* Explanation Panel */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
-        <div className="flex items-center text-xs text-slate-400 font-semibold gap-1.5">
-          <Info className="w-4 h-4 text-purple-400" /> Animation Status
-        </div>
-        <div className="text-sm font-medium text-purple-200/90 leading-relaxed min-h-[20px]">{message}</div>
-      </div>
-
-      {/* Array View */}
-      <div className="flex justify-center gap-2">
-        {array.map((val, idx) => (
-          <div 
-            key={idx} 
-            className={`w-12 h-12 flex items-center justify-center font-bold text-lg rounded-lg border-2 ${
-              sortedIndices.includes(idx) ? "bg-purple-900 border-purple-800 text-purple-300" :
-              activeIndices.includes(idx) ? "bg-purple-600 border-purple-400 text-white scale-110 shadow-lg shadow-purple-500/50" :
-              "bg-slate-800 border-slate-700 text-slate-300"
-            } transition-all duration-300`}
-          >
-            {val}
+    <VisualizerInteractiveLayout>
+      <VisualizerCard>
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm font-bold text-gray-700 dark:text-gray-300">Array: [{INITIAL_ARRAY.join(", ")}]</div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={startHeapSort} 
+              disabled={animating}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#a435f0] hover:bg-[#8f2cd6] disabled:opacity-50 text-white rounded-xl transition-all shadow-md"
+            >
+              <Play className="w-4 h-4" /> Start Sort
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Reset
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Tree SVG */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 min-h-[350px]">
-        <div className="overflow-auto flex justify-center mt-6">
-          <svg width="800" height="300" viewBox="0 0 800 300" className="max-w-full h-auto drop-shadow-xl">
+        <PlaybackControls 
+          isPlaying={animating}
+          onPlayPause={animating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0}
+          showPlayPause={true}
+        />
+      </VisualizerCard>
+
+      <VisualizerCard
+        className={
+          message.includes("complete") || message.includes("successfully")
+            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+            : animating
+                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
+                : ""
+        }
+      >
+        <div className="flex items-center text-xs text-gray-500 font-semibold gap-1.5 mb-2">
+          <Info className="w-4 h-4 text-[#a435f0]" /> Animation Status
+          <span className="ml-auto font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+          </span>
+        </div>
+        <div className="text-lg font-medium min-h-[28px]">{message}</div>
+      </VisualizerCard>
+
+      <VisualizerCard>
+        <div className="flex justify-center gap-2 mb-8">
+          {array.map((val, idx) => (
+            <div 
+              key={idx} 
+              className={`w-12 h-12 flex items-center justify-center font-bold text-lg rounded-lg border-2 ${
+                sortedIndices.includes(idx) ? "bg-amber-100 border-amber-400 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400" :
+                activeIndices.includes(idx) ? "bg-[#a435f0] border-[#d38cff] text-white scale-110 shadow-lg shadow-[#a435f0]/30" :
+                "bg-white border-gray-300 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+              } transition-all duration-300`}
+            >
+              {val}
+            </div>
+          ))}
+        </div>
+
+        <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[350px]">
+          <svg width="800" height="300" viewBox="0 0 800 300" className="max-w-full h-auto drop-shadow-sm">
             {/* Edges */}
             {array.map((_, i) => {
               const left = 2 * i + 1;
@@ -203,9 +270,9 @@ export default function HeapSortAnimation() {
                     key={`${i}-${left}`}
                     x1={positions[i].x} y1={positions[i].y + 20}
                     x2={positions[left].x} y2={positions[left].y - 20}
-                    stroke={sortedIndices.includes(left) || sortedIndices.includes(i) ? "#334155" : "#64748b"}
+                    stroke={(sortedIndices.includes(left) || sortedIndices.includes(i)) ? "#cbd5e1" : "currentColor"}
                     strokeWidth="2"
-                    className="transition-all duration-500"
+                    className={`transition-all duration-500 ${(sortedIndices.includes(left) || sortedIndices.includes(i)) ? 'dark:stroke-gray-800' : 'stroke-gray-400 dark:stroke-gray-600'}`}
                   />
                 );
               }
@@ -215,9 +282,9 @@ export default function HeapSortAnimation() {
                     key={`${i}-${right}`}
                     x1={positions[i].x} y1={positions[i].y + 20}
                     x2={positions[right].x} y2={positions[right].y - 20}
-                    stroke={sortedIndices.includes(right) || sortedIndices.includes(i) ? "#334155" : "#64748b"}
+                    stroke={(sortedIndices.includes(right) || sortedIndices.includes(i)) ? "#cbd5e1" : "currentColor"}
                     strokeWidth="2"
-                    className="transition-all duration-500"
+                    className={`transition-all duration-500 ${(sortedIndices.includes(right) || sortedIndices.includes(i)) ? 'dark:stroke-gray-800' : 'stroke-gray-400 dark:stroke-gray-600'}`}
                   />
                 );
               }
@@ -228,23 +295,23 @@ export default function HeapSortAnimation() {
             {array.map((val, i) => {
               const isSorted = sortedIndices.includes(i);
               return (
-                <g key={i} className={`transition-all duration-500 ${isSorted ? "opacity-50" : ""}`}>
-                  {activeIndices.includes(i) && <circle cx={positions[i].x} cy={positions[i].y} r="32" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                <g key={i} className={`transition-all duration-500 ${isSorted ? "opacity-60" : ""}`}>
+                  {activeIndices.includes(i) && <circle cx={positions[i].x} cy={positions[i].y} r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle 
                     cx={positions[i].x} cy={positions[i].y} r="24" 
                     fill={getNodeColor(i)} 
                     stroke={getStrokeColor(i)} 
                     strokeWidth="2.5" 
-                    className="shadow-xl transition-all duration-500" 
+                    className="shadow-sm transition-all duration-500" 
                   />
-                  <text x={positions[i].x} y={positions[i].y + 5} textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">{val}</text>
-                  <text x={positions[i].x + 35} y={positions[i].y + 5} fill="#94a3b8" fontSize="12">[{i}]</text>
+                  <text x={positions[i].x} y={positions[i].y + 5} textAnchor="middle" fill={getTextColor(i)} fontSize="14" fontWeight="bold">{val}</text>
+                  <text x={positions[i].x + 35} y={positions[i].y + 5} className="fill-gray-500 dark:fill-gray-400" fontSize="12">[{i}]</text>
                 </g>
               );
             })}
           </svg>
         </div>
-      </div>
-    </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 }

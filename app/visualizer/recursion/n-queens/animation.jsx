@@ -288,8 +288,6 @@ const NQueensAnimation = () => {
               onTogglePlayPause={togglePlay}
               speed={speed}
               onSpeedChange={setSpeed}
-              onIncreaseSpeed={() => setSpeed((s) => Math.min(s + 0.5, 5))}
-              onDecreaseSpeed={() => setSpeed((s) => Math.max(s - 0.5, 0.5))}
               onStepForward={stepForward}
               onStepBackward={stepBackward}
               onReset={handleReset}
