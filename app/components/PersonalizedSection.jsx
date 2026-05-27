@@ -91,8 +91,8 @@ export default function PersonalizedSection() {
 
           <Link
             href="/visualizer"
-            className="inline-flex items-center gap-2 h-[46px] px-7 rounded-full bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] text-[15px] font-bold hover:bg-[#a435f0] dark:hover:bg-[#a435f0] dark:hover:text-white transition-all duration-200"
-          >
+            className="inline-flex items-center gap-2 h-[46px] px-7 rounded-full border-2 border-surface-900 dark:border-white bg-surface-900 text-white dark:bg-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 dark:hover:bg-surface-900 dark:hover:text-white transition-all duration-200"
+            >
             Start your path
             <svg
               className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"

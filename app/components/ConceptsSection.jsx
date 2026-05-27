@@ -270,8 +270,8 @@ export default function ConceptsSection() {
               </p>
               <Link
                 href={c.cta.href}
-                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
-              >
+                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-surface-50 bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 hover:border-surface-900 dark:hover:bg-surface-900 dark:hover:text-white dark:hover:border-white transition-all duration-200"
+                >
                 {c.cta.label}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
@@ -298,8 +298,8 @@ export default function ConceptsSection() {
             </p>
             <Link
               href="/visualizer"
-              className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
-            >
+              className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-white bg-surface-900 text-white dark:bg-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 dark:hover:bg-surface-900 dark:hover:text-white active:scale-95 transition-all duration-200"
+              >
               Start learning
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
             </Link>

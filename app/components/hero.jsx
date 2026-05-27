@@ -5,12 +5,12 @@ import { event } from "@/lib/gtag";
 import { ArrowRight } from "lucide-react";
 
 const TOPICS = [
-  { label: "Sorting Algorithms",  color: "#a435f0", bg: "#faf5ff", darkBg: "#2e1a47", darkColor: "#c27cf7" },
-  { label: "Binary Search",       color: "#2563eb", bg: "#eff6ff", darkBg: "#1a2744", darkColor: "#60a5fa" },
-  { label: "Graph Traversal",     color: "#059669", bg: "#f0fdf4", darkBg: "#0f2e22", darkColor: "#34d399" },
-  { label: "Linked Lists",        color: "#d97706", bg: "#fffbeb", darkBg: "#2e1f0a", darkColor: "#fbbf24" },
+  { label: "Sorting Algorithms", color: "#a435f0", bg: "#faf5ff", darkBg: "#2e1a47", darkColor: "#c27cf7" },
+  { label: "Binary Search", color: "#2563eb", bg: "#eff6ff", darkBg: "#1a2744", darkColor: "#60a5fa" },
+  { label: "Graph Traversal", color: "#059669", bg: "#f0fdf4", darkBg: "#0f2e22", darkColor: "#34d399" },
+  { label: "Linked Lists", color: "#d97706", bg: "#fffbeb", darkBg: "#2e1f0a", darkColor: "#fbbf24" },
   { label: "Dynamic Programming", color: "#dc2626", bg: "#fef2f2", darkBg: "#2e0f0f", darkColor: "#f87171" },
-  { label: "Stack & Queue",       color: "#7c3aed", bg: "#f5f3ff", darkBg: "#1e1535", darkColor: "#a78bfa" },
+  { label: "Stack & Queue", color: "#7c3aed", bg: "#f5f3ff", darkBg: "#1e1535", darkColor: "#a78bfa" },
 ];
 
 const HeroSection = () => {
@@ -66,10 +66,10 @@ const HeroSection = () => {
               <span
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[14px] font-bold transition-all duration-300"
                 style={{
-                  background: visible ? (isDark ? topic.darkBg  : topic.bg)    : "transparent",
-                  color:      visible ? (isDark ? topic.darkColor : topic.color) : "transparent",
-                  opacity:    visible ? 1 : 0,
-                  transform:  visible ? "translateY(0px)" : "translateY(6px)",
+                  background: visible ? (isDark ? topic.darkBg : topic.bg) : "transparent",
+                  color: visible ? (isDark ? topic.darkColor : topic.color) : "transparent",
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? "translateY(0px)" : "translateY(6px)",
                   border: `1.5px solid ${visible ? (isDark ? topic.darkColor + "55" : topic.color + "33") : "transparent"}`,
                 }}
               >
@@ -86,15 +86,14 @@ const HeroSection = () => {
               <Link
                 href="/visualizer"
                 onClick={handleStart}
-                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
-              >
+                 className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-white bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 dark:hover:bg-surface-900 dark:hover:text-white active:scale-95 transition-all duration-200">
                 Start Visualizing
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
 
               <Link
                 href="/blogs"
-                className="inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-surface-50 text-surface-900 dark:text-surface-50 text-[15px] font-bold hover:bg-surface-900 hover:text-white dark:hover:bg-white dark:hover:text-surface-900 transition-all duration-200"
+                className="inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-white bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 dark:hover:bg-surface-900 dark:hover:text-white transition-all duration-200"
               >
                 Read Blogs
               </Link>

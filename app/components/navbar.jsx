@@ -239,8 +239,8 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="h-[42px] px-7 flex items-center text-[15px] font-bold text-white bg-surface-900 dark:bg-white dark:text-surface-900 rounded-full hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-all duration-150 focus-ring"
-              >
+                className="h-[42px] px-7 flex items-center rounded-full border-2 border-surface-900 dark:border-white bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-white hover:text-surface-900 hover:border-surface-900 dark:hover:bg-surface-900 dark:hover:text-white dark:hover:border-white transition-all duration-200"
+                >
                 Sign in
               </Link>
             )}
