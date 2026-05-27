@@ -52,6 +52,39 @@ AlgoBuddy is an open-source, interactive DSA learning platform that brings algor
 
 ---
 
+## 📸 Screenshots
+
+### 🏠 Home Page
+
+![Home Page](public/screenshots/Home-page.png)
+
+---
+
+### 🔐 Authentication Page
+
+![Login Page](public/screenshots/login-page.png)
+
+---
+
+### 🧠 Visualizer Dashboard
+
+![Visualizer](public/screenshots/visualizer-page.png)
+
+---
+
+### 🔄 Queue Visualization
+
+![Queue Visualization](public/screenshots/queue-visualization-page.png)
+
+---
+
+### 📚 Queue Operations
+
+![Queue Operations](public/screenshots/queue-operations-page.png)
+
+
+
+
 ## Tech Stack
 
 | Layer | Technology |

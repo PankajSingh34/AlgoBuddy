@@ -7,9 +7,8 @@ export function createVisualizerPaths(...segments) {
   return [
     { name: "Home", href: "/" },
     { name: "Visualizer", href: "/visualizer" },
-    ...segments.map((name, index) => ({
+    ...segments.map((name) => ({
       name,
-      href: index === segments.length - 1 ? "" : "/visualizer",
     })),
   ];
 }

@@ -7,42 +7,48 @@ function StreakCounter({ activityDates }) {
       return { currentStreak: 0, highestStreak: 0 };
     }
 
-    const toLocalStr = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
+    const normalizeDateString = (value) => {
+      if (typeof value !== "string") return null;
+      const candidate = value.split("T")[0];
+      return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : null;
     };
 
-    const uniqueSortedDates = [...new Set(
-      activityDates.map((date) => {
-        const localDate = new Date(date);
-        localDate.setHours(0, 0, 0, 0);
-        return toLocalStr(localDate);
-      })
-    )].sort();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const toDayIndex = (ymd) => {
+      const [year, month, day] = ymd.split("-").map(Number);
+      return Math.floor(Date.UTC(year, month - 1, day) / msPerDay);
+    };
+
+    const getLocalISODate = () => {
+      const now = new Date();
+      const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      return local.toISOString().split("T")[0];
+    };
+
+    const uniqueSortedDates = [
+      ...new Set(activityDates.map(normalizeDateString).filter(Boolean)),
+    ].sort();
 
     let highest = 1;
     let tempStreak = 1;
     for (let i = 1; i < uniqueSortedDates.length; i++) {
-      const prev = new Date(uniqueSortedDates[i - 1] + "T00:00:00");
-      const curr = new Date(uniqueSortedDates[i] + "T00:00:00");
-
-      const diff = Math.round(
-        (curr - prev) / (1000 * 60 * 60 * 24)
-      );
+      const diff =
+        toDayIndex(uniqueSortedDates[i]) - toDayIndex(uniqueSortedDates[i - 1]);
       if (diff === 1) tempStreak++;
       else tempStreak = 1;
       if (tempStreak > highest) highest = tempStreak;
     }
 
     let streakCount = 0;
-    let checkDate = new Date();
-    checkDate.setHours(0, 0, 0, 0);
+    let expectedDay = toDayIndex(getLocalISODate());
     for (let i = uniqueSortedDates.length - 1; i >= 0; i--) {
-      if (uniqueSortedDates[i] === toLocalStr(checkDate)) {
+      const dayIndex = toDayIndex(uniqueSortedDates[i]);
+      if (dayIndex > expectedDay) {
+        continue;
+      }
+      if (dayIndex === expectedDay) {
         streakCount++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        expectedDay -= 1;
       } else break;
     }
 
