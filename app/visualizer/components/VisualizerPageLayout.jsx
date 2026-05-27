@@ -44,7 +44,7 @@ export default function VisualizerPageLayout({
     <>
       <Navbar />
 
-      <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#0f0f0f] dark:text-[#f5f5f5]">
+      <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#1c1d1f] dark:text-[#f5f5f5]">
         <section className="px-6 md:px-12">
           <div className="mb-4 mt-2">
             <Breadcrumbs paths={paths} />
