@@ -269,6 +269,7 @@ const SelectionSortVisualizer = () => {
                   </button>
                   <button
                     onClick={reset}
+                    disabled={sorting}
                     className="w-full bg-transparent border border-[#a435f0] text-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 mt-4 px-4 py-2 rounded transition-colors"
                   >
                     Reset All

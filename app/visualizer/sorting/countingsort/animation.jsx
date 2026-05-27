@@ -352,6 +352,7 @@ const CountingSortVisualizer = () => {
             </button>
             <button
               onClick={reset}
+              disabled={sorting}
               className="w-full rounded border border-[#a435f0] px-4 py-2 text-sm text-[#a435f0] transition-colors hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 sm:text-base"
             >
               Reset All
