@@ -17,6 +17,7 @@ const Turnstile = dynamic(
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -47,9 +48,6 @@ export default function LoginPage() {
         const data = await res.json();
         if (!data.success) throw new Error(data.message || "Login failed");
 
-        // The API route set the session as cookies. Read the session from those
-        // cookies to hydrate the client-side SDK and update the user context.
-        // Tokens are never passed through the response body.
         const {
           data: { user },
           error: sessionError,
@@ -62,6 +60,10 @@ export default function LoginPage() {
         setUser(user);
         router.push("/dashboard");
       } else {
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+
         const res = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -76,6 +78,7 @@ export default function LoginPage() {
         const data = await res.json();
         if (!data.success) throw new Error(data.message || "Signup failed");
         toast.success(data.message || "Account created! Please sign in.");
+        setConfirmPassword("");
         setIsLogin(true);
       }
     } catch (err) {
@@ -99,29 +102,21 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-white dark:bg-udemy-dark-surface rounded-xl shadow-lg overflow-hidden border border-udemy-border dark:border-udemy-dark-border"
       >
-        {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
           <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
-            <Link
-              href="/"
-            >
-            ← Back To Home
-            </Link>
+            <Link href="/">← Back To Home</Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold font-serif">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-purple-200 text-sm mt-1">
-              {isLogin
-                ? "Sign in to access your dashboard"
-                : "Join us to get started"}
+              {isLogin ? "Sign in to access your dashboard" : "Join us to get started"}
             </p>
           </div>
         </div>
 
         <div className="flex justify-center items-center p-6">
-          {/* Google OAuth */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -134,9 +129,7 @@ export default function LoginPage() {
 
         <div className="relative flex items-center px-6">
           <div className="flex-grow border-t border-udemy-border dark:border-udemy-dark-border"></div>
-          <span className="flex-shrink mx-4 text-udemy-muted dark:text-udemy-dark-muted">
-            or
-          </span>
+          <span className="flex-shrink mx-4 text-udemy-muted dark:text-udemy-dark-muted">or</span>
           <div className="flex-grow border-t border-udemy-border dark:border-udemy-dark-border"></div>
         </div>
 
@@ -153,7 +146,6 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -188,6 +180,23 @@ export default function LoginPage() {
             {!isLogin && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400 dark:text-gray-500" />
+                </div>
+                <input
+                  type="password"
+                  aria-label="Confirm Password"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            )}
+
+            {!isLogin && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User size={18} className="text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
@@ -202,7 +211,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Turnstile for both login and signup */}
             <div className="flex justify-center">
               <Turnstile
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
@@ -236,13 +244,15 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Switch forms */}
           <div className="text-center text-sm text-udemy-muted dark:text-udemy-dark-muted">
             {isLogin ? (
               <p>
                 Don't have an account?{" "}
                 <button
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    setIsLogin(false);
+                    setConfirmPassword("");
+                  }}
                   className="text-udemy-purple dark:text-udemy-purple-light hover:underline font-semibold"
                 >
                   Sign up
@@ -252,7 +262,10 @@ export default function LoginPage() {
               <p>
                 Already have an account?{" "}
                 <button
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                    setConfirmPassword("");
+                  }}
                   className="text-udemy-purple dark:text-udemy-purple-light hover:underline font-semibold"
                 >
                   Sign in
@@ -263,17 +276,11 @@ export default function LoginPage() {
 
           <div className="text-center text-xs text-udemy-muted dark:text-udemy-dark-muted mt-6">
             By continuing, you agree to our{" "}
-            <Link
-              href="/terms"
-              className="text-udemy-purple dark:text-udemy-purple-light hover:underline"
-            >
+            <Link href="/terms" className="text-udemy-purple dark:text-udemy-purple-light hover:underline">
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link
-              href="/privacy"
-              className="text-udemy-purple dark:text-udemy-purple-light hover:underline"
-            >
+            <Link href="/privacy" className="text-udemy-purple dark:text-udemy-purple-light hover:underline">
               Privacy Policy
             </Link>
           </div>
