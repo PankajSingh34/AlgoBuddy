@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const Content = () => {
@@ -78,200 +79,189 @@ const Content = () => {
   ];
 
     return (
-    <main className="max-w-4xl mx-auto">
-      <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
-    {/* Header Section */}
-    <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-        What is Stack Implementation Using Linked List?
-      </h1>
-      <div className="prose dark:prose-invert max-w-none">
-        <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
-          {paragraph[0]}
-        </p>
-      </div>
-    </section>
-
-    {/* Algorithmic Steps */}
-    <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-            Algorithmic Steps
+    <main className="max-w-4xl mx-auto">
+      <article className="max-w-4xl bg-white dark:bg-neutral-950 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+        {/* Header Section */}
+        <section className="p-8 border-b border-gray-100 dark:border-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-4 rounded-full"></span>
+            Stack Implementation Using Linked List
           </h1>
+          <div className="prose dark:prose-invert max-w-none">
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
+              {paragraph[0]}
+            </p>
+          </div>
+        </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Stack Basic Operations */}
-        <div className="rounded-lg p-4 bg-white dark:bg-neutral-950 shadow-md">
-          <h2 className="text-lg sm:text-xl mb-3 font-bold text-center">
-            Stack Basic Operations
+        {/* Algorithmic Steps */}
+        <section className="p-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-4 rounded-full"></span>
+            Algorithmic Steps
           </h2>
 
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-gray-50 dark:bg-neutral-900">
-              <ul className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Core Operations */}
+            <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+              <h3 className="text-xl mb-6 font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2">Core Operations</h3>
+              <div className="space-y-6">
                 {opeartions.map((item, index) => (
-                  <li key={index}>
-                    <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
-                      {item.points}
-                    </h3>
+                  <motion.div
+                    key={index}
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <h4 className="font-bold text-[#a435f0] mb-3 flex items-center gap-2">
+                       <span className="w-2 h-2 rounded-full bg-[#a435f0]"></span>
+                       {item.points}
+                    </h4>
                     {item.subpoints && (
-                      <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
+                      <ul className="space-y-2 ml-4">
                         {item.subpoints.map((subitem, subindex) => (
-                          <li key={subindex} className="text-[#374151] dark:text-[#d1d5db] pl-2">
+                          <li key={subindex} className="text-gray-600 dark:text-gray-400 text-sm flex items-start gap-2">
+                            <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600 flex-shrink-0"></span>
                             {subitem}
                           </li>
                         ))}
-                      </ol>
+                      </ul>
                     )}
-                  </li>
+                  </motion.div>
                 ))}
-              </ul>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Stack Helper Operations */}
-        <div className="rounded-lg p-4 bg-white dark:bg-neutral-950 shadow-md">
-          <h2 className="text-lg sm:text-xl mb-3 font-bold text-center">
-            Stack Helper Operations
-          </h2>
-
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-gray-50 dark:bg-neutral-900">
-              <ul className="space-y-3">
+            {/* Utility Operations */}
+            <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+              <h3 className="text-xl mb-6 font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2">Utility Functions</h3>
+              <div className="space-y-6">
                 {helper.map((item, index) => (
-                  <li key={index}>
-                    <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
-                      {item.points}
-                    </h3>
+                  <motion.div
+                    key={index}
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <h4 className="font-bold text-[#a435f0] mb-3 flex items-center gap-2">
+                       <span className="w-2 h-2 rounded-full bg-[#a435f0]"></span>
+                       {item.points}
+                    </h4>
                     {item.subpoints && (
-                      <ol className="space-y-2 list-decimal pl-5 marker:text-gray-500 dark:marker:text-gray-400">
+                      <ul className="space-y-2 ml-4">
                         {item.subpoints.map((subitem, subindex) => (
-                          <li key={subindex} className="text-[#374151] dark:text-[#d1d5db] pl-2">
+                          <li key={subindex} className="text-gray-600 dark:text-gray-400 text-sm flex items-start gap-2">
+                            <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600 flex-shrink-0"></span>
                             {subitem}
                           </li>
                         ))}
-                      </ol>
+                      </ul>
                     )}
-                  </li>
+                  </motion.div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Complexity Analysis */}
+        <section className="p-8 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-4 rounded-full"></span>
+            Efficiency Analysis
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-3">Time Complexity</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Push/Pop/Peek:</span>
+                  <code className="text-[#a435f0] font-bold">O(1)</code>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Search:</span>
+                  <code className="text-[#a435f0] font-bold">O(n)</code>
+                </li>
+              </ul>
+            </div>
+            <div className="p-5 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-3">Space Complexity</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Overall Space:</span>
+                  <code className="text-[#a435f0] font-bold">O(n)</code>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Memory overhead:</span>
+                  <p className="text-xs text-right text-gray-500">(1 pointer per node)</p>
+                </li>
               </ul>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    {/* Time Complexity */}
-    <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-        Time Complexity
-      </h1>
-      <div className="prose dark:prose-invert max-w-none overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-400">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-blue-900">
-              <th className="border border-blue-400 p-3 font-semibold">Operation</th>
-              <th className="border border-blue-400 p-3 font-semibold">Complexity</th>
-              <th className="border border-blue-400 p-3 font-semibold hidden sm:table-cell">
-                Reason
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+        {/* Key Characteristics */}
+        <section className="p-8 border-t border-gray-100 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-4 rounded-full"></span>
+            Key Characteristics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              ["push()", "O(1)", "Only head pointer modification"],
-              ["pop()", "O(1)", "Only head pointer modification"],
-              ["peek()", "O(1)", "Single node access"],
-              ["isEmpty()", "O(1)", "Head pointer check"],
-              ["size()", "O(1) or O(n)", "Depends on counter implementation"],
-            ].map(([op, comp, reason], index) => (
-              <tr
-                key={op}
-                className={index % 2 === 0 ? "bg-white dark:bg-neutral-950" : "bg-blue-50 dark:bg-neutral-900"}
-              >
-                <td className="border border-blue-400 p-3">{op}</td>
-                <td className="border border-blue-400 p-3 font-mono">
-                  {comp}
-                </td>
-                <td className="border border-blue-400 p-3 hidden sm:table-cell">
-                  {reason}
-                </td>
-              </tr>
+              "Dynamic Size: No fixed capacity (grows as needed)",
+              "Memory Efficiency: Uses only needed memory",
+              "No Wasted Space: Unlike array implementation",
+              "Extra Memory: Requires space for pointers",
+              "Flexibility: Can grow until memory exhausted",
+            ].map((text, i) => (
+              <div key={i} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+                <div className="w-2 h-2 rounded-full bg-[#a435f0]"></div>
+                <span className="text-gray-600 dark:text-gray-400 font-medium">{text}</span>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </div>
+        </section>
 
-    {/* Key Characteristics */}
-    <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-        Key Characteristics
-      </h1>
-      <div className="prose dark:prose-invert max-w-none">
-        <ul className="space-y-3 list-disc pl-5 marker:text-gray-500 dark:marker:text-gray-400">
-          {[
-            "Dynamic Size: No fixed capacity (grows as needed)",
-            "Memory Efficiency: Uses only needed memory",
-            "No Wasted Space: Unlike array implementation",
-            "Extra Memory: Requires space for pointers",
-            "Flexibility: Can grow until memory exhausted",
-          ].map((item) => (
-            <li key={item} className="text-[#374151] dark:text-[#d1d5db] pl-2">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+        {/* Comparison Section */}
+        <section className="p-8 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-4 rounded-full"></span>
+            Implementation Comparison
+          </h2>
+          <div className="prose dark:prose-invert max-w-none overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100 dark:bg-gray-800">
+                  <th className="border border-gray-200 dark:border-gray-700 p-4 text-left font-semibold">Feature</th>
+                  <th className="border border-gray-200 dark:border-gray-700 p-4 text-left font-semibold">Linked List</th>
+                  <th className="border border-gray-200 dark:border-gray-700 p-4 text-left font-semibold">Array</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Memory Usage", "Extra for pointers", "Fixed size, may be wasted"],
+                  ["Dynamic Size", "Yes", "No (unless resized)"],
+                  ["Memory Allocation", "Dynamic", "Static (usually)"],
+                  ["Access Time", "O(1) for top", "O(1) for all"],
+                  ["Complexity", "Slightly higher", "Very Simple"],
+                ].map(([feature, ll, arr], index) => (
+                  <tr key={feature} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                    <td className="p-4 text-gray-700 dark:text-gray-300 font-medium">{feature}</td>
+                    <td className="p-4 text-gray-600 dark:text-gray-400">{ll}</td>
+                    <td className="p-4 text-gray-600 dark:text-gray-400">{arr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </article>
+    </main>
+  );
+};
 
-    {/* Comparison Section */}
-    <section className="p-6">
-      <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-        <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-        Linked List vs Array Implementation
-      </h1>
-      <div className="prose dark:prose-invert max-w-none overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-400">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-blue-900">
-              <th className="border border-blue-400 p-3 font-semibold">Feature</th>
-              <th className="border border-blue-400 p-3 font-semibold">Linked List</th>
-              <th className="border border-blue-400 p-3 font-semibold">Array</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["Memory Usage", "Extra for pointers", "Fixed size, may be wasted"],
-              ["Dynamic Size", "Yes", "No (unless resized)"],
-              ["Memory Allocation", "Dynamic", "Static (usually)"],
-              ["Access Time", "O(1) for top", "O(1) for all"],
-              ["Implementation Complexity", "Slightly more complex", "Simpler"],
-            ].map(([feature, ll, arr], index) => (
-              <tr
-                key={feature}
-                className={index % 2 === 0 ? "bg-white dark:bg-neutral-950" : "bg-gray-50 dark:bg-neutral-900"}
-              >
-                <td className="border border-blue-400 p-3">{feature}</td>
-                <td className="border border-blue-400 p-3 font-mono">
-                  {ll}
-                </td>
-                <td className="border border-blue-400 p-3 font-mono">
-                  {arr}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </article>
-</main>
-    );
-  };
-  
-  export default Content;
+export default Content;

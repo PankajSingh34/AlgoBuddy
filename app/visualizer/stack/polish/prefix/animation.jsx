@@ -2,6 +2,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 /* ----------  tiny animated bits  ---------- */
 const AnimatedStackItem = ({ char, isTop }) => (
@@ -12,7 +15,7 @@ const AnimatedStackItem = ({ char, isTop }) => (
     transition={{ type: "spring", stiffness: 300, damping: 20 }}
     className={`p-3 border-2 rounded text-center font-medium ${
       isTop
-        ? "bg-blue-100 dark:bg-blue-900 border-blue-300"
+        ? "bg-blue-100 dark:bg-blue-900 border-[#c27cf7]"
         : "bg-white dark:bg-gray-700 border-gray-200"
     }`}
   >
@@ -48,7 +51,7 @@ const InfixToPrefixVisualizer = () => {
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Enter an infix expression and click Convert");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1000);
+  const { speed, setSpeed } = usePlayback(1);
 
   const precedence = { "^": 4, "*": 3, "/": 3, "+": 2, "-": 2 };
 
@@ -206,7 +209,7 @@ const InfixToPrefixVisualizer = () => {
 
   useEffect(() => {
     let t;
-    if (isPlaying && currentStep < steps.length - 1) t = setTimeout(playNextStep, speed);
+    if (isPlaying && currentStep < steps.length - 1) t = setTimeout(playNextStep, 1000 / speed);
     else if (currentStep >= steps.length - 1) setIsPlaying(false);
     return () => clearTimeout(t);
   }, [isPlaying, currentStep, steps.length, speed, playNextStep]);
@@ -218,6 +221,17 @@ const InfixToPrefixVisualizer = () => {
       gsap.fromTo(statusRef.current, { scale: 0.95, opacity: 0.7 }, { scale: 1, opacity: 1, duration: 0.3 });
   }, [message]);
 
+  useVisualizerKeyboard({
+    onStart: undefined, 
+    onReset: reset,
+    onSpeedChange: setSpeed,
+    onTogglePlayPause: togglePlayPause,
+    speed: speed,
+    sorting: steps.length > 0 && currentStep < steps.length - 1,
+    sorted: currentStep === steps.length - 1 && steps.length > 0,
+    enabled: true,
+  });
+
   useEffect(() => {
     if (steps.length && currentStep < steps.length) {
       setIsAnimating(true);
@@ -226,138 +240,116 @@ const InfixToPrefixVisualizer = () => {
       setOutput(s.output || []);
       setOperation(s.action);
       setMessage(s.description);
-      const t = setTimeout(() => setIsAnimating(false), 500);
+      const t = setTimeout(() => setIsAnimating(false), 500 / speed);
       return () => clearTimeout(t);
     }
-  }, [currentStep, steps]);
+  }, [currentStep, steps, speed]);
 
   /* ----------  render  ---------- */
   return (
-    <main className="container mx-auto px-6">
+    <main className="container mx-auto">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
         Visualize the conversion from infix to prefix notation
       </p>
       <div className="max-w-4xl mx-auto">
         {/* Input & Controls */}
-        <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <input
-              type="text"
-              value={infix}
-              onChange={(e) => setInfix(e.target.value)}
-              placeholder="Enter infix expression (e.g., (A+B)*C)"
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-900 dark:text-white"
-            />
+        <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="mb-4">
+            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+              Infix Expression
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={infix}
+                onChange={(e) => setInfix(e.target.value)}
+                placeholder="Enter infix expression (e.g., (A+B)*C)"
+                className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300"
+                disabled={isProcessing}
+              />
+              <button
+                onClick={convertInfixToPrefix}
+                disabled={isProcessing}
+                className="px-6 py-2 font-bold bg-[#a435f0] text-white rounded-lg hover:bg-[#8f2cd6] transition-all duration-200"
+              >
+                {isProcessing ? "Converting..." : "Convert"}
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4">
             <button
-              onClick={convertInfixToPrefix}
-              disabled={isProcessing}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              onClick={reset}
+              className="flex-1 border-2 border-[#1a1a1a] dark:border-[#f7f9fa] text-[#1a1a1a] dark:text-[#f7f9fa] font-bold py-[10px] rounded-lg hover:bg-[#1a1a1a] hover:text-white dark:hover:bg-white dark:hover:text-[#1a1a1a] disabled:opacity-50 transition-all duration-200"
             >
-              {isProcessing ? "Converting..." : "Convert"}
-            </button>
-            <button onClick={reset} className="px-6 py-2 bg-red-500 text-white rounded-md">
               Reset
             </button>
           </div>
 
           {steps.length > 0 && (
-            <div className="flex flex-col gap-4 mt-4">
-              <div className="flex justify-between items-center">
-                <button
-                  onClick={playPrevStep}
-                  disabled={currentStep === 0 || isAnimating}
-                  className="px-4 py-2 bg-gray-200 dark:bg-neutral-900 rounded-md disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button onClick={togglePlayPause} className="px-4 py-2 bg-blue-600 text-white rounded-md">
-                  {isPlaying ? "Pause" : "Play"}
-                </button>
-                <button
-                  onClick={playNextStep}
-                  disabled={currentStep >= steps.length - 1 || isAnimating}
-                  className="px-4 py-2 bg-gray-200 dark:bg-neutral-900 rounded-md disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm">Speed:</span>
-                <select
-                  value={speed}
-                  onChange={(e) => setSpeed(Number(e.target.value))}
-                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-neutral-900"
-                >
-                  <option value={2000}>Slow</option>
-                  <option value={1000}>Normal</option>
-                  <option value={500}>Fast</option>
-                  <option value={250}>Very Fast</option>
-                </select>
-                <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-                  Step {currentStep + 1} of {steps.length}
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-neutral-900 rounded-full h-2.5">
-                <motion.div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  initial={false}
-                  animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-                  transition={{ type: "spring", stiffness: 80 }}
-                />
-              </div>
+            <div className="mt-6">
+              <PlaybackControls
+                isPaused={!isPlaying}
+                onTogglePlayPause={togglePlayPause}
+                speed={speed}
+                onSpeedChange={setSpeed}
+                onIncreaseSpeed={() => setSpeed(Math.min(speed + 0.5, 5))}
+                onDecreaseSpeed={() => setSpeed(Math.max(speed - 0.5, 0.5))}
+                disabled={isAnimating && !isPlaying}
+                showShortcuts={true}
+                onStepForward={currentStep < steps.length - 1 ? playNextStep : undefined}
+                onStepBackward={currentStep > 0 ? playPrevStep : undefined}
+                onReset={reset}
+                progressText={`Step ${currentStep + 1} of ${steps.length}`}
+              />
             </div>
           )}
         </div>
 
-        {/* Status panel */}
-        <div ref={statusRef} className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+        {/* Status panel with GSAP flash */}
+        <div ref={statusRef} className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-semibold mb-4">Conversion Status</h2>
           {operation && (
-            <div className="mb-4 p-3 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+            <div className="mb-4 p-3 rounded-lg bg-[#a435f0]/10 dark:bg-[#a435f0]/20 text-[#a435f0] border border-[#a435f0]/20">
+              <span className="font-semibold uppercase text-xs tracking-wider mr-2">Status:</span>
               {operation}
             </div>
           )}
           {message && (
-            <div
-              className={`p-3 rounded-lg ${
-                message.includes("Added")
-                  ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                  : message.includes("Popped")
-                  ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
-                  : message.includes("Pushed")
-                  ? "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
-                  : "bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-gray-200"
-              }`}
-            >
-              {message}
-            </div>
+             <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900 text-primary-dark dark:text-blue-200">
+               <p className="font-medium text-center">{message}</p>
+             </div>
           )}
           {prefix && currentStep === steps.length - 1 && (
             <motion.div
               initial={{ scale: 0.8, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="mt-4 p-3 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+              className="mt-4 p-4 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800 text-center"
             >
-              <div className="font-bold">Prefix Result:</div>
-              <div className="text-2xl font-mono">{prefix}</div>
+              <div className="font-bold uppercase text-xs tracking-widest mb-1">Final Prefix Result</div>
+              <div className="text-3xl font-bold font-mono">{prefix}</div>
             </motion.div>
           )}
         </div>
 
-        {/* Visualisations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Visualisations – now with motion */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           {/* Stack */}
-          <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold mb-4">Stack</h2>
-            <div className="flex flex-col items-center min-h-[200px]">
+          <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+              Stack (Operators)
+            </h2>
+            <div className="flex flex-col items-center min-h-[300px]">
               <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">{stack.length > 0 ? "↑ Top" : ""}</div>
               <div className="w-32 relative">
                 <AnimatePresence>
                   {stack.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">Stack is empty</div>
+                    <div className="text-center py-12 text-gray-400 border-2 border-dashed rounded-xl italic">
+                      Stack is empty
+                    </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {stack.map((item, i) => (
                         <AnimatedStackItem key={`${i}-${item}`} char={item} isTop={i === stack.length - 1} />
                       ))}
@@ -370,13 +362,18 @@ const InfixToPrefixVisualizer = () => {
           </div>
 
           {/* Output */}
-          <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold mb-4">Output</h2>
-            <div className="min-h-[200px] p-4 bg-gray-50 dark:bg-neutral-900 rounded">
-              <div className="flex flex-wrap gap-2">
+          <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
+              Prefix Output
+            </h2>
+            <div className="min-h-[300px] p-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col">
+              <div className="flex flex-wrap gap-3 justify-center">
                 <AnimatePresence>
                   {output.length === 0 ? (
-                    <div className="text-gray-500 dark:text-gray-400 w-full text-center py-8">Output will appear here</div>
+                    <div className="text-gray-400 italic w-full text-center py-12">
+                      Output will appear here
+                    </div>
                   ) : (
                     output.map((c, i) => <AnimatedOutputToken key={`${i}-${c}`} char={c} />)
                   )}

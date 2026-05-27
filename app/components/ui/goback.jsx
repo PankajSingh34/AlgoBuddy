@@ -1,12 +1,20 @@
 "use client";
+import { useRouter } from "next/navigation";
+
 const RedirectButton = ({ 
     url = '/visualizer',
     className = '',
     buttonText = 'Go Back',
     icon = true
   }) => {
+    const router = useRouter();
+
     const handleRedirect = () => {
-      window.location.href = url;
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(url);
+      }
     };
   
     return (

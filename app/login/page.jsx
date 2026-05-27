@@ -1,18 +1,4 @@
-"use client";
-import { useState } from "react";
-import { supabase } from "../../lib/supabase";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, User, LogIn, UserPlus, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { useUser } from "@/app/contexts/UserContext";
-
-const Turnstile = dynamic(
-  () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
-  { ssr: false },
-);
+import AuthForm from "../components/ui/AuthForm";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

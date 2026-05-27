@@ -146,6 +146,47 @@ const sections = [
           { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
           { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
+          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Recursion",
+    desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.306 7.5L20 9"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Recursion is a programming technique where a function calls itself to solve smaller instances of the same problem. A recursive function consists of a base case (to stop recursion) and a recursive case (to continue).",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Recursion Topics",
+        items: [
+          { name: "Basic Recursion", path: "/visualizer/recursion/basic-recursion" },
+          { name: "Functional & Parameterized Recursion", path: "/visualizer/recursion/functional-parameterized" },
+          { name: "Multiple Recursive Calls", path: "/visualizer/recursion/multiple-calls" },
+          { name: "Recursion on Subsequences", path: "/visualizer/recursion/subsequences" },
+          { name: "Backtracking", path: "/visualizer/recursion/backtracking" },
+          { name: "Recursion Trees", path: "/visualizer/recursion/trees" },
+          { name: "Call Stack Visualization", path: "/visualizer/recursion/stack" },
+          { name: "Recursive Binary Search", path: "/visualizer/recursion/binary-search" },
         ],
       },
     ],
@@ -487,8 +528,43 @@ const sections = [
     ],
   },
   {
+    title: "HashMap",
+    desc: "Key-value pairs with hash function and collision handling",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "HashMap stores key-value pairs using a hash function to compute bucket index. Provides O(1) average time for insert, search, and delete. Collision handled via chaining.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Operations",
+        items: [
+          { name: "Insert (put)", path: "/visualizer/hashmap/insert" },
+          { name: "Search (get)", path: "/visualizer/hashmap/search" },
+          { name: "Delete (remove)", path: "/visualizer/hashmap/delete" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Graph",
-    desc: "BFS, DFS, Dijkstra, MST & topological sort",
+    desc: "BFS, DFS, shortest paths, MST & topological sort",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -516,11 +592,11 @@ const sections = [
         items: [
           {
             name: "Adjacency Matrix",
-            path: "/visualizer/graph/representation/adjacency-matrix",
+            path: "/visualizer/graph/adjacency-matrix",
           },
           {
             name: "Adjacency List",
-            path: "/visualizer/graph/representation/adjacency-list",
+            path: "/visualizer/graph/adjacency-list",
           },
         ],
       },
@@ -529,11 +605,11 @@ const sections = [
         items: [
           {
             name: "Breadth-First Search (BFS)",
-            path: "/visualizer/graph/traversal/bfs",
+            path: "/visualizer/graph/bfs",
           },
           {
             name: "Depth-First Search (DFS)",
-            path: "/visualizer/graph/traversal/dfs",
+            path: "/visualizer/graph/dfs",
           },
         ],
       },
@@ -542,19 +618,23 @@ const sections = [
         items: [
           {
             name: "Dijkstra's Algorithm",
-            path: "/visualizer/graph/algorithms/dijkstra",
+            path: "/visualizer/graph/dijkstra",
+          },
+          {
+            name: "Floyd-Warshall Algorithm",
+            path: "/visualizer/graph/floyd-warshall",
           },
           {
             name: "Prim's Algorithm",
-            path: "/visualizer/graph/algorithms/prim",
+            path: "/visualizer/graph/prim",
           },
           {
             name: "Kruskal's Algorithm",
-            path: "/visualizer/graph/algorithms/kruskal",
+            path: "/visualizer/graph/kruskal",
           },
           {
             name: "Topological Sort",
-            path: "/visualizer/graph/algorithms/topological-sort",
+            path: "/visualizer/graph/topological-sort",
           },
         ],
       },

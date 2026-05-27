@@ -1,5 +1,6 @@
 "use client";
 import Navbar from "@/app/components/navbar";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -100,9 +101,11 @@ export default function Dashboard() {
                         className="card-surface p-4 flex flex-col justify-between"
                       >
                         <div>
-                          <img
+                          <Image
                             src={`/modules/${mod.image}`}
                             alt={mod.title}
+                            width={400}
+                            height={160}
                             className="w-full h-40 object-cover rounded-md mb-2"
                           />
                           <h3 className="text-md font-semibold text-surface-800 dark:text-surface-200 py-2">{mod.title}</h3>
@@ -136,7 +139,7 @@ export default function Dashboard() {
                   </p>
                   <Link
                     href="/visualizer"
-                    className="px-4 py-2 rounded-full font-medium bg-primary text-white hover:bg-primary-dark transition duration-300"
+                    className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
                   >
                     Start Learning
                   </Link>
