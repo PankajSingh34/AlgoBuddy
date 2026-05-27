@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -189,11 +190,14 @@ export default function Navbar() {
                   }
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
                 >
-                  <img
+                  <Image
                     src={`https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(
                       user.email
                     )}`}
                     alt="avatar"
+                    width={28}
+                    height={28}
+                    unoptimized
                     className="w-7 h-7 rounded-full"
                   />
 

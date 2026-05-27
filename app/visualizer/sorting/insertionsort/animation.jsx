@@ -3,6 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import RandomArray from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ChallengeModePanel, {
+  createOptions,
+  useSortingChallenge,
+} from "@/app/visualizer/sorting/components/ChallengeMode";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -11,11 +18,37 @@ const getFontSize = (value) => {
   return "text-xs";
 };
 
+const createInsertionKeyQuestion = (arr, index) => {
+  const correctLabel = `${arr[index]} (index ${index})`;
+  const options = createOptions(correctLabel, [
+    index > 0 ? `${arr[index - 1]} (index ${index - 1})` : null,
+    index + 1 < arr.length ? `${arr[index + 1]} (index ${index + 1})` : null,
+    "The first element",
+  ]);
+
+  return {
+    prompt: "Which element will be inserted next?",
+    options,
+    correctOptionId: "correct",
+    explanation: `Insertion Sort takes the element at index ${index}, ${arr[index]}, and inserts it into the sorted left side.`,
+  };
+};
+
 const InsertionSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [challengeEnabled, setChallengeEnabled] = useState(false);
+  const {
+    isPaused,
+    speed,
+    speedRef,
+    setSpeed,
+    togglePlayPause,
+    increaseSpeed,
+    decreaseSpeed,
+    checkPause,
+  } = usePlayback(1);
   const [comparisons, setComparisons] = useState(0);
   const [shifts, setShifts] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -25,13 +58,22 @@ const InsertionSortVisualizer = () => {
   const barRefs = useRef([]);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  const {
+    activeQuestion,
+    askChallenge,
+    resetChallengeStats,
+    stats: challengeStats,
+    submitAnswer,
+  } = useSortingChallenge(challengeEnabled);
 
   // Helper: cancellable delay
-  const cancellableDelay = () =>
-    new Promise((resolve) => {
+  const cancellableDelay = async () => {
+    await new Promise((resolve) => {
       resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, 1000 / speed);
+      animationRef.current = setTimeout(resolve, 1000 / speedRef.current);
     });
+    await checkPause();
+  };
 
   const resetStats = () => {
     setComparisons(0);
@@ -39,6 +81,7 @@ const InsertionSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
+    resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
 
@@ -63,6 +106,8 @@ const InsertionSortVisualizer = () => {
       let current = arr[i];
       let j = i - 1;
       setCurrentIndices({ current: i, comparing: j, sortedUpTo: i - 1 });
+      await askChallenge(createInsertionKeyQuestion(arr, i));
+      if (!isSortingRef.current) return;
       await cancellableDelay();
       if (!isSortingRef.current) return;
 
@@ -126,6 +171,17 @@ const InsertionSortVisualizer = () => {
     };
   }, []);
 
+  // keyboard shortcuts
+  useVisualizerKeyboard({
+    onStart:       insertionSort,
+    onReset:       reset,
+    onSpeedChange: setSpeed,
+    onTogglePlayPause: togglePlayPause,
+    speed,
+    sorting,
+    sorted,
+  });
+
   return (
     <main className="container mx-auto px-6 pb-6">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
@@ -135,24 +191,55 @@ const InsertionSortVisualizer = () => {
         <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md mb-6 md:mb-8 border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             <div className="flex flex-col gap-1">
-              <RandomArray onGenerate={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} />
+              <RandomArray onGenerate={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} isPrimary={array.length === 0} />
               <CustomArrayInput onUseCustomArray={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} className="w-full" />
             </div>
             <div className="flex flex-col gap-2 justify-between">
-              <button onClick={insertionSort} disabled={!array.length || sorting || sorted} className="w-full disabled:opacity-75 bg-none bg-green-500 px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-black">
+              <button onClick={insertionSort} disabled={!array.length || sorting || sorted} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
                 {sorting ? "Sorting..." : "Start Insertion Sort"}
               </button>
-              <button onClick={reset} className="w-full bg-none text-white bg-red-500 px-4 py-2 rounded transition-colors text-sm sm:text-base">
+              <button onClick={reset} className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base">
                 Reset All
               </button>
             </div>
           </div>
-          {/* Speed controls */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-gray-700 dark:text-gray-300">Speed:</span>
-            <input type="range" min="0.5" max="5" step="0.5" value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-32" disabled={sorting} />
-            <span className="text-gray-700 dark:text-gray-300">{speed}x</span>
-          </div>
+          {/* Playback & Speed controls */}
+          {sorting && (
+            <PlaybackControls
+              isPaused={isPaused}
+              onTogglePlayPause={togglePlayPause}
+              speed={speed}
+              onIncreaseSpeed={increaseSpeed}
+              onDecreaseSpeed={decreaseSpeed}
+              onSpeedChange={setSpeed}
+            />
+          )}
+
+          {!sorting && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
+              <input
+                type="range"
+                min="0.5"
+                max="5"
+                step="0.5"
+                value={speed}
+                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                className="w-24 sm:w-32"
+                disabled={sorting}
+              />
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
+            </div>
+          )}
+          <ChallengeModePanel
+            activeQuestion={activeQuestion}
+            disabled={sorting}
+            enabled={challengeEnabled}
+            onEnabledChange={setChallengeEnabled}
+            onResetStats={resetChallengeStats}
+            onSubmitAnswer={submitAnswer}
+            stats={challengeStats}
+          />
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded"><div className="font-medium">Comparisons:</div><div className="text-2xl">{comparisons}</div></div>
@@ -185,7 +272,7 @@ const InsertionSortVisualizer = () => {
                                 ? "bg-red-400 dark:bg-red-400 border-red-600 dark:border-red-600 dark:text-gray-800"
                                 : isSorted
                                 ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-800"
-                                : "bg-blue-400 dark:bg-blue-400 border-blue-600 dark:border-blue-600 dark:text-gray-800"
+                                : "bg-primary/80 dark:bg-primary/80 border-primary dark:border-primary dark:text-gray-800"
                             }`}
                     >
                       {value}

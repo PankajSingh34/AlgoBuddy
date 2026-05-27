@@ -66,6 +66,26 @@ const DS_THEME = {
       </svg>
     ),
   },
+  HashMap: {
+    color: "#db2777",
+    bg: "#fdf2f8",
+    border: "#fbcfe8",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+      </svg>
+    ),
+  },
+  Recursion: {
+    color: "#0f766e",
+    bg: "#f0fdfa",
+    border: "#ccfbf1",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+      </svg>
+    ),
+  },
 };
 
 const getTheme = (t) =>
@@ -207,6 +227,87 @@ function GraphMiniViz({ color }) {
   );
 }
 
+function HashMapMiniViz({ color }) {
+  const buckets = [
+    { key: "k1", val: "v1" },
+    { key: null, val: null },
+    { key: "k2", val: "v2" },
+    { key: "k3", val: "v3" }
+  ];
+  return (
+    <div className="flex gap-2 items-center justify-center h-[48px]">
+      {buckets.map((b, i) => (
+        <div
+          key={i}
+          className="flex flex-col items-center justify-center border rounded p-1 w-14 h-10 transition-all duration-300"
+          style={{
+            background: b.key ? color + "15" : "transparent",
+            borderColor: b.key ? color + "50" : color + "20",
+          }}
+        >
+          <span className="text-[8px] font-mono" style={{ color: b.key ? color : color + "50" }}>
+            [{i}]
+          </span>
+          {b.key ? (
+            <span className="text-[9px] font-bold" style={{ color }}>
+              {b.key}:{b.val}
+            </span>
+          ) : (
+            <span className="text-[9px] font-bold text-gray-300 dark:text-gray-600">∅</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RecursionMiniViz({ color }) {
+  const frames = ["f(3)", "f(2)", "f(1)"];
+  return (
+    <div className="flex flex-col gap-1 items-center justify-center h-[48px] w-full">
+      {frames.map((v, i) => (
+        <div
+          key={i}
+          className={`h-[12px] rounded text-[8px] font-mono font-bold flex items-center justify-center border transition-all duration-300 ${i === 0 ? '' : 'mini-viz-inactive'}`}
+          style={{
+            width: `${60 - i * 12}px`,
+            background: i === 0 ? color : color + "15",
+            color: i === 0 ? "#fff" : color,
+            borderColor: i === 0 ? color : color + "40",
+          }}
+        >
+          {v}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+function CustomCodeMiniViz({ color }) {
+  const lines = [
+    { width: "75%", highlight: true },
+    { width: "55%", highlight: false },
+    { width: "85%", highlight: false },
+    { width: "45%", highlight: false },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5 justify-center h-[48px] px-1">
+      {lines.map((l, i) => (
+        <div
+          key={i}
+          className="rounded-sm h-[9px] transition-all duration-300"
+          style={{
+            width: l.width,
+            background: l.highlight ? color : color + "30",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+
 const MINI_VIZ = {
   Array: ArrayMiniViz,
   Stack: StackMiniViz,
@@ -214,6 +315,9 @@ const MINI_VIZ = {
   "Linked List": LinkedListMiniViz,
   Tree: TreeMiniViz,
   Graph: GraphMiniViz,
+  HashMap: HashMapMiniViz,
+  Recursion: RecursionMiniViz,
+  "Custom Code": CustomCodeMiniViz,
 };
 
 /* ═══════════════════════════════════════
@@ -233,10 +337,10 @@ function DSCard({ section, theme, onClick, delay }) {
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="group w-full text-left cursor-pointer"
+      className="group w-full h-full text-left cursor-pointer"
     >
       <div
-        className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+        className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col"
         style={{ borderColor: theme.border }}
         data-theme-card={section.title || "Custom Code"}
       >
@@ -256,7 +360,7 @@ function DSCard({ section, theme, onClick, delay }) {
 
         {/* card body */}
         <div
-          className="p-5 bg-white transition-colors duration-300"
+          className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
           data-theme-card={section.title || "Custom Code"}
         >
           {/* icon + title */}
@@ -296,7 +400,7 @@ function DSCard({ section, theme, onClick, delay }) {
 
           {/* CTA pill */}
           <div
-            className="inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
+            className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
               group-hover:gap-3 transition-all duration-200"
             style={{ background: theme.color }}
           >
@@ -563,6 +667,8 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Linked List"] { background: #2b1a08 !important; border-color: #92400e !important; }
         .dark [data-theme-card="Tree"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
+        .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
+        .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
 
         /* Dark mode solid card headers & icons */
         .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
@@ -572,6 +678,8 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Linked List"] { background: #3d240a !important; border-color: #92400e !important; }
         .dark [data-theme-header="Tree"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
+        .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
+        .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
 
         /* Mini Viz Overrides for Dark Mode (Rich saturated colors) */
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
@@ -581,31 +689,35 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Linked List"] .mini-viz-inactive { background: #92400e !important; color: #fcd34d !important; }
         .dark [data-theme-card="Tree"] .mini-viz-inactive-node { fill: #5b21b6 !important; }
         .dark [data-theme-card="Graph"] .mini-viz-inactive-node { fill: #991b1b !important; }
+        .dark [data-theme-card="Recursion"] .mini-viz-inactive { background: #115e59 !important; color: #99f6e4 !important; border-color: #115e59 !important; }
         .dark .mini-viz-line { stroke: #4b5563 !important; }
       `}</style>
       
       {/* ═══════ CONTENT AREA ═══════ */}
       <section
-        className="px-5 pt-28 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300"
+        className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300"
       >
         <div className="max-w-[1100px] mx-auto">
           {/* page heading + search */}
-          <div className="text-center mb-14">
-            <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
-              Algorithm <span className="text-primary">Visualizer</span>
-            </h1>
-            <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
-              Pick any data structure, tap an algorithm, and watch it run step
-              by step. Learning DSA has never been this fun.
-            </p>
+          {!activeSection && !search.trim() && (
+            <div className="text-center mb-14">
+              <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
+                Algorithm <span className="text-primary">Visualizer</span>
+              </h1>
+              <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
+                Pick any data structure, tap an algorithm, and watch it run step
+                by step. Learning DSA has never been this fun.
+              </p>
+            </div>
+          )}
 
-            {/* Search Bar */}
-            <div className="relative max-w-[480px] mx-auto mt-8">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+          {/* Search Bar */}
+          <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search algorithms and topics..."
                 className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
               />
@@ -618,7 +730,6 @@ export default function VisualizerClient({ initialSections }) {
                 </button>
               )}
             </div>
-          </div>
 
           <AnimatePresence mode="wait">
             {search.trim() ? (
@@ -695,7 +806,7 @@ export default function VisualizerClient({ initialSections }) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
                   {filtered.map((section, i) => (
                     <DSCard
                       key={section.title}

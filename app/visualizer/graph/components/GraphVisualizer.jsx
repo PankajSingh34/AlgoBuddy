@@ -2,11 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  ChevronLeft, 
-  ChevronRight, 
   Settings2,
   BarChart3,
   Info
@@ -22,6 +17,8 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { 
   bfsFrames, 
   dfsFrames, 
@@ -264,8 +261,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   const togglePlay = () => {
     if (currentFrame === frames.length - 1) setCurrentFrame(0);
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) setIsEditing(false);
+    setIsPlaying(prev => !prev);
+    setIsEditing(false); // If they press play/pause, it shouldn't be in edit mode
   };
 
   const reset = () => {
@@ -273,6 +270,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     setIsPlaying(false);
     setIsEditing(true);
   };
+
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: isPlaying,
+    onReset: reset,
+    speed: speed,
+    onSpeedChange: setSpeed,
+  });
 
   const stepForward = () => {
     if (currentFrame < frames.length - 1) {
@@ -314,12 +320,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                   {currentFrameData.description || "Ready to start"}
                 </div>
                 {currentFrameData.queue && currentFrameData.queue.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-primary dark:bg-blue-900/20 dark:text-[#c27cf7]">
                     Queue: [{currentFrameData.queue.join(", ")}]
                   </div>
                 )}
                 {currentFrameData.stack && currentFrameData.stack.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-600 dark:bg-purple-900/20 dark:text-blue-400">
+                  <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-600 dark:bg-purple-900/20 dark:text-[#c27cf7]">
                     Stack: [{currentFrameData.stack.join(", ")}]
                   </div>
                 )}
@@ -346,58 +352,19 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         />
 
         {/* Controls Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-surface-200 bg-white p-4 shadow-sm dark:border-surface-800 dark:bg-surface-900">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={reset}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
-              title="Reset"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              onClick={stepBackward}
-              disabled={currentFrame === 0}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 disabled:opacity-30 dark:hover:bg-surface-800"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={togglePlay}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current ml-1" />}
-            </button>
-            <button
-              onClick={stepForward}
-              disabled={currentFrame === frames.length - 1}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 disabled:opacity-30 dark:hover:bg-surface-800"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="flex flex-1 items-center gap-4 px-4">
-            <span className="text-xs font-semibold text-surface-500">SPEED</span>
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.1"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-surface-200 dark:bg-surface-800"
-            />
-            <span className="w-10 text-xs font-bold text-primary">{speed}x</span>
-          </div>
-
-          <div className="text-right">
-            <div className="text-xs font-semibold text-surface-500">PROGRESS</div>
-            <div className="text-sm font-bold text-surface-900 dark:text-white">
-              {currentFrame + 1} / {frames.length || 1}
-            </div>
-          </div>
-        </div>
+        <PlaybackControls
+          isPaused={!isPlaying}
+          onTogglePlayPause={togglePlay}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          onIncreaseSpeed={() => setSpeed(s => Math.min(s + 0.5, 3))}
+          onDecreaseSpeed={() => setSpeed(s => Math.max(s - 0.5, 0.5))}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={reset}
+          progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+          disabled={frames.length === 0}
+        />
       </div>
 
       {/* Info & Charts Section */}

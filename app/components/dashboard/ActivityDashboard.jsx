@@ -19,7 +19,10 @@ function ActivityDashboard({ userId }) {
         .eq("user_id", userId);
 
       if (!error && data) {
-        const dates = data.map((item) => item.activity_date);
+        const dates = data
+          .map((item) => (typeof item.activity_date === "string" ? item.activity_date : null))
+          .filter(Boolean)
+          .map((d) => d.split("T")[0]);
         setActivityDates(dates);
       }
       setLoading(false);

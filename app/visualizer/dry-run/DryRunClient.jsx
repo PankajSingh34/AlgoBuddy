@@ -13,6 +13,8 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
+import Editor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
 import Editor from "@monaco-editor/react";
@@ -52,6 +54,13 @@ const LANGUAGE_HINTS = {
   Python: "Traces lists, assignments, if branches, swap calls, and print output.",
   "C++": "Traces vector declarations, scalar assignments, if branches, swap calls, and cout output.",
   Java: "Traces primitive types, array declarations, if branches, swap calls, and System.out.println output.",
+};
+
+const MONACO_LANGUAGE_MAP = {
+  JavaScript: "javascript",
+  Python: "python",
+  "C++": "cpp",
+  Java: "java",
 };
 
 function cloneVariables(variables) {
@@ -342,6 +351,8 @@ function DataPreview({ title, values, variant = "array" }) {
 }
 
 export default function DryRunClient() {
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
   const { user } = useUser();
   const [language, setLanguage] = useState("JavaScript");
   const [source, setSource] = useState(SAMPLES.JavaScript);
@@ -406,6 +417,10 @@ export default function DryRunClient() {
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
   const sourceLines = source.split("\n");
+  const monacoLanguage = useMemo(
+    () => MONACO_LANGUAGE_MAP[language] || "javascript",
+    [language]
+  );
 
   useEffect(() => {
     setStep(0);

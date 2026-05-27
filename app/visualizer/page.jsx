@@ -151,6 +151,46 @@ const sections = [
     ],
   },
   {
+    title: "Recursion",
+    desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.306 7.5L20 9"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Recursion is a programming technique where a function calls itself to solve smaller instances of the same problem. A recursive function consists of a base case (to stop recursion) and a recursive case (to continue).",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Recursion Topics",
+        items: [
+          { name: "Basic Recursion", path: "/visualizer/recursion/basic-recursion" },
+          { name: "Functional & Parameterized Recursion", path: "/visualizer/recursion/functional-parameterized" },
+          { name: "Multiple Recursive Calls", path: "/visualizer/recursion/multiple-calls" },
+          { name: "Recursion on Subsequences", path: "/visualizer/recursion/subsequences" },
+          { name: "Backtracking", path: "/visualizer/recursion/backtracking" },
+          { name: "Recursion Trees", path: "/visualizer/recursion/trees" },
+          { name: "Call Stack Visualization", path: "/visualizer/recursion/stack" },
+          { name: "Recursive Binary Search", path: "/visualizer/recursion/binary-search" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Stack",
     desc: "LIFO operations, polish notations & implementations",
     icon: (
@@ -482,6 +522,41 @@ const sections = [
             name: "Syntax Trees",
             path: "/visualizer/trees/applications/syntax-trees",
           },
+        ],
+      },
+    ],
+  },
+  {
+    title: "HashMap",
+    desc: "Key-value pairs with hash function and collision handling",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "HashMap stores key-value pairs using a hash function to compute bucket index. Provides O(1) average time for insert, search, and delete. Collision handled via chaining.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Operations",
+        items: [
+          { name: "Insert (put)", path: "/visualizer/hashmap/insert" },
+          { name: "Search (get)", path: "/visualizer/hashmap/search" },
+          { name: "Delete (remove)", path: "/visualizer/hashmap/delete" },
         ],
       },
     ],

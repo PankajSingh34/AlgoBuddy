@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
@@ -120,7 +121,13 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full flex items-center justify-center py-3 px-4 rounded-lg border border-udemy-border dark:border-udemy-dark-border bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text font-medium hover:bg-udemy-surface dark:hover:bg-udemy-dark-bg duration-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <img src="/google.webp" width={24} alt="" aria-hidden="true" />
+            <Image
+              src="/google.webp"
+              width={24}
+              height={24}
+              alt=""
+              aria-hidden="true"
+            />
             <span className="mx-2">Continue with Google</span>
           </button>
         </div>

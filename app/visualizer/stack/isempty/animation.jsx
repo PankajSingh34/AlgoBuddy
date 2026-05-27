@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import usePlayback from "@/app/hooks/usePlayback";
+import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 
 const StackVisualizer = () => {
   /* ---------- state ---------- */
@@ -11,6 +13,7 @@ const StackVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [peekedItem, setPeekedItem] = useState(null);
   const [isEmptyStatus, setIsEmptyStatus] = useState(null);
+  const { speed, setSpeed } = usePlayback(1);
 
   const itemRefs = useRef([]);
 
@@ -37,8 +40,8 @@ const StackVisualizer = () => {
       gsap.set(el, { y: -60, scale: 0.8, opacity: 0 });
       gsap
         .timeline({ onComplete: () => setIsAnimating(false) })
-        .to(el, { y: 0, scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" })
-        .to(el, { boxShadow: "0 0 10px #3b82f6", duration: 0.2, yoyo: true, repeat: 1 }, "-=0.2")
+        .to(el, { y: 0, scale: 1, opacity: 1, duration: 0.4 / speed, ease: "back.out(1.7)" })
+        .to(el, { boxShadow: "0 0 10px #3b82f6", duration: 0.2 / speed, yoyo: true, repeat: 1 }, "-=0.2")
         .call(() => setMessage(`"${val}" pushed to stack!`));
     }, 10);
 
@@ -66,7 +69,7 @@ const StackVisualizer = () => {
         setIsAnimating(false);
         setMessage(`"${val}" popped from stack!`);
       } })
-      .to(el, { scale: 0.5, rotation: 15, y: 80, opacity: 0, duration: 0.5, ease: "power2.in" });
+      .to(el, { scale: 0.5, rotation: 15, y: 80, opacity: 0, duration: 0.5 / speed, ease: "power2.in" });
   };
 
   /* ---------- peek ---------- */
@@ -84,10 +87,10 @@ const StackVisualizer = () => {
     const el = itemRefs.current[0];
     gsap
       .timeline({ onComplete: () => setIsAnimating(false) })
-      .to(el, { y: -6, boxShadow: "0 0 15px #a855f7", duration: 0.25 })
-      .to(el, { y: 0, boxShadow: "0 0 0px transparent", duration: 0.25 })
-      .to(el, { y: -6, duration: 0.25 })
-      .to(el, { y: 0, duration: 0.25 })
+      .to(el, { y: -6, boxShadow: "0 0 15px #a855f7", duration: 0.25 / speed })
+      .to(el, { y: 0, boxShadow: "0 0 0px transparent", duration: 0.25 / speed })
+      .to(el, { y: -6, duration: 0.25 / speed })
+      .to(el, { y: 0, duration: 0.25 / speed })
       .call(() => setMessage(`Top element is "${stack[0]}"`));
   };
 
@@ -102,7 +105,7 @@ const StackVisualizer = () => {
       setOperation(null);
       setMessage(empty ? "Stack is empty!" : "Stack is not empty");
       setIsAnimating(false);
-    }, 1000);
+    }, 1000 / speed);
   };
 
   /* ---------- reset ---------- */
@@ -112,8 +115,8 @@ const StackVisualizer = () => {
       scale: 0,
       y: -60,
       opacity: 0,
-      stagger: 0.06,
-      duration: 0.3,
+      stagger: 0.06 / speed,
+      duration: 0.3 / speed,
       onComplete: () => {
         setStack([]);
         setInputValue("");
@@ -128,78 +131,31 @@ const StackVisualizer = () => {
   };
 
   return (
-    <main className="container mx-auto px-6 pb-4">
+    <main className="container mx-auto">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
         Visualize Push, Pop, Peek, and IsEmpty operations
       </p>
 
-      <div className="max-w-md mx-auto">
-        {/* Controls */}
-        <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md mb-8 border border-gray-200 dark:border-gray-700">
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Enter a value"
-              className="flex-1 p-2 rounded dark:bg-neutral-900 border"
-              disabled={isAnimating}
-            />
-            <button
-              onClick={push}
-              disabled={isAnimating}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-            >
-              Push
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={checkEmpty}
-              disabled={isAnimating}
-              className="text-black bg-green-500 px-4 py-2 rounded disabled:opacity-50"
-            >
-              IsEmpty
-            </button>
-            <button
-              onClick={reset}
-              disabled={isAnimating}
-              className="bg-red-500 dark:text-black text-white px-4 py-2 rounded disabled:opacity-50"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto">
+        <LinearMemoryControls
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          isAnimating={isAnimating}
+          operation={operation}
+          message={message}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          actions={[
+            { label: "Push", onClick: push, variant: "primary", needsInput: true },
+            { label: "IsEmpty", onClick: checkEmpty, variant: "secondary" },
+            { label: "Pop", onClick: pop, disabled: stack.length === 0, variant: "secondary" },
+            { label: "Reset", onClick: reset, variant: "outline" }
+          ]}
+        />
 
         {/* Stack Visualization */}
-        <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Stack Visualization</h2>
-
-          {/* Operation Status */}
-          {operation && (
-            <div className="mb-4 p-3 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              {operation}
-            </div>
-          )}
-
-          {/* Message Display */}
-          {message && (
-            <div
-              className={`mb-4 p-3 rounded-lg text-sm ${
-                message.includes("pushed")
-                  ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                  : message.includes("popped")
-                  ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
-                  : message.includes("Top element")
-                  ? "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
-                  : isEmptyStatus !== null
-                  ? "bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200"
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              }`}
-            >
-              {message}
-            </div>
-          )}
 
           {/* Vertical Stack */}
           <div className="flex flex-col items-center min-h-[300px]">
@@ -221,7 +177,7 @@ const StackVisualizer = () => {
                         index === 0 && peekedItem !== null
                           ? "bg-purple-200 dark:bg-purple-800 border-purple-400 dark:border-purple-600"
                           : index === 0
-                          ? "bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700"
+                          ? "bg-blue-100 dark:bg-blue-900 border-[#c27cf7] dark:border-primary-dark"
                           : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                       }`}
                     >
