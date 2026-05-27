@@ -13,11 +13,8 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
-import Editor from "@monaco-editor/react";
-import { useTheme } from "next-themes";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
-import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];
@@ -241,14 +238,12 @@ function buildTrace(source) {
       note = "Entered else branch.";
     } else if (swapMatch) {
       const targets = swapMatch[1].split(",").map((part) => part.trim());
-      
-      // Try Style B (JS/Python): swap(array, idx1, idx2)
+
       let arrayName = targets[0];
       let arrayValue = variables[arrayName];
       let leftIndex = targets[1];
       let rightIndex = targets[2];
 
-      // If Style B is not matched (i.e. targets[0] is not a raw array name), try Style A (C++)
       if (!Array.isArray(arrayValue)) {
         arrayName = targets[0]?.match(/^([A-Za-z_]\w*)/)?.[1];
         arrayValue = variables[arrayName];
@@ -371,6 +366,17 @@ export default function DryRunClient() {
   const [sessionNotice, setSessionNotice] = useState("");
   const [importNotice, setImportNotice] = useState("");
 
+  // ✅ FIX 2: isDarkMode state synced with system preference
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const match = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDarkMode(match.matches);
+    const handler = (e) => setIsDarkMode(e.matches);
+    match.addEventListener("change", handler);
+    return () => match.removeEventListener("change", handler);
+  }, []);
+
   const suppressBroadcastRef = useRef(false);
   const sendStateRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -422,10 +428,6 @@ export default function DryRunClient() {
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
   const sourceLines = source.split("\n");
-  const monacoLanguage = useMemo(
-    () => MONACO_LANGUAGE_MAP[language] || "javascript",
-    [language]
-  );
 
   useEffect(() => {
     setStep(0);
