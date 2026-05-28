@@ -648,10 +648,7 @@ const Visualizer = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
      passing to the client component. Icons are fine — they're
      plain <svg> elements. */
-  const clientSections = sections.map(({ info, ...rest }) => ({
-    ...rest,
-    slug: rest.title.toLowerCase().replace(/\s+/g, "-")
-  }));
+  const clientSections = sections.map(({ info, ...rest }) => rest);
 
   return (
     <div
