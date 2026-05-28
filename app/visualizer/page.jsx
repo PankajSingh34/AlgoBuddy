@@ -154,6 +154,40 @@ const sections = [
     ],
   },
   {
+    title: "Kadane's Algorithm",
+    slug: "kadane",
+    desc: "Maximum Subarray Sum optimization technique",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 16h4l3-8 4 6h5"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Kadane's Algorithm solves maximum subarray sum in linear time by tracking the best running sum and the best global sum.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Optimization",
+        items: [
+          { name: "Explore Kadane", path: "/visualizer/kadane" },
+        ],
+      },
+    ],
+  },
+  {
     title: "Recursion",
     desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
     icon: (
@@ -650,7 +684,7 @@ const Visualizer = () => {
      plain <svg> elements. */
   const clientSections = sections.map(({ info, ...rest }) => ({
     ...rest,
-    slug: rest.title.toLowerCase().replace(/\s+/g, "-")
+    slug: rest.slug ?? rest.title.toLowerCase().replace(/\s+/g, "-"),
   }));
 
   return (

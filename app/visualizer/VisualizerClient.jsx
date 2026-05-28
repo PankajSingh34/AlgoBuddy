@@ -16,6 +16,20 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "Kadane's Algorithm": {
+    color: "#f59e0b",
+    bg: "#fff7ed",
+    border: "#fed7aa",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M4 18h4" />
+        <path d="M10 18l3-8" />
+        <path d="M13 10l3 8" />
+        <path d="M16 18h4" />
+        <path d="M8 6h8" />
+      </svg>
+    ),
+  },
   Stack: {
     color: "#2563eb",
     bg: "#eff6ff",
@@ -114,6 +128,25 @@ function ArrayMiniViz({ color }) {
           className={`flex-1 rounded-t-sm transition-all ${i === highlight ? '' : 'mini-viz-inactive'}`}
           style={{
             height: `${(h / 80) * 44}px`,
+            background: i === highlight ? color : color + "30",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function KadaneMiniViz({ color }) {
+  const bars = [12, 26, 18, 47, 30, 55, 23, 65];
+  const highlight = 3;
+  return (
+    <div className="flex items-end gap-1 h-[48px]">
+      {bars.map((h, i) => (
+        <div
+          key={i}
+          className={`flex-1 rounded-t-sm transition-all ${i === highlight ? '' : 'mini-viz-inactive'}`}
+          style={{
+            height: `${(h / 65) * 44}px`,
             background: i === highlight ? color : color + "30",
           }}
         />
@@ -310,6 +343,7 @@ function CustomCodeMiniViz({ color }) {
 
 const MINI_VIZ = {
   Array: ArrayMiniViz,
+  "Kadane's Algorithm": KadaneMiniViz,
   Stack: StackMiniViz,
   Queue: QueueMiniViz,
   "Linked List": LinkedListMiniViz,
@@ -328,7 +362,7 @@ function DSCard({ section, theme, delay }) {
   const count = section.subsections
     ? section.subsections.reduce((a, s) => a + s.items.length, 0)
     : 0;
-  const href = `/visualizer/${section.slug}`;
+  const href = section.slug === "kadane" ? "/visualizer/kadane" : `/visualizer/${section.slug}`;
 
   return (
     <motion.div
@@ -458,6 +492,7 @@ export default function VisualizerClient({ initialSections }) {
       <style>{`
         .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-card="Kadane's Algorithm"] { background: #2a200a !important; border-color: #b45309 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
         .dark [data-theme-card="Linked List"] { background: #2b1a08 !important; border-color: #92400e !important; }
@@ -467,6 +502,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
         .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-header="Kadane's Algorithm"] { background: #3d2910 !important; border-color: #b45309 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
         .dark [data-theme-header="Linked List"] { background: #3d240a !important; border-color: #92400e !important; }

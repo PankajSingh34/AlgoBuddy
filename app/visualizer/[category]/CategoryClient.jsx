@@ -55,6 +55,20 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "Kadane's Algorithm": {
+    color: "#f59e0b",
+    bg: "#fff7ed",
+    border: "#fed7aa",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M4 18h4" />
+        <path d="M10 18l3-8" />
+        <path d="M13 10l3 8" />
+        <path d="M16 18h4" />
+        <path d="M8 6h8" />
+      </svg>
+    ),
+  },
   Graph: {
     color: "#dc2626",
     bg: "#fef2f2",
@@ -115,6 +129,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
         .dark [data-theme-card="Linked List"] { background: #2b1a08 !important; border-color: #92400e !important; }
         .dark [data-theme-card="Tree"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-card="Kadane's Algorithm"] { background: #2a200a !important; border-color: #b45309 !important; }
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
@@ -125,6 +140,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
         .dark [data-theme-header="Linked List"] { background: #3d240a !important; border-color: #92400e !important; }
         .dark [data-theme-header="Tree"] { background: #23133d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-header="Kadane's Algorithm"] { background: #3d2910 !important; border-color: #b45309 !important; }
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
