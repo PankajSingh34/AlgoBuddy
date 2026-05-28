@@ -24,13 +24,23 @@ export async function POST(req) {
     // checkRateLimit uses a global Redis sliding-window counter in production
     // so the limit is enforced across all serverless instances, not just the
     // current one. Falls back to an in-memory check in local development.
-    const { allowed } = await checkRateLimit(`contact:${ip}`);
+    const { allowed, remaining, resetAt } =
+      await checkRateLimit(`contact:${ip}`);
     if (!allowed) {
-      return Response.json(
-        { message: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
+  const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+
+  return Response.json(
+    { message: "Too many requests. Please try again later." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": retryAfter.toString(),
+        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Remaining": "0",
+      },
     }
+  );
+}
 
     let body;
     try {
@@ -130,7 +140,15 @@ export async function POST(req) {
 
     await transporter.sendMail(mailOptions);
 
-    return Response.json({ message: "Email sent successfully" });
+    return Response.json(
+  { message: "Email sent successfully" },
+  {
+    headers: {
+      "X-RateLimit-Limit": "5",
+      "X-RateLimit-Remaining": remaining.toString(),
+    },
+  }
+);
   } catch (error) {
     return new Response(JSON.stringify({ message: "Error sending email" }), {
       status: 500,

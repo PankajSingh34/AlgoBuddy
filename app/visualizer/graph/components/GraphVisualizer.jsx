@@ -2,11 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  ChevronLeft, 
-  ChevronRight, 
   Settings2,
   BarChart3,
   Info
@@ -22,16 +17,22 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { 
   bfsFrames, 
   dfsFrames, 
   dijkstraFrames, 
+  floydWarshallFrames,
   primFrames, 
   kruskalFrames, 
   topologicalSortFrames,
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
+
+const weightedAlgorithms = new Set(["dijkstra", "floyd-warshall", "prim", "kruskal"]);
+const directedAlgorithms = new Set(["dijkstra", "floyd-warshall", "topological-sort"]);
 
 const defaultGraphs = {
   bfs: {
@@ -88,6 +89,25 @@ const defaultGraphs = {
       { from: "3", to: "5", weight: 2, directed: true },
       { from: "4", to: "3", weight: 4, directed: true },
       { from: "4", to: "5", weight: 6, directed: true },
+    ]
+  },
+  "floyd-warshall": {
+    nodes: [
+      { id: "0", x: 120, y: 160, label: "A" },
+      { id: "1", x: 340, y: 90, label: "B" },
+      { id: "2", x: 560, y: 160, label: "C" },
+      { id: "3", x: 250, y: 360, label: "D" },
+      { id: "4", x: 520, y: 350, label: "E" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 3, directed: true },
+      { from: "0", to: "3", weight: 8, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "1", to: "3", weight: 4, directed: true },
+      { from: "2", to: "4", weight: 2, directed: true },
+      { from: "3", to: "2", weight: 2, directed: true },
+      { from: "3", to: "4", weight: 7, directed: true },
+      { from: "4", to: "0", weight: 4, directed: true },
     ]
   },
   prim: {
@@ -187,6 +207,10 @@ const complexityData = {
     { name: 'Time', value: 95, label: 'O((V+E)logV)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
+  "floyd-warshall": [
+    { name: 'Time', value: 100, label: 'O(V^3)', full: 'Time Complexity' },
+    { name: 'Space', value: 90, label: 'O(V^2)', full: 'Space Complexity' },
+  ],
   prim: [
     { name: 'Time', value: 90, label: 'O(ElogV)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
@@ -213,6 +237,7 @@ const comparisonData = [
   { name: 'BFS', time: 80, space: 60 },
   { name: 'DFS', time: 80, space: 60 },
   { name: 'Dijkstra', time: 95, space: 65 },
+  { name: 'Floyd', time: 100, space: 90 },
   { name: 'MST', time: 90, space: 60 },
 ];
 
@@ -229,7 +254,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
-      if (algorithm === "dijkstra" || algorithm === "prim") {
+      if (weightedAlgorithms.has(algorithm)) {
         adj[e.from].push({ node: e.to, weight: e.weight });
         if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight });
       } else {
@@ -242,6 +267,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "bfs") return bfsFrames(adj, startNodeId);
     if (algorithm === "dfs") return dfsFrames(adj, startNodeId);
     if (algorithm === "dijkstra") return dijkstraFrames(adj, startNodeId);
+    if (algorithm === "floyd-warshall") return floydWarshallFrames(nodes, edges);
     if (algorithm === "prim") return primFrames(adj, startNodeId);
     if (algorithm === "kruskal") return kruskalFrames(nodes.map(n => n.id), edges);
     if (algorithm === "topological-sort") return topologicalSortFrames(adj, nodes.map(n => n.id));
@@ -264,8 +290,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   const togglePlay = () => {
     if (currentFrame === frames.length - 1) setCurrentFrame(0);
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) setIsEditing(false);
+    setIsPlaying(prev => !prev);
+    setIsEditing(false); // If they press play/pause, it shouldn't be in edit mode
   };
 
   const reset = () => {
@@ -273,6 +299,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     setIsPlaying(false);
     setIsEditing(true);
   };
+
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: isPlaying,
+    onReset: reset,
+    speed: speed,
+    onSpeedChange: setSpeed,
+  });
 
   const stepForward = () => {
     if (currentFrame < frames.length - 1) {
@@ -289,6 +324,72 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const currentFrameData = frames[currentFrame] || {};
+  const isWeighted = weightedAlgorithms.has(algorithm);
+  const isDirected = directedAlgorithms.has(algorithm);
+  const showFloydMatrix = algorithm === "floyd-warshall" && currentFrameData.matrix;
+  const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
+
+  const addNode = ({ x, y }) => {
+    const usedIds = new Set(nodes.map((node) => node.id));
+    let nextId = `${nodes.length}`;
+    let counter = nodes.length;
+    while (usedIds.has(nextId)) {
+      counter += 1;
+      nextId = `${counter}`;
+    }
+
+    setNodes((current) => [
+      ...current,
+      {
+        id: nextId,
+        x,
+        y,
+        label: String.fromCharCode(65 + (counter % 26)),
+      },
+    ]);
+    setCurrentFrame(0);
+    setIsPlaying(false);
+  };
+
+  const addEdge = ({ from, to }) => {
+    const rawWeight = isWeighted ? window.prompt("Enter edge weight", "1") : "1";
+    if (rawWeight === null) return;
+    const weight = Number(rawWeight);
+    if (!Number.isFinite(weight)) {
+      window.alert("Please enter a valid numeric weight.");
+      return;
+    }
+
+    setEdges((current) => [
+      ...current,
+      { from, to, weight, directed: isDirected },
+    ]);
+    setCurrentFrame(0);
+    setIsPlaying(false);
+  };
+
+  const removeNode = (id) => {
+    setNodes((current) => current.filter((node) => node.id !== id));
+    setEdges((current) => current.filter((edge) => edge.from !== id && edge.to !== id));
+    setCurrentFrame(0);
+    setIsPlaying(false);
+  };
+
+  const removeEdge = (edgeIndex) => {
+    setEdges((current) => current.filter((_, index) => index !== edgeIndex));
+    setCurrentFrame(0);
+    setIsPlaying(false);
+  };
+
+  const reverseEdge = (edgeIndex) => {
+    setEdges((current) =>
+      current.map((edge, index) =>
+        index === edgeIndex ? { ...edge, from: edge.to, to: edge.from } : edge,
+      ),
+    );
+    setCurrentFrame(0);
+    setIsPlaying(false);
+  };
 
   return (
     <div className="mt-8 space-y-6">
@@ -314,18 +415,23 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                   {currentFrameData.description || "Ready to start"}
                 </div>
                 {currentFrameData.queue && currentFrameData.queue.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-primary dark:bg-blue-900/20 dark:text-[#c27cf7]">
                     Queue: [{currentFrameData.queue.join(", ")}]
                   </div>
                 )}
                 {currentFrameData.stack && currentFrameData.stack.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-600 dark:bg-purple-900/20 dark:text-blue-400">
+                  <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-600 dark:bg-purple-900/20 dark:text-[#c27cf7]">
                     Stack: [{currentFrameData.stack.join(", ")}]
+                  </div>
+                )}
+                {currentFrameData.intermediate && (
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                    k: {nodes.find((node) => node.id === currentFrameData.intermediate)?.label || currentFrameData.intermediate}
                   </div>
                 )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-bold text-success">
-                    Order: {currentFrameData.result.join(" → ")}
+                    Order: {currentFrameData.result.join(" ??? ")}
                   </div>
                 )}
               </div>
@@ -336,68 +442,30 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         <GraphCanvas
           nodes={nodes}
           edges={edges}
-          onUpdateNodes={setNodes}
-          onUpdateEdges={setEdges}
+          onAddNode={addNode}
+          onAddEdge={addEdge}
+          onRemoveNode={removeNode}
+          onRemoveEdge={removeEdge}
+          onReverseEdge={reverseEdge}
           animationState={!isEditing ? currentFrameData : {}}
           interactive={isEditing}
-          isWeighted={algorithm === "dijkstra" || algorithm === "prim" || algorithm === "kruskal"}
-          isDirected={algorithm === "dijkstra" || algorithm === "topological-sort"}
+          isWeighted={isWeighted}
+          isDirected={isDirected}
           className="w-full"
         />
 
         {/* Controls Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-surface-200 bg-white p-4 shadow-sm dark:border-surface-800 dark:bg-surface-900">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={reset}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
-              title="Reset"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-            <button
-              onClick={stepBackward}
-              disabled={currentFrame === 0}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 disabled:opacity-30 dark:hover:bg-surface-800"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={togglePlay}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current ml-1" />}
-            </button>
-            <button
-              onClick={stepForward}
-              disabled={currentFrame === frames.length - 1}
-              className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 disabled:opacity-30 dark:hover:bg-surface-800"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="flex flex-1 items-center gap-4 px-4">
-            <span className="text-xs font-semibold text-surface-500">SPEED</span>
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.1"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-surface-200 dark:bg-surface-800"
-            />
-            <span className="w-10 text-xs font-bold text-primary">{speed}x</span>
-          </div>
-
-          <div className="text-right">
-            <div className="text-xs font-semibold text-surface-500">PROGRESS</div>
-            <div className="text-sm font-bold text-surface-900 dark:text-white">
-              {currentFrame + 1} / {frames.length || 1}
-            </div>
-          </div>
-        </div>
+        <PlaybackControls
+          isPaused={!isPlaying}
+          onTogglePlayPause={togglePlay}
+          speed={speed}
+          onSpeedChange={setSpeed}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={reset}
+          progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+          disabled={frames.length === 0}
+        />
       </div>
 
       {/* Info & Charts Section */}
@@ -477,13 +545,71 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
           <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Adjacency Representation</h3>
           <div className="space-y-4">
+            {showFloydMatrix && (
+              <div>
+                <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Floyd-Warshall Distance Matrix</h4>
+                <div className="overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
+                  <table className="w-full border-collapse text-center">
+                    <thead>
+                      <tr>
+                        <th className="p-1"></th>
+                        {currentFrameData.matrixNodes.map((nodeId) => (
+                          <th
+                            key={nodeId}
+                            className={`p-1 ${
+                              currentFrameData.intermediate === nodeId
+                                ? "text-amber-600 dark:text-amber-300"
+                                : "text-primary"
+                            }`}
+                          >
+                            {nodeLabelById[nodeId]}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentFrameData.matrixNodes.map((rowId) => (
+                        <tr key={rowId}>
+                          <td className="p-1 font-bold text-primary">{nodeLabelById[rowId]}</td>
+                          {currentFrameData.matrixNodes.map((colId) => {
+                            const isFocus = currentFrameData.row === rowId && currentFrameData.col === colId;
+                            const isUpdated =
+                              currentFrameData.updatedCell?.row === rowId &&
+                              currentFrameData.updatedCell?.col === colId;
+                            const value = currentFrameData.matrix[rowId][colId];
+                            return (
+                              <td
+                                key={colId}
+                                className={`border border-surface-200 p-1 dark:border-surface-800 ${
+                                  isUpdated
+                                    ? "bg-success/20 text-success"
+                                    : isFocus
+                                      ? "bg-primary/10 text-primary"
+                                      : ""
+                                }`}
+                              >
+                                {value === Infinity ? "INF" : value}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
             <div>
               <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency List</h4>
               <div className="max-h-64 overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
                 {nodes.map(node => {
                   const neighbors = edges
                     .filter(e => e.from === node.id || (!e.directed && e.to === node.id))
-                    .map(e => e.from === node.id ? e.to : e.from);
+                    .map(e => {
+                      const neighbor = e.from === node.id ? e.to : e.from;
+                      const label = nodeLabelById[neighbor] || neighbor;
+                      return isWeighted ? `${label}(${e.weight})` : label;
+                    });
                   return (
                     <div key={node.id} className="mb-1">
                       <span className="text-primary font-bold">{node.label}</span>: [{neighbors.join(", ")}]
@@ -513,7 +639,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                           );
                           return (
                             <td key={col.id} className="border border-surface-200 p-1 dark:border-surface-800">
-                              {edge ? (algorithm === "dijkstra" || algorithm === "prim" || algorithm === "kruskal" ? edge.weight : 1) : 0}
+                              {edge ? (isWeighted ? edge.weight : 1) : 0}
                             </td>
                           );
                         })}

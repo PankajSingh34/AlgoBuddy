@@ -6,10 +6,8 @@ const codeExamples = {
 function binarySearch(arr, target) {
   let left = 0;
   let right = arr.length - 1;
-
   while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
+    const mid = Math.floor((left + right) / 2);  
     if (arr[mid] === target) {
       return mid; // Target found
     } else if (arr[mid] < target) {
@@ -18,15 +16,12 @@ function binarySearch(arr, target) {
       right = mid - 1; // Search left half
     }
   }
-  
   return -1; // Target not found
 }
-
 // Usage example
 const sortedNumbers = [10, 20, 30, 40, 50, 60, 70];
 const target = 40;
 const result = binarySearch(sortedNumbers, target);
-
 if (result !== -1) {
   console.log(\`Element found at index: \${result}\`);
 } else {
@@ -35,25 +30,20 @@ if (result !== -1) {
 
   python: `# Binary Search in Python (Iterative)
 def binary_search(arr, target):
-    left, right = 0, len(arr) - 1
-    
+    left, right = 0, len(arr) - 1    
     while left <= right:
-        mid = (left + right) // 2
-        
+        mid = (left + right) // 2  
         if arr[mid] == target:
             return mid  # Target found
         elif arr[mid] < target:
             left = mid + 1  # Search right half
         else:
             right = mid - 1  # Search left half
-    
     return -1  # Target not found
-
 # Usage example
 sorted_numbers = [10, 20, 30, 40, 50, 60, 70]
 target = 40
 result = binary_search(sorted_numbers, target)
-
 if result != -1:
     print(f"Element found at index: {result}")
 else:
@@ -64,10 +54,8 @@ public class BinarySearch {
     public static int binarySearch(int[] arr, int target) {
         int left = 0;
         int right = arr.length - 1;
-        
         while (left <= right) {
-            int mid = left + (right - left) / 2;
-            
+            int mid = left + (right - left) / 2; 
             if (arr[mid] == target) {
                 return mid; // Target found
             } else if (arr[mid] < target) {
@@ -75,16 +63,13 @@ public class BinarySearch {
             } else {
                 right = mid - 1; // Search left half
             }
-        }
-        
+        }    
         return -1; // Target not found
     }
-
     public static void main(String[] args) {
         int[] sortedNumbers = {10, 20, 30, 40, 50, 60, 70};
         int target = 40;
-        int result = binarySearch(sortedNumbers, target);
-        
+        int result = binarySearch(sortedNumbers, target);   
         if (result != -1) {
             System.out.println("Element found at index: " + result);
         } else {
@@ -95,14 +80,11 @@ public class BinarySearch {
 
   c: `// Binary Search in C (Iterative)
 #include <stdio.h>
-
 int binarySearch(int arr[], int size, int target) {
     int left = 0;
     int right = size - 1;
-    
     while (left <= right) {
         int mid = left + (right - left) / 2;
-        
         if (arr[mid] == target) {
             return mid; // Target found
         } else if (arr[mid] < target) {
@@ -110,24 +92,19 @@ int binarySearch(int arr[], int size, int target) {
         } else {
             right = mid - 1; // Search left half
         }
-    }
-    
+    } 
     return -1; // Target not found
 }
-
 int main() {
     int sortedNumbers[] = {10, 20, 30, 40, 50, 60, 70};
     int size = sizeof(sortedNumbers) / sizeof(sortedNumbers[0]);
-    int target = 40;
-    
-    int result = binarySearch(sortedNumbers, size, target);
-    
+    int target = 40;    
+    int result = binarySearch(sortedNumbers, size, target);    
     if (result != -1) {
         printf("Element found at index: %d\\n", result);
     } else {
         printf("Element not found\\n");
     }
-    
     return 0;
 }`,
 
@@ -135,14 +112,11 @@ int main() {
 #include <iostream>
 #include <vector>
 using namespace std;
-
 int binarySearch(const vector<int>& arr, int target) {
     int left = 0;
     int right = arr.size() - 1;
-    
     while (left <= right) {
         int mid = left + (right - left) / 2;
-        
         if (arr[mid] == target) {
             return mid; // Target found
         } else if (arr[mid] < target) {
@@ -151,22 +125,17 @@ int binarySearch(const vector<int>& arr, int target) {
             right = mid - 1; // Search left half
         }
     }
-    
     return -1; // Target not found
 }
-
 int main() {
     vector<int> sortedNumbers = {10, 20, 30, 40, 50, 60, 70};
-    int target = 40;
-    
+    int target = 40;   
     int result = binarySearch(sortedNumbers, target);
-    
     if (result != -1) {
         cout << "Element found at index: " << result << endl;
     } else {
         cout << "Element not found" << endl;
     }
-    
     return 0;
 }`,
 };

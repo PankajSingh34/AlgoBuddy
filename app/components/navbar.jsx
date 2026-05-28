@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -139,16 +140,16 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-surface-900 flex items-center transition-all duration-200 ${
+        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${
           scrolled
-            ? "border-b border-surface-200 dark:border-surface-700 shadow-sm"
+            ? "border-b border-surface-200 dark:border-udemy-dark-border shadow-sm"
             : "border-b border-transparent"
         }`}
       >
         <div className="w-full max-w-[1200px] mx-auto px-8 flex items-center justify-between h-full">
           <Link
             href="/"
-            className="text-[26px] font-black text-surface-900 dark:text-white tracking-tighter hover:opacity-75 transition-opacity focus-ring"
+            className="brand-logo text-[26px] text-surface-900 dark:text-white hover:opacity-75 transition-opacity focus-ring"
           >
             Algo
             <span className="text-primary">
@@ -189,11 +190,14 @@ export default function Navbar() {
                   }
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
                 >
-                  <img
+                  <Image
                     src={`https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(
                       user.email
                     )}`}
                     alt="avatar"
+                    width={28}
+                    height={28}
+                    unoptimized
                     className="w-7 h-7 rounded-full"
                   />
 

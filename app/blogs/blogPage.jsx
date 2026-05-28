@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
@@ -7,7 +8,7 @@ import {
   ArrowRight,
   Search,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion} from "framer-motion";
 import PopularTopics from "@/app/blogs/components/PopularTopics";
 import TerminalPopup from "@/app/components/TerminalPopup";
 import blogData from "@/app/blogs/data/blogs.json";
@@ -19,6 +20,7 @@ const BlogPage = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+
   const searchRef = useRef(null);
 
   // Filtered blogs
@@ -27,7 +29,7 @@ const BlogPage = () => {
       searchQuery === "" ||
       blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       blog.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
     const matchesCategory =
@@ -39,7 +41,7 @@ const BlogPage = () => {
   // Categories
   const categories = ["All", ...new Set(blogData.map((blog) => blog.category))];
 
-  // Featured posts (latest 5 by date)
+  // Featured posts
   const featuredPosts = [...blogData]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 4);
@@ -62,26 +64,29 @@ const BlogPage = () => {
         setIsSearchFocused(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-900 dark:to-surface-950">
-      <main className="container mx-auto max-w-6xl px-6 pt-32 pb-20">
+      <main className="container mx-auto max-w-6xl px-6 pt-24 pb-20">
         {/* Hero Section */}
         <section className="mb-20 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-5xl mt-10 md:text-5xl font-bold text-surface-800 dark:text-white mb-6 leading-tight"
+            className="text-5xl md:text-5xl font-bold text-surface-800 dark:text-white mb-6 leading-tight"
           >
             Insights for{" "}
             <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
               Modern Developers
             </span>
           </motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -107,6 +112,7 @@ const BlogPage = () => {
                 onChange={(e) => setSubscriberEmail(e.target.value)}
                 className="flex-1 w-full px-4 py-3 rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-surface-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               />
+
               <button
                 onClick={() => {
                   if (subscriberEmail.trim()) {
@@ -118,23 +124,34 @@ const BlogPage = () => {
                 Subscribe
               </button>
             </div>
+
             <p className="text-sm text-surface-500 dark:text-surface-400 text-center mt-2">
-              By clicking "Subscribe", you agree to receive updates when new blogs are published.
+              By clicking "Subscribe", you agree to receive updates when new
+              blogs are published.
             </p>
           </motion.div>
         </section>
 
         {/* Featured Posts */}
         <section className="mb-20">
-          <div className="flex items-center justify-between mb-2">
+          {/* Updated Heading + CTA */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
             <h2 className="text-3xl font-medium text-surface-800 dark:text-white">
               Featured Articles
             </h2>
+
+            <Link href="/blogs/blogform">
+              <button className="group inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+                Write a Blog
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+            </Link>
           </div>
+
           <div className="h-px bg-surface-200 dark:bg-surface-700 mb-4"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left column: recent upload (big card) - vertical layout */}
+            {/* Featured Main Card */}
             <motion.div
               key={featuredPosts[0].id}
               initial={{ opacity: 0, y: 20 }}
@@ -150,24 +167,33 @@ const BlogPage = () => {
                     alt={featuredPosts[0].title}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
                   <span className="absolute top-4 right-4 bg-primary text-white text-xs font-medium px-2.5 py-1 rounded-full">
                     {featuredPosts[0].category}
                   </span>
                 </div>
+
                 <div className="p-6">
                   <div className="flex items-center text-sm text-surface-500 dark:text-surface-400 mb-3">
                     <Calendar className="h-4 w-4 mr-1.5" />
+
                     <span className="mr-3">{featuredPosts[0].date}</span>
+
                     <Clock className="h-4 w-4 mr-1.5" />
+
                     <span>{featuredPosts[0].readTime}</span>
                   </div>
+
                   <h3 className="text-2xl font-bold text-surface-800 dark:text-white mb-3">
                     {featuredPosts[0].title}
                   </h3>
+
                   <p className="text-surface-600 dark:text-surface-300 mb-4 line-clamp-3">
                     {featuredPosts[0].excerpt}
                   </p>
+
                   <div className="flex flex-wrap gap-2">
                     {featuredPosts[0].tags.map((tag, i) => (
                       <span
@@ -182,14 +208,17 @@ const BlogPage = () => {
               </Link>
             </motion.div>
 
-            {/* Right column: next 4 featured cards in vertical list-style layout */}
+            {/* Side Featured Posts */}
             <div className="col-span-12 lg:col-span-6 h-full flex flex-col gap-6">
               {featuredPosts.slice(1, 5).map((post, index) => (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                  }}
                   whileHover={{ y: -5 }}
                   className="flex gap-4 items-start bg-white dark:bg-surface-800 rounded-xl p-4 shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
                 >
@@ -200,16 +229,22 @@ const BlogPage = () => {
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
                   </div>
+
                   <div className="flex-1">
                     <div className="flex items-center text-sm text-surface-500 dark:text-surface-400 mb-1">
                       <Calendar className="h-4 w-4 mr-1.5" />
+
                       <span className="mr-3">{post.date}</span>
+
                       <Clock className="h-4 w-4 mr-1.5" />
+
                       <span>{post.readTime}</span>
                     </div>
+
                     <h3 className="text-lg font-semibold text-surface-800 dark:text-white mb-1">
                       <Link href={post.slug}>{post.title}</Link>
                     </h3>
+
                     <p className="text-sm text-surface-600 dark:text-surface-300 line-clamp-2">
                       {post.excerpt}
                     </p>
@@ -254,12 +289,13 @@ const BlogPage = () => {
         <section>
           <h2 className="text-2xl font-medium text-surface-800 dark:text-white mb-8">
             {activeCategory === "All" ? "All Blog Posts" : activeCategory}
+
             <span className="text-surface-500 dark:text-surface-400 text-base font-normal ml-2">
               ({filteredBlogs.length} articles)
             </span>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {filteredBlogs.length > 0 ? (
               filteredBlogs.map((post) => (
                 <motion.article
@@ -268,34 +304,42 @@ const BlogPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   whileHover={{ y: -3 }}
-                  className="bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
+                  className="h-full flex flex-col bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
                 >
                   <Link href={post.slug}>
                     <div className="flex flex-col h-full">
-                      <div className="aspect-video overflow-hidden relative">
+                      <div className="w-full h-52 overflow-hidden relative flex-shrink-0">
                         <img
                           src={post.image}
                           alt={post.title}
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                         />
                       </div>
-                      <div className="p-5 flex flex-col gap-3 flex-grow">
-                        <div className="flex items-center justify-between text-sm text-surface-500 dark:text-surface-400">
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1.5" />
-                            <span>{post.date}</span>
-                          </div>
-                          <div className="text-primary dark:text-primary-light flex items-center font-medium">
-                            Read article <ArrowRight className="h-4 w-4 ml-1" />
-                          </div>
+                      <div className="p-5 flex flex-col gap-3 flex-1">
+                      <div className="flex items-center justify-between text-sm text-surface-500 dark:text-surface-400">
+                        <div className="flex items-center gap-4">
+                        <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1.5" />
+                        <span>{post.date}</span>
+                      </div>
+
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1.5" />
+                          <span>{post.readTime}</span>
                         </div>
+                      </div>
+
+                            <div className="text-primary dark:text-primary-light flex items-center font-medium">
+                            Read article <ArrowRight className="h-4 w-4 ml-1" />
+                        </div>
+                      </div>
                         <span className="inline-block text-xs font-medium px-3 py-1 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light rounded-full w-fit">
                           {post.category}
                         </span>
-                        <h3 className="text-lg font-bold text-surface-800 dark:text-white">
+                        <h3 className="text-lg font-bold text-surface-800 dark:text-white line-clamp-2 min-h-[56px]">
                           {post.title}
                         </h3>
-                        <div className="flex flex-wrap gap-2 mt-auto">
+                        <div className="flex flex-wrap gap-2 mt-auto overflow-hidden">
                           {post.tags.map((tag, i) => (
                             <span
                               key={i}
@@ -311,17 +355,20 @@ const BlogPage = () => {
                 </motion.article>
               ))
             ) : (
-              <div className="text-center py-16">
+              <div className="text-center py-16 col-span-full">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
                   <Search className="h-6 w-6 text-surface-400" />
                 </div>
+
                 <h3 className="text-xl font-medium text-surface-700 dark:text-surface-300 mb-2">
                   No articles found
                 </h3>
+
                 <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-md mx-auto">
                   We couldn't find any articles matching your search. Try a
                   different term or browse our categories.
                 </p>
+
                 <button
                   onClick={() => {
                     setSearchQuery("");
@@ -338,12 +385,12 @@ const BlogPage = () => {
       </main>
 
       {/* Terminal Popup */}
-      <TerminalPopup 
-        isOpen={isTerminalOpen} 
+      <TerminalPopup
+        isOpen={isTerminalOpen}
         onClose={() => {
           setIsTerminalOpen(false);
           setSubscriberEmail("");
-        }} 
+        }}
         email={subscriberEmail}
       />
     </div>

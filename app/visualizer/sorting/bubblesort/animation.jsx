@@ -12,6 +12,22 @@ const getFontSize = (value) => {
   return "text-xs";
 };
 
+const createBubbleSwapQuestion = (arr, j) => {
+  const correctLabel = `${arr[j]} and ${arr[j + 1]} (indices ${j} and ${j + 1})`;
+  const options = createOptions(correctLabel, [
+    j > 0 ? `${arr[j - 1]} and ${arr[j]} (indices ${j - 1} and ${j})` : null,
+    j + 2 < arr.length ? `${arr[j + 1]} and ${arr[j + 2]} (indices ${j + 1} and ${j + 2})` : null,
+    "No swap will happen",
+  ]);
+
+  return {
+    prompt: "Which two elements will swap next?",
+    options,
+    correctOptionId: "correct",
+    explanation: `${arr[j]} is greater than ${arr[j + 1]}, so Bubble Sort swaps adjacent indices ${j} and ${j + 1}.`,
+  };
+};
+
 const BubbleSortVisualizer = () => {
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
@@ -32,6 +48,13 @@ const BubbleSortVisualizer = () => {
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  const {
+    activeQuestion,
+    askChallenge,
+    resetChallengeStats,
+    stats: challengeStats,
+    submitAnswer,
+  } = useSortingChallenge(challengeEnabled);
 
   useEffect(() => {
     saveToStorage("bubble-array", array);
@@ -74,8 +97,10 @@ const BubbleSortVisualizer = () => {
   const cancellableDelay = () =>
     new Promise((resolve) => {
       resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, 1000 / speed);
+      animationRef.current = setTimeout(resolve, 1000 / speedRef.current);
     });
+    await checkPause();
+  };
 
   // Bubble Sort
   const bubbleSort = async () => {
@@ -108,6 +133,9 @@ const BubbleSortVisualizer = () => {
         if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
+          await askChallenge(createBubbleSwapQuestion(arr, j));
+          if (!isSortingRef.current) return;
+
           const bars = document.querySelectorAll(".bar");
           const bar1 = bars[j];
           const bar2 = bars[j + 1];
@@ -203,6 +231,7 @@ const BubbleSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
                 className="w-full"
               />
             </div>
@@ -210,13 +239,14 @@ const BubbleSortVisualizer = () => {
               <button
                 onClick={bubbleSort}
                 disabled={!array.length || sorting || sorted}
-                className="w-full disabled:opacity-75 bg-none bg-green-500 px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-black"
+                className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white"
               >
                 {sorting ? "Sorting..." : "Start Bubble Sort"}
               </button>
               <button
                 onClick={reset}
-                className="w-full bg-none text-white bg-red-500 px-4 py-2 rounded transition-colors text-sm sm:text-base"
+                disabled={sorting}
+                className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base"
               >
                 Reset All
               </button>
@@ -304,7 +334,7 @@ const BubbleSortVisualizer = () => {
                     >
                       {value}
                     </div>
-                    <div className="mt-1 text-xs text-gray-700 dark:text-blue-300 font-semibold">
+                    <div className="mt-1 text-xs text-gray-700 dark:text-[#c27cf7] font-semibold">
                       {index === currentIndices.i && "i"}
                       {index === currentIndices.j && "j"}
                     </div>

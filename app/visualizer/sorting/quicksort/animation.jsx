@@ -3,6 +3,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -15,7 +18,16 @@ const QuickSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const {
+    isPaused,
+    speed,
+    speedRef,
+    setSpeed,
+    togglePlayPause,
+    increaseSpeed,
+    decreaseSpeed,
+    checkPause,
+  } = usePlayback(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -52,11 +64,13 @@ const QuickSortVisualizer = () => {
   };
 
   // Helper: cancellable delay
-  const cancellableDelay = (ms) =>
-    new Promise((resolve) => {
+  const cancellableDelay = async (ms) => {
+    await new Promise((resolve) => {
       resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, ms);
+      animationRef.current = setTimeout(resolve, ms / speedRef.current);
     });
+    await checkPause();
+  };
 
   // Partition function for Quick Sort
   const partition = async (arr, low, high) => {
@@ -78,7 +92,7 @@ const QuickSortVisualizer = () => {
       }));
 
       setComparisons((prev) => prev + 1);
-      await cancellableDelay(1000 / speed);
+      await cancellableDelay(1000);
       if (!isSortingRef.current) return -1;
 
       if (arr[j] < pivot) {
@@ -95,7 +109,7 @@ const QuickSortVisualizer = () => {
             { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
           );
         }
-        await cancellableDelay(1000 / speed);
+        await cancellableDelay(1000);
         if (!isSortingRef.current) return -1;
       }
     }
@@ -112,7 +126,7 @@ const QuickSortVisualizer = () => {
         { scale: 1.1, opacity: 1, duration: 0.3, stagger: 0.05 }
       );
     }
-    await cancellableDelay(1000 / speed);
+    await cancellableDelay(1000);
     if (!isSortingRef.current) return -1;
 
     return i + 1;
@@ -160,7 +174,7 @@ const QuickSortVisualizer = () => {
         stack.push({ low: pi + 1, high });
         stack.push({ low, high: pi - 1 });
 
-        await cancellableDelay(1000 / speed);
+        await cancellableDelay(1000);
         if (!isSortingRef.current) return;
 
         // Remove completed partition
@@ -188,7 +202,6 @@ const QuickSortVisualizer = () => {
     });
   };
 
-  // Reset everything
   const reset = () => {
     // Unblock any suspended async loop immediately
     isSortingRef.current = false;
@@ -214,6 +227,17 @@ const QuickSortVisualizer = () => {
     };
   }, []);
 
+  // keyboard shortcuts
+  useVisualizerKeyboard({
+    onStart:       quickSort,
+    onReset:       reset,
+    onSpeedChange: setSpeed,
+    onTogglePlayPause: togglePlayPause,
+    speed,
+    sorting,
+    sorted,
+  });
+
   // Function to render partition visualization
   const renderPartitions = () => {
     if (currentIndices.partitions.length === 0) return null;
@@ -233,7 +257,7 @@ const QuickSortVisualizer = () => {
                     Partition {idx + 1}: Indexes {partition.low} to{" "}
                     {partition.high}
                   </span>
-                  <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                  <span className="text-xs bg-blue-100 dark:bg-blue-900 text-primary-dark dark:text-blue-200 px-2 py-1 rounded">
                     {subArray.length} elements
                   </span>
                 </div>
@@ -257,7 +281,7 @@ const QuickSortVisualizer = () => {
                                   : isLeft
                                   ? "bg-yellow-400 dark:bg-yellow-600 border-yellow-600 dark:border-yellow-400"
                                   : isRight
-                                  ? "bg-blue-400 dark:bg-blue-600 border-blue-600 dark:border-blue-400"
+                                  ? "bg-primary/80 dark:bg-primary border-primary dark:border-primary/80"
                                   : "bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                               }`}
                         >
@@ -297,6 +321,7 @@ const QuickSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                isPrimary={array.length === 0}
               />
               <CustomArrayInput
                 onUseCustomArray={(newArray) => {
@@ -305,40 +330,52 @@ const QuickSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
               />
             </div>
             <div className="flex flex-col gap-2">
               <button
                 onClick={quickSort}
                 disabled={!array.length || sorting || sorted}
-                className="w-full disabled:opacity-75 bg-none bg-green-500 px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-black"
+                className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white"
               >
                 {sorting ? "Sorting..." : "Start Quick Sort"}
               </button>
               <button
                 onClick={reset}
-                className="w-full bg-none text-white bg-red-500 px-4 py-2 rounded transition-colors text-sm sm:text-base"
+                disabled={sorting}
+                className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base"
               >
                 Reset All
               </button>
             </div>
           </div>
-
-          {/* Speed controls */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-gray-700 dark:text-gray-300">Speed:</span>
-            <input
-              type="range"
-              min="0.5"
-              max="5"
-              step="0.5"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              className="w-32"
-              disabled={sorting}
+          {/* Playback & Speed controls */}
+          {sorting && (
+            <PlaybackControls
+              isPaused={isPaused}
+              onTogglePlayPause={togglePlayPause}
+              speed={speed}
+              onSpeedChange={setSpeed}
             />
-            <span className="text-gray-700 dark:text-gray-300">{speed}x</span>
-          </div>
+          )}
+
+          {!sorting && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
+              <input
+                type="range"
+                min="0.5"
+                max="5"
+                step="0.5"
+                value={speed}
+                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                className="w-24 sm:w-32"
+                disabled={sorting}
+              />
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -390,7 +427,7 @@ const QuickSortVisualizer = () => {
                                 : isLeft
                                 ? "bg-yellow-400 dark:bg-yellow-600 border-yellow-600 dark:border-yellow-400"
                                 : isRight
-                                ? "bg-blue-400 dark:bg-blue-600 border-blue-600 dark:border-blue-400"
+                                ? "bg-primary/80 dark:bg-primary border-primary dark:border-primary/80"
                                 : isPartition
                                 ? "bg-green-400 dark:bg-green-600 border-green-600 dark:border-green-400"
                                 : isInPartition
