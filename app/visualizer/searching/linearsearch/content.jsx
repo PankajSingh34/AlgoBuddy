@@ -42,6 +42,7 @@ const Content = () => {
 
   const complexity = [
     { data: "Best Case: Target is the first element → O(1)" },
+    { data: "Average Case: Target is near the middle → O(n/2)" },
     {
       data: "Worst Case: Target is last or not present → O(n) (checks all elements)",
     },
@@ -61,7 +62,8 @@ const Content = () => {
   ];
 
   return (
-    <main className="max-w-4xl mx-auto">
+    <main className="max-w-4xl mx-auto">
+
       <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is Linear Search */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
@@ -159,8 +161,8 @@ const Content = () => {
 
             <div className="mt-8">
               <ComplexityGraph
-                bestCase={(n) => 1}
-                averageCase={(n) => n}
+                bestCase={(n) => 1}               
+                averageCase={(n) => Math.ceil(n / 2)}
                 worstCase={(n) => n}
                 maxN={25}
               />
