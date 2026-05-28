@@ -38,7 +38,7 @@ const createBubbleSwapQuestion = (arr, j) => {
 const BubbleSortVisualizer = () => {
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [array, setArray] = useState(() => loadFromStorage("bubble-array", []));
+  const [array, setArray] = useState([]);
   const [challengeEnabled, setChallengeEnabled] = useState(false);
   const {
     isPaused,
@@ -53,7 +53,7 @@ const BubbleSortVisualizer = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
 
-  useEffect(() => { saveToStorage("bubble-array", array); }, [array]);
+  
   useEffect(() => { saveToStorage("bubble-speed", speed); }, [speed]);
 
   const [comparisons, setComparisons] = useState(0);
@@ -213,6 +213,7 @@ const BubbleSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
                 className="w-full"
               />
             </div>

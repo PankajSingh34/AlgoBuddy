@@ -20,6 +20,8 @@ const INITIAL_MESSAGES = [
 ];
 
 export default function Chatbot() {
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamedContent, setStreamedContent] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
@@ -28,6 +30,7 @@ export default function Chatbot() {
   const [copiedId, setCopiedId] = useState(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
+
 
   const messagesEndRef = useRef(null);
   const turnstileRef = useRef(null);
@@ -106,23 +109,53 @@ export default function Chatbot() {
         body: JSON.stringify({ messages: apiMessages, captchaToken }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error("Please log in to use the AI assistant.");
-        }
-        if (res.status === 403) {
-          refreshCaptcha();
-        }
-        throw new Error(data.error || "Failed to get AI response.");
+        throw new Error("Failed to get AI response.");
       }
 
-      if (data.message) {
-        setMessages((prev) => [...prev, data.message]);
-      } else {
-        throw new Error("Invalid response format received from backend.");
+      if (!res.body) {
+        throw new Error("Streaming not supported.");
       }
+
+      setIsStreaming(true);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      let fullContent = "";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "",
+        },
+      ]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+
+        fullContent += chunk;
+
+        setStreamedContent(fullContent);
+
+        setMessages((prev) => {
+          const updated = [...prev];
+
+          updated[updated.length - 1] = {
+            role: "assistant",
+            content: fullContent,
+          };
+
+          return updated;
+        });
+      }
+
+      setIsStreaming(false);
     } catch (err) {
       console.error("Error sending chat message:", err);
       setError(err.message || "Something went wrong. Please try again.");
@@ -130,6 +163,7 @@ export default function Chatbot() {
       // Turnstile tokens are single-use; refresh after every attempt.
       refreshCaptcha();
       setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -291,7 +325,7 @@ export default function Chatbot() {
               })}
 
               {/* Loader */}
-              {isLoading && (
+              {isLoading && !isStreaming && (
                 <div className="flex gap-2.5 justify-start">
                   <div className="w-8 h-8 rounded-full bg-[#a435f0] text-white flex-shrink-0 flex items-center justify-center text-sm">
                     🤖
@@ -330,12 +364,12 @@ export default function Chatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about DSA algorithms..."
-                disabled={isLoading}
+                disabled={isLoading || isStreaming}
                 className="flex-1 px-4 py-2 bg-neutral-50 dark:bg-[var(--udemy-dark-bg)] text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)] placeholder-neutral-400 dark:placeholder-neutral-500 border border-[var(--color-border)] rounded-full text-sm focus:outline-none focus:border-[#a435f0] focus:ring-1 focus:ring-[#a435f0] transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || isStreaming || !input.trim()}
                 className="w-9 h-9 rounded-full bg-[#a435f0] hover:bg-[#7d2be0] text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
               >
                 <Send className="w-4 h-4" />
@@ -348,8 +382,12 @@ export default function Chatbot() {
       {/* Turnstile captcha (invisible) */}
       <div className="w-0 h-0 overflow-hidden" aria-hidden="true">
         <Turnstile
-          ref={turnstileRef}
-          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          siteKey={
+            process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("1x") || 
+            process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("0x")
+              ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+              : "1x00000000000000000000AA"
+          }
           onSuccess={(token) => setCaptchaToken(token)}
           options={{ size: "invisible" }}
         />

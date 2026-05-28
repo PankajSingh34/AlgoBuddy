@@ -23,22 +23,19 @@ export async function POST(req) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-  model: "openai/gpt-3.5-turbo",
-  messages: messages,
-}),
+          model: "openai/gpt-3.5-turbo",
+          messages,
+          stream: true
+        }),
       }
     );
 
-    const data = await response.json();
-
-    console.log("OpenRouter Response:", data);
-
+    
     // Handle API errors
     if (!response.ok) {
       return Response.json(
         {
           error:
-            data?.error?.message ||
             "OpenRouter request failed.",
         },
         { status: 500 }
@@ -46,13 +43,82 @@ export async function POST(req) {
     }
 
     // Extract assistant reply
-    const replyText =
-      data?.choices?.[0]?.message?.content;
+    
+    if (!response.body) {
+      return Response.json(
+        {
+          error: "No response stream available.",
+        },
+        { status: 500 }
+      );
+    }
 
-    return Response.json({
-      message: {
-        role: "assistant",
-        content: replyText || "No response generated.",
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body.getReader();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+
+            // SSE messages come line-by-line
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.replace("data: ", "").trim();
+
+                // End of stream
+                if (data === "[DONE]") {
+                  controller.close();
+                  return;
+                }
+
+                try {
+                  const json = JSON.parse(data);
+
+                  const content =
+                    json?.choices?.[0]?.delta?.content;
+
+                  if (content) {
+                    controller.enqueue(
+                      encoder.encode(content)
+                    );
+                  }
+                } catch (err) {
+                  console.error(
+                    "Stream parsing error:",
+                    err
+                  );
+                }
+              }
+            }
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error("Streaming error:", err);
+          controller.error(err);
+        } finally {
+          reader.releaseLock();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {

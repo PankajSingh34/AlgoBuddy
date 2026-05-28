@@ -9,14 +9,14 @@ const CONCEPTS = [
     body: "Step-by-step interactive visualizations make even complex algorithms feel intuitive. See exactly what's happening at every step.",
     cta: { label: "Try Sorting", href: "/visualizer" },
     visual: <SortingVisual />,
-    bgClass: "bg-[#f0fdf4] dark:bg-[#0d1f14] transition-colors duration-300", // Green theme
+    bgClass: "bg-surface-50 dark:bg-surface-800 transition-colors duration-300", // Green theme
   },
   {
     heading: "Code that\nmakes sense",
     body: "Watch the algorithm execute line by line alongside the visualization. Learn how code maps to real behaviour.",
     cta: { label: "Try Searching", href: "/visualizer" },
     visual: <SearchVisual />,
-    bgClass: "bg-[#faf5ff] dark:bg-[#12091f] transition-colors duration-300", // Purple theme
+    bgClass: "bg-white dark:bg-surface-900 transition-colors duration-300", // Purple theme
     flip: true,
   },
   {
@@ -24,7 +24,7 @@ const CONCEPTS = [
     body: "Manipulate data structures directly — push, pop, enqueue, dequeue — and see the state update in real time.",
     cta: { label: "Try Stack & Queue", href: "/visualizer" },
     visual: <StackVisual />,
-    bgClass: "bg-[#eff6ff] dark:bg-[#0a1220] transition-colors duration-300", // Blue theme
+    bgClass: "bg-surface-50 dark:bg-surface-800 transition-colors duration-300", // Blue theme
   },
 ];
 
@@ -34,21 +34,27 @@ function SortingVisual() {
   const bars = [65, 30, 80, 45, 55, 20, 70, 40, 90, 35];
   const active = [2, 6];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#d1fae5] dark:border-[#166534] bg-white dark:bg-[#122b19] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fbfffd] hover:border-[#86efac] hover:shadow-2xl hover:shadow-emerald-200/50 dark:hover:bg-[#173820] dark:hover:border-[#22c55e] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#f0fdf4] dark:bg-[#173820] border-b border-[#d1fae5] dark:border-[#166534] transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] bg-white shadow-xl overflow-hidden transition-colors duration-300">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] border-b border-[#e9d5ff] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
         <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#a7f3d0]">bubbleSort.js — step 4</span>
+        <span className="ml-2 text-[12px] font-mono text-surface-500">
+          bubbleSort.js — step 4
+        </span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#6ee7b7] mb-4 font-semibold transition-colors duration-300">Comparing indices 2 & 3</p>
+        <p className="text-[11px] uppercase tracking-widest text-surface-500 mb-4 font-semibold">
+          Comparing indices 2 & 3
+        </p>
         <div className="flex items-end gap-1.5 h-[80px]">
           {bars.map((h, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className={`w-full rounded-t-sm transition-all duration-300 ${
-                  active.includes(i) ? "bg-[#22c55e]" : "bg-[#d1fae5] dark:bg-[#166534]"
+                  active.includes(i)
+                    ? "bg-[#a435f0]"
+                    : "bg-[#ede9fe]"
                 }`}
                 style={{ height: `${(h / 90) * 72}px` }}
               />
@@ -56,18 +62,17 @@ function SortingVisual() {
           ))}
         </div>
         <div className="flex gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#a7f3d0] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#22c55e] inline-block" /> comparing
+          <span className="flex items-center gap-1.5 text-[11px] text-surface-500">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0] inline-block" /> comparing
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#a7f3d0] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#d1fae5] dark:bg-[#166534] inline-block transition-colors duration-300" /> unsorted
+          <span className="flex items-center gap-1.5 text-[11px] text-surface-500">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#ede9fe] inline-block" /> unsorted
           </span>
         </div>
       </div>
     </div>
   );
 }
-
 /* ── Visual: Binary Search ── */
 /* ── Visual: Binary Search ── */
 function SearchVisual() {
@@ -75,25 +80,29 @@ function SearchVisual() {
   const mid = 4;
   const eliminated = [0, 1, 2, 3];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] dark:border-[#5b21b6] bg-white dark:bg-[#1a0e2d] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fdfaff] hover:border-[#c084fc] hover:shadow-2xl hover:shadow-purple-200/50 dark:hover:bg-[#23133d] dark:hover:border-[#a855f7] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] dark:bg-[#23133d] border-b border-[#e9d5ff] dark:border-[#5b21b6] transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] bg-white shadow-xl overflow-hidden transition-colors duration-300">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] border-b border-[#e9d5ff] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
         <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">binarySearch.js — step 2</span>
+        <span className="ml-2 text-[12px] font-mono text-surface-500">
+          binarySearch.js — step 2
+        </span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#c4b5fd] mb-4 font-semibold transition-colors duration-300">Target: 16 &nbsp;·&nbsp; mid = index 4</p>
+        <p className="text-[11px] uppercase tracking-widest text-surface-500 mb-4 font-semibold">
+          Target: 16 &nbsp;·&nbsp; mid = index 4
+        </p>
         <div className="flex gap-1.5">
           {arr.map((v, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className={`w-full h-9 rounded-md flex items-center justify-center text-[11px] font-bold transition-all duration-300 ${
-                  i === mid 
-                    ? "bg-[#a435f0] text-white" 
-                    : eliminated.includes(i) 
-                      ? "bg-[#f3f4f6] dark:bg-[#2d2f31] text-[#d1d5db] dark:text-[#6b7280]" 
-                      : "bg-[#ede9fe] dark:bg-[#5b21b6] text-[#7c3aed] dark:text-[#e9d5ff]"
+                  i === mid
+                    ? "bg-[#a435f0] text-white"
+                    : eliminated.includes(i)
+                    ? "bg-[#f3f4f6] text-[#d1d5db]"
+                    : "bg-[#ede9fe] text-[#7c3aed]"
                 }`}
               >
                 {v}
@@ -102,14 +111,14 @@ function SearchVisual() {
           ))}
         </div>
         <div className="flex gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
+          <span className="flex items-center gap-1.5 text-[11px] text-surface-500">
             <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0] inline-block" /> mid
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#ede9fe] dark:bg-[#5b21b6] inline-block transition-colors duration-300" /> active
+          <span className="flex items-center gap-1.5 text-[11px] text-surface-500">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#ede9fe] inline-block" /> active
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-surface-100 dark:bg-[#2d2f31] inline-block transition-colors duration-300" /> eliminated
+          <span className="flex items-center gap-1.5 text-[11px] text-surface-500">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#f3f4f6] inline-block" /> eliminated
           </span>
         </div>
       </div>
@@ -121,21 +130,25 @@ function SearchVisual() {
 function StackVisual() {
   const stack = ["push(42)", "push(17)", "push(8)", "peek → 8"];
   const boxClasses = [
-    "bg-[#bfdbfe] dark:bg-[#1e3a8a] text-[#1e3a5f] dark:text-[#bfdbfe]",
-    "bg-[#93c5fd] dark:bg-[#1d4ed8] text-[#1e3a5f] dark:text-[#93c5fd]",
-    "bg-[#60a5fa] dark:bg-[#2563eb] text-[#1e3a5f] dark:text-white",
-    "bg-[#2563eb] dark:bg-[#3b82f6] text-white dark:text-white shadow-[0_2px_12px_#2563eb44]"
+    "bg-[#ede9fe] text-[#7c3aed]",
+    "bg-[#ddd6fe] text-[#7c3aed]",
+    "bg-[#c4b5fd] text-[#4c1d95]",
+    "bg-[#a435f0] text-white shadow-[0_2px_12px_#a435f044]"
   ];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#bfdbfe] dark:border-[#1e3a8a] bg-white dark:bg-[#111d33] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#f8fbff] hover:border-[#60a5fa] hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:bg-[#182847] dark:hover:border-[#3b82f6] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#eff6ff] dark:bg-[#182847] border-b border-[#bfdbfe] dark:border-[#1e3a8a] transition-colors duration-300">
+    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] bg-white shadow-xl overflow-hidden transition-colors duration-300">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] border-b border-[#e9d5ff] transition-colors duration-300">
         <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
         <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#bfdbfe] transition-colors duration-300">stack.js — operations</span>
+        <span className="ml-2 text-[12px] font-mono text-surface-500">
+          stack.js — operations
+        </span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#93c5fd] mb-4 font-semibold transition-colors duration-300">Stack — top of stack ↑</p>
+        <p className="text-[11px] uppercase tracking-widest text-surface-500 mb-4 font-semibold">
+          Stack — top of stack ↑
+        </p>
         <div className="flex flex-col-reverse gap-2">
           {stack.map((item, i) => (
             <div
@@ -144,7 +157,9 @@ function StackVisual() {
             >
               {item}
               {i === stack.length - 1 && (
-                <span className="ml-auto text-[11px] bg-white/30 rounded px-2 py-0.5">TOP</span>
+                <span className="ml-auto text-[11px] bg-white/30 rounded px-2 py-0.5">
+                  TOP
+                </span>
               )}
             </div>
           ))}
@@ -153,7 +168,6 @@ function StackVisual() {
     </div>
   );
 }
-
 /* ── Visual: App phone-style mockup ── */
 function AppMockup() {
   const steps = [
@@ -281,7 +295,7 @@ export default function ConceptsSection() {
       ))}
 
      {/* ── "More effective, more fun" block ── */}
-      <div className="py-20 px-6 bg-[#f0fdf4] dark:bg-[#0d1f14] transition-colors duration-300">
+      <div className="py-20 px-6 bg-surface-50 dark:bg-surface-900 transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24">
 
           {/* Text side */}

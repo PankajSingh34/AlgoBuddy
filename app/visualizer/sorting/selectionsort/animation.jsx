@@ -257,6 +257,7 @@ const SelectionSortVisualizer = () => {
                     onUseCustomArray={handleCustomArray}
                     disabled={sorting}
                     placeholder="e.g. 5, 3, 8, 1, 2"
+                    currentArray={array}
                   />
                 </div>
                 <div className="flex flex-col">

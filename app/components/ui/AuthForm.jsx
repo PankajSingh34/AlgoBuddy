@@ -21,14 +21,34 @@ export default function AuthForm({ isLogin = true }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const router = useRouter();
   const { setUser } = useUser();
+
+  const validateEmail = (value) => {
+    if (!value) {
+      setEmailError("");
+      return true;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
 
   const handleAuth = async (event) => {
     event?.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!validateEmail(email)) {
+      setLoading(false);
+      return;
+    }
 
     try {
       if (!captchaToken) throw new Error("Please complete captcha");
@@ -159,19 +179,29 @@ export default function AuthForm({ isLogin = true }) {
 
           {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail size={18} className="text-gray-400 dark:text-gray-500" />
+            <div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 w-10 flex items-center pointer-events-none">
+                  <Mail size={18} className="text-gray-400 dark:text-gray-500" />
+                </div>
+                <input
+                  type="email"
+                  aria-label="Email address"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    validateEmail(e.target.value);
+                  }}
+                />
               </div>
-              <input
-                type="email"
-                aria-label="Email address"
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="relative">
@@ -216,9 +246,9 @@ export default function AuthForm({ isLogin = true }) {
 
             <button
               type="submit"
-              disabled={loading || !captchaToken}
+              disabled={loading || !captchaToken || (email && emailError)}
               className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
-                loading
+                loading || !captchaToken || (email && emailError)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
               }`}

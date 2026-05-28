@@ -285,6 +285,7 @@ const MergeSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
                 className="mb-4"
               />
             </div>

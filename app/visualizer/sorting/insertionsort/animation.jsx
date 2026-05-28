@@ -192,7 +192,14 @@ const InsertionSortVisualizer = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             <div className="flex flex-col gap-1">
               <RandomArray onGenerate={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} isPrimary={array.length === 0} />
-              <CustomArrayInput onUseCustomArray={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} className="w-full" />
+              <CustomArrayInput 
+                onUseCustomArray={(newArray) => { 
+                  setArray(newArray); 
+                  setSorted(false); 
+                  resetStats(); }} 
+                    disabled={sorting}   
+                    currentArray={array}  
+              className="w-full" />
             </div>
             <div className="flex flex-col gap-2 justify-between">
               <button onClick={insertionSort} disabled={!array.length || sorting || sorted} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
