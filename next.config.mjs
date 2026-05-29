@@ -1,4 +1,3 @@
-
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
@@ -39,9 +38,9 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://cdn.jsdelivr.net",
-      "worker-src 'self' blob:",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+      // Added 'unsafe-eval' to allow Next.js development debugging tools
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com https://va.vercel-scripts.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
       "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://cdn.jsdelivr.net",
