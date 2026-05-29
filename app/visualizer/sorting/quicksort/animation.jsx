@@ -41,6 +41,8 @@ const QuickSortVisualizer = () => {
     stack: [],
     partitions: [],
   });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
@@ -72,6 +74,8 @@ const QuickSortVisualizer = () => {
       stack: [],
       partitions: [],
     });
+    setCurrentPhase("");
+    setStepExplanation("");
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -91,6 +95,8 @@ const QuickSortVisualizer = () => {
     const pivot = arr[high];
     let i = low - 1;
 
+    setCurrentPhase(`Partitioning range [${low}, ${high}]`);
+    setStepExplanation(`Choosing pivot ${pivot} at index ${high}.`);
     setCurrentIndices((prev) => ({
       ...prev,
       pivot: high,
@@ -104,13 +110,15 @@ const QuickSortVisualizer = () => {
         left: j,
         right: i,
       }));
-
+      setStepExplanation(`Comparing ${arr[j]} at index ${j} with pivot ${pivot}.`);
       setComparisons((prev) => prev + 1);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay(1000);
       if (!isSortingRef.current) return -1;
 
       if (arr[j] < pivot) {
         i++;
+        setStepExplanation(`Since ${arr[j]} < pivot, swapping elements at indices ${i} and ${j}.`);
         [arr[i], arr[j]] = [arr[j], arr[i]];
         setSwaps((prev) => prev + 1);
         setArray([...arr]);
@@ -125,9 +133,14 @@ const QuickSortVisualizer = () => {
         }
         await cancellableDelay(1000);
         if (!isSortingRef.current) return -1;
+      } else {
+        setStepExplanation(`Since ${arr[j]} >= pivot, leaving ${arr[j]} on the right side.`);
+        await cancellableDelay(1000);
+        if (!isSortingRef.current) return -1;
       }
     }
 
+    setStepExplanation(`Placing pivot ${pivot} into its correct position at index ${i + 1}.`);
     [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
     setSwaps((prev) => prev + 1);
     setArray([...arr]);
@@ -166,10 +179,13 @@ const QuickSortVisualizer = () => {
       const { low, high } = stack.pop();
 
       if (low < high) {
+        setCurrentPhase(`Partition Step: [${low}, ${high}]`);
+        setStepExplanation(`Processing partition range [${low}, ${high}] in the current Quick Sort stack.`);
         // Show current partition being processed
         setCurrentIndices((prev) => ({
           ...prev,
           partitions: [...prev.partitions, { low, high }],
+          stack: [...stack],
         }));
 
         const pi = await partition(arr, low, high);
@@ -184,12 +200,13 @@ const QuickSortVisualizer = () => {
           right: -1,
         }));
 
+        setStepExplanation(`Partition completed. Pivot is now at index ${pi}.`);
+        await cancellableDelay(1000);
+        if (!isSortingRef.current) return;
+
         // Push right subarray first so left is processed first
         stack.push({ low: pi + 1, high });
         stack.push({ low, high: pi - 1 });
-
-        await cancellableDelay(1000);
-        if (!isSortingRef.current) return;
 
         // Remove completed partition
         setCurrentIndices((prev) => ({
@@ -200,12 +217,13 @@ const QuickSortVisualizer = () => {
         }));
       }
     }
-        setCurrentStep((prev) => prev + 1);
 
     setArray([...arr]);
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
     setCurrentIndices({
       pivot: -1,
       left: -1,
@@ -413,6 +431,16 @@ const QuickSortVisualizer = () => {
                 : sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>
