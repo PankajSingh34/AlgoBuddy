@@ -680,6 +680,7 @@ export default function VisualizerClient({ initialSections }) {
                 />
               )}
             </>
+          )}
         </div>
       </section>
 
