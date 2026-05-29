@@ -3,6 +3,10 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiArrowLeft, FiSearch, FiChevronRight } from "react-icons/fi";
+import ChallengeSection from "@/app/components/challenges/ChallengeSection";
+import ChallengeSetupModal from "@/app/components/challenges/ChallengeSetupModal";
+import ChallengeLobby from "@/app/components/challenges/ChallengeLobby";
+import ChallengeScreen from "@/app/components/challenges/ChallengeScreen";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
@@ -489,6 +493,11 @@ function ModuleView({ section, theme, onBack }) {
 export default function VisualizerClient({ initialSections }) {
   const [activeSection, setActiveSection] = useState(null);
   const [search, setSearch] = useState("");
+  const [isChallengeSetupOpen, setIsChallengeSetupOpen] = useState(false);
+  const [initialSetupStep, setInitialSetupStep] = useState(1);
+  const [activeChallengeState, setActiveChallengeState] = useState("idle"); // idle, lobby, playing
+  const [challengeSelections, setChallengeSelections] = useState(null);
+  const [lobbyPlayers, setLobbyPlayers] = useState([]);
 
   // Sync state with URL search parameters (category) and restore scroll coordinates
   useEffect(() => {
@@ -665,137 +674,215 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Graph"] .mini-viz-inactive-node { fill: #991b1b !important; }
         .dark [data-theme-card="Recursion"] .mini-viz-inactive { background: #115e59 !important; color: #99f6e4 !important; border-color: #115e59 !important; }
         .dark .mini-viz-line { stroke: #4b5563 !important; }
+
+        /* Hide global navigation elements, footer, and utilities during active challenge mode */
+        ${activeChallengeState !== "idle" ? `
+          nav {
+            display: none !important;
+          }
+          nav + div {
+            display: none !important;
+          }
+          footer {
+            display: none !important;
+          }
+          button[aria-label="Back to top"] {
+            display: none !important;
+          }
+          button[aria-label="Toggle AI Assistant"] {
+            display: none !important;
+          }
+        ` : ""}
       `}</style>
       
       {/* ═══════ CONTENT AREA ═══════ */}
       <section
-        className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300"
+        className={`px-5 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300 ${activeChallengeState !== "idle" ? "pt-4" : "pt-12"}`}
       >
         <div className="max-w-[1100px] mx-auto">
-          {/* page heading + search */}
-          {!activeSection && !search.trim() && (
-            <div className="text-center mb-14">
-              <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
-                Algorithm <span className="text-primary">Visualizer</span>
-              </h1>
-              <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
-                Pick any data structure, tap an algorithm, and watch it run step
-                by step. Learning DSA has never been this fun.
-              </p>
-            </div>
-          )}
-
-          {/* Search Bar */}
-          <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search algorithms and topics..."
-                className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-          <AnimatePresence mode="wait">
-            {search.trim() ? (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                {flatResults.length > 0 ? (
-                  <div className="max-w-3xl mx-auto">
-                    <p className="text-[13px] font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-5">
-                      {flatResults.length} result
-                      {flatResults.length !== 1 ? "s" : ""}
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {flatResults.map((item, i) => {
-                        const t = getTheme(item.ds);
-                        return (
-                          <Link
-                            key={i}
-                            href={item.path}
-                            className="group/r flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#2d2f31] border dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
-                            style={{ borderColor: t.border }}
-                          >
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 flex-shrink-0 transition-colors"
-                              style={{ background: t.bg }}
-                              data-theme-header={item.ds}
-                            >
-                              {t.icon(t.color)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/r:text-primary transition-colors">
-                                {item.name}
-                              </span>
-                              <span className="block text-[11px] text-surface-500 dark:text-surface-400">
-                                {item.ds}
-                              </span>
-                            </div>
-                            <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                      <FiSearch className="h-6 w-6 text-surface-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">
-                      No results found
-                    </h3>
-                    <p className="text-surface-500 dark:text-surface-400 text-[15px]">
-                      Try a different search term
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            ) : activeSection ? (
-              <ModuleView
-                key={`module-${activeSection.title}`}
-                section={activeSection}
-                theme={getTheme(activeSection.title)}
-                onBack={handleBackToGrid}
-              />
-            ) : (
-              <motion.div
-                key="grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {filtered.map((section, i) => (
-                    <DSCard
-                      key={section.title}
-                      section={section}
-                      theme={getTheme(section.title)}
-                      onClick={() => handleCardClick(section)}
-                      delay={i * 0.07}
-                    />
-                  ))}
+          {activeChallengeState === "lobby" && challengeSelections ? (
+            <ChallengeLobby
+              selections={challengeSelections}
+              onBack={() => setActiveChallengeState("idle")}
+              onStart={(players, hostConfig) => {
+                if (hostConfig && hostConfig.topic) {
+                  setChallengeSelections((prev) => ({
+                    ...prev,
+                    topic: hostConfig.topic,
+                    difficulty: hostConfig.difficulty
+                  }));
+                }
+                setLobbyPlayers(players);
+                setActiveChallengeState("playing");
+              }}
+            />
+          ) : activeChallengeState === "playing" && challengeSelections ? (
+            <ChallengeScreen
+              selections={challengeSelections}
+              initialPlayers={lobbyPlayers}
+              onExit={() => setActiveChallengeState("idle")}
+              onRestartLobby={() => setActiveChallengeState("lobby")}
+            />
+          ) : (
+            <>
+              {/* page heading + search */}
+              {!activeSection && !search.trim() && (
+                <div className="text-center mb-14">
+                  <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
+                    Algorithm <span className="text-primary">Visualizer</span>
+                  </h1>
+                  <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
+                    Pick any data structure, tap an algorithm, and watch it run step
+                    by step. Learning DSA has never been this fun.
+                  </p>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+
+              {/* Search Bar */}
+              <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
+                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search algorithms and topics..."
+                  className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <AnimatePresence mode="wait">
+                {search.trim() ? (
+                  <motion.div
+                    key="search"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {flatResults.length > 0 ? (
+                      <div className="max-w-3xl mx-auto">
+                        <p className="text-[13px] font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-5">
+                          {flatResults.length} result
+                          {flatResults.length !== 1 ? "s" : ""}
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {flatResults.map((item, i) => {
+                            const t = getTheme(item.ds);
+                            return (
+                              <Link
+                                key={i}
+                                href={item.path}
+                                className="group/r flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#2d2f31] border dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
+                                style={{ borderColor: t.border }}
+                              >
+                                <div
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 flex-shrink-0 transition-colors"
+                                  style={{ background: t.bg }}
+                                  data-theme-header={item.ds}
+                                >
+                                  {t.icon(t.color)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/r:text-primary transition-colors">
+                                    {item.name}
+                                  </span>
+                                  <span className="block text-[11px] text-surface-500 dark:text-surface-400">
+                                    {item.ds}
+                                  </span>
+                                </div>
+                                <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                          <FiSearch className="h-6 w-6 text-surface-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">
+                          No results found
+                        </h3>
+                        <p className="text-surface-500 dark:text-surface-400 text-[15px]">
+                          Try a different search term
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                ) : activeSection ? (
+                  <ModuleView
+                    key={`module-${activeSection.title}`}
+                    section={activeSection}
+                    theme={getTheme(activeSection.title)}
+                    onBack={handleBackToGrid}
+                  />
+                ) : (
+                  <motion.div
+                    key="grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {filtered.map((section, i) => (
+                        <DSCard
+                          key={section.title}
+                          section={section}
+                          theme={getTheme(section.title)}
+                          onClick={() => handleCardClick(section)}
+                          delay={i * 0.07}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Challenge section card at bottom */}
+              {!activeSection && !search.trim() && (
+                <ChallengeSection
+                  onStartChallenge={() => {
+                    setInitialSetupStep(1);
+                    setIsChallengeSetupOpen(true);
+                  }}
+                  onJoinWithCode={() => {
+                    setInitialSetupStep(3);
+                    setIsChallengeSetupOpen(true);
+                  }}
+                />
+              )}
+            </>
+          )}
         </div>
       </section>
+
+      {/* Setup Modal */}
+      <ChallengeSetupModal
+        isOpen={isChallengeSetupOpen}
+        onClose={() => setIsChallengeSetupOpen(false)}
+        initialStep={initialSetupStep}
+        onComplete={(selections) => {
+          setIsChallengeSetupOpen(false);
+          setChallengeSelections(selections);
+          if (selections.mode === "solo") {
+            const displayUsername = selections.username ? `${selections.username} (You)` : "You 🎮";
+            setLobbyPlayers([{ name: displayUsername, status: "Ready", isLocal: true }]);
+            setActiveChallengeState("playing");
+          } else {
+            setActiveChallengeState("lobby");
+          }
+        }}
+      />
     </div>
   );
 }
