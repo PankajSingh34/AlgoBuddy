@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -21,7 +20,7 @@ const Content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraph = [
     `Implementing a Queue using a linked list provides dynamic memory allocation and efficient insertion/removal operations. Unlike array implementation, linked list queues don't have fixed capacity limitations and can grow dynamically as needed.`,
@@ -180,7 +179,7 @@ const Content = () => {
               <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
                 {paragraph[2]}
               </p>
-              <ul className="mt-2 space-y-1 list-disc pl-5 marker:text-blue-500 dark:marker:text-blue-400">
+              <ul className="mt-2 space-y-1 list-disc pl-5 marker:text-primary dark:marker:text-[#c27cf7]">
                 <li className="text-[#374151] dark:text-[#d1d5db]">When the maximum queue size is unpredictable</li>
                 <li className="text-[#374151] dark:text-[#d1d5db]">When memory efficiency is more important than cache performance</li>
                 <li className="text-[#374151] dark:text-[#d1d5db]">In applications with frequent dynamic memory allocation/deallocation</li>

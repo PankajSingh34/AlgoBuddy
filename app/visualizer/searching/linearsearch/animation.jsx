@@ -6,6 +6,7 @@ import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -37,13 +38,18 @@ const LinearSearch = () => {
   const resolveRef = useRef(null);
   const isSearchingRef = useRef(false);
   const formRef = useRef(null);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setCurrentIndex(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+  });
   const elementRefs = useRef([]);
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(animationRef.current);
-    };
-  }, []);
 
   const handleReset = () => {
     isSearchingRef.current = false;
@@ -259,8 +265,6 @@ const targetValue = parseInt(target);
             isPaused={isPaused}
             onTogglePlayPause={togglePlayPause}
             speed={speed}
-            onIncreaseSpeed={increaseSpeed}
-            onDecreaseSpeed={decreaseSpeed}
             onSpeedChange={setSpeed}
           />
         )}
@@ -286,7 +290,7 @@ const targetValue = parseInt(target);
                       : currentIndex === index && foundIndex === -1
                       ? "bg-yellow-500 dark:bg-yellow-600 border-yellow-700 dark:border-yellow-400 text-gray-800 dark:text-white"
                       : index < currentIndex
-                      ? "bg-blue-300 dark:bg-blue-700 border-blue-500 dark:border-blue-400 text-gray-800 dark:text-white"
+                      ? "bg-[#c27cf7] dark:bg-blue-700 border-primary dark:border-primary/80 text-gray-800 dark:text-white"
                       : "bg-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white"
                   }`}
                 >
@@ -307,7 +311,7 @@ const targetValue = parseInt(target);
               <span className="text-sm">Found Element</span>
             </div>
             <div className="flex items-center">
-              <div className="w-4 h-4 bg-blue-300 dark:bg-blue-700 rounded mr-2"></div>
+              <div className="w-4 h-4 bg-[#c27cf7] dark:bg-blue-700 rounded mr-2"></div>
               <span className="text-sm">Checked Elements</span>
             </div>
             <div className="flex items-center">

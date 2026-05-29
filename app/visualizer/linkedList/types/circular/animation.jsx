@@ -9,6 +9,7 @@ import Quiz from '@/app/visualizer/linkedList/types/circular/quiz';
 import CodeBlock from "@/app/visualizer/linkedList/types/circular/codeBlock";
 import BackToTop from '@/app/components/ui/backtotop';
 import GoBackButton from "@/app/components/ui/goback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const CircularLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -17,6 +18,11 @@ const CircularLinkedListVisualizer = () => {
   const [diagramSize, setDiagramSize] = useState({ width: 0, height: 0 });
   const nodeIdCounter = useRef(1);
   const stageRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+  });
 
   // Generate random memory addresses
   const generateMemoryAddress = () => {
@@ -148,7 +154,7 @@ const CircularLinkedListVisualizer = () => {
           <div className="flex gap-4">
             <button
               onClick={addNode}
-              className={`flex-1 py-3 rounded-lg transition-all ${isAnimating || !inputValue ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              className={`flex-1 py-3 rounded-lg transition-all ${isAnimating || !inputValue ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'}`}
               disabled={isAnimating || !inputValue}
             >
               Add Node
@@ -248,12 +254,12 @@ const CircularLinkedListVisualizer = () => {
                         width: '160px',
                       }}
                     >
-                      <div className={`flex flex-col border-2 ${index === 0 ? 'border-green-500' : 'border-blue-500'} rounded-xl p-4 bg-white dark:bg-gray-700 shadow-md`}>
+                      <div className={`flex flex-col border-2 ${index === 0 ? 'border-green-500' : 'border-primary'} rounded-xl p-4 bg-white dark:bg-gray-700 shadow-md`}>
                         <div className="flex justify-between items-center mb-3">
                           <span className="font-mono text-xs text-gray-600 dark:text-gray-300">
                             {node.address}
                           </span>
-                          <span className={`text-xs px-2 py-1 rounded ${index === 0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>
+                          <span className={`text-xs px-2 py-1 rounded ${index === 0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-primary-dark dark:bg-blue-900 dark:text-blue-200'}`}>
                             {index === 0 ? 'HEAD' : `Node ${index}`}
                           </span>
                         </div>

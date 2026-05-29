@@ -1,18 +1,58 @@
 "use client";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const VISUALIZER_CATEGORY_BY_SEGMENT = {
+  searching: "array",
+  sorting: "array",
+  stack: "stack",
+  queue: "queue",
+  linkedlist: "linked list",
+  linkedList: "linked list",
+  trees: "tree",
+  graph: "graph",
+  hashmap: "hashmap",
+  recursion: "recursion",
+  "dry-run": "custom code",
+};
 
 export default function Breadcrumbs({ paths }) {
+  const pathname = usePathname();
+  const pathSegments = pathname?.split("/").filter(Boolean) ?? [];
+  const isVisualizer = pathSegments[0] === "visualizer";
+  const visualizerSegment = pathSegments[1] || "";
+  const visualizerCategory =
+    VISUALIZER_CATEGORY_BY_SEGMENT[visualizerSegment] || "";
+  const categoryHref = visualizerCategory
+    ? `/visualizer?category=${encodeURIComponent(visualizerCategory)}`
+    : "/visualizer";
+
+  const getHref = (path, index) => {
+    if (path.href) return path.href;
+    if (!isVisualizer) return null;
+    if (index > 1 && index < paths.length - 1) {
+      return categoryHref;
+    }
+    return null;
+  };
+
   return (
     <nav className="flex items-center text-sm text-gray-600 dark:text-gray-300" aria-label="Breadcrumb">
       {paths.map((path, index) => (
         <div key={index} className="flex items-center">
-          <Link
-            href={path.href}
-            className="hover:text-black dark:hover:text-white transition-colors"
-          >
-            {path.name}
-          </Link>
+          {getHref(path, index) ? (
+            <Link
+              href={getHref(path, index)}
+              className="hover:text-black dark:hover:text-white transition-colors"
+            >
+              {path.name}
+            </Link>
+          ) : (
+            <span className="text-surface-700 dark:text-surface-300">
+              {path.name}
+            </span>
+          )}
           {index !== paths.length - 1 && (
             <ChevronRight className="mx-2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           )}

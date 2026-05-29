@@ -56,7 +56,9 @@ export default function useVisualizerKeyboard({
 
         case "r":
         case "R":
-          onReset?.();
+          if (!sorting) {
+            onReset?.();
+          }
           break;
 
         case "+":

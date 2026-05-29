@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -18,6 +19,13 @@ const LinkedListMerge = () => {
   const mergedRefs = useRef([]);
   const arrowRefs = useRef([]);
   const containerRef = useRef(null);
+  useVisualizerReset(() => {
+    setList1([]);
+    setList2([]);
+    setMergedList([]);
+    setIsAnimating(false);
+    setCurrentPointers({ list1: 0, list2: 0 });
+  });
   const animationTimeline = useRef(gsap.timeline());
 
   const generateRandomList = (setList) => {
@@ -208,7 +216,7 @@ const LinkedListMerge = () => {
           <button
             onClick={animateMerge}
             disabled={isAnimating || list1.length === 0 || list2.length === 0}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:bg-gray-400 sm:px-6"
+            className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400 sm:px-6"
           >
             {isAnimating ? "Merging..." : "Merge Lists"}
           </button>
@@ -232,7 +240,7 @@ const LinkedListMerge = () => {
             <span>List 2</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-blue-600"></div>
+            <div className="mr-2 h-4 w-4 rounded-md bg-primary"></div>
             <span>Merged</span>
           </div>
           <div className="flex items-center">
@@ -323,7 +331,7 @@ const LinkedListMerge = () => {
           </div>
 
           <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-blue-600">Merged List</h3>
+            <h3 className="mb-3 text-lg font-medium text-primary">Merged List</h3>
             <div
               ref={containerRef}
               className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]"
@@ -340,7 +348,7 @@ const LinkedListMerge = () => {
                     <React.Fragment key={`merged-${node.id}`}>
                       <div
                         ref={(el) => (mergedRefs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-blue-600 text-lg text-white shadow-md ${
+                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-primary text-lg text-white shadow-md ${
                           index === mergedList.length - 1 && isAnimating ? "animate-pulse" : ""
                         }`}
                       >

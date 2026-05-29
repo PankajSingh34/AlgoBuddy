@@ -60,7 +60,7 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-[#0f0f0f] flex items-center transition-all duration-200 ${
+        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-[#1c1d1f] flex items-center transition-all duration-200 ${
           scrolled
             ? "border-b border-[#e5e7eb] dark:border-[#222] shadow-sm"
             : "border-b border-transparent"
@@ -197,7 +197,7 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {menuOpen && (
         <div
-          className="fixed top-[72px] left-0 right-0 bottom-0 z-[9997] bg-white dark:bg-[#0f0f0f] overflow-y-auto border-t border-[#e5e7eb] dark:border-[#222]"
+          className="fixed top-[72px] left-0 right-0 bottom-0 z-[9997] bg-white dark:bg-[#1c1d1f] overflow-y-auto border-t border-[#e5e7eb] dark:border-[#222]"
           style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
         >
           <div className="py-2">

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const nodes = [
   { id: "A", x: 18, y: 32 },
@@ -64,6 +65,9 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   const canToggle = !DIRECTED_ONLY.includes(type) && !UNDIRECTED_ONLY.includes(type);
   const forceDirected = DIRECTED_ONLY.includes(type);
   const [isDirected, setIsDirected] = useState(forceDirected);
+  useVisualizerReset(() => {
+    setStep(0);
+  });
 
   const sequence = sequences[type] || sequences.bfs;
   const current = sequence[Math.min(step, sequence.length - 1)];

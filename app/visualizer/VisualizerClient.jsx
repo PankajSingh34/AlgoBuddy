@@ -287,6 +287,31 @@ function RecursionMiniViz({ color }) {
   );
 }
 
+
+function CustomCodeMiniViz({ color }) {
+  const lines = [
+    { width: "75%", highlight: true },
+    { width: "55%", highlight: false },
+    { width: "85%", highlight: false },
+    { width: "45%", highlight: false },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5 justify-center h-[48px] px-1">
+      {lines.map((l, i) => (
+        <div
+          key={i}
+          className="rounded-sm h-[9px] transition-all duration-300"
+          style={{
+            width: l.width,
+            background: l.highlight ? color : color + "30",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+
 const MINI_VIZ = {
   Array: ArrayMiniViz,
   Stack: StackMiniViz,
@@ -296,309 +321,114 @@ const MINI_VIZ = {
   Graph: GraphMiniViz,
   HashMap: HashMapMiniViz,
   Recursion: RecursionMiniViz,
+  "Custom Code": CustomCodeMiniViz,
 };
 
 /* ═══════════════════════════════════════
    DS Card — homepage-style window card
    ═══════════════════════════════════════ */
-function DSCard({ section, theme, onClick, delay }) {
+function DSCard({ section, theme, delay }) {
   const MiniViz = MINI_VIZ[section.title];
   const count = section.subsections
     ? section.subsections.reduce((a, s) => a + s.items.length, 0)
     : 0;
+  const href = `/visualizer/${section.slug}`;
 
   return (
-    <motion.button
-      onClick={onClick}
+    <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="group w-full text-left cursor-pointer"
+      className="group w-full h-full"
     >
-      <div
-        className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-        style={{ borderColor: theme.border }}
-        data-theme-card={section.title || "Custom Code"}
-      >
-        {/* title bar */}
+      <Link href={href} className="block w-full h-full text-left cursor-pointer">
         <div
-          className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
-          style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-header={section.title || "Custom Code"}
-        >
-          <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-          <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-surface-300">
-            {section.title.toLowerCase().replace(/\s/g, "")}.js
-          </span>
-        </div>
-
-        {/* card body */}
-        <div
-          className="p-5 bg-white transition-colors duration-300"
+          className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col"
+          style={{ borderColor: theme.border }}
           data-theme-card={section.title || "Custom Code"}
         >
-          {/* icon + title */}
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
-              style={{ background: theme.bg }}
-              data-theme-header={section.title || "Custom Code"}
-            >
-              {theme.icon(theme.color)}
-            </div>
-            <div>
-              <h3 className="text-[18px] font-extrabold text-surface-900 dark:text-white transition-colors">
-                {section.title}
-              </h3>
-              <p className="text-[12px] text-surface-500 dark:text-surface-400 font-medium transition-colors">
-                {count} algorithm{count !== 1 ? "s" : ""} to explore
-              </p>
-            </div>
-          </div>
-
-          {/* description */}
-          <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
-            {section.desc}
-          </p>
-
-          {/* mini visualization */}
-          {MiniViz && (
-            <div
-              className="rounded-lg p-3 mb-4 border transition-colors duration-300"
-              style={{ background: theme.bg, borderColor: theme.border }}
-              data-theme-header={section.title || "Custom Code"}
-            >
-              <MiniViz color={theme.color} />
-            </div>
-          )}
-
-          {/* CTA pill */}
+          {/* title bar */}
           <div
-            className="inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
-              group-hover:gap-3 transition-all duration-200"
-            style={{ background: theme.color }}
+            className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
+            style={{ background: theme.bg, borderColor: theme.border }}
+            data-theme-header={section.title || "Custom Code"}
           >
-            Explore {section.title}
-            <FiChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+            <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+            <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+            <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+            <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-surface-300">
+              {section.title.toLowerCase().replace(/\s/g, "")}.js
+            </span>
           </div>
-        </div>
-      </div>
-    </motion.button>
-  );
-}
 
-/* ═══════════════════════════════════════
-   Module View — drill-down page
-   ═══════════════════════════════════════ */
-function ModuleView({ section, theme, onBack }) {
-  const count = section.subsections
-    ? section.subsections.reduce((a, s) => a + s.items.length, 0)
-    : 0;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div
-        className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
-        style={{ background: theme.bg, borderColor: theme.border }}
-        data-theme-card={section.title}
-      >
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
-            hover:text-surface-900 dark:hover:text-surface-100 transition-colors duration-200 mb-5"
-        >
-          <FiArrowLeft className="w-4 h-4" /> Back to all topics
-        </button>
-
-        <div className="flex items-center gap-4 mb-3">
+          {/* card body */}
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center p-3 flex-shrink-0 transition-colors duration-300"
-            style={{ background: theme.bg }}
-            data-theme-header={section.title}
+            className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
+            data-theme-card={section.title || "Custom Code"}
           >
-            {theme.icon(theme.color)}
-          </div>
-          <div>
-            <h2 className="text-[2rem] sm:text-[2.8rem] font-black leading-[1.1] tracking-tighter text-surface-900 dark:text-white transition-colors duration-300">
-              {section.title}
-            </h2>
-            <p className="text-[14px] text-surface-600 dark:text-surface-300 mt-1 transition-colors duration-300">
-              {count} algorithm{count !== 1 ? "s" : ""} · {section.desc}
+            {/* icon + title */}
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
+                style={{ background: theme.bg }}
+                data-theme-header={section.title || "Custom Code"}
+              >
+                {theme.icon(theme.color)}
+              </div>
+              <div>
+                <h3 className="text-[18px] font-extrabold text-surface-900 dark:text-white transition-colors">
+                  {section.title}
+                </h3>
+                <p className="text-[12px] text-surface-500 dark:text-surface-400 font-medium transition-colors">
+                  {count} algorithm{count !== 1 ? "s" : ""} to explore
+                </p>
+              </div>
+            </div>
+
+            {/* description */}
+            <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
+              {section.desc}
             </p>
+
+            {/* mini visualization */}
+            {MiniViz && (
+              <div
+                className="rounded-lg p-3 mb-4 border transition-colors duration-300"
+                style={{ background: theme.bg, borderColor: theme.border }}
+                data-theme-header={section.title || "Custom Code"}
+              >
+                <MiniViz color={theme.color} />
+              </div>
+            )}
+
+            {/* CTA pill */}
+            <div
+              className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
+                group-hover:gap-3 transition-all duration-200"
+              style={{ background: theme.color }}
+            >
+              Explore {section.title}
+              <FiChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="space-y-8">
-        {section.subsections?.map((sub, si) => (
-          <motion.div
-            key={si}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: si * 0.08 }}
-          >
-            <h4
-              className="text-[13px] font-bold uppercase tracking-wider mb-4 pl-1"
-              style={{ color: theme.color }}
-            >
-              {sub.title}
-            </h4>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {sub.items.map((item, ii) => (
-                <Link
-                  key={ii}
-                  href={item.path}
-                  className="group/item flex items-center justify-between p-4 rounded-xl border
-                    bg-white dark:bg-[#2d2f31] dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
-                  style={{ borderColor: theme.border }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[14px] font-bold transition-colors duration-300"
-                      style={{ background: theme.color + "15", color: theme.color }}
-                      data-theme-header={section.title}
-                    >
-                      {ii + 1}
-                    </div>
-                    <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/item:text-primary transition-colors">
-                      {item.name}
-                    </span>
-                  </div>
-                  <FiChevronRight
-                    className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/item:translate-x-1 transition-all duration-200"
-                    style={{ color: theme.color + "60" }}
-                  />
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      </Link>
     </motion.div>
   );
 }
 
 /* ═══════════════════════════════════════
-   Main Client Component
+   Main Client Component — Grid only
    ═══════════════════════════════════════ */
 export default function VisualizerClient({ initialSections }) {
-  const [activeSection, setActiveSection] = useState(null);
   const [search, setSearch] = useState("");
   const [isChallengeSetupOpen, setIsChallengeSetupOpen] = useState(false);
   const [initialSetupStep, setInitialSetupStep] = useState(1);
   const [activeChallengeState, setActiveChallengeState] = useState("idle"); // idle, lobby, playing
   const [challengeSelections, setChallengeSelections] = useState(null);
   const [lobbyPlayers, setLobbyPlayers] = useState([]);
-
-  // Sync state with URL search parameters (category) and restore scroll coordinates
-  useEffect(() => {
-    const handleUrlState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const category = params.get("category");
-      if (category) {
-        const section = initialSections.find((s) => s.title.toLowerCase() === category.toLowerCase());
-        if (section) {
-          setActiveSection(section);
-
-          // Restore module scroll position
-          const savedModulePos = sessionStorage.getItem("visualizerModuleScrollPosition");
-          if (savedModulePos) {
-            const scrollPos = parseInt(savedModulePos, 10);
-            if (!isNaN(scrollPos) && scrollPos > 0) {
-              setTimeout(() => {
-                window.scrollTo({
-                  top: scrollPos,
-                  behavior: "instant",
-                });
-              }, 100);
-            }
-          }
-          return;
-        }
-      }
-
-      // If no category parameter, show grid view
-      setActiveSection(null);
-
-      // Restore grid scroll position
-      const savedGridPos = sessionStorage.getItem("visualizerGridScrollPosition");
-      if (savedGridPos) {
-        const scrollPos = parseInt(savedGridPos, 10);
-        if (!isNaN(scrollPos) && scrollPos > 0) {
-          setTimeout(() => {
-            window.scrollTo({
-              top: scrollPos,
-              behavior: "instant",
-            });
-          }, 100);
-        }
-      }
-    };
-
-    // Run on mount
-    handleUrlState();
-
-    // Listen to browser Back/Forward navigation
-    window.addEventListener("popstate", handleUrlState);
-    return () => window.removeEventListener("popstate", handleUrlState);
-  }, [initialSections]);
-
-  // Track window scroll position in sessionStorage
-  useEffect(() => {
-    const handleScroll = () => {
-      if (activeSection) {
-        sessionStorage.setItem("visualizerModuleScrollPosition", window.scrollY.toString());
-      } else {
-        sessionStorage.setItem("visualizerGridScrollPosition", window.scrollY.toString());
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [activeSection]);
-
-  const handleCardClick = (section) => {
-    // Save grid scroll position before entering the module view
-    sessionStorage.setItem("visualizerGridScrollPosition", window.scrollY.toString());
-    
-    // Update URL to include category search query in browser history
-    window.history.pushState(null, "", `?category=${encodeURIComponent(section.title.toLowerCase())}`);
-    
-    // Reset module scroll position to top
-    sessionStorage.setItem("visualizerModuleScrollPosition", "0");
-    
-    setActiveSection(section);
-    window.scrollTo(0, 0);
-  };
-
-  const handleBackToGrid = () => {
-    // Revert URL to base visualizer path
-    window.history.pushState(null, "", "/visualizer");
-    
-    setActiveSection(null);
-
-    // Restore grid scroll position after transition stabilizes
-    const savedGridPos = sessionStorage.getItem("visualizerGridScrollPosition");
-    if (savedGridPos) {
-      const scrollPos = parseInt(savedGridPos, 10);
-      if (!isNaN(scrollPos)) {
-        setTimeout(() => {
-          window.scrollTo({
-            top: scrollPos,
-            behavior: "instant",
-          });
-        }, 100);
-      }
-    }
-  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
@@ -613,11 +443,7 @@ export default function VisualizerClient({ initialSections }) {
             return { ...sub, items: subHit ? sub.items : items };
           })
           .filter((sub) => sub.items.length > 0);
-        return {
-          ...sec,
-          subsections: subs,
-          _hit: titleHit || (subs && subs.length > 0),
-        };
+        return { ...sec, subsections: subs, _hit: titleHit || (subs && subs.length > 0) };
       })
       .filter((s) => s._hit);
   }, [search, initialSections]);
@@ -629,8 +455,7 @@ export default function VisualizerClient({ initialSections }) {
     initialSections.forEach((sec) =>
       sec.subsections?.forEach((sub) =>
         sub.items.forEach((item) => {
-          if (item.name.toLowerCase().includes(q))
-            r.push({ ...item, ds: sec.title });
+          if (item.name.toLowerCase().includes(q)) r.push({ ...item, ds: sec.title });
         }),
       ),
     );
@@ -640,9 +465,6 @@ export default function VisualizerClient({ initialSections }) {
   return (
     <div>
       <style>{`
-        /* Overriding inline styles aggressively for perfect dark mode */
-        
-        /* Dark mode solid card body elevations */
         .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
@@ -652,8 +474,6 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
-
-        /* Dark mode solid card headers & icons */
         .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
@@ -663,8 +483,6 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
-
-        /* Mini Viz Overrides for Dark Mode (Rich saturated colors) */
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] .mini-viz-inactive { background: #1e3a8a !important; color: #93c5fd !important; }
         .dark [data-theme-card="Queue"] .mini-viz-inactive { background: #166534 !important; color: #86efac !important; }
@@ -862,7 +680,6 @@ export default function VisualizerClient({ initialSections }) {
                 />
               )}
             </>
-          )}
         </div>
       </section>
 

@@ -1,4 +1,4 @@
-// app/components/models/GraphCanvas.jsx
+﻿// app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
 
@@ -37,8 +37,12 @@ export default function GraphCanvas({
   nodes,
   edges,
   isDirected,
+  isWeighted = false,
   visitedSet,
   currentNode,
+  animationState = {},
+  interactive = true,
+  className = "",
   onAddNode,
   onAddEdge,
   onRemoveNode,
@@ -49,23 +53,25 @@ export default function GraphCanvas({
   const [edgeStart, setEdgeStart] = useState(null);
 
   const getNodeState = (id) => {
-    if (id === currentNode) return "visiting";
-    if (visitedSet?.has(id)) return "visited";
+    if (animationState.visitingNodes?.has(id) || id === currentNode) return "visiting";
+    if (animationState.visitedNodes?.has(id) || visitedSet?.has(id)) return "visited";
     return "unvisited";
   };
 
   const handleCanvasClick = useCallback(
     (e) => {
+      if (!interactive || !onAddNode) return;
       if (e.target !== svgRef.current) return;
       const rect = svgRef.current.getBoundingClientRect();
       onAddNode({ x: e.clientX - rect.left, y: e.clientY - rect.top });
       setEdgeStart(null);
     },
-    [onAddNode]
+    [interactive, onAddNode]
   );
 
   const handleNodeClick = useCallback(
     (e, id) => {
+      if (!interactive || !onAddEdge) return;
       e.stopPropagation();
       if (edgeStart === null) {
         setEdgeStart(id);
@@ -76,40 +82,59 @@ export default function GraphCanvas({
         setEdgeStart(null);
       }
     },
-    [edgeStart, onAddEdge]
+    [edgeStart, interactive, onAddEdge]
   );
 
   const handleNodeRightClick = useCallback(
     (e, id) => {
+      if (!interactive || !onRemoveNode) return;
       e.preventDefault();
       onRemoveNode(id);
       setEdgeStart(null);
     },
-    [onRemoveNode]
+    [interactive, onRemoveNode]
   );
 
   const handleEdgeRightClick = useCallback(
     (e, edgeIdx) => {
+      if (!interactive || !onRemoveEdge) return;
       e.preventDefault();
       const menu = window.confirm(
         isDirected
           ? "Right-click edge: OK = Reverse direction, Cancel = Delete edge"
           : "Delete this edge?"
       );
-      if (menu && isDirected) onReverseEdge(edgeIdx);
+      if (menu && isDirected && onReverseEdge) onReverseEdge(edgeIdx);
       else if (!isDirected || !menu) onRemoveEdge(edgeIdx);
     },
-    [isDirected, onRemoveEdge, onReverseEdge]
+    [interactive, isDirected, onRemoveEdge, onReverseEdge]
   );
 
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+
+  const isActiveEdge = (edge) => {
+    const active = animationState.activeEdge;
+    const mstEdges = animationState.mstEdges || [];
+
+    return (
+      (active &&
+        ((active.from === edge.from && active.to === edge.to) ||
+          (!isDirected && active.from === edge.to && active.to === edge.from))) ||
+      mstEdges.some(
+        (mstEdge) =>
+          (mstEdge.from === edge.from && mstEdge.to === edge.to) ||
+          (!isDirected && mstEdge.from === edge.to && mstEdge.to === edge.from),
+      )
+    );
+  };
 
   return (
     <svg
       ref={svgRef}
       width="100%"
       height="100%"
-      style={{ cursor: edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
+      className={className}
+      style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
       onClick={handleCanvasClick}
     >
       <defs>
@@ -160,29 +185,58 @@ export default function GraphCanvas({
           return <SelfLoop key={idx} cx={src.x} cy={src.y} color="#22c55e" />;
         }
 
-        const isActive = currentNode === edge.from || currentNode === edge.to;
+        const isActive = isActiveEdge(edge) || currentNode === edge.from || currentNode === edge.to;
         const edgeColor = isActive ? "#f97316" : "#6b7280";
-        const markerEnd = isDirected
+        const markerEnd = edge.directed
           ? isActive ? "url(#arrowhead-active)" : "url(#arrowhead)"
           : undefined;
 
-        const { x: ex, y: ey } = isDirected
+        const { x: ex, y: ey } = edge.directed
           ? edgeEndpoint(src.x, src.y, tgt.x, tgt.y, NODE_RADIUS)
           : { x: tgt.x, y: tgt.y };
 
+        const labelX = (src.x + tgt.x) / 2;
+        const labelY = (src.y + tgt.y) / 2;
+
         return (
-          <line
-            key={idx}
-            x1={src.x}
-            y1={src.y}
-            x2={ex}
-            y2={ey}
-            stroke={edgeColor}
-            strokeWidth={isActive ? 2 : 1.5}
-            markerEnd={markerEnd}
-            style={{ cursor: "pointer" }}
-            onContextMenu={(e) => handleEdgeRightClick(e, idx)}
-          />
+          <g key={idx}>
+            <line
+              x1={src.x}
+              y1={src.y}
+              x2={ex}
+              y2={ey}
+              stroke={edgeColor}
+              strokeWidth={isActive ? 2 : 1.5}
+              markerEnd={markerEnd}
+              style={{ cursor: interactive ? "pointer" : "default" }}
+              onContextMenu={(e) => handleEdgeRightClick(e, idx)}
+            />
+            {isWeighted && (
+              <g>
+                <rect
+                  x={labelX - 12}
+                  y={labelY - 10}
+                  width="24"
+                  height="18"
+                  rx="6"
+                  fill="#111827"
+                  stroke={isActive ? "#f97316" : "#4b5563"}
+                />
+                <text
+                  x={labelX}
+                  y={labelY}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#f9fafb"
+                  fontSize={11}
+                  fontWeight={700}
+                  fontFamily="monospace"
+                >
+                  {edge.weight}
+                </text>
+              </g>
+            )}
+          </g>
         );
       })}
 
@@ -196,7 +250,7 @@ export default function GraphCanvas({
             key={node.id}
             onClick={(e) => handleNodeClick(e, node.id)}
             onContextMenu={(e) => handleNodeRightClick(e, node.id)}
-            style={{ cursor: "pointer" }}
+            style={{ cursor: interactive ? "pointer" : "default" }}
           >
             {isSelected && (
               <circle

@@ -7,7 +7,6 @@ import { cookies } from "next/headers";
 const MAX_MESSAGES_PER_REQUEST = 20;
 const MAX_TOTAL_CHARS = 4000;
 const MAX_PER_MESSAGE_LENGTH = 2000;
-const VALID_ROLES = new Set(["user", "assistant"]);
 
 const SYSTEM_PROMPT = `You are the AlgoBuddy AI Assistant, an interactive helper for students and developers learning Data Structures and Algorithms (DSA). Your goal is to explain concepts in simple, easy-to-understand words, avoid jargon where possible, and provide clear step-by-step guidance.
 
@@ -21,21 +20,16 @@ Capabilities & Guidelines:
 7. Keep responses concise and structured. Do not overwhelm the user with walls of text.
 8. If asked about something unrelated to programming, computer science, or DSA, politely redirect the conversation back to algorithms and data structures.`;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-function validateMessages(messages) {
+function validatePayload(messages) {
   if (!messages || !Array.isArray(messages)) {
     return "Invalid or missing 'messages' array.";
   }
   if (messages.length > MAX_MESSAGES_PER_REQUEST) {
-    return `Cannot send more than ${MAX_MESSAGES_PER_REQUEST} messages.`;
+    return `Cannot process more than ${MAX_MESSAGES_PER_REQUEST} messages at once.`;
   }
+
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    if (!msg || !VALID_ROLES.has(msg.role)) {
-      return `Message at index ${i} has an invalid or missing role.`;
-    }
     if (typeof msg.content !== "string") {
       return `Message content at index ${i} must be a string.`;
     }
@@ -75,6 +69,7 @@ function createGeminiContents(messages) {
 
 export async function POST(req) {
   try {
+    // 1. Parse Request Body
     let body;
     try {
       body = await req.json();
@@ -86,22 +81,17 @@ export async function POST(req) {
 
     // 2. Turnstile Captcha Verification
     if (!captchaToken) {
-      return Response.json(
-        { error: "Captcha token missing." },
-        { status: 403 }
-      );
+      return Response.json({ error: "Captcha token missing. Please refresh the page and try again." }, { status: 403 });
     }
+    
     const ip = getClientIp(req.headers);
     const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
-      return Response.json(
-        { error: captcha.error },
-        { status: 403 }
-      );
+      return Response.json({ error: captcha.error }, { status: 403 });
     }
 
     // 3. Validate Messages Payload
-    const validationError = validateMessages(messages);
+    const validationError = validatePayload(messages);
     if (validationError) {
       return Response.json({ error: validationError }, { status: 400 });
     }
@@ -115,6 +105,9 @@ export async function POST(req) {
       );
     }
 
+    // 5. Authentication Check
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) {
       return Response.json({ error: "Auth server is not configured." }, { status: 500 });
     }
@@ -138,51 +131,132 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    // 6. Gemini API Integration
     if (!process.env.GEMINI_API_KEY) {
       return Response.json(
-        { error: "Gemini API Key is missing. Please add GEMINI_API_KEY to your .env.local file." },
+        { error: "Gemini API Key is missing. Please add GEMINI_API_KEY to your env configuration." },
         { status: 500 }
       );
     }
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    // Send request to OpenRouter using Gemma model
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          contents: createGeminiContents(messages),
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-          },
+          model: "openai/gpt-3.5-turbo",
+          messages,
+          stream: true
         }),
       }
     );
 
-    if (!geminiRes.ok) {
-      const errData = await geminiRes.json();
-      throw new Error(errData?.error?.message || "Gemini API request failed.");
+    
+    // Handle API errors
+    if (!response.ok) {
+      return Response.json(
+        {
+          error:
+            "OpenRouter request failed.",
+        },
+        { status: 500 }
+      );
     }
 
-    const geminiData = await geminiRes.json();
-    const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!replyText) {
-      throw new Error("No response received from Gemini API.");
+    // Extract assistant reply
+    
+    if (!response.body) {
+      return Response.json(
+        {
+          error: "No response stream available.",
+        },
+        { status: 500 }
+      );
     }
 
-    return Response.json({
-      message: {
-        role: "assistant",
-        content: replyText,
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body.getReader();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+
+            // SSE messages come line-by-line
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.replace("data: ", "").trim();
+
+                // End of stream
+                if (data === "[DONE]") {
+                  controller.close();
+                  return;
+                }
+
+                try {
+                  const json = JSON.parse(data);
+
+                  const content =
+                    json?.choices?.[0]?.delta?.content;
+
+                  if (content) {
+                    controller.enqueue(
+                      encoder.encode(content)
+                    );
+                  }
+                } catch (err) {
+                  console.error(
+                    "Stream parsing error:",
+                    err
+                  );
+                }
+              }
+            }
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error("Streaming error:", err);
+          controller.error(err);
+        } finally {
+          reader.releaseLock();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {
     console.error("Chatbot API error:", error);
+
     return Response.json(
-      { error: "An error occurred while processing your request." },
+      {
+        error:
+          error.message ||
+          "An error occurred while processing your request.",
+      },
       { status: 500 }
     );
   }
-}
+} 

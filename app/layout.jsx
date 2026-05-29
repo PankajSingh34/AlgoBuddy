@@ -29,7 +29,7 @@ export const metadata = {
   publisher: "AlgoBuddy",
   robots: "index, follow",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.svg?v=3",
   },
   openGraph: {
     title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
@@ -65,7 +65,7 @@ export default async function RootLayout({ children }) {
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />
-        <link rel="icon" href="/favicon.ico?v=2" />
+        <link rel="icon" href="/favicon.ico?v=3" />
 
         {/* Prevent flash: apply saved theme before React hydrates */}
         <Script
