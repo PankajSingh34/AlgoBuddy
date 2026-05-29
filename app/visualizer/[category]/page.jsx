@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { sections } from "@/lib/visualizerSections";
-import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import CategoryClient from "./CategoryClient";
@@ -38,7 +37,6 @@ export default async function CategoryPage({ params }) {
       className="min-h-screen bg-white dark:bg-[#1c1d1f] text-gray-800 dark:text-gray-200 flex flex-col"
       style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
     >
-      <Navbar />
 
       <main className="flex-1 max-w-[1100px] w-full mx-auto px-5 pt-24 pb-20">
         <CategoryClient section={section} />
@@ -49,3 +47,4 @@ export default async function CategoryPage({ params }) {
     </div>
   );
 }
+

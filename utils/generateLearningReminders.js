@@ -3,14 +3,22 @@
  * The function is intentionally data-driven and returns an array of
  * reminder objects { id, type, message, severity } derived from inputs.
  */
+const msPerDay = 1000 * 60 * 60 * 24;
+
+function toDayIndex(val) {
+  const d = new Date(val);
+  if (typeof val === "string") {
+    const match = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const [_, y, m, date] = match;
+      return Math.floor(Date.UTC(Number(y), Number(m) - 1, Number(date)) / msPerDay);
+    }
+  }
+  return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / msPerDay);
+}
+
 function daysBetween(a, b) {
-  const A = new Date(a);
-  const B = new Date(b);
-  // clear time
-  A.setHours(0, 0, 0, 0);
-  B.setHours(0, 0, 0, 0);
-  const diff = Math.round((B - A) / (1000 * 60 * 60 * 24));
-  return diff;
+  return toDayIndex(b) - toDayIndex(a);
 }
 
 export default function generateLearningReminders({
@@ -21,25 +29,37 @@ export default function generateLearningReminders({
 }) {
   const reminders = [];
   const today = new Date();
-  const uniqueDates = Array.from(new Set(activityDates || [])).sort();
+
+  const normalizeDateString = (value) => {
+    if (typeof value !== "string") return null;
+    const candidate = value.split("T")[0];
+    return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : null;
+  };
+
+  const uniqueDates = Array.from(
+    new Set((activityDates || []).map(normalizeDateString).filter(Boolean))
+  ).sort();
 
   const lastDate = uniqueDates.length ? new Date(uniqueDates[uniqueDates.length - 1]) : null;
   const daysSinceLast = lastDate ? daysBetween(lastDate, today) : Infinity;
 
-  // simple current streak approximation (consecutive days ending today)
+  // simple current streak approximation (consecutive days ending today or yesterday)
   let currentStreak = 0;
   if (uniqueDates.length) {
-    for (let i = uniqueDates.length - 1; i >= 0; i--) {
-      const d = new Date(uniqueDates[i]);
-      const diff = daysBetween(d, today) - currentStreak;
-      // if date equals today - currentStreak
-      if (diff === 0) {
-        currentStreak++;
-      } else if (diff === 1) {
-        // consecutive day
-        currentStreak++;
-      } else {
-        break;
+    const lastDiff = daysBetween(uniqueDates[uniqueDates.length - 1], today);
+    if (lastDiff <= 1) {
+      let expectedDiff = lastDiff;
+      for (let i = uniqueDates.length - 1; i >= 0; i--) {
+        const d = uniqueDates[i];
+        const diff = daysBetween(d, today);
+        if (diff === expectedDiff) {
+          currentStreak++;
+          expectedDiff++;
+        } else if (diff < expectedDiff) {
+          continue; // Ignore duplicate dates or multiple practices on same day
+        } else {
+          break; // Gap detected
+        }
       }
     }
   }

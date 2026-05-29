@@ -41,6 +41,12 @@ function StreakCounter({ activityDates }) {
 
     let streakCount = 0;
     let expectedDay = toDayIndex(getLocalISODate());
+    if (uniqueSortedDates.length > 0) {
+      const lastDayIndex = toDayIndex(uniqueSortedDates[uniqueSortedDates.length - 1]);
+      if (lastDayIndex === expectedDay - 1) {
+        expectedDay = expectedDay - 1;
+      }
+    }
     for (let i = uniqueSortedDates.length - 1; i >= 0; i--) {
       const dayIndex = toDayIndex(uniqueSortedDates[i]);
       if (dayIndex > expectedDay) {

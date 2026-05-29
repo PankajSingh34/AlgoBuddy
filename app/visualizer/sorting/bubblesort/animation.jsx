@@ -132,6 +132,8 @@ const BubbleSortVisualizer = () => {
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
+      setCurrentPhase(`Pass ${i + 1} of ${n - 1}`);
+      setStepExplanation(`Starting pass ${i + 1}, comparing adjacent elements.`);
 
       for (let j = 0; j < n - i - 1; j++) {
         if (!isSortingRef.current) return;
@@ -147,6 +149,7 @@ const BubbleSortVisualizer = () => {
         if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
+          setStepExplanation(`Since ${arr[j]} > ${arr[j + 1]}, swapping elements at indices ${j} and ${j + 1}.`);
           await askChallenge(createBubbleSwapQuestion(arr, j));
           if (!isSortingRef.current) return;
 
@@ -182,10 +185,19 @@ const BubbleSortVisualizer = () => {
 
           await cancellableDelay();
           if (!isSortingRef.current) return;
+        } else {
+          setStepExplanation(`Since ${arr[j]} <= ${arr[j + 1]}, no swap is needed.`);
+          await cancellableDelay();
+          if (!isSortingRef.current) return;
         }
       }
 
-      if (!swapped) break;
+      if (!swapped) {
+        setStepExplanation(`No swaps occurred in pass ${i + 1}; the array is already sorted.`);
+        setCurrentPhase("Completion Check");
+        await cancellableDelay();
+        break;
+      }
     }
 
     isSortingRef.current = false;
@@ -322,6 +334,16 @@ const BubbleSortVisualizer = () => {
                 : sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>

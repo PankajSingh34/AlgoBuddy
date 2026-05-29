@@ -34,21 +34,22 @@ function SortingVisual() {
   const bars = [65, 30, 80, 45, 55, 20, 70, 40, 90, 35];
   const active = [2, 6];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#d1fae5] dark:border-[#166534] bg-white dark:bg-[#122b19] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fbfffd] hover:border-[#86efac] hover:shadow-2xl hover:shadow-emerald-200/50 dark:hover:bg-[#173820] dark:hover:border-[#22c55e] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#f0fdf4] dark:bg-[#173820] border-b border-[#d1fae5] dark:border-[#166534] transition-colors duration-300">
-        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#a7f3d0]">bubbleSort.js — step 4</span>
+    <div className="w-full max-w-[420px] rounded-2xl bg-[#1e1e1e] shadow-2xl overflow-hidden font-mono text-[13px] leading-[1.7] border border-[#333] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
+      {/* Top Bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#333] bg-[#1e1e1e]">
+        <span className="w-3 h-3 rounded-full bg-[#ff5f57] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#febc2e] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#28c840] flex-shrink-0" />
+        <span className="ml-3 text-[#858585] text-[13px] truncate">bubbleSort.js — step 4</span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#6ee7b7] mb-4 font-semibold transition-colors duration-300">Comparing indices 2 & 3</p>
+        <p className="text-[11px] uppercase tracking-widest text-[#858585] mb-4 font-semibold transition-colors duration-300">Comparing indices 2 & 3</p>
         <div className="flex items-end gap-1.5 h-[80px]">
           {bars.map((h, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className={`w-full rounded-t-sm transition-all duration-300 ${
-                  active.includes(i) ? "bg-[#22c55e]" : "bg-[#d1fae5] dark:bg-[#166534]"
+                  active.includes(i) ? "bg-[#22c55e]" : "bg-[#404040]"
                 }`}
                 style={{ height: `${(h / 90) * 72}px` }}
               />
@@ -56,11 +57,11 @@ function SortingVisual() {
           ))}
         </div>
         <div className="flex gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#a7f3d0] transition-colors duration-300">
+          <span className="flex items-center gap-1.5 text-[11px] text-[#858585] transition-colors duration-300">
             <span className="w-2.5 h-2.5 rounded-sm bg-[#22c55e] inline-block" /> comparing
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#a7f3d0] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#d1fae5] dark:bg-[#166534] inline-block transition-colors duration-300" /> unsorted
+          <span className="flex items-center gap-1.5 text-[11px] text-[#858585] transition-colors duration-300">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#404040] inline-block transition-colors duration-300" /> unsorted
           </span>
         </div>
       </div>
@@ -75,25 +76,26 @@ function SearchVisual() {
   const mid = 4;
   const eliminated = [0, 1, 2, 3];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#e9d5ff] dark:border-[#5b21b6] bg-white dark:bg-[#1a0e2d] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fdfaff] hover:border-[#c084fc] hover:shadow-2xl hover:shadow-purple-200/50 dark:hover:bg-[#23133d] dark:hover:border-[#a855f7] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#faf5ff] dark:bg-[#23133d] border-b border-[#e9d5ff] dark:border-[#5b21b6] transition-colors duration-300">
-        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">binarySearch.js — step 2</span>
+    <div className="w-full max-w-[420px] rounded-2xl bg-[#1e1e1e] shadow-2xl overflow-hidden font-mono text-[13px] leading-[1.7] border border-[#333] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
+      {/* Top Bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#333] bg-[#1e1e1e]">
+        <span className="w-3 h-3 rounded-full bg-[#ff5f57] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#febc2e] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#28c840] flex-shrink-0" />
+        <span className="ml-3 text-[#858585] text-[13px] truncate">binarySearch.js — step 2</span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#c4b5fd] mb-4 font-semibold transition-colors duration-300">Target: 16 &nbsp;·&nbsp; mid = index 4</p>
+        <p className="text-[11px] uppercase tracking-widest text-[#858585] mb-4 font-semibold transition-colors duration-300">Target: 16 &nbsp;·&nbsp; mid = index 4</p>
         <div className="flex gap-1.5">
           {arr.map((v, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className={`w-full h-9 rounded-md flex items-center justify-center text-[11px] font-bold transition-all duration-300 ${
                   i === mid 
-                    ? "bg-[#a435f0] text-white" 
+                    ? "bg-[#a855f7] text-white" 
                     : eliminated.includes(i) 
-                      ? "bg-[#f3f4f6] dark:bg-[#2d2f31] text-[#d1d5db] dark:text-[#6b7280]" 
-                      : "bg-[#ede9fe] dark:bg-[#5b21b6] text-[#7c3aed] dark:text-[#e9d5ff]"
+                      ? "bg-[#252526] text-[#6b7280]" 
+                      : "bg-[#3b2a59] text-[#e9d5ff]"
                 }`}
               >
                 {v}
@@ -102,14 +104,14 @@ function SearchVisual() {
           ))}
         </div>
         <div className="flex gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0] inline-block" /> mid
+          <span className="flex items-center gap-1.5 text-[11px] text-[#858585] transition-colors duration-300">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#a855f7] inline-block" /> mid
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#ede9fe] dark:bg-[#5b21b6] inline-block transition-colors duration-300" /> active
+          <span className="flex items-center gap-1.5 text-[11px] text-[#858585] transition-colors duration-300">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#3b2a59] inline-block transition-colors duration-300" /> active
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-surface-500 dark:text-[#d8b4fe] transition-colors duration-300">
-            <span className="w-2.5 h-2.5 rounded-sm bg-surface-100 dark:bg-[#2d2f31] inline-block transition-colors duration-300" /> eliminated
+          <span className="flex items-center gap-1.5 text-[11px] text-[#858585] transition-colors duration-300">
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#252526] inline-block transition-colors duration-300" /> eliminated
           </span>
         </div>
       </div>
@@ -121,21 +123,22 @@ function SearchVisual() {
 function StackVisual() {
   const stack = ["push(42)", "push(17)", "push(8)", "peek → 8"];
   const boxClasses = [
-    "bg-[#bfdbfe] dark:bg-[#1e3a8a] text-[#1e3a5f] dark:text-[#bfdbfe]",
-    "bg-[#93c5fd] dark:bg-[#1d4ed8] text-[#1e3a5f] dark:text-[#93c5fd]",
-    "bg-[#60a5fa] dark:bg-[#2563eb] text-[#1e3a5f] dark:text-white",
-    "bg-[#2563eb] dark:bg-[#3b82f6] text-white dark:text-white shadow-[0_2px_12px_#2563eb44]"
+    "bg-[#404040] text-[#d4d4d4]",
+    "bg-[#404040] text-[#d4d4d4]",
+    "bg-[#525252] text-white",
+    "bg-[#3b82f6] text-white shadow-[0_2px_12px_rgba(59,130,246,0.4)]"
   ];
   return (
-    <div className="w-full max-w-[340px] rounded-2xl border border-[#bfdbfe] dark:border-[#1e3a8a] bg-white dark:bg-[#111d33] shadow-xl overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#f8fbff] hover:border-[#60a5fa] hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:bg-[#182847] dark:hover:border-[#3b82f6] dark:hover:shadow-black/30">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#eff6ff] dark:bg-[#182847] border-b border-[#bfdbfe] dark:border-[#1e3a8a] transition-colors duration-300">
-        <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-        <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-        <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-[#bfdbfe] transition-colors duration-300">stack.js — operations</span>
+    <div className="w-full max-w-[420px] rounded-2xl bg-[#1e1e1e] shadow-2xl overflow-hidden font-mono text-[13px] leading-[1.7] border border-[#333] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
+      {/* Top Bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#333] bg-[#1e1e1e]">
+        <span className="w-3 h-3 rounded-full bg-[#ff5f57] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#febc2e] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#28c840] flex-shrink-0" />
+        <span className="ml-3 text-[#858585] text-[13px] truncate">stack.js — operations</span>
       </div>
       <div className="p-5">
-        <p className="text-[11px] uppercase tracking-widest text-surface-500 dark:text-[#93c5fd] mb-4 font-semibold transition-colors duration-300">Stack — top of stack ↑</p>
+        <p className="text-[11px] uppercase tracking-widest text-[#858585] mb-4 font-semibold transition-colors duration-300">Stack — top of stack ↑</p>
         <div className="flex flex-col-reverse gap-2">
           {stack.map((item, i) => (
             <div
@@ -144,7 +147,7 @@ function StackVisual() {
             >
               {item}
               {i === stack.length - 1 && (
-                <span className="ml-auto text-[11px] bg-white/30 rounded px-2 py-0.5">TOP</span>
+                <span className="ml-auto text-[11px] bg-white/20 rounded px-2 py-0.5">TOP</span>
               )}
             </div>
           ))}
@@ -157,39 +160,31 @@ function StackVisual() {
 /* ── Visual: App phone-style mockup ── */
 function AppMockup() {
   const steps = [
-    { line: 1, tokens: [{ t: "while", c: "#7c3aed" }, { t: " gems remain", c: "#1a1a1a" }], active: false },
-    { line: 2, tokens: [{ t: "  if", c: "#7c3aed" }, { t: " node.visited", c: "#1a1a1a" }], active: false },
-    { line: 3, tokens: [{ t: "    mark", c: "#059669" }, { t: " node", c: "#1a1a1a" }], active: false },
-    { line: 4, tokens: [{ t: "  else", c: "#7c3aed" }], active: true },
-    { line: 5, tokens: [{ t: "    skip", c: "#059669" }, { t: " node", c: "#1a1a1a" }], active: false },
+    { line: 1, tokens: [{ t: "while", c: "#c678dd" }, { t: " gems remain", c: "#d4d4d4" }], active: false },
+    { line: 2, tokens: [{ t: "  if", c: "#c678dd" }, { t: " node.visited", c: "#d4d4d4" }], active: false },
+    { line: 3, tokens: [{ t: "    mark", c: "#22c55e" }, { t: " node", c: "#d4d4d4" }], active: false },
+    { line: 4, tokens: [{ t: "  else", c: "#c678dd" }], active: true },
+    { line: 5, tokens: [{ t: "    skip", c: "#22c55e" }, { t: " node", c: "#d4d4d4" }], active: false },
   ];
 
   return (
-    <div
-      className="w-full max-w-[320px] rounded-[2rem] bg-white shadow-2xl border border-surface-200 overflow-hidden transform-gpu will-change-transform transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#fbfffd] hover:border-[#86efac] hover:shadow-2xl hover:shadow-emerald-200/50"
-    >
-      {/* top bar */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
-        <button className="w-7 h-7 flex items-center justify-center rounded-full bg-surface-100 text-surface-500 text-[14px] font-bold">×</button>
-        {/* progress bar */}
-        <div className="flex-1 mx-3 flex items-center gap-1.5">
-          <div className="flex-1 h-2.5 rounded-full bg-[#22c55e]" style={{ flex: "2.5" }} />
-          {[0,1,2,3].map(i => (
-            <div key={i} className="w-2.5 h-2.5 rounded-full bg-[#e5e7eb]" />
-          ))}
-        </div>
-        {/* lightning */}
-        <span className="text-[22px]">⚡</span>
+    <div className="w-full max-w-[420px] rounded-2xl bg-[#1e1e1e] shadow-2xl overflow-hidden font-mono text-[13px] leading-[1.7] border border-[#333] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
+      {/* Top Bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#333] bg-[#1e1e1e]">
+        <span className="w-3 h-3 rounded-full bg-[#ff5f57] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#febc2e] flex-shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-[#28c840] flex-shrink-0" />
+        <span className="ml-3 text-[#858585] text-[13px] truncate">graphTraversal.js</span>
       </div>
 
       {/* task label */}
-      <div className="px-5 pb-3">
-        <p className="text-[13px] font-semibold text-surface-700">Traverse the graph</p>
+      <div className="px-5 pt-5 pb-3">
+        <p className="text-[11px] uppercase tracking-widest text-[#858585] font-semibold">Traverse the graph</p>
       </div>
 
       {/* grid visual */}
-      <div className="mx-5 mb-4 rounded-xl overflow-hidden border border-surface-200 bg-surface-50">
-        <div className="grid grid-cols-5 gap-px bg-surface-200 p-px">
+      <div className="mx-5 mb-4 rounded-xl overflow-hidden border border-[#333] bg-[#252526]">
+        <div className="grid grid-cols-5 gap-px bg-[#333] p-px">
           {Array.from({ length: 25 }).map((_, i) => {
             const path = [6, 11, 16, 21, 22, 17, 12, 7];
             const gems = [4, 9, 14];
@@ -202,11 +197,11 @@ function AppMockup() {
                 key={i}
                 className="aspect-square flex items-center justify-center text-[14px]"
                 style={{
-                  background: isPath ? "#ede9fe" : "#f9fafb",
-                  border: isPath ? "1.5px solid #7c3aed" : "none",
+                  background: isPath ? "#311b42" : "#1e1e1e",
+                  border: isPath ? "1.5px solid #a855f7" : "none",
                 }}
               >
-                {isRobot ? "🤖" : isGem ? "💎" : isPath ? <span className="w-1.5 h-1.5 rounded-full bg-[#7c3aed] inline-block" /> : ""}
+                {isRobot ? "🤖" : isGem ? "💎" : isPath ? <span className="w-1.5 h-1.5 rounded-full bg-[#a855f7] inline-block" /> : ""}
               </div>
             );
           })}
@@ -214,15 +209,15 @@ function AppMockup() {
       </div>
 
       {/* pseudocode steps */}
-      <div className="mx-5 mb-5 rounded-xl bg-surface-50 border border-[#e5e7eb] overflow-hidden">
+      <div className="mx-5 mb-5 rounded-xl bg-[#252526] border border-[#333] overflow-hidden">
         {steps.map((s) => (
           <div
             key={s.line}
-            className="flex items-center gap-3 px-4 py-2.5 border-b border-surface-100 last:border-0"
-            style={{ background: s.active ? "#fff" : "transparent" }}
+            className="flex items-center gap-3 px-4 py-2.5 border-b border-[#333] last:border-0"
+            style={{ background: s.active ? "#311b42" : "transparent" }}
           >
             {s.active ? (
-              <span className="w-3 h-3 rounded-full bg-surface-900 flex-shrink-0" />
+              <span className="w-3 h-3 rounded-full bg-[#a855f7] flex-shrink-0" />
             ) : (
               <span className="w-3 h-3 flex-shrink-0" />
             )}

@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import DryRunClient from "./DryRunClient";
 
@@ -18,9 +17,9 @@ export const metadata = {
 export default function DryRunPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-[#101216] dark:text-slate-100">
-      <Navbar />
       <DryRunClient />
       <Footer />
     </div>
   );
 }
+

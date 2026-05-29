@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Navbar from "@/app/components/navbarinner";
 import Footer from "@/app/components/footer";
 import {
   Play,
@@ -821,7 +820,6 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
   return (
     <div className="min-h-screen bg-udemy-dark-bg text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
-      <Navbar />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
         
@@ -1285,3 +1283,4 @@ export default function TreeBSTVisualizer({ initialMode }) {
     </div>
   );
 }
+
