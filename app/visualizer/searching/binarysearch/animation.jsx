@@ -155,6 +155,7 @@ const BinarySearch = () => {
         }, delay * 0.6);
       }
     }, delay);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speedRef]);
 
   const handleGo = (e) => {
