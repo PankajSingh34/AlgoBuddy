@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 export default function DecisionTreeAnimation() {
   const [animating, setAnimating] = useState(false);
@@ -18,15 +19,20 @@ export default function DecisionTreeAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSample({ weather: "Rainy", wind: "Strong" });
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   const currentStep = steps[currentStepIdx] || null;
   const activeNode = currentStep ? currentStep.activeNode : null;
   const activeEdge = currentStep ? currentStep.activeEdge : null;
   const prediction = currentStep ? currentStep.prediction : null;
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const INITIAL_NODES = [
   { id: "A", val: 5, char: "A", x: 100, y: 250, active: true },
@@ -26,15 +27,20 @@ export default function HuffmanAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setTreeBuilt(false);
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   const currentStep = steps[currentStepIdx] || null;
   const nodes = currentStep ? currentStep.nodes : [...INITIAL_NODES];
   const edges = currentStep ? currentStep.edges : [];
   const activeIds = currentStep ? currentStep.activeIds : [];
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

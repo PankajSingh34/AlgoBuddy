@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -15,6 +16,13 @@ const LinkedListReverse = () => {
   const [nextPointer, setNextPointer] = useState(-1);
   const listRefs = useRef([]);
   const containerRef = useRef(null);
+  useVisualizerReset(() => {
+    setList([]);
+    setIsAnimating(false);
+    setCurrentPointer(-1);
+    setPrevPointer(-1);
+    setNextPointer(-1);
+  });
   const animationTimeline = useRef(gsap.timeline());
 
   const generateRandomList = () => {

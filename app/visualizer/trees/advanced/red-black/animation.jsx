@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 // === Red-Black Tree Implementation ===
 const RED = "RED";
@@ -252,6 +253,13 @@ export default function RedBlackAnimation() {
   const [highlighted, setHighlighted] = useState({});
 
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
   const activeTreeRef = useRef(() => {
     const t = new RBTree();
     for (const v of INITIAL_VALUES) t.insert(v);
@@ -264,7 +272,7 @@ export default function RedBlackAnimation() {
     activeTreeRef.current = t;
   }, []);
 
-  useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
+
 
   useEffect(() => {
     if (currentStepIdx < 0 || currentStepIdx >= steps.length) return;

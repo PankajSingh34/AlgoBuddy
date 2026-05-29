@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const DEFAULT_ARRAY = [42, 18, 76, 33, 9, 55, 64, 27];
 const MAX_ITEMS = 12;
@@ -235,6 +236,15 @@ export default function HeapSortVisualizer() {
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setArray(DEFAULT_ARRAY);
+    setArraySize(DEFAULT_ARRAY.length);
+    setSteps([]);
+    setCurrentStepIndex(-1);
+    setSorting(false);
+    setSorted(false);
+  });
 
   const {
     isPaused,

@@ -88,6 +88,10 @@ export default function Chatbot() {
     // captcha skipped in development
 
     setError(null);
+    if (!captchaToken) {
+      setError("Waiting for security check to complete. Please try again in a moment.");
+      return;
+    }
     if (!textToSend) setInput("");
 
     const newMessages = [...messages, { role: "user", content: text }];
@@ -110,7 +114,16 @@ export default function Chatbot() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to get AI response.");
+        let errorMessage = "Failed to get AI response.";
+        try {
+          const errorData = await res.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // Ignore JSON parse error
+        }
+        throw new Error(errorMessage);
       }
 
       if (!res.body) {
@@ -382,6 +395,7 @@ export default function Chatbot() {
       {/* Turnstile captcha (invisible) */}
       <div className="w-0 h-0 overflow-hidden" aria-hidden="true">
         <Turnstile
+          ref={turnstileRef}
           siteKey={
             process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("1x") || 
             process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("0x")

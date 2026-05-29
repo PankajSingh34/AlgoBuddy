@@ -4,6 +4,7 @@ import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 function generateNQueensFrames() {
   const frames = [];
@@ -183,6 +184,12 @@ const NQueensAnimation = () => {
   const [speed, setSpeed] = useState(1);
   const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
+    useVisualizerReset(() => {
+      setIsPlaying(false);
+      setSpeed(1);
+      setCurrentFrame(-1);
+      setIsVisualizing(false);
+    });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];

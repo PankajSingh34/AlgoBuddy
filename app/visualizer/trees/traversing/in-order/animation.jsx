@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 class TreeNode {
   constructor(value) {
@@ -26,6 +27,16 @@ export default function InOrderVisualizer() {
   const [traversalResult, setTraversalResult] = useState([]);
   const [steps, setSteps] = useState(0);
   const animationRef = useRef(null);
+  useVisualizerReset(() => {
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setRoot(null);
+    setInputValue("");
+    setMessage("Tree is empty");
+    setIsAnimating(false);
+    setHighlightedNodes([]);
+    setTraversalResult([]);
+    setSteps(0);
+  });
   const { speed, setSpeed } = usePlayback(1);
 
   const insertNode = (node, value) => {

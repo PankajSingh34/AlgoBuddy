@@ -4,6 +4,7 @@ import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 function generateBinarySearchFrames(arr, target) {
   const frames = [];
@@ -235,6 +236,15 @@ export default function BinarySearchAnimation() {
   const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+    useVisualizerReset(() => {
+      setArrayVal("10, 20, 30, 40, 50, 60, 70, 80");
+      setTargetVal("60");
+      setIsPlaying(false);
+      setSpeed(1);
+      setCurrentFrame(-1);
+      setIsVisualizing(false);
+      setErrorMsg("");
+    });
 
   const parsedArray = useMemo(() => {
     return arrayVal

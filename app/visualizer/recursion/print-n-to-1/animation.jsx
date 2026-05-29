@@ -4,6 +4,7 @@ import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 function generatePrintNTo1Frames(n) {
   const frames = [];
@@ -124,6 +125,14 @@ const PrintNTo1Animation = () => {
   const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+    useVisualizerReset(() => {
+      setNVal("3");
+      setIsPlaying(false);
+      setSpeed(1);
+      setCurrentFrame(-1);
+      setIsVisualizing(false);
+      setErrorMsg("");
+    });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];

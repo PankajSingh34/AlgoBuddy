@@ -8,6 +8,7 @@ import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/stora
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -37,6 +38,7 @@ const BinarySearch = () => {
 
   const {
     isPaused,
+    isPausedRef,
     speed,
     speedRef,
     setSpeed,
@@ -46,7 +48,7 @@ const BinarySearch = () => {
   } = usePlayback(() => loadFromStorage("binary-speed", 1));
 
   const animationRef = useRef(null);
-  const isPausedRef = useRef(false);
+  const wasPausedRef = useRef(false);
   const searchStateRef = useRef({ l: 0, h: 0, arr: [], targetValue: 0, step: 0 });
   const formRef = useRef(null);
   const elementRefs = useRef([]);
@@ -67,6 +69,7 @@ const BinarySearch = () => {
     setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
     setIsAnimating(false); setPendingStart(false);
     isPausedRef.current = false;
+    wasPausedRef.current = false;
     setArrayElements(""); setTarget(""); setSpeed(1);
     if (formRef.current) formRef.current.reset();
     elementRefs.current.forEach((ref) => {
@@ -196,6 +199,7 @@ const BinarySearch = () => {
     setJ(elements.length - 1);
     setIsAnimating(true);
     isPausedRef.current = false;
+    wasPausedRef.current = false;
     setPendingStart(true);
   };
 
@@ -206,10 +210,36 @@ const BinarySearch = () => {
     }
   }, [pendingStart, array, animateBinarySearch]);
 
+  useEffect(() => {
+    if (isPaused) {
+      wasPausedRef.current = true;
+    } else if (wasPausedRef.current && isAnimating) {
+      wasPausedRef.current = false;
+      clearTimeout(animationRef.current);
+      animateBinarySearch();
+    }
+  }, [isPaused, isAnimating, animateBinarySearch]);
+
   const togglePlayPauseRef = useRef(togglePlayPause);
   useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
 
   const isAnimatingRef = useRef(isAnimating);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setI(-1);
+    setJ(-1);
+    setMid(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+    setStepExplanation("");
+    setStepCount(0);
+    setPendingStart(false);
+  });
   useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   useEffect(() => {
@@ -228,7 +258,7 @@ const BinarySearch = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  useEffect(() => { return () => clearTimeout(animationRef.current); }, []);
+
 
   const messageClass =
     messageType === "success"

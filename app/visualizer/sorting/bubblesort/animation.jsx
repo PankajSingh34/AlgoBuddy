@@ -48,6 +48,20 @@ const BubbleSortVisualizer = () => {
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setSorting(false);
+    setSorted(false);
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ i: -1, j: -1 });
+    setChallengeEnabled(false);
+  });
   const {
     activeQuestion,
     askChallenge,
@@ -206,6 +220,17 @@ const BubbleSortVisualizer = () => {
         clearTimeout(animationRef.current);
       }
     };
+  // ── Stable callbacks for the keyboard hook ──────────────────────────────
+  // useCallback keeps the function reference stable so the hook's useEffect
+  // doesn't re-subscribe on every render.
+  const handleStart = useCallback(() => {
+    bubbleSort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorting, sorted, array, speed]);
+
+  const handleReset = useCallback(() => {
+    reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

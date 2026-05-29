@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const CircularQueueVisualizer = () => {
   const [maxSize, setMaxSize] = useState(5); // capacity
@@ -13,6 +14,17 @@ const CircularQueueVisualizer = () => {
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Circular queue is empty");
   const [isAnimating, setIsAnimating] = useState(false);
+  useVisualizerReset(() => {
+    setMaxSize(5);
+    setQueue(Array(5).fill(null));
+    setFront(0);
+    setRear(-1);
+    setCount(0);
+    setInputValue("");
+    setOperation(null);
+    setMessage("Circular queue is empty");
+    setIsAnimating(false);
+  });
   const { speed, setSpeed } = usePlayback(1);
 
   const isEmpty = count === 0;

@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const NODES = [
   { id: "3", val: "3", x: 400, y: 60, parent: null },
@@ -36,6 +37,15 @@ export default function LCAAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setTargetP("5");
+    setTargetQ("1");
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   const currentStep = steps[currentStepIdx] || null;
   const activeNode = currentStep ? currentStep.activeNode : null;
@@ -44,9 +54,6 @@ export default function LCAAnimation() {
   const backtrackingEdges = currentStep ? currentStep.backtrackingEdges : [];
   const lcaNode = currentStep ? currentStep.lcaNode : null;
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

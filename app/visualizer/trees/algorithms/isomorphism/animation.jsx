@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 // Tree 1 Setup
 const NODES1 = [
@@ -45,15 +46,19 @@ export default function IsomorphismAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   const currentStep = steps[currentStepIdx] || null;
   const activePairs = currentStep ? currentStep.activePairs : [];
   const matchStatus = currentStep ? currentStep.matchStatus : {};
   const isomorphic = currentStep ? currentStep.isomorphicResult : null;
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

@@ -17,6 +17,7 @@ import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];
@@ -378,8 +379,10 @@ export default function DryRunClient() {
     user?.user_metadata?.name || user?.email?.split("@")[0] || "Anonymous";
 
   function handleRemoteStateDelta(delta) {
+    const effectivePresenterId =
+      delta.presenterId !== undefined ? delta.presenterId : collaboration.presenterId;
     const isPresenter =
-      collaboration.presenterId && collaboration.presenterId === collaboration.clientId;
+      effectivePresenterId && effectivePresenterId === collaboration.clientId;
 
     if (!followPresenter && !isPresenter) {
       return;
@@ -413,6 +416,9 @@ export default function DryRunClient() {
     onRemoteStateDelta: handleRemoteStateDelta,
   });
 
+  const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId } =
+    collaboration;
+
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
   const sourceLines = source.split("\n");
@@ -425,6 +431,24 @@ export default function DryRunClient() {
     setStep(0);
     setPlaying(false);
   }, [source, language]);
+
+  const isAtEnd = step >= trace.length - 1;
+
+  useVisualizerKeyboard({
+    onStart: () => {
+      if (isAtEnd) setStep(0);
+      setPlaying(true);
+    },
+    onReset: () => {
+      setStep(0);
+      setPlaying(false);
+    },
+    onTogglePlayPause: () => setPlaying((value) => !value),
+    onSpeedChange: setSpeed,
+    speed,
+    sorting: playing,
+    sorted: isAtEnd,
+  });
 
   useEffect(() => {
     if (!playing) return;
@@ -446,13 +470,13 @@ export default function DryRunClient() {
   }, [collaboration.sendEnvelope]);
 
   useEffect(() => {
-    if (!collaboration.session) return;
+    if (!collabSession) return;
     if (suppressBroadcastRef.current) {
       suppressBroadcastRef.current = false;
       return;
     }
 
-    if (collaboration.presenterId && collaboration.presenterId !== collaboration.clientId) {
+    if (collabPresenterId && collabPresenterId !== collabClientId) {
       return;
     }
 
@@ -470,9 +494,9 @@ export default function DryRunClient() {
     step,
     playing,
     speed,
-    collaboration.session,
-    collaboration.presenterId,
-    collaboration.clientId,
+    collabSession,
+    collabPresenterId,
+    collabClientId,
   ]);
 
   const updateLanguage = (nextLanguage) => {

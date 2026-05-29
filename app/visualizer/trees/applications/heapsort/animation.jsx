@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const INITIAL_ARRAY = [7, 1, 8, 5, 2];
 
@@ -19,6 +20,13 @@ export default function HeapSortAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   const currentStep = steps[currentStepIdx] || null;
   const array = currentStep ? currentStep.array : [...INITIAL_ARRAY];
@@ -26,9 +34,6 @@ export default function HeapSortAnimation() {
   const sortedIndices = currentStep ? currentStep.sortedIndices : [];
   const heapSize = currentStep ? currentStep.heapSize : INITIAL_ARRAY.length;
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

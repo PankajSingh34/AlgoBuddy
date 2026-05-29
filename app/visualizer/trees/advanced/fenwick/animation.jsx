@@ -10,6 +10,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const DEFAULT_ARRAY = [0, 5, 3, 7, 2, 6, 4, 8, 1]; // 1-indexed, index 0 unused
 
@@ -44,11 +45,25 @@ export default function FenwickAnimation() {
   const [resultBox, setResultBox] = useState(null);
 
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setBaseArray([...DEFAULT_ARRAY]);
+    setBit(buildBIT(DEFAULT_ARRAY));
+    setInputIndex("");
+    setInputValue("");
+    setQueryL("");
+    setQueryR("");
+    setMode("update");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+    setIsAnimating(false);
+    setMessage("...");
+    setHighlightedBIT({});
+    setHighlightedBase({});
+    setResultBox(null);
+  });
   const n = baseArray.length - 1;
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   // Apply current step's highlight state
   useEffect(() => {

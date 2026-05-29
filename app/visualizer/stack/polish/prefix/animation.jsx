@@ -5,6 +5,7 @@ import gsap from "gsap";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 /* ----------  tiny animated bits  ---------- */
 const AnimatedStackItem = ({ char, isTop }) => (
@@ -216,6 +217,19 @@ const InfixToPrefixVisualizer = () => {
 
   /* ----------  GSAP flash on message change  ---------- */
   const statusRef = useRef();
+  useVisualizerReset(() => {
+    setInfix("(A+B)*C");
+    setPrefix("");
+    setStack([]);
+    setOutput([]);
+    setCurrentStep(0);
+    setSteps([]);
+    setIsProcessing(false);
+    setIsAnimating(false);
+    setOperation(null);
+    setMessage("");
+    setIsPlaying(false);
+  });
   useEffect(() => {
     if (statusRef.current)
       gsap.fromTo(statusRef.current, { scale: 0.95, opacity: 0.7 }, { scale: 1, opacity: 1, duration: 0.3 });

@@ -11,6 +11,7 @@ import ChallengeModePanel, {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { loadFromStorage, saveToStorage } from "@/utils/storage";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -76,6 +77,27 @@ const CountingSortVisualizer = () => {
   const animationRef = useRef(null);
   const resolveRef = useRef(null);
   const isSortingRef = useRef(false);
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setMinValue(0);
+    setMaxValue(9);
+    setCountArray(generateCountingArray(0, 9));
+    setOutputArray([]);
+    setPhase("Ready");
+    setMessage("Generate or enter values in the selected range.");
+    setActiveInputIndex(-1);
+    setActiveCountIndex(-1);
+    setActiveOutputIndex(-1);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setWrites(0);
+    setSorting(false);
+    setSorted(false);
+    setChallengeEnabled(false);
+  });
 
   const {
     isPaused,

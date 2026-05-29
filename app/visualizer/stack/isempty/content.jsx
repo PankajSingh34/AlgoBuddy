@@ -1,28 +1,27 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Content = () => {
   const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
-    window.addEventListener('storage', updateTheme);
-    window.addEventListener('themeChange', updateTheme);
+    window.addEventListener("storage", updateTheme);
+    window.addEventListener("themeChange", updateTheme);
 
     return () => {
-      window.removeEventListener('storage', updateTheme);
-      window.removeEventListener('themeChange', updateTheme);
+      window.removeEventListener("storage", updateTheme);
+      window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraphs = [
     `The isEmpty operation checks whether a stack contains any elements or not. It's a fundamental operation that helps prevent errors when trying to perform operations like pop() or peek() on an empty stack.`,

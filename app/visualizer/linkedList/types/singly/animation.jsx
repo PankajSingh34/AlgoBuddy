@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import ResetButton from '@/app/components/ui/resetButton';
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -14,6 +15,13 @@ const SinglyLinkedListVisualizer = () => {
   const [explanation, setExplanation] = useState('Enter a value and click "Add Node" to start.');
   const nodeIdCounter = useRef(1);
   const animationRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+    setCurrentStep(0);
+    setExplanation("Enter a value and click \"Add Node\" to start.");
+  });
   const isMounted = useRef(true);
 
   const steps = [0, 1, 2, 3];

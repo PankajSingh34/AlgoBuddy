@@ -157,7 +157,10 @@ const BlogPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              whileHover={{ y: -5 }}
+              whileHover={{
+              y: -8,
+              scale: 1.01,
+            }}
               className="col-span-12 lg:col-span-6 h-full bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-surface-100 dark:border-surface-700/50"
             >
               <Link href={featuredPosts[0].slug}>
@@ -220,7 +223,7 @@ const BlogPage = () => {
                     delay: index * 0.1,
                   }}
                   whileHover={{ y: -5 }}
-                  className="flex gap-4 items-start bg-white dark:bg-surface-800 rounded-xl p-4 shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
+                  className="flex gap-4 items-start bg-white dark:bg-surface-800 rounded-xl p-4 shadow-md hover:shadow-xl transition-all duration-300 border border-surface-100 dark:border-surface-700/50 cursor-pointer"
                 >
                   <div className="w-32 h-24 overflow-hidden rounded-md">
                     <img
@@ -303,8 +306,11 @@ const BlogPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  whileHover={{ y: -3 }}
-                  className="h-full flex flex-col bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow hover:shadow-md transition-shadow border border-surface-100 dark:border-surface-700/50"
+                  whileHover={{
+                  y: -8,
+                  scale: 1.02,
+                }}
+                className="group h-full flex flex-col bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-surface-100 dark:border-surface-700/50 cursor-pointer"
                 >
                   <Link href={post.slug}>
                     <div className="flex flex-col h-full">
@@ -312,7 +318,7 @@ const BlogPage = () => {
                         <img
                           src={post.image}
                           alt={post.title}
-                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       </div>
                       <div className="p-5 flex flex-col gap-3 flex-1">

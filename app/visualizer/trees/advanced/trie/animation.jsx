@@ -12,6 +12,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 // Internal Trie Node Class for coordinate mapping
 class TrieNode {
@@ -61,6 +62,16 @@ export default function TrieAnimation() {
   }, []);
 
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setRoot(null);
+    setNodeIdCounter(0);
+    setInputValue("");
+    setMessage("...");
+    setIsAnimating(false);
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   // Clean up timers on unmount
   useEffect(() => {

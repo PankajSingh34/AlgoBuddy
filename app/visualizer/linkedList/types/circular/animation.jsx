@@ -9,6 +9,7 @@ import Quiz from '@/app/visualizer/linkedList/types/circular/quiz';
 import CodeBlock from "@/app/visualizer/linkedList/types/circular/codeBlock";
 import BackToTop from '@/app/components/ui/backtotop';
 import GoBackButton from "@/app/components/ui/goback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const CircularLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -17,6 +18,11 @@ const CircularLinkedListVisualizer = () => {
   const [diagramSize, setDiagramSize] = useState({ width: 0, height: 0 });
   const nodeIdCounter = useRef(1);
   const stageRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+  });
 
   // Generate random memory addresses
   const generateMemoryAddress = () => {

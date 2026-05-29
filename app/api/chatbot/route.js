@@ -81,7 +81,7 @@ export async function POST(req) {
 
     // 2. Turnstile Captcha Verification
     if (!captchaToken) {
-      return Response.json({ error: "Captcha token missing." }, { status: 403 });
+      return Response.json({ error: "Captcha token missing. Please refresh the page and try again." }, { status: 403 });
     }
     
     const ip = getClientIp(req.headers);

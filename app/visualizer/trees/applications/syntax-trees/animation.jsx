@@ -8,6 +8,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 export default function SyntaxTreesAnimation() {
   const [animating, setAnimating] = useState(false);
@@ -17,6 +18,13 @@ export default function SyntaxTreesAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   // Derived state from steps
   const currentStep = steps[currentStepIdx] || null;
@@ -24,9 +32,6 @@ export default function SyntaxTreesAnimation() {
   const activeEdge = currentStep ? currentStep.activeEdge : null;
   const nodeValues = currentStep && currentStep.nodeValues ? currentStep.nodeValues : { N1: "?", N2: "3", N3: "?", N4: "5", N5: "2" };
 
-  useEffect(() => {
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, []);
 
   useEffect(() => {
     if (currentStep) {

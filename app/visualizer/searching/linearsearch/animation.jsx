@@ -6,6 +6,7 @@ import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -37,13 +38,18 @@ const LinearSearch = () => {
   const resolveRef = useRef(null);
   const isSearchingRef = useRef(false);
   const formRef = useRef(null);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setCurrentIndex(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+  });
   const elementRefs = useRef([]);
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(animationRef.current);
-    };
-  }, []);
 
   const handleReset = () => {
     isSearchingRef.current = false;

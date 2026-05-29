@@ -12,6 +12,7 @@ import {
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 // === B-Tree Implementation (order t, min t-1 keys, max 2t-1 keys) ===
 const T = 2; // Min degree (B-Tree of order 4: max 3 keys per node, max 4 children)
@@ -243,6 +244,13 @@ export default function BTreeAnimation() {
   const [highlighted, setHighlighted] = useState({});
 
   const timerRef = useRef(null);
+  useVisualizerReset(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setAnimating(false);
+    setMessage("...");
+    setSteps([]);
+    setCurrentStepIdx(-1);
+  });
 
   // Initialize tree
   useEffect(() => {
@@ -252,7 +260,7 @@ export default function BTreeAnimation() {
     setDisplayRoot(cloneTree(mgr.root));
   }, []);
 
-  useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
+
 
   useEffect(() => {
     if (currentStepIdx < 0 || currentStepIdx >= steps.length) return;
