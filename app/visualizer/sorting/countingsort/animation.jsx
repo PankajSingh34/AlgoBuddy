@@ -1,82 +1,31 @@
 "use client";
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
-import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import ChallengeModePanel, {
-  createOptions,
-  useSortingChallenge,
-} from "@/app/visualizer/sorting/components/ChallengeMode";
-import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import { loadFromStorage, saveToStorage } from "@/utils/storage";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-const normalizeArray = (values, minValue, maxValue) =>
-  values
-    .map((value) => Math.trunc(Number(value)))
-    .filter((value) => Number.isFinite(value))
-    .map((value) => clamp(value, minValue, maxValue))
-    .slice(0, 12);
-
-const generateCountingArray = (minValue, maxValue) =>
-  Array.from({ length: maxValue - minValue + 1 }, (_, index) => ({
-    value: minValue + index,
-    count: 0,
-  }));
-
-const getCellClass = (active, done, accent = "purple") => {
-  if (active) {
-    return accent === "green"
-      ? "border-green-600 bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100"
-      : accent === "yellow"
-      ? "border-yellow-600 bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100"
-      : "border-[#a435f0] bg-purple-100 text-purple-900 dark:bg-purple-900/40 dark:text-purple-100";
-  }
-
-  if (done) {
-    return "border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100";
-  }
-
-  return "border-gray-200 bg-white text-gray-900 dark:border-gray-700 dark:bg-neutral-950 dark:text-gray-100";
+const getFontSize = (value) => {
+  const len = String(value).length;
+  if (len <= 2) return "text-lg";
+  if (len === 3) return "text-sm";
+  return "text-xs";
 };
 
-const createPlacementQuestion = (value, countValue, index) => ({
-  prompt: `Where will value ${value} be placed next?`,
-  options: createOptions(`Output index ${index}`, [
-    index > 0 ? `Output index ${index - 1}` : null,
-    `Output index ${index + 1}`,
-    `Count slot ${countValue}`,
-  ]),
-  correctOptionId: "correct",
-  explanation: `The cumulative count for ${value} is ${countValue}, so the stable placement index is ${countValue - 1}.`,
-});
-
 const CountingSortVisualizer = () => {
-  const [minValue, setMinValue] = useState(() => loadFromStorage("counting-min", 0));
-  const [maxValue, setMaxValue] = useState(() => loadFromStorage("counting-max", 9));
-  const [array, setArray] = useState(() =>
-    normalizeArray(loadFromStorage("counting-array", [4, 2, 2, 8, 3, 3, 1]), 0, 9)
-  );
-  const [countArray, setCountArray] = useState(() => generateCountingArray(0, 9));
-  const [outputArray, setOutputArray] = useState([]);
-  const [phase, setPhase] = useState("Ready");
-  const [message, setMessage] = useState("Generate or enter values in the selected range.");
-  const [activeInputIndex, setActiveInputIndex] = useState(-1);
-  const [activeCountIndex, setActiveCountIndex] = useState(-1);
-  const [activeOutputIndex, setActiveOutputIndex] = useState(-1);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [writes, setWrites] = useState(0);
+  const [array, setArray] = useState([]);
+  const [counts, setCounts] = useState([]);
+  const [output, setOutput] = useState([]);
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [challengeEnabled, setChallengeEnabled] = useState(false);
-  const animationRef = useRef(null);
-  const resolveRef = useRef(null);
-  const isSortingRef = useRef(false);
-
+  const [comparisons, setComparisons] = useState(0);
+  const [swaps, setSwaps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [currentIndices, setCurrentIndices] = useState({ current: -1, countIndex: -1, outputIndex: -1 });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const {
     isPaused,
     speed,
@@ -86,184 +35,119 @@ const CountingSortVisualizer = () => {
     increaseSpeed,
     decreaseSpeed,
     checkPause,
-  } = usePlayback(loadFromStorage("counting-speed", 1));
+  } = usePlayback(1);
+  const animationRef = useRef(null);
+  const isSortingRef = useRef(false);
+  const resolveRef = useRef(null);
 
-  const {
-    activeQuestion,
-    askChallenge,
-    resetChallengeStats,
-    stats: challengeStats,
-    submitAnswer,
-  } = useSortingChallenge(challengeEnabled);
-
-  const safeRange = useMemo(() => {
-    const min = Math.trunc(Number(minValue));
-    const max = Math.trunc(Number(maxValue));
-    if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) {
-      return { min: 0, max: 9 };
-    }
-    return { min, max: Math.min(max, min + 20) };
-  }, [minValue, maxValue]);
-
-  useEffect(() => {
-    saveToStorage("counting-array", array);
-  }, [array]);
-
-  useEffect(() => {
-    saveToStorage("counting-speed", speed);
-  }, [speed]);
-
-  useEffect(() => {
-    saveToStorage("counting-min", safeRange.min);
-    saveToStorage("counting-max", safeRange.max);
-  }, [safeRange.min, safeRange.max]);
-
-  const resetStats = useCallback(() => {
-    setCountArray(generateCountingArray(safeRange.min, safeRange.max));
-    setOutputArray([]);
-    setPhase("Ready");
-    setMessage("Generate or enter values in the selected range.");
-    setActiveInputIndex(-1);
-    setActiveCountIndex(-1);
-    setActiveOutputIndex(-1);
-    setCurrentStep(0);
-    setTotalSteps(0);
-    setWrites(0);
-    resetChallengeStats();
-    if (animationRef.current) clearTimeout(animationRef.current);
-  }, [resetChallengeStats, safeRange.max, safeRange.min]);
-
-  useEffect(() => {
-    const nextArray = normalizeArray(array, safeRange.min, safeRange.max);
-    setArray(nextArray);
-    resetStats();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [safeRange.min, safeRange.max]);
-
-  const cancellableDelay = async () => {
+  const cancellableDelay = async (ms = 1000) => {
     await new Promise((resolve) => {
       resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, 1000 / speedRef.current);
+      animationRef.current = setTimeout(resolve, ms / speedRef.current);
     });
     await checkPause();
   };
 
-  const applyArray = (values) => {
-    setArray(normalizeArray(values, safeRange.min, safeRange.max));
-    setSorted(false);
-    resetStats();
-  };
-
-  const handleRangeChange = (type, value) => {
-    const next = Math.trunc(Number(value));
-    if (!Number.isFinite(next)) return;
-
-    if (type === "min") {
-      setMinValue(Math.min(next, Number(maxValue)));
-      return;
+  const resetStats = () => {
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ current: -1, countIndex: -1, outputIndex: -1 });
+    setCurrentPhase("");
+    setStepExplanation("");
+    setCounts([]);
+    setOutput([]);
+    if (animationRef.current) {
+      clearTimeout(animationRef.current);
     }
-
-    setMaxValue(Math.max(next, Number(minValue)));
-  };
-
-  const handleGenerate = () => {
-    const length = 10;
-    const next = Array.from(
-      { length },
-      () => Math.floor(Math.random() * (safeRange.max - safeRange.min + 1)) + safeRange.min
-    );
-    applyArray(next);
   };
 
   const countingSort = async () => {
-    if (sorting || sorted || array.length === 0) return;
+    if (sorted || sorting || array.length === 0) return;
 
     isSortingRef.current = true;
     setSorting(true);
     setSorted(false);
+    const arr = [...array];
+    const n = arr.length;
+    const maxVal = Math.max(...arr);
+    const count = new Array(maxVal + 1).fill(0);
+    const result = new Array(n).fill(null);
+
+    setCounts([...count]);
+    setOutput([...result]);
+    setTotalSteps(n + maxVal + 1 + n);
     setCurrentStep(0);
-    setTotalSteps(array.length * 2 + (safeRange.max - safeRange.min));
-    setWrites(0);
+    setCurrentPhase("Counting Phase");
+    setStepExplanation("Scanning the input array and counting how often each value appears.");
 
-    const counts = Array(safeRange.max - safeRange.min + 1).fill(0);
-    const output = Array(array.length).fill(null);
-    setCountArray(generateCountingArray(safeRange.min, safeRange.max));
-    setOutputArray(output);
-
-    setPhase("Frequency count");
-    for (let i = 0; i < array.length; i++) {
+    for (let i = 0; i < n; i++) {
       if (!isSortingRef.current) return;
-      const countIndex = array[i] - safeRange.min;
-      counts[countIndex] += 1;
-      setActiveInputIndex(i);
-      setActiveCountIndex(countIndex);
-      setActiveOutputIndex(-1);
-      setCountArray(counts.map((count, index) => ({ value: safeRange.min + index, count })));
-      setCurrentStep((step) => step + 1);
-      setMessage(`Read ${array[i]} at input index ${i}; increment count[${array[i]}].`);
+      const value = arr[i];
+      setCurrentIndices({ current: i, countIndex: value, outputIndex: -1 });
+      setStepExplanation(`Incrementing count for value ${value} at index ${value}.`);
+      count[value] += 1;
+      setCounts([...count]);
+      setComparisons((prev) => prev + 1);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay();
     }
 
-    setPhase("Cumulative count");
-    for (let i = 1; i < counts.length; i++) {
+    setCurrentPhase("Prefix Sum Phase");
+    setStepExplanation(`Building cumulative counts to determine final sorted positions.`);
+    for (let i = 1; i < count.length; i++) {
       if (!isSortingRef.current) return;
-      counts[i] += counts[i - 1];
-      setActiveInputIndex(-1);
-      setActiveCountIndex(i);
-      setActiveOutputIndex(-1);
-      setCountArray(counts.map((count, index) => ({ value: safeRange.min + index, count })));
-      setCurrentStep((step) => step + 1);
-      setMessage(`Add previous total so count[${safeRange.min + i}] becomes ${counts[i]}.`);
+      setCurrentIndices({ current: -1, countIndex: i, outputIndex: -1 });
+      setStepExplanation(`Computing cumulative count for value ${i} (previous total ${count[i - 1]}).`);
+      count[i] += count[i - 1];
+      setCounts([...count]);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay();
     }
 
-    setPhase("Stable placement");
-    let writeCount = 0;
-    for (let i = array.length - 1; i >= 0; i--) {
+    setCurrentPhase("Placement Phase");
+    setStepExplanation(`Placing elements into the output array using the count positions.`);
+    for (let i = n - 1; i >= 0; i--) {
       if (!isSortingRef.current) return;
-      const value = array[i];
-      const countIndex = value - safeRange.min;
-      const targetIndex = counts[countIndex] - 1;
-      await askChallenge(createPlacementQuestion(value, counts[countIndex], targetIndex));
-      if (!isSortingRef.current) return;
-      output[targetIndex] = value;
-      counts[countIndex] -= 1;
-      writeCount += 1;
-      setWrites(writeCount);
-      setActiveInputIndex(i);
-      setActiveCountIndex(countIndex);
-      setActiveOutputIndex(targetIndex);
-      setOutputArray([...output]);
-      setCountArray(counts.map((count, index) => ({ value: safeRange.min + index, count })));
-      setCurrentStep((step) => step + 1);
-      setMessage(`Place ${value} into output index ${targetIndex}, then decrement its count.`);
+      const value = arr[i];
+      const position = count[value] - 1;
+      result[position] = value;
+      count[value] -= 1;
+      setOutput([...result]);
+      setCounts([...count]);
+      setCurrentIndices({ current: i, countIndex: value, outputIndex: position });
+      setStepExplanation(`Placing ${value} into output index ${position}.`);
+      setSwaps((prev) => prev + 1);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay();
     }
 
     if (!isSortingRef.current) return;
-    setArray(output);
-    setPhase("Complete");
-    setMessage("Counting Sort is complete. The output array is now sorted.");
-    setActiveInputIndex(-1);
-    setActiveCountIndex(-1);
-    setActiveOutputIndex(-1);
+    setArray([...result]);
+    setOutput([...result]);
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted using Counting Sort.");
     isSortingRef.current = false;
+    setCurrentIndices({ current: -1, countIndex: -1, outputIndex: -1 });
   };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     isSortingRef.current = false;
     if (resolveRef.current) {
       resolveRef.current();
       resolveRef.current = null;
     }
-    if (animationRef.current) clearTimeout(animationRef.current);
+    if (animationRef.current) {
+      clearTimeout(animationRef.current);
+    }
+    setArray([]);
     setSorting(false);
     setSorted(false);
-    setArray([]);
     resetStats();
-  }, [resetStats]);
+  };
 
   useEffect(() => {
     return () => {
@@ -271,13 +155,8 @@ const CountingSortVisualizer = () => {
     };
   }, []);
 
-  const handleStart = useCallback(() => {
-    countingSort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sorting, sorted, array, safeRange.min, safeRange.max, speed]);
-
   useVisualizerKeyboard({
-    onStart: handleStart,
+    onStart: countingSort,
     onReset: reset,
     onSpeedChange: setSpeed,
     onTogglePlayPause: togglePlayPause,
@@ -287,79 +166,29 @@ const CountingSortVisualizer = () => {
   });
 
   return (
-    <main className="container mx-auto px-6 pb-4">
-      <p className="mb-8 text-center text-lg text-gray-600 dark:text-gray-400">
-        Build the frequency table, convert it to cumulative counts, then place values into a stable output array.
+    <main className="container mx-auto px-6 pb-6">
+      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
+        Visualize Counting Sort as it counts values and places them into sorted order.
       </p>
 
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-neutral-950 sm:p-6 md:mb-8">
-          <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_280px]">
-            <div className="flex flex-col gap-2">
-              <ArrayGenerator
-                onGenerate={handleGenerate}
-                disabled={sorting}
-                isPrimary={array.length === 0}
-              />
-              <CustomArrayInput
-                onUseCustomArray={applyArray}
-                disabled={sorting}
-                className="w-full"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Values are rounded to integers, clamped to the selected range, and limited to 12 items.
-              </p>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md mb-6 md:mb-8 border border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+            <div className="flex flex-col gap-1">
+              <ArrayGenerator onGenerate={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} isPrimary={array.length === 0} />
+              <CustomArrayInput onUseCustomArray={(newArray) => { setArray(newArray); setSorted(false); resetStats(); }} disabled={sorting} className="w-full" />
             </div>
-
-            <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-3 dark:bg-neutral-900">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Min value
-                <input
-                  type="number"
-                  value={safeRange.min}
-                  min="0"
-                  max="30"
-                  disabled={sorting}
-                  onChange={(event) => handleRangeChange("min", event.target.value)}
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-neutral-950"
-                />
-              </label>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Max value
-                <input
-                  type="number"
-                  value={safeRange.max}
-                  min={safeRange.min}
-                  max={safeRange.min + 20}
-                  disabled={sorting}
-                  onChange={(event) => handleRangeChange("max", event.target.value)}
-                  className="mt-1 w-full rounded border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-neutral-950"
-                />
-              </label>
-              <div className="col-span-2 text-xs text-gray-500 dark:text-gray-400">
-                Range size k = {safeRange.max - safeRange.min + 1}. Counting Sort uses O(n + k) time and space.
-              </div>
+            <div className="flex flex-col gap-2 justify-between">
+              <button onClick={countingSort} disabled={!array.length || sorting || sorted} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
+                {sorting ? "Sorting..." : "Start Counting Sort"}
+              </button>
+              <button onClick={reset} className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base">
+                Reset All
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <button
-              onClick={countingSort}
-              disabled={!array.length || sorting || sorted}
-              className="w-full rounded bg-[#a435f0] px-4 py-2 text-sm text-white shadow-sm transition-colors hover:bg-[#8f2cd6] disabled:opacity-75 sm:text-base"
-            >
-              {sorting ? "Sorting..." : "Start Counting Sort"}
-            </button>
-            <button
-              onClick={reset}
-              disabled={sorting}
-              className="w-full rounded border border-[#a435f0] px-4 py-2 text-sm text-[#a435f0] transition-colors hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 sm:text-base"
-            >
-              Reset All
-            </button>
-          </div>
-
-          {sorting ? (
+          {sorting && (
             <PlaybackControls
               isPaused={isPaused}
               onTogglePlayPause={togglePlayPause}
@@ -368,112 +197,101 @@ const CountingSortVisualizer = () => {
               onDecreaseSpeed={decreaseSpeed}
               onSpeedChange={setSpeed}
             />
-          ) : (
-            <div className="mt-4 flex items-center gap-4">
-              <span className="text-sm text-gray-700 dark:text-gray-300 sm:text-base">Speed:</span>
-              <input
-                type="range"
-                min="0.5"
-                max="5"
-                step="0.5"
-                value={speed}
-                onChange={(event) => setSpeed(parseFloat(event.target.value))}
-                className="w-24 sm:w-32"
-                disabled={sorting}
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300 sm:text-base">{speed}x</span>
+          )}
+
+          {!sorting && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
+              <input type="range" min="0.5" max="5" step="0.5" value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))} className="w-24 sm:w-32" disabled={sorting} />
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
             </div>
           )}
 
-          <ChallengeModePanel
-            activeQuestion={activeQuestion}
-            disabled={sorting}
-            enabled={challengeEnabled}
-            onEnabledChange={setChallengeEnabled}
-            onResetStats={resetChallengeStats}
-            onSubmitAnswer={submitAnswer}
-            stats={challengeStats}
-          />
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
+              <div className="font-medium">Count Operations:</div>
+              <div className="text-2xl">{comparisons}</div>
+            </div>
+            <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
+              <div className="font-medium">Placements:</div>
+              <div className="text-2xl">{swaps}</div>
+            </div>
+          </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 sm:text-base">
-            <div className="rounded bg-gray-100 p-3 dark:bg-neutral-900">
-              <div className="font-medium">Phase</div>
-              <div className="text-lg font-bold">{phase}</div>
-            </div>
-            <div className="rounded bg-gray-100 p-3 dark:bg-neutral-900">
-              <div className="font-medium">Writes</div>
-              <div className="text-lg font-bold">{writes}</div>
-            </div>
-            <div className="rounded bg-gray-100 p-3 dark:bg-neutral-900">
-              <div className="font-medium">Range</div>
-              <div className="text-lg font-bold">k = {safeRange.max - safeRange.min + 1}</div>
-            </div>
-            <div className="rounded bg-gray-100 p-3 dark:bg-neutral-900">
-              <div className="font-medium">Step</div>
-              <div className="text-lg font-bold">{totalSteps ? `${currentStep} / ${totalSteps}` : "-"}</div>
-            </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Step:</div>
+            <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{currentStep > 0 && !sorted ? `Processing index ${currentIndices.current}` : sorted ? "Sorting complete!" : "Start sorting to see steps"}</div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">{currentPhase || (sorted ? "Completed" : "Ready to start")}</div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">{stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}</div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-neutral-950 sm:p-6">
-          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-lg font-semibold sm:text-xl">Counting Sort Visualization</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
-          </div>
-
-          <section className="mb-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">Input array</h3>
-            <div className="flex flex-wrap justify-center gap-2">
-              {array.length ? (
-                array.map((value, index) => (
-                  <div key={`${value}-${index}`} className="flex flex-col items-center">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-base font-bold shadow-sm transition-colors sm:h-14 sm:w-14 ${getCellClass(index === activeInputIndex, sorted, "yellow")}`}
-                    >
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Input Array</h2>
+          {array.length > 0 ? (
+            <div className="flex flex-wrap gap-3 justify-center">
+              {array.map((value, index) => {
+                const isCurrent = index === currentIndices.current;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className={`w-14 h-14 flex items-center justify-center rounded-lg border-2 ${getFontSize(value)} font-bold transition-all duration-300 ${isCurrent ? "bg-yellow-400 border-yellow-600" : "bg-primary/80 border-primary"}`}>
                       {value}
                     </div>
-                    <span className="mt-1 text-xs text-gray-500">{index}</span>
+                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{index}</div>
                   </div>
-                ))
-              ) : (
-                <div className="py-6 text-center text-gray-500">Generate or enter an array to begin</div>
-              )}
+                );
+              })}
             </div>
-          </section>
+          ) : (
+            <div className="text-center py-8 text-gray-500">{sorting ? "Sorting..." : "Generate or enter an array to begin"}</div>
+          )}
+        </div>
 
-          <section className="mb-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">Count array</h3>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
-              {countArray.map((item, index) => (
-                <div
-                  key={item.value}
-                  className={`rounded-lg border-2 p-2 text-center transition-colors ${getCellClass(index === activeCountIndex, false)}`}
-                >
-                  <div className="text-xs text-gray-500 dark:text-gray-400">value</div>
-                  <div className="font-bold">{item.value}</div>
-                  <div className="mt-1 rounded bg-gray-100 px-2 py-1 font-mono text-sm dark:bg-neutral-900">
-                    {item.count}
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Count Array</h2>
+          {counts.length > 0 ? (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {counts.map((value, index) => {
+                const isCountIndex = index === currentIndices.countIndex;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className={`w-14 h-14 flex items-center justify-center rounded-lg border-2 ${getFontSize(value)} font-bold transition-all duration-300 ${isCountIndex ? "bg-pink-400 border-pink-600" : "bg-gray-100 border-gray-300"}`}>
+                      {value}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{index}</div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </section>
+          ) : (
+            <div className="text-center py-8 text-gray-500">Counting array will appear here as the algorithm processes values.</div>
+          )}
+        </div>
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">Output array</h3>
-            <div className="flex flex-wrap justify-center gap-2">
-              {(outputArray.length ? outputArray : Array(array.length).fill(null)).map((value, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-base font-bold shadow-sm transition-colors sm:h-14 sm:w-14 ${getCellClass(index === activeOutputIndex, value !== null, "green")}`}
-                  >
-                    {value ?? ""}
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Output Array</h2>
+          {output.length > 0 ? (
+            <div className="flex flex-wrap gap-3 justify-center">
+              {output.map((value, index) => {
+                const isOutputIndex = index === currentIndices.outputIndex;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className={`w-14 h-14 flex items-center justify-center rounded-lg border-2 ${getFontSize(value ?? "") } font-bold transition-all duration-300 ${isOutputIndex ? "bg-green-400 border-green-600" : "bg-gray-100 border-gray-300"}`}>
+                      {value ?? ""}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{index}</div>
                   </div>
-                  <span className="mt-1 text-xs text-gray-500">{index}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </section>
+          ) : (
+            <div className="text-center py-8 text-gray-500">The output array will populate as values are placed into sorted positions.</div>
+          )}
         </div>
       </div>
     </main>

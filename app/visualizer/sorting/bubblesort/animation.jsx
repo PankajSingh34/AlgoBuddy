@@ -8,6 +8,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
   createOptions,
   useSortingChallenge,
@@ -39,7 +40,7 @@ const createBubbleSwapQuestion = (arr, j) => {
 const BubbleSortVisualizer = () => {
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [array, setArray] = useState(() => loadFromStorage("bubble-array", []));
+  const [array, setArray] = useState([]);
   const [challengeEnabled, setChallengeEnabled] = useState(false);
   const {
     isPaused,
@@ -54,16 +55,32 @@ const BubbleSortVisualizer = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
 
-  useEffect(() => { saveToStorage("bubble-array", array); }, [array]);
+  
   useEffect(() => { saveToStorage("bubble-speed", speed); }, [speed]);
 
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setSorting(false);
+    setSorted(false);
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ i: -1, j: -1 });
+    setChallengeEnabled(false);
+  });
   const {
     activeQuestion,
     askChallenge,
@@ -85,6 +102,8 @@ const BubbleSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
+    setCurrentPhase("");
+    setStepExplanation("");
     resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
@@ -111,6 +130,8 @@ const BubbleSortVisualizer = () => {
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
+      setCurrentPhase(`Pass ${i + 1} of ${n - 1}`);
+      setStepExplanation(`Starting pass ${i + 1}, comparing adjacent elements.`);
 
       for (let j = 0; j < n - i - 1; j++) {
         if (!isSortingRef.current) return;
@@ -118,11 +139,13 @@ const BubbleSortVisualizer = () => {
         tempComparisons++;
         setComparisons(tempComparisons);
         setCurrentStep((prev) => prev + 1);
+        setStepExplanation(`Comparing ${arr[j]} and ${arr[j + 1]} at indices ${j} and ${j + 1}.`);
 
         await cancellableDelay();
         if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
+          setStepExplanation(`Since ${arr[j]} > ${arr[j + 1]}, swapping elements at indices ${j} and ${j + 1}.`);
           await askChallenge(createBubbleSwapQuestion(arr, j));
           if (!isSortingRef.current) return;
 
@@ -140,19 +163,31 @@ const BubbleSortVisualizer = () => {
           tempSwaps++;
           setSwaps(tempSwaps);
           setArray([...arr]);
+          setStepExplanation(`Swapped ${arr[j]} and ${arr[j + 1]} to continue sorting this pass.`);
 
+          await cancellableDelay();
+          if (!isSortingRef.current) return;
+        } else {
+          setStepExplanation(`Since ${arr[j]} <= ${arr[j + 1]}, no swap is needed.`);
           await cancellableDelay();
           if (!isSortingRef.current) return;
         }
       }
 
-      if (!swapped) break;
+      if (!swapped) {
+        setStepExplanation(`No swaps occurred in pass ${i + 1}; the array is already sorted.`);
+        setCurrentPhase("Completion Check");
+        await cancellableDelay();
+        break;
+      }
     }
 
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
     setShowSummary(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
   };
 
   const reset = () => {
@@ -164,10 +199,6 @@ const BubbleSortVisualizer = () => {
     setSorted(false);
     resetStats();
   };
-
-  useEffect(() => {
-    return () => { if (animationRef.current) clearTimeout(animationRef.current); };
-  }, []);
 
   // ── Stable callbacks for the keyboard hook ──────────────────────────────
   // useCallback keeps the function reference stable so the hook's useEffect
@@ -217,6 +248,7 @@ const BubbleSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
                 className="w-full"
               />
             </div>
@@ -244,8 +276,6 @@ const BubbleSortVisualizer = () => {
               isPaused={isPaused}
               onTogglePlayPause={togglePlayPause}
               speed={speed}
-              onIncreaseSpeed={increaseSpeed}
-              onDecreaseSpeed={decreaseSpeed}
               onSpeedChange={setSpeed}
             />
           )}
@@ -299,6 +329,16 @@ const BubbleSortVisualizer = () => {
                 : sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>

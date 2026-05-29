@@ -4,6 +4,7 @@ import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 function generatePalindromeFrames(str) {
   const frames = [];
@@ -174,6 +175,14 @@ const PalindromeAnimation = () => {
   const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+    useVisualizerReset(() => {
+      setStringInput("radar");
+      setIsPlaying(false);
+      setSpeed(1);
+      setCurrentFrame(-1);
+      setIsVisualizing(false);
+      setErrorMsg("");
+    });
 
   const frames = useMemo(() => {
     if (!isVisualizing || !stringInput.trim()) return [];
@@ -331,8 +340,6 @@ const PalindromeAnimation = () => {
               onTogglePlayPause={togglePlay}
               speed={speed}
               onSpeedChange={setSpeed}
-              onIncreaseSpeed={() => setSpeed((s) => Math.min(s + 0.5, 5))}
-              onDecreaseSpeed={() => setSpeed((s) => Math.max(s - 0.5, 0.5))}
               onStepForward={stepForward}
               onStepBackward={stepBackward}
               onReset={handleReset}

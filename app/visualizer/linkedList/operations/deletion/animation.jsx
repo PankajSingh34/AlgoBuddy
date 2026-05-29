@@ -7,6 +7,7 @@ import {
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
 import { createLinkedListTempNode } from "@/app/visualizer/linkedList/utils/createTempNode";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const LinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState("");
@@ -14,6 +15,11 @@ const LinkedListVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const nodeRefs = useRef([]);
   const containerRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+  });
 
   const generateAddress = () =>
     `0x${Math.floor(Math.random() * 0x10000)

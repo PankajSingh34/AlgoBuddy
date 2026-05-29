@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   createSessionEvent,
@@ -75,6 +75,8 @@ export function useCollaboration({
   const seenSequencesRef = useRef(new Map());
   const callbacksRef = useRef({ onRemoteStateDelta });
   const currentDisplayNameRef = useRef(displayName);
+  const recordingRef = useRef(recording);
+  const presenterIdRef = useRef(presenterId);
 
   useEffect(() => {
     callbacksRef.current.onRemoteStateDelta = onRemoteStateDelta;
@@ -84,7 +86,15 @@ export function useCollaboration({
     currentDisplayNameRef.current = displayName;
   }, [displayName]);
 
-  function cleanupTransport() {
+  useEffect(() => {
+    recordingRef.current = recording;
+  }, [recording]);
+
+  useEffect(() => {
+    presenterIdRef.current = presenterId;
+  }, [presenterId]);
+
+  const cleanupTransport = useCallback(() => {
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
@@ -94,27 +104,27 @@ export function useCollaboration({
       broadcastRef.current.close();
       broadcastRef.current = null;
     }
-  }
+  }, []);
 
-  function updateParticipantsFromJoin(participant) {
+  const updateParticipantsFromJoin = useCallback((participant) => {
     if (!participant?.id) return;
 
     setParticipants((current) => {
       const next = current.filter((entry) => entry.id !== participant.id);
       return [...next, participant];
     });
-  }
+  }, []);
 
-  function removeParticipant(participantId) {
+  const removeParticipant = useCallback((participantId) => {
     setParticipants((current) => current.filter((entry) => entry.id !== participantId));
-  }
+  }, []);
 
-  function recordIfNeeded(event) {
-    if (!recording) return;
+  const recordIfNeeded = useCallback((event) => {
+    if (!recordingRef.current) return;
     setRecordedEvents((current) => [...current, event]);
-  }
+  }, []);
 
-  function processEnvelope(envelope) {
+  const processEnvelope = useCallback((envelope) => {
     if (!envelope || typeof envelope !== "object") return;
 
     const lastSeen = seenSequencesRef.current.get(envelope.senderId) || 0;
@@ -143,8 +153,14 @@ export function useCollaboration({
         return;
       }
       case "state:update": {
+        const nextPresenterId =
+          envelope.payload?.delta?.presenterId !== undefined
+            ? envelope.payload.delta.presenterId || null
+            : presenterIdRef.current;
+
         if (envelope.payload?.delta?.presenterId !== undefined) {
-          setPresenterId(envelope.payload.delta.presenterId || null);
+          presenterIdRef.current = nextPresenterId;
+          setPresenterId(nextPresenterId);
         }
 
         callbacksRef.current.onRemoteStateDelta?.(envelope.payload?.delta || {}, envelope);
@@ -168,15 +184,17 @@ export function useCollaboration({
         return;
       }
       case "control:grant": {
-        setPresenterId(envelope.payload?.presenterId || null);
+        const nextPresenterId = envelope.payload?.presenterId || null;
+        presenterIdRef.current = nextPresenterId;
+        setPresenterId(nextPresenterId);
         return;
       }
       default:
         return;
     }
-  }
+  }, [recordIfNeeded, removeParticipant, updateParticipantsFromJoin]);
 
-  function sendEnvelope(type, payload = {}, options = {}) {
+  const sendEnvelope = useCallback((type, payload = {}, options = {}) => {
     const activeSession = sessionRef.current;
     if (!activeSession) {
       throw new Error("Join or create a session first.");
@@ -190,7 +208,9 @@ export function useCollaboration({
       sequence: ++sequenceRef.current,
     });
 
-    processEnvelope(envelope);
+    if (options.applyLocal !== false) {
+      processEnvelope(envelope);
+    }
 
     channelRef.current?.send({
       type: "broadcast",
@@ -202,19 +222,17 @@ export function useCollaboration({
       broadcastRef.current.postMessage(envelope);
     }
 
-    if (options.applyLocal === false) {
-      return envelope;
-    }
-
     return envelope;
-  }
+  }, [clientId, processEnvelope]);
 
-  async function attachSession(nextSession, sessionSecret) {
+  const attachSession = useCallback(async (nextSession, sessionSecret) => {
     cleanupTransport();
     seenSequencesRef.current = new Map();
+    sequenceRef.current = 0;
     setParticipants([]);
     setAnnotations([]);
     setPresenterId(null);
+    presenterIdRef.current = null;
     sessionRef.current = nextSession;
     setSession(nextSession);
     setError(null);
@@ -222,23 +240,27 @@ export function useCollaboration({
 
     const sessionChannelName = `collab:${nextSession.id}:${sessionSecret}`;
     const channel = supabase.channel(sessionChannelName, {
-      config: { broadcast: { self: true } },
+      config: { broadcast: { self: false } },
     });
 
     channel.on("broadcast", { event: "session:event" }, ({ payload }) => {
       processEnvelope(payload);
     });
 
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        setConnectionStatus("connected");
-        sendEnvelope("join", {
-          role: nextSession.presenterId ? "attendee" : "presenter",
-        });
-      } else if (status === "TIMED_OUT" || status === "CHANNEL_ERROR") {
-        setConnectionStatus("error");
-      }
+    const subscribed = await new Promise((resolve) => {
+      channel.subscribe((status) => resolve(status));
     });
+
+    if (subscribed === "SUBSCRIBED") {
+      setConnectionStatus("connected");
+      sendEnvelope("join", {
+        role: nextSession.presenterId ? "attendee" : "presenter",
+      });
+    } else {
+      setConnectionStatus("error");
+      cleanupTransport();
+      throw new Error("Failed to connect to collaboration channel.");
+    }
 
     channelRef.current = channel;
 
@@ -249,9 +271,14 @@ export function useCollaboration({
     }
 
     return nextSession;
-  }
+  }, [cleanupTransport, processEnvelope, sendEnvelope]);
 
-  async function createSession({ title, visibility, password, module, createdBy }) {
+  const grantControl = useCallback((nextPresenterId) => {
+    const presenter = nextPresenterId || clientId;
+    return sendEnvelope("control:grant", { presenterId: presenter });
+  }, [clientId, sendEnvelope]);
+
+  const createSession = useCallback(async ({ title, visibility, password, module, createdBy }) => {
     const data = await requestJson("/api/sessions", {
       method: "POST",
       body: JSON.stringify({ title, visibility, password, module, createdBy }),
@@ -260,9 +287,9 @@ export function useCollaboration({
     await attachSession(data.session, data.sessionSecret);
     grantControl(clientId);
     return data;
-  }
+  }, [attachSession, clientId, grantControl]);
 
-  async function joinSession({ sessionCode, password, createdBy }) {
+  const joinSession = useCallback(async ({ sessionCode, password, createdBy }) => {
     const resolvedSessionId = await resolveSessionIdentifier(sessionCode);
     if (!resolvedSessionId) {
       throw new Error("A session code or link is required.");
@@ -275,9 +302,9 @@ export function useCollaboration({
 
     await attachSession(data.session, data.sessionSecret);
     return data;
-  }
+  }, [attachSession]);
 
-  async function leaveSession() {
+  const leaveSession = useCallback(async () => {
     if (sessionRef.current) {
       try {
         sendEnvelope("leave", { role: "participant" }, { applyLocal: false });
@@ -293,21 +320,18 @@ export function useCollaboration({
     setParticipants([]);
     setAnnotations([]);
     setPresenterId(null);
-  }
+    presenterIdRef.current = null;
+    seenSequencesRef.current = new Map();
+  }, [cleanupTransport, sendEnvelope]);
 
-  function requestControl() {
+  const requestControl = useCallback(() => {
     return sendEnvelope("control:request", {
       requestedBy: clientId,
       requestedByName: currentDisplayNameRef.current,
     });
-  }
+  }, [clientId, sendEnvelope]);
 
-  function grantControl(nextPresenterId) {
-    const presenter = nextPresenterId || clientId;
-    return sendEnvelope("control:grant", { presenterId: presenter });
-  }
-
-  function addAnnotation({ timeIndex, text }) {
+  const addAnnotation = useCallback(({ timeIndex, text }) => {
     const annotation = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `annotation_${Date.now()}`,
       timeIndex,
@@ -321,26 +345,28 @@ export function useCollaboration({
 
     sendEnvelope("annotation:add", annotation);
     return annotation;
-  }
+  }, [clientId, sendEnvelope]);
 
-  function updateState(delta) {
+  const updateState = useCallback((delta) => {
     return sendEnvelope("state:update", { delta });
-  }
+  }, [sendEnvelope]);
 
-  function startRecording() {
+  const startRecording = useCallback(() => {
     setRecordedEvents([]);
+    recordingRef.current = true;
     setRecording(true);
-  }
+  }, []);
 
-  function stopRecording() {
+  const stopRecording = useCallback(() => {
+    recordingRef.current = false;
     setRecording(false);
-  }
+  }, []);
 
-  function clearRecording() {
+  const clearRecording = useCallback(() => {
     setRecordedEvents([]);
-  }
+  }, []);
 
-  function exportRecording() {
+  const exportRecording = useCallback(() => {
     return serializeSessionTrace({
       metadata: {
         session,
@@ -349,36 +375,61 @@ export function useCollaboration({
       },
       events: recordedEvents,
     });
-  }
+  }, [clientId, presenterId, recordedEvents, session]);
 
-  function importRecording(text, initialSnapshot = {}) {
+  const importRecording = useCallback((text, initialSnapshot = {}) => {
     const trace = deserializeSessionTrace(text);
     return replaySessionTrace(initialSnapshot, trace.events);
-  }
+  }, []);
 
-  return {
-    session,
-    connectionStatus,
-    participants,
-    annotations,
-    presenterId,
-    recording,
-    recordedEvents,
-    error,
-    clientId,
-    createSession,
-    joinSession,
-    leaveSession,
-    sendEnvelope: updateState,
-    requestControl,
-    grantControl,
-    addAnnotation,
-    startRecording,
-    stopRecording,
-    clearRecording,
-    exportRecording,
-    importRecording,
-    setError,
-    setPresenterId,
-  };
+  return useMemo(
+    () => ({
+      session,
+      connectionStatus,
+      participants,
+      annotations,
+      presenterId,
+      recording,
+      recordedEvents,
+      error,
+      clientId,
+      createSession,
+      joinSession,
+      leaveSession,
+      sendEnvelope: updateState,
+      requestControl,
+      grantControl,
+      addAnnotation,
+      startRecording,
+      stopRecording,
+      clearRecording,
+      exportRecording,
+      importRecording,
+      setError,
+      setPresenterId,
+    }),
+    [
+      addAnnotation,
+      annotations,
+      clearRecording,
+      clientId,
+      connectionStatus,
+      createSession,
+      error,
+      exportRecording,
+      grantControl,
+      importRecording,
+      joinSession,
+      leaveSession,
+      participants,
+      presenterId,
+      recordedEvents,
+      recording,
+      requestControl,
+      session,
+      stopRecording,
+      startRecording,
+      updateState,
+    ],
+  );
 }

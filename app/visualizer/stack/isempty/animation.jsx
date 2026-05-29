@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const StackVisualizer = () => {
   /* ---------- state ---------- */
@@ -202,6 +203,15 @@ const StackVisualizer = () => {
 /* ---------- cute floating cloud (empty) ---------- */
 const EmptyCloud = () => {
   const cloudRef = useRef(null);
+  useVisualizerReset(() => {
+    setStack([]);
+    setInputValue("");
+    setOperation(null);
+    setMessage("Stack is empty");
+    setIsAnimating(false);
+    setPeekedItem(null);
+    setIsEmptyStatus(null);
+  });
   useEffect(() => {
     gsap.to(cloudRef.current, { y: -6, duration: 2, repeat: -1, yoyo: true, ease: "power1.inOut" });
   }, []);

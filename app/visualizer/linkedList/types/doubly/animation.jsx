@@ -8,6 +8,7 @@ import Quiz from '@/app/visualizer/linkedList/types/doubly/quiz';
 import CodeBlock from "@/app/visualizer/linkedList/types/doubly/codeBlock";
 import BackToTop from '@/app/components/ui/backtotop';
 import GoBackButton from "@/app/components/ui/goback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const DoublyLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -15,6 +16,11 @@ const DoublyLinkedListVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const nodeIdCounter = useRef(1);
   const animationRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+  });
 
   const PointerBridge = ({ direction, label, color, reversed = false }) => {
     const laneClass = direction === 'next'

@@ -3,12 +3,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import PushPop from "@/app/components/ui/PushPop";
 import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const StackVisualizer = () => {
   const [stack, setStack] = useState([]);
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Stack is empty");
   const [isAnimating, setIsAnimating] = useState(false);
+  useVisualizerReset(() => {
+    setStack([]);
+    setOperation(null);
+    setMessage("Stack is empty");
+    setIsAnimating(false);
+  });
   const { speed, setSpeed } = usePlayback(1);
   const stackRefs = useRef([]);
   const animationQueue = useRef([]);

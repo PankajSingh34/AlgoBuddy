@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/navbarinner";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
@@ -42,9 +41,8 @@ export default function VisualizerPageLayout({
 }) {
   return (
     <>
-      <Navbar />
 
-      <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#0f0f0f] dark:text-[#f5f5f5]">
+      <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#1c1d1f] dark:text-[#f5f5f5]">
         <section className="px-6 md:px-12">
           <div className="mb-4 mt-2">
             <Breadcrumbs paths={paths} />
@@ -112,3 +110,4 @@ export default function VisualizerPageLayout({
     </>
   );
 }
+

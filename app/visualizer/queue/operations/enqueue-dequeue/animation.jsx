@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const QueueVisualizer = () => {
   const [queue, setQueue] = useState([]);
@@ -9,6 +10,13 @@ const QueueVisualizer = () => {
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
+  useVisualizerReset(() => {
+    setQueue([]);
+    setInputValue("");
+    setOperation(null);
+    setMessage("");
+    setIsAnimating(false);
+  });
   const { speed, setSpeed } = usePlayback(1);
 
   const enqueue = () => {

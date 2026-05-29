@@ -7,7 +7,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
-
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 const getFontSize = (value) => {
   const len = String(value).length;
   if (len <= 2) return "text-lg";
@@ -40,13 +40,18 @@ const LinearSearch = () => {
   const resolveRef = useRef(null);
   const isSearchingRef = useRef(false);
   const formRef = useRef(null);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setCurrentIndex(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+  });
   const elementRefs = useRef([]);
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(animationRef.current);
-    };
-  }, []);
 
   const handleReset = () => {
     isSearchingRef.current = false;
@@ -267,8 +272,6 @@ const targetValue = parseInt(target);
             isPaused={isPaused}
             onTogglePlayPause={togglePlayPause}
             speed={speed}
-            onIncreaseSpeed={increaseSpeed}
-            onDecreaseSpeed={decreaseSpeed}
             onSpeedChange={setSpeed}
           />
         )}

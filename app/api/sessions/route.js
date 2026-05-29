@@ -15,9 +15,13 @@ function getClientIp(headers) {
   return "unknown";
 }
 
-export async function GET() {
-  const sessions = await listCollaborationSessions();
-  return Response.json({ sessions });
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const limit = searchParams.get("limit") ?? undefined;
+  const cursor = searchParams.get("cursor") ?? undefined;
+
+  const { sessions, nextCursor } = await listCollaborationSessions({ limit, cursor });
+  return Response.json({ sessions, nextCursor: nextCursor ?? null });
 }
 
 export async function POST(request) {

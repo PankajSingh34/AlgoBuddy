@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -18,6 +19,13 @@ const LinkedListMerge = () => {
   const mergedRefs = useRef([]);
   const arrowRefs = useRef([]);
   const containerRef = useRef(null);
+  useVisualizerReset(() => {
+    setList1([]);
+    setList2([]);
+    setMergedList([]);
+    setIsAnimating(false);
+    setCurrentPointers({ list1: 0, list2: 0 });
+  });
   const animationTimeline = useRef(gsap.timeline());
 
   const generateRandomList = (setList) => {

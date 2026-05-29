@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 
 const termsSections = [
@@ -62,7 +61,6 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[var(--udemy-dark-bg)]">
-      <Navbar />
       <main className="container-app section-app">
         <div className="mx-auto max-w-3xl">
           <h1 className="mb-2 text-3xl font-bold text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]">
@@ -123,3 +121,4 @@ export default function TermsPage() {
     </div>
   );
 }
+

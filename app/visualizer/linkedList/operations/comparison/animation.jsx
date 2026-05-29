@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -13,6 +14,13 @@ const LinkedListComparison = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPointers, setCurrentPointers] = useState({ list1: 0, list2: 0 });
   const [comparisonResult, setComparisonResult] = useState(null);
+  useVisualizerReset(() => {
+    setList1([]);
+    setList2([]);
+    setIsAnimating(false);
+    setCurrentPointers({ list1: 0, list2: 0 });
+    setComparisonResult(null);
+  });
   const list1Refs = useRef([]);
   const list2Refs = useRef([]);
   const animationTimeline = useRef(gsap.timeline());

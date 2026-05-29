@@ -1,85 +1,92 @@
 import React from "react";
 import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
-import KeyboardShortcutsLegend from "@/app/components/ui/KeyboardShortcutsLegend";
 
 export default function PlaybackControls({
-  isPaused,
-  onTogglePlayPause,
+  isPlaying,
+  onPlayPause,
   speed,
   onIncreaseSpeed,
   onDecreaseSpeed,
   onSpeedChange,
   disabled = false,
-  showShortcuts = true,
   showPlayPause = true,
   onStepForward,
   onStepBackward,
   onReset,
+  onClear,
+  clearLabel = "Clear",
   progressText,
 }) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
+    <div className="flex flex-col sm:flex-row items-center justify-between w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-3 md:p-4 rounded-2xl shadow-lg shadow-black/20 gap-4">
       {/* Play/Pause Button & Frame Stepping */}
       {showPlayPause && (
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-          {onReset && (
-          <button
-            type="button"
-            onClick={onReset}
-            disabled={disabled}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Reset"
-          >
-            <RotateCcw size={20} />
-          </button>
-        )}
-        
-        {onStepBackward && (
-          <button
-            type="button"
-            onClick={onStepBackward}
-            disabled={disabled}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Previous Step"
-          >
-            <ChevronLeft size={24} />
-          </button>
-        )}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-center bg-slate-950/70 p-1.5 rounded-full border border-slate-800/80 shadow-inner">
+          {onStepBackward && (
+            <button
+              type="button"
+              onClick={onStepBackward}
+              disabled={disabled}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Previous Step"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
 
+          <button
+            type="button"
+            onClick={onPlayPause}
+            disabled={disabled}
+            className="flex items-center justify-center bg-[#a435f0] text-white w-10 h-10 rounded-full hover:bg-[#8f2cd6] transition-all shadow-md shadow-[#a435f0]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!isPlaying ? "Play" : "Pause"}
+          >
+            {!isPlaying ? <Play size={20} className="fill-current ml-1" /> : <Pause size={20} className="fill-current" />}
+          </button>
+
+          {onStepForward && (
+            <button
+              type="button"
+              onClick={onStepForward}
+              disabled={disabled}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Next Step"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              disabled={disabled}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-1"
+              title="Reset"
+            >
+              <RotateCcw size={18} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Clear Button */}
+      {onClear && (
         <button
           type="button"
-          onClick={onTogglePlayPause}
+          onClick={onClear}
           disabled={disabled}
-          className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors font-medium shadow-sm justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30 flex items-center gap-1.5 w-full sm:w-auto justify-center"
         >
-          {isPaused ? <Play size={20} className="fill-current ml-1" /> : <Pause size={20} />}
-          {isPaused ? "Play" : "Pause"}
+          <RotateCcw size={14} /> {clearLabel}
         </button>
-
-        {onStepForward && (
-          <button
-            type="button"
-            onClick={onStepForward}
-            disabled={disabled}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Next Step"
-          >
-            <ChevronRight size={24} />
-          </button>
-        )}
-      </div>
       )}
 
       {/* Speed Controls */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onDecreaseSpeed}
-          className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={disabled || speed <= 0.5}
-        >
-          -
-        </button>
+      <div className="flex items-center gap-3 bg-slate-950/70 px-5 py-2 rounded-full border border-slate-800/80 shadow-inner h-10">
+        <span className="text-slate-400 font-bold text-[10px] sm:text-xs uppercase tracking-widest select-none">
+          SPEED
+        </span>
 
         {onSpeedChange ? (
           <input
@@ -89,39 +96,25 @@ export default function PlaybackControls({
             step="0.5"
             value={speed}
             onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-            className="w-24 sm:w-32"
+            className="w-20 sm:w-24 accent-[#a435f0] cursor-pointer"
             disabled={disabled}
           />
         ) : null}
 
-        <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center">
-          Speed: {speed}x
+        <span className="text-[#c084fc] font-black text-xs sm:text-sm min-w-[28px] text-right select-none">
+          {speed}x
         </span>
-
-        <button
-          type="button"
-          onClick={onIncreaseSpeed}
-          className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={disabled || speed >= 5}
-        >
-          +
-        </button>
       </div>
 
       {progressText && (
-        <div className="hidden lg:block text-right">
-          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">PROGRESS</div>
-          <div className="text-sm font-bold text-gray-900 dark:text-white">
+        <div className="hidden lg:block text-right bg-slate-950/40 px-3 py-1.5 rounded-lg border border-slate-800">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">PROGRESS</div>
+          <div className="text-sm font-bold text-slate-200">
             {progressText}
           </div>
         </div>
       )}
 
-      {showShortcuts && (
-        <div className="hidden md:block ml-auto">
-          <KeyboardShortcutsLegend />
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import PushPop from "@/app/components/ui/PushPop";
 import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const StackVisualizer = () => {
   const [stack, setStack] = useState([]);
@@ -14,6 +15,12 @@ const StackVisualizer = () => {
   const stackRef = useRef(null);
   const itemRefs = useRef([]);
   const peekRef = useRef(null);
+  useVisualizerReset(() => {
+    setStack([]);
+    setOperation(null);
+    setMessage("");
+    setIsAnimating(false);
+  });
 
   /* ---------- random numbers ---------- */
   const addRandomStack = () => {
