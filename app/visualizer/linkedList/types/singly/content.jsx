@@ -264,7 +264,7 @@ const content = () => {
         <section className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Applications</h2>
           <div className="prose dark:prose-invert max-w-none">
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc pl-5 marker:text-blue-500 dark:marker:text-blue-400">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc pl-5 marker:text-primary dark:marker:text-[#c27cf7]">
               {applications.map((app, index) => (
                 <li key={index} className="text-[#374151] dark:text-[#d1d5db] pl-2">
                   {app}
@@ -273,7 +273,7 @@ const content = () => {
             </ul>
             <div className="mt-4 p-4 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-xl border border-[#e9d5ff] dark:border-[#3b1a6e]">
               <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
-                <strong>Note:</strong> Singly linked lists are preferred when you need constant-time insertions/deletions at the beginning and don't require backward traversal.
+                <strong>Note:</strong> Singly linked lists are preferred when you need constant-time insertions/deletions at the beginning and don&apos;t require backward traversal.
               </p>
             </div>
           </div>

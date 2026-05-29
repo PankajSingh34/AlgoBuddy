@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/navbar";
 import Hero from "@/app/components/hero";
 import ConceptsSection from "@/app/components/ConceptsSection";
 import PersonalizedSection from "@/app/components/PersonalizedSection";
@@ -43,8 +42,7 @@ export const metadata = {
 export default function Home() {
   return (
     <>
-      <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
-        <Navbar />
+      <div className="landing-page visualizer-page min-h-screen bg-surface-50 dark:bg-surface-900">
         <div id="hero">
           <Hero />
         </div>
@@ -56,3 +54,4 @@ export default function Home() {
     </>
   );
 }
+

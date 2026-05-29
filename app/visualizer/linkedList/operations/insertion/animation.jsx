@@ -6,6 +6,8 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { createLinkedListTempNode } from "@/app/visualizer/linkedList/utils/createTempNode";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const LinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState("");
@@ -13,6 +15,11 @@ const LinkedListVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const nodeRefs = useRef([]);
   const containerRef = useRef(null);
+  useVisualizerReset(() => {
+    setInputValue("");
+    setList([]);
+    setIsAnimating(false);
+  });
   const animationTimeline = useRef(gsap.timeline());
 
   const generateAddress = () =>
@@ -32,12 +39,10 @@ const LinkedListVisualizer = () => {
       next: "NULL",
     };
 
-    const tempNode = document.createElement("div");
-    tempNode.className = "node absolute flex border border-gray-300";
-    tempNode.innerHTML = `
-      <div class="data-part rounded-l-lg bg-blue-500 p-4 text-white">${inputValue}</div>
-      <div class="next-part rounded-r-lg bg-blue-300 p-4">NULL</div>
-    `;
+    const tempNode = createLinkedListTempNode({
+      value: inputValue,
+      nextText: "NULL",
+    });
     containerRef.current.appendChild(tempNode);
 
     gsap.set(tempNode, {
@@ -122,7 +127,7 @@ const LinkedListVisualizer = () => {
             <button
               onClick={addNode}
               disabled={isAnimating || !inputValue}
-              className="rounded-lg bg-blue-600 px-6 py-3 text-white disabled:bg-gray-400"
+              className="rounded-lg bg-primary px-6 py-3 text-white disabled:bg-gray-400"
             >
               {isAnimating ? "Adding..." : "Add Node"}
             </button>
@@ -139,11 +144,11 @@ const LinkedListVisualizer = () => {
       <VisualizerCard>
         <div className="mb-6 flex justify-center gap-4 text-sm sm:gap-8 sm:text-base">
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-full bg-blue-500"></div>
+            <div className="mr-2 h-4 w-4 rounded-full bg-primary"></div>
             <span>Data</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-full bg-blue-300 dark:bg-blue-600"></div>
+            <div className="mr-2 h-4 w-4 rounded-full bg-[#c27cf7] dark:bg-primary"></div>
             <span>Next Pointer</span>
           </div>
         </div>
@@ -164,10 +169,10 @@ const LinkedListVisualizer = () => {
                     ref={(el) => (nodeRefs.current[index] = el)}
                     className="node flex"
                   >
-                    <div className="data-part w-16 rounded-l-lg bg-blue-500 p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg">
+                    <div className="data-part w-16 rounded-l-lg bg-primary p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg">
                       {node.value}
                     </div>
-                    <div className="next-part w-16 rounded-r-lg bg-blue-300 p-3 text-center font-mono text-xs dark:bg-blue-600 sm:w-20 sm:p-4 sm:text-base">
+                    <div className="next-part w-16 rounded-r-lg bg-[#c27cf7] p-3 text-center font-mono text-xs dark:bg-primary sm:w-20 sm:p-4 sm:text-base">
                       {node.next}
                     </div>
                   </div>

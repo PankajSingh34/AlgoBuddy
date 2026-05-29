@@ -3,6 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -15,7 +19,16 @@ const MergeSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [sorting, setSorting] = useState(false);
   const [sorted, setSorted] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const {
+    isPaused,
+    speed,
+    speedRef,
+    setSpeed,
+    togglePlayPause,
+    increaseSpeed,
+    decreaseSpeed,
+    checkPause,
+  } = usePlayback(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,20 +41,38 @@ const MergeSortVisualizer = () => {
     comparing: [],
     levels: [],
     currentLevel: -1,
+    recursionPath: [],
+    mid: -1,
   });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
 
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setSorting(false);
+    setSorted(false);
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ left: -1, right: -1, mergeStart: -1, mergeEnd: -1, comparing: [], levels: [], currentLevel: -1 });
+  });
 
-  const cancellableDelay = (ms) => {
-    return new Promise((resolve) => {
+  const cancellableDelay = async (ms) => {
+    await new Promise((resolve) => {
       resolveRef.current = resolve;
       animationRef.current = setTimeout(() => {
         resolveRef.current = null;
         resolve();
-      }, ms);
+      }, ms / speedRef.current);
     });
+    await checkPause();
   };
   
 
@@ -59,7 +90,11 @@ const MergeSortVisualizer = () => {
       comparing: [],
       levels: [],
       currentLevel: -1,
+      recursionPath: [],
+      mid: -1,
     });
+    setCurrentPhase("");
+    setStepExplanation("");
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -83,6 +118,8 @@ const MergeSortVisualizer = () => {
       j = 0,
       k = l;
 
+    setCurrentPhase("Merge Phase");
+    setStepExplanation(`Merging two sorted subarrays: [${l}, ${m}] and [${m + 1}, ${r}].`);
     while (i < n1 && j < n2) {
       setCurrentIndices((prev) => ({
         ...prev,
@@ -90,17 +127,19 @@ const MergeSortVisualizer = () => {
         mergeStart: l,
         mergeEnd: r,
       }));
-
+      setStepExplanation(`Comparing ${L[i]} from the left subarray with ${R[j]} from the right subarray.`);
       setComparisons((prev) => prev + 1);
       setCurrentStep((prev) => prev + 1);
-      await cancellableDelay(1000 / speed);
+      await cancellableDelay(1000);
       if (!isSortingRef.current) return;
 
       if (L[i] <= R[j]) {
         arr[k] = L[i];
+        setStepExplanation(`Moving ${L[i]} from the left subarray into position ${k}.`);
         i++;
       } else {
         arr[k] = R[j];
+        setStepExplanation(`Moving ${R[j]} from the right subarray into position ${k}.`);
         j++;
       }
       setSwaps((prev) => prev + 1);
@@ -117,7 +156,7 @@ const MergeSortVisualizer = () => {
       }
 
       k++;
-      await cancellableDelay(1000 / speed);
+      await cancellableDelay(1000);
       if (!isSortingRef.current) return;
     }
 
@@ -136,7 +175,7 @@ const MergeSortVisualizer = () => {
         }
       }
       k++;
-      await cancellableDelay(1000 / speed);
+      await cancellableDelay(1000);
       if (!isSortingRef.current) return;
     }
 
@@ -155,7 +194,7 @@ const MergeSortVisualizer = () => {
         }
       }
       k++;
-      await cancellableDelay(1000 / speed);
+      await cancellableDelay(1000);
       if (!isSortingRef.current) return;
     }
   };
@@ -166,6 +205,8 @@ const MergeSortVisualizer = () => {
     if (l >= r) return;
     const currentPath = [...path, { l, r }];
     const m = l + Math.floor((r - l) / 2);
+    setCurrentPhase("Divide Phase");
+    setStepExplanation(`Splitting array range [${l}, ${r}] into [${l}, ${m}] and [${m + 1}, ${r}].`);
     setCurrentIndices((prev) => ({
       ...prev,
       currentLevel: level,
@@ -174,7 +215,7 @@ const MergeSortVisualizer = () => {
       right: r,
       mid: m,
     }));
-    await cancellableDelay(1000 / speed);
+    await cancellableDelay(1000);
     if (!isSortingRef.current) return;
     await mergeSortHelper(arr, l, m, level + 1, currentPath);
     if (!isSortingRef.current) return;
@@ -197,6 +238,8 @@ const MergeSortVisualizer = () => {
     setArray([...arr]);
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
     isSortingRef.current = false;
     setCurrentIndices({
       left: -1,
@@ -207,6 +250,7 @@ const MergeSortVisualizer = () => {
       levels: [],
       currentLevel: -1,
       recursionPath: [],
+      mid: -1,
     });
   };
 
@@ -232,6 +276,17 @@ const MergeSortVisualizer = () => {
     };
   }, []);
 
+  // keyboard shortcuts
+  useVisualizerKeyboard({
+    onStart:       mergeSort,
+    onReset:       reset,
+    onSpeedChange: setSpeed,
+    onTogglePlayPause: togglePlayPause,
+    speed,
+    sorting,
+    sorted,
+  });
+
   const isInCurrentRange = (index) => index >= currentIndices.left && index <= currentIndices.right;
   const isBeingMerged = (index) => index >= currentIndices.mergeStart && index <= currentIndices.mergeEnd;
 
@@ -252,6 +307,7 @@ const MergeSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                isPrimary={array.length === 0}
               />
               <CustomArrayInput
                 onUseCustomArray={(newArray) => {
@@ -260,6 +316,7 @@ const MergeSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
                 className="mb-4"
               />
             </div>
@@ -267,13 +324,14 @@ const MergeSortVisualizer = () => {
               <button
                 onClick={mergeSort}
                 disabled={!array.length || sorting || sorted}
-                className="w-full disabled:opacity-75 bg-none bg-green-500 px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-black"
+                className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white"
               >
                 {sorting ? "Sorting..." : "Start Merge Sort"}
               </button>
               <button
                 onClick={reset}
-                className="w-full bg-none text-white bg-red-500 px-4 py-2 rounded transition-colors text-sm sm:text-base"
+                disabled={sorting}
+                className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base"
               >
                 Reset All
               </button>
@@ -304,7 +362,7 @@ const MergeSortVisualizer = () => {
                                 ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 text-gray-800"
                                 : isSorted
                                 ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 text-gray-800"
-                                : "bg-blue-400 dark:bg-blue-500 border-blue-600 dark:border-blue-600 text-gray-800"
+                                : "bg-primary/80 dark:bg-primary border-primary dark:border-primary text-gray-800"
                             }`}
                       >
                         {value}
@@ -328,6 +386,34 @@ const MergeSortVisualizer = () => {
               </div>
             )}
           </div>
+
+          {/* Playback & Speed controls */}
+          {sorting && (
+            <PlaybackControls
+              isPaused={isPaused}
+              onTogglePlayPause={togglePlayPause}
+              speed={speed}
+              onSpeedChange={setSpeed}
+            />
+          )}
+
+          {!sorting && (
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
+              <input
+                type="range"
+                min="0.5"
+                max="5"
+                step="0.5"
+                value={speed}
+                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                className="w-24 sm:w-32"
+                disabled={sorting}
+              />
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
@@ -350,6 +436,16 @@ const MergeSortVisualizer = () => {
                 : sorted
                 ? 'Sorting complete!'
                 : 'Start sorting to see steps'}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? 'Completed' : 'Ready to start')}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
             </div>
           </div>
         </div>
@@ -376,7 +472,7 @@ const MergeSortVisualizer = () => {
                             ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 text-gray-800"
                             : isSorted
                             ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 text-gray-800"
-                            : "bg-blue-400 dark:bg-blue-500 border-blue-600 dark:border-blue-600 text-gray-800"
+                            : "bg-primary/80 dark:bg-primary border-primary dark:border-primary text-gray-800"
                         }`}
                     >
                       {value}

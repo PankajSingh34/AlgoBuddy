@@ -1,29 +1,34 @@
 const baseRelatedLinks = [
   {
-    key: "adjacencyMatrix",
+    key: "adjacency-matrix",
     text: "Adjacency Matrix",
-    url: "/visualizer/graph/representation/adjacency-matrix",
+    url: "/visualizer/graph/adjacency-matrix",
   },
   {
-    key: "adjacencyList",
+    key: "adjacency-list",
     text: "Adjacency List",
-    url: "/visualizer/graph/representation/adjacency-list",
+    url: "/visualizer/graph/adjacency-list",
   },
-  { key: "bfs", text: "BFS", url: "/visualizer/graph/traversal/bfs" },
-  { key: "dfs", text: "DFS", url: "/visualizer/graph/traversal/dfs" },
-  { key: "dijkstra", text: "Dijkstra", url: "/visualizer/graph/algorithms/dijkstra" },
-  { key: "prim", text: "Prim", url: "/visualizer/graph/algorithms/prim" },
-  { key: "kruskal", text: "Kruskal", url: "/visualizer/graph/algorithms/kruskal" },
+  { key: "bfs", text: "BFS", url: "/visualizer/graph/bfs" },
+  { key: "dfs", text: "DFS", url: "/visualizer/graph/dfs" },
+  { key: "dijkstra", text: "Dijkstra", url: "/visualizer/graph/dijkstra" },
   {
-    key: "topologicalSort",
+    key: "floyd-warshall",
+    text: "Floyd-Warshall",
+    url: "/visualizer/graph/floyd-warshall",
+  },
+  { key: "prim", text: "Prim", url: "/visualizer/graph/prim" },
+  { key: "kruskal", text: "Kruskal", url: "/visualizer/graph/kruskal" },
+  {
+    key: "topological-sort",
     text: "Topological Sort",
-    url: "/visualizer/graph/algorithms/topological-sort",
+    url: "/visualizer/graph/topological-sort",
   },
 ];
 
 export const graphTopics = {
-  adjacencyMatrix: {
-    key: "adjacencyMatrix",
+  "adjacency-matrix": {
+    key: "adjacency-matrix",
     title: "Adjacency Matrix",
     category: "Graph Representation",
     description:
@@ -46,8 +51,8 @@ export const graphTopics = {
       { label: "List neighbors", value: "O(V)" },
     ],
   },
-  adjacencyList: {
-    key: "adjacencyList",
+  "adjacency-list": {
+    key: "adjacency-list",
     title: "Adjacency List",
     category: "Graph Representation",
     description:
@@ -142,6 +147,31 @@ export const graphTopics = {
       { label: "Requirement", value: "No negative weights" },
     ],
   },
+  "floyd-warshall": {
+    key: "floyd-warshall",
+    title: "Floyd-Warshall Algorithm",
+    category: "Graph Algorithm",
+    description:
+      "Find the shortest paths between every pair of vertices by repeatedly allowing one more intermediate vertex.",
+    animationType: "floyd-warshall",
+    summary: [
+      "Floyd-Warshall computes all-pairs shortest paths with dynamic programming.",
+      "The distance matrix starts with direct edge weights, zeroes on the diagonal, and infinity for unreachable pairs.",
+      "For each intermediate vertex k, it checks whether i -> k -> j improves the current distance from i to j.",
+    ],
+    steps: [
+      "Initialize a V x V distance matrix from the weighted graph.",
+      "Choose each vertex k as the allowed intermediate vertex.",
+      "For every source i and destination j, compare dist[i][j] with dist[i][k] + dist[k][j].",
+      "Update dist[i][j] when the route through k is shorter.",
+      "After all k values are processed, the matrix stores shortest distances for every ordered pair.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V^3)" },
+      { label: "Space", value: "O(V^2)" },
+      { label: "Output", value: "All-pairs shortest paths" },
+    ],
+  },
   prim: {
     key: "prim",
     title: "Prim's Algorithm",
@@ -191,8 +221,8 @@ export const graphTopics = {
       { label: "Output", value: "Minimum spanning tree" },
     ],
   },
-  topologicalSort: {
-    key: "topologicalSort",
+  "topological-sort": {
+    key: "topological-sort",
     title: "Topological Sort",
     category: "Directed Acyclic Graph",
     description:

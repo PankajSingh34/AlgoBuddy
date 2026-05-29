@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-const content = () => {
+const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -21,7 +20,7 @@ const content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraph = [
     `Implementing a Queue using an array is a fundamental approach where we use a fixed-size or dynamic array to store elements while maintaining FIFO order. The array implementation requires careful handling of front and rear pointers to efficiently enqueue and dequeue elements.`,
@@ -95,37 +94,8 @@ const content = () => {
   ];
 
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-4">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="100%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-        <div className="flex justify-center">
-          <span className="text-xs hidden md:block">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
+    <main className="max-w-4xl mx-auto">
+      <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* Queue Array Implementation Overview */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
@@ -259,37 +229,8 @@ const content = () => {
           </div>
         </section>
       </article>
-
-      {/* Mobile iframe at bottom */}
-      <div className="block md:hidden w-full">
-        {mounted && (
-          <iframe
-            key={theme}
-            src={
-              theme === "dark"
-                ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-            }
-            width="100%"
-            height="320"
-            title="Daily DSA Challenge"
-          ></iframe>
-        )}
-        <div className="flex justify-center pb-8">
-          <span className="text-xs">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-    </main>
+</main>
   );
 };
 
-export default content;
+export default Content;

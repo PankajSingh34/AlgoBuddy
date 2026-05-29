@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-const content = () => {
+const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -21,7 +20,7 @@ const content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraph = [
     `Prefix notation (also called Polish Notation) is a way of writing expressions where the operator comes before the operands.`,
@@ -44,37 +43,8 @@ const content = () => {
   ];
 
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-4">
-      <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="100%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-        <div className="flex justify-center">
-          <span className="text-xs hidden md:block">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
+    <main className="max-w-4xl mx-auto">
+      <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is Prefix Notation? */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
           <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
@@ -131,62 +101,62 @@ const content = () => {
             Operator Precedence Table
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
-            <table className="min-w-full border-collapse border border-blue-500">
+            <table className="min-w-full border-collapse border border-primary">
               <thead>
                 <tr className="bg-blue-50 dark:bg-blue-900/20">
-                  <th className="border border-blue-500 px-4 py-2 font-semibold">
+                  <th className="border border-primary px-4 py-2 font-semibold">
                     Operator
                   </th>
-                  <th className="border border-blue-500 px-4 py-2 font-semibold">
+                  <th className="border border-primary px-4 py-2 font-semibold">
                     Meaning
                   </th>
-                  <th className="border border-blue-500 px-4 py-2 font-semibold">
+                  <th className="border border-primary px-4 py-2 font-semibold">
                     Precedence
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ( )
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Parentheses
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Highest
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ^ %
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Exponentiation / Modulus
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     2
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     * /
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Multiplication / Division
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     3
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     + -
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Addition / Subtraction
                   </td>
-                  <td className="border border-blue-500 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     4 (Lowest)
                   </td>
                 </tr>
@@ -198,37 +168,8 @@ const content = () => {
           </div>
         </section>
       </article>
-
-      {/* Mobile iframe at bottom */}
-      <div className="block md:hidden w-full">
-        {mounted && (
-          <iframe
-            key={theme}
-            src={
-              theme === "dark"
-                ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-            }
-            width="100%"
-            height="320"
-            title="Daily DSA Challenge"
-          ></iframe>
-        )}
-        <div className="flex justify-center pb-8">
-          <span className="text-xs">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-    </main>
+</main>
   );
 };
 
-export default content;
+export default Content;

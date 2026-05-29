@@ -1,49 +1,70 @@
-import OpenAI from "openai";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 const MAX_MESSAGES_PER_REQUEST = 20;
 const MAX_TOTAL_CHARS = 4000;
 const MAX_PER_MESSAGE_LENGTH = 2000;
-const VALID_ROLES = new Set(["user", "assistant"]);
 
-async function verifyTurnstile(captchaToken) {
-  if (!process.env.TURNSTILE_SECRET_KEY) {
-    return { ok: false, message: "Server misconfigured: TURNSTILE_SECRET_KEY is not set" };
+const SYSTEM_PROMPT = `You are the AlgoBuddy AI Assistant, an interactive helper for students and developers learning Data Structures and Algorithms (DSA). Your goal is to explain concepts in simple, easy-to-understand words, avoid jargon where possible, and provide clear step-by-step guidance.
+
+Capabilities & Guidelines:
+1. Explain concepts step-by-step (e.g., how a queue works, how quicksort partitions elements).
+2. Answer user doubts in a friendly, supportive, and beginner-friendly tone.
+3. Explain code line-by-line. Highlight what each variable represents and what each loop/conditional accomplishes.
+4. Help beginners understand time and space complexity (Big O notation) using intuitive analogies.
+5. Give simple examples and quiz help. Do not give direct answers immediately if the user is asking a quiz question; instead, guide them to the answer by explaining the underlying concept and asking leading questions.
+6. Format your responses using clean Markdown. Use headings, bullet points, bold text, and code blocks with language specifiers for syntax highlighting.
+7. Keep responses concise and structured. Do not overwhelm the user with walls of text.
+8. If asked about something unrelated to programming, computer science, or DSA, politely redirect the conversation back to algorithms and data structures.`;
+
+function validatePayload(messages) {
+  if (!messages || !Array.isArray(messages)) {
+    return "Invalid or missing 'messages' array.";
+  }
+  if (messages.length > MAX_MESSAGES_PER_REQUEST) {
+    return `Cannot process more than ${MAX_MESSAGES_PER_REQUEST} messages at once.`;
   }
 
-  let res;
-  try {
-    res = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY,
-          response: captchaToken,
-        }),
-      },
-    );
-  } catch {
-    return { ok: false, message: "Captcha verification request failed" };
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (typeof msg.content !== "string") {
+      return `Message content at index ${i} must be a string.`;
+    }
+    if (msg.content.length > MAX_PER_MESSAGE_LENGTH) {
+      return `Message at index ${i} exceeds ${MAX_PER_MESSAGE_LENGTH} characters.`;
+    }
   }
 
-  const data = await res.json();
-  if (!data.success) {
-    return { ok: false, message: "Captcha verification failed" };
+  const totalChars = messages.reduce((sum, message) => sum + message.content.length, 0);
+  if (totalChars > MAX_TOTAL_CHARS) {
+    return `Total message content exceeds ${MAX_TOTAL_CHARS} characters.`;
   }
-  return { ok: true };
+
+  return null;
 }
 
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
+function createGeminiContents(messages) {
+  return [
+    {
+      role: "user",
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    {
+      role: "model",
+      parts: [
+        {
+          text: "Understood! I am the AlgoBuddy AI Assistant, ready to help you learn DSA. What would you like to know?",
+        },
+      ],
+    },
+    ...messages.map((msg) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    })),
+  ];
 }
 
 export async function POST(req) {
@@ -60,62 +81,22 @@ export async function POST(req) {
 
     // 2. Turnstile Captcha Verification
     if (!captchaToken) {
-      return Response.json(
-        { error: "Captcha token missing." },
-        { status: 403 }
-      );
+      return Response.json({ error: "Captcha token missing. Please refresh the page and try again." }, { status: 403 });
     }
-    const captcha = await verifyTurnstile(String(captchaToken));
+    
+    const ip = getClientIp(req.headers);
+    const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
-      return Response.json(
-        { error: captcha.message },
-        { status: 403 }
-      );
+      return Response.json({ error: captcha.error }, { status: 403 });
     }
 
     // 3. Validate Messages Payload
-    if (!messages || !Array.isArray(messages)) {
-      return Response.json({ error: "Invalid or missing 'messages' array." }, { status: 400 });
+    const validationError = validatePayload(messages);
+    if (validationError) {
+      return Response.json({ error: validationError }, { status: 400 });
     }
 
-    if (messages.length === 0 || messages.length > MAX_MESSAGES_PER_REQUEST) {
-      return Response.json(
-        { error: `Messages count must be between 1 and ${MAX_MESSAGES_PER_REQUEST}.` },
-        { status: 400 }
-      );
-    }
-
-    for (const [i, msg] of messages.entries()) {
-      if (!msg || typeof msg !== "object") {
-        return Response.json({ error: `Message at index ${i} is not a valid object.` }, { status: 400 });
-      }
-      if (!VALID_ROLES.has(msg.role)) {
-        return Response.json(
-          { error: `Invalid role "${msg.role}" at index ${i}. Must be "user" or "assistant".` },
-          { status: 400 }
-        );
-      }
-      if (typeof msg.content !== "string") {
-        return Response.json({ error: `Message content at index ${i} must be a string.` }, { status: 400 });
-      }
-      if (msg.content.length > MAX_PER_MESSAGE_LENGTH) {
-        return Response.json(
-          { error: `Message at index ${i} exceeds ${MAX_PER_MESSAGE_LENGTH} characters.` },
-          { status: 400 }
-        );
-      }
-    }
-
-    const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
-    if (totalChars > MAX_TOTAL_CHARS) {
-      return Response.json(
-        { error: `Total message content exceeds ${MAX_TOTAL_CHARS} characters.` },
-        { status: 400 }
-      );
-    }
-
-    // 4. Rate Limiting Check (global via Upstash in prod, in-memory fallback locally)
-    const ip = getClientIp(req.headers);
+    // 4. Rate Limiting Check
     const { allowed } = await checkRateLimit(`chatbot:${ip}`);
     if (!allowed) {
       return Response.json(
@@ -124,68 +105,149 @@ export async function POST(req) {
       );
     }
 
-    // 5. Validate API Key
-    if (!process.env.OPENAI_API_KEY) {
+    // 5. Authentication Check
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return Response.json({ error: "Auth server is not configured." }, { status: 500 });
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      return Response.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    // 6. Gemini API Integration
+    if (!process.env.GEMINI_API_KEY) {
       return Response.json(
-        { error: "OpenAI API Key is missing. Please add OPENAI_API_KEY to your .env.local file." },
+        { error: "Gemini API Key is missing. Please add GEMINI_API_KEY to your env configuration." },
         { status: 500 }
       );
     }
 
-    // 6. Initialize OpenAI Client
-    const apiKey = process.env.OPENAI_API_KEY;
-    const isOpenRouter = apiKey.startsWith("sk-or-");
-
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      ...(isOpenRouter
-        ? {
-            baseURL: "https://openrouter.ai/api/v1",
-            defaultHeaders: {
-              "HTTP-Referer": "https://algobuddy.in",
-              "X-Title": "AlgoBuddy",
-            },
-          }
-        : {}),
-    });
-
-    const modelName = isOpenRouter ? "openai/gpt-4o-mini" : "gpt-4o-mini";
-
-    // 7. Call Chat Completions API
-    const response = await openai.chat.completions.create({
-      model: modelName,
-      messages: [
-        {
-          role: "system",
-          content: `You are the AlgoBuddy AI Assistant, an interactive helper for students and developers learning Data Structures and Algorithms (DSA). Your goal is to explain concepts in simple, easy-to-understand words, avoid jargon where possible, and provide clear step-by-step guidance.
-
-Capabilities & Guidelines:
-1. Explain concepts step-by-step (e.g., how a queue works, how quicksort partitions elements).
-2. Answer user doubts in a friendly, supportive, and beginner-friendly tone.
-3. Explain code line-by-line. Highlight what each variable represents and what each loop/conditional accomplishes.
-4. Help beginners understand time and space complexity (Big O notation) using intuitive analogies.
-5. Give simple examples and quiz help. Do not give direct answers immediately if the user is asking a quiz question; instead, guide them to the answer by explaining the underlying concept and asking leading questions.
-6. Format your responses using clean Markdown. Use headings, bullet points, bold text, and code blocks with language specifiers for syntax highlighting.
-7. Keep responses concise and structured. Do not overwhelm the user with walls of text.
-8. If asked about something unrelated to programming, computer science, or DSA, politely redirect the conversation back to algorithms and data structures.`
+    // Send request to Google Gemini API using the Gemini 2.5 Flash model
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        ...messages
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
+        body: JSON.stringify({
+          contents: createGeminiContents(messages),
+        }),
+      }
+    );
 
-    const reply = response.choices[0]?.message;
-    if (!reply) {
-      throw new Error("No response received from OpenAI API.");
+    
+    // Handle API errors
+    if (!response.ok) {
+      return Response.json(
+        {
+          error:
+            "Gemini API request failed.",
+        },
+        { status: 500 }
+      );
     }
 
-    return Response.json({ message: reply });
+    // Extract assistant reply
+    
+    if (!response.body) {
+      return Response.json(
+        {
+          error: "No response stream available.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body.getReader();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+
+            // SSE messages come line-by-line
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.replace("data: ", "").trim();
+
+                try {
+                  const json = JSON.parse(data);
+
+                  const content =
+                    json?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                  if (content) {
+                    controller.enqueue(
+                      encoder.encode(content)
+                    );
+                  }
+                } catch (err) {
+                  console.error(
+                    "Stream parsing error:",
+                    err
+                  );
+                }
+              }
+            }
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error("Streaming error:", err);
+          controller.error(err);
+        } finally {
+          reader.releaseLock();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Chatbot API error:", error);
+
     return Response.json(
-      { error: error.message || "An error occurred while processing your request." },
+      {
+        error:
+          error.message ||
+          "An error occurred while processing your request.",
+      },
       { status: 500 }
     );
   }
-}
+} 

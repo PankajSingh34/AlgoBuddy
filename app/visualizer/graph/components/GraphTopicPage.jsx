@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/navbarinner";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
@@ -15,7 +14,6 @@ export default function GraphTopicPage({ topic, Animation, startNode }) {
 
   return (
     <>
-      <Navbar />
       <main className="bg-white pt-6 pb-16 text-surface-900 dark:bg-surface-950 dark:text-white">
         <section className="container-app">
           <div className="mb-8 mt-2">

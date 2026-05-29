@@ -1,18 +1,17 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-const content = () => {
+const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -23,7 +22,7 @@ const content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const push = [
     { points: "Check if stack is full" },
@@ -63,62 +62,34 @@ const content = () => {
   ];
 
   return (
-    <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 md:gap-4">
-            <div className="col-span-1">
-        <div className="hidden md:block">
-          {mounted && (
-            <iframe
-              key={theme}
-              src={
-                theme === "dark"
-                  ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                  : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-              }
-              width="100%"
-              height="400"
-              title="Daily DSA Challenge"
-            ></iframe>
-          )}
-        </div>
-        <div className="flex justify-center">
-          <span className="text-xs hidden md:block">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-      <article className="col-span-4 max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
+    <main className="max-w-4xl mx-auto">
+
+      <article className="max-w-4xl bg-white dark:bg-neutral-950 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
         {/* -------  HEADER  ------- */}
-        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
-            What is Stack Implementation Using Array?
+        <section className="p-8 border-b border-gray-100 dark:border-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
+            Stack Implementation Using Array
           </h1>
           <div className="prose dark:prose-invert max-w-none">
-            <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
-              A stack is a linear data structure that follows the LIFO (Last In First Out) principle. Arrays provide a simple way to implement stack operations with constant time complexity.
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              A stack is a linear data structure that follows the LIFO (Last In First Out) principle. Arrays provide a simple and memory-efficient way to implement stack operations with constant time complexity.
             </p>
           </div>
         </section>
 
         {/* -------  ALGORITHMIC STEPS – LIFT CARDS  ------- */}
-        <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
-            <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
+        <section className="p-8 border-b border-gray-100 dark:border-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <span className="w-1.5 h-6 bg-[#a435f0] mr-3 rounded-full"></span>
             Algorithmic Steps
           </h1>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Basic Operations */}
-            <div className="rounded-lg p-4 bg-white dark:bg-neutral-950 shadow-md">
-              <h2 className="text-lg sm:text-xl mb-3 font-bold text-center">Stack Basic Operations</h2>
-              <div className="space-y-4">
+            <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+              <h2 className="text-xl mb-6 font-bold text-center text-gray-800 dark:text-gray-200">Stack Basic Operations</h2>
+              <div className="space-y-6">
                 {[{t:"Initialize Stack", s:initialize}, {t:"push()", s:push}, {t:"pop()", s:pop}].map(
                   ({t, s}, idx) => (
                     <motion.div
@@ -129,10 +100,10 @@ const content = () => {
                       transition={{ type: "spring", stiffness: 120, delay: idx * 0.1 }}
                       whileHover={{ y: -4, boxShadow: "0 10px 20px -5px rgba(0,0,0,0.1)" }}
                       className="p-4 rounded-lg bg-gray-50 dark:bg-neutral-900
-                                 border border-transparent hover:border-blue-300
-                                 dark:hover:border-blue-500 transition"
+                                 border border-transparent hover:border-[#c27cf7]
+                                 dark:hover:border-primary transition"
                     >
-                      <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-blue-900 text-blue-700 dark:text-indigo-200">
+                      <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-blue-900 text-primary-dark dark:text-indigo-200">
                         Step {idx + 1}
                       </span>
                       <h3 className="font-semibold mb-2">{t}</h3>
@@ -163,10 +134,10 @@ const content = () => {
                       transition={{ type: "spring", stiffness: 120, delay: idx * 0.1 }}
                       whileHover={{ y: -4, boxShadow: "0 10px 20px -5px rgba(0,0,0,0.1)" }}
                       className="p-4 rounded-lg bg-gray-50 dark:bg-neutral-900
-                                 border border-transparent hover:border-blue-300
-                                 dark:hover:border-blue-600 transition"
+                                 border border-transparent hover:border-[#c27cf7]
+                                 dark:hover:border-primary transition"
                     >
-                      <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-blue-900 text-blue-700 dark:text-indigo-200">
+                      <span className="inline-block mb-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-blue-900 text-primary-dark dark:text-indigo-200">
                         Step {idx + 1}
                       </span>
                       <h3 className="font-semibold mb-2">{t}</h3>
@@ -191,12 +162,12 @@ const content = () => {
             Time Complexity
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
-            <table className="min-w-full border-collapse border border-blue-400">
+            <table className="min-w-full border-collapse border border-primary/80">
               <thead>
                 <tr className="bg-blue-100 dark:bg-blue-900">
-                  <th className="border border-blue-400 p-3 font-semibold">Operation</th>
-                  <th className="border border-blue-400 p-3 font-semibold">Complexity</th>
-                  <th className="border border-blue-400 p-3 font-semibold hidden sm:table-cell">Reason</th>
+                  <th className="border border-primary/80 p-3 font-semibold">Operation</th>
+                  <th className="border border-primary/80 p-3 font-semibold">Complexity</th>
+                  <th className="border border-primary/80 p-3 font-semibold hidden sm:table-cell">Reason</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,9 +178,9 @@ const content = () => {
                   ["isEmpty()", "O(1)", "Pointer comparison"],
                 ].map(([op, comp, reason], index) => (
                   <tr key={op} className={index % 2 === 0 ? "bg-white dark:bg-neutral-950" : "bg-blue-50 dark:bg-neutral-900"}>
-                    <td className="border border-blue-400 p-3">{op}</td>
-                    <td className="border border-blue-400 p-3 font-mono">{comp}</td>
-                    <td className="border border-blue-400 p-3 hidden sm:table-cell">{reason}</td>
+                    <td className="border border-primary/80 p-3">{op}</td>
+                    <td className="border border-primary/80 p-3 font-mono">{comp}</td>
+                    <td className="border border-primary/80 p-3 hidden sm:table-cell">{reason}</td>
                   </tr>
                 ))}
               </tbody>
@@ -238,37 +209,8 @@ const content = () => {
           </div>
         </section>
       </article>
-
-      {/* Mobile iframe at bottom */}
-      <div className="block md:hidden w-full">
-        {mounted && (
-          <iframe
-            key={theme}
-            src={
-              theme === "dark"
-                ? "https://hw.glich.co/resources/embed/daily/dsa?theme=dark"
-                : "https://hw.glich.co/resources/embed/daily/dsa?theme=light"
-            }
-            width="100%"
-            height="320"
-            title="Daily DSA Challenge"
-          ></iframe>
-        )}
-        <div className="flex justify-center pb-8">
-          <span className="text-xs">
-            Daily DSA Challenge by{" "}
-            <a
-              href="https://hw.glich.co/resources/daily"
-              target="_blank"
-              className="underline hover:text-blue-500 duration-300"
-            >
-              Hello World
-            </a>
-          </span>
-        </div>
-      </div>
-    </main>
+</main>
   );
 };
 
-export default content;
+export default Content;

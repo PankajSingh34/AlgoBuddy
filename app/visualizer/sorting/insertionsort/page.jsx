@@ -71,7 +71,9 @@ export default function Page() {
             { text: "Bubble Sort", url: "/visualizer/sorting/bubblesort" },
             { text: "Merge Sort", url: "/visualizer/sorting/mergesort" },
             { text: "Quick Sort", url: "/visualizer/sorting/quicksort" },
-            { text: "Heap Sort", url: "/algorithms/sorting/heap" },
+            { text: "Comparison Mode", url: "/visualizer/sorting/comparison" },
+            { text: "Counting Sort", url: "/visualizer/sorting/countingsort" },
+            { text: "Heap Sort", url: "/visualizer/sorting/heapsort" },
           ]}
         />
       }

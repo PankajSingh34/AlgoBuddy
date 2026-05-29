@@ -29,27 +29,7 @@ export default function ArticleActions() {
       handleCopy();
     }
   };
+ 
+  return null;
 
-  return (
-    <div className="flex gap-4 mt-6">
-      <button
-        onClick={handleCopy}
-        className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-      >
-        {copied ? (
-          <Check className="w-4 h-4 text-green-600" />
-        ) : (
-          <Copy className="w-4 h-4" />
-        )}
-        <span>{copied ? "Copied!" : "Copy Link"}</span>
-      </button>
-      <button
-        onClick={handleShare}
-        className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-      >
-        <Share2 className="w-4 h-4" />
-        <span>Share</span>
-      </button>
-    </div>
-  );
 }
