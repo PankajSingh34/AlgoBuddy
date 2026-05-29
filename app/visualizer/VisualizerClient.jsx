@@ -544,7 +544,7 @@ export default function VisualizerClient({ initialSections }) {
           ) : (
             <>
               {/* page heading + search */}
-              {!activeSection && !search.trim() && (
+              {!search.trim() && (
                 <div className="text-center mb-14">
                   <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
                     Algorithm <span className="text-primary">Visualizer</span>
@@ -636,13 +636,6 @@ export default function VisualizerClient({ initialSections }) {
                       </div>
                     )}
                   </motion.div>
-                ) : activeSection ? (
-                  <ModuleView
-                    key={`module-${activeSection.title}`}
-                    section={activeSection}
-                    theme={getTheme(activeSection.title)}
-                    onBack={handleBackToGrid}
-                  />
                 ) : (
                   <motion.div
                     key="grid"
@@ -651,13 +644,12 @@ export default function VisualizerClient({ initialSections }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
                       {filtered.map((section, i) => (
                         <DSCard
                           key={section.title}
                           section={section}
                           theme={getTheme(section.title)}
-                          onClick={() => handleCardClick(section)}
                           delay={i * 0.07}
                         />
                       ))}
@@ -667,7 +659,7 @@ export default function VisualizerClient({ initialSections }) {
               </AnimatePresence>
 
               {/* Challenge section card at bottom */}
-              {!activeSection && !search.trim() && (
+              {!search.trim() && (
                 <ChallengeSection
                   onStartChallenge={() => {
                     setInitialSetupStep(1);
