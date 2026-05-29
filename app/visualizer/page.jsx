@@ -70,8 +70,9 @@ export const metadata = {
 
 const sections = [
   {
-    title: "Custom Code",
-    desc: "Paste code and inspect a safe step-by-step dry run",
+    title: "Code Lab",
+    slug: "code-lab",
+    desc: "Write custom code, run safe step-by-step dry runs, and analyze time & space complexity",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -90,16 +91,20 @@ const sections = [
     ),
     info: {
       About:
-        "The custom code dry-run visualizer helps learners paste short algorithm snippets and inspect line-by-line execution state without running unsafe code.",
+        "The Code Lab provides essential developer tools. Use the Dry Run Visualizer to inspect line-by-line execution state, and the Complexity Analyzer to understand Big O notations, best/worst cases, and optimization insights.",
       Representation: null,
     },
     subsections: [
       {
-        title: "Dry Run",
+        title: "Tools",
         items: [
           {
-            name: "User Code Dry Run Visualizer",
+            name: "Dry Run Visualizer",
             path: "/visualizer/dry-run",
+          },
+          {
+            name: "Complexity Analyzer",
+            path: "/visualizer/complexity-analyzer",
           },
         ],
       },
@@ -150,52 +155,6 @@ const sections = [
       },
     ],
   },
-{
-  title: "Complexity Analyzer",
-  slug: "complexity-analyzer",
-  desc: "Analyze time & space complexity with interactive breakdowns",
-  icon: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 17v-6m3 6V7m3 10v-3m3 7H6a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2z"
-      />
-    </svg>
-  ),
-  color: {
-    border: "border-pink-200 dark:border-pink-900/40",
-    topBar: "bg-pink-50 dark:bg-pink-950/20",
-    iconBg: "bg-pink-100 dark:bg-pink-900/30",
-    iconColor: "text-pink-600 dark:text-pink-300",
-    button:
-      "from-pink-500 via-fuchsia-500 to-violet-500 hover:from-pink-400 hover:via-fuchsia-400 hover:to-violet-400",
-    preview: "bg-pink-50 dark:bg-pink-950/10 border-pink-200 dark:border-pink-900/30",
-  },
-  info: {
-    About:
-      "Analyze algorithms with detailed time and space complexity breakdowns. Understand Big O notation, best/worst cases, and optimization insights interactively.",
-    Representation: null,
-  },
-  subsections: [
-    {
-      title: "Analysis",
-      items: [
-        {
-          name: "Complexity Analyzer",
-          path: "/visualizer/complexity-analyzer",
-        },
-      ],
-    },
-  ],
-},
   {
     title: "Recursion",
     desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",

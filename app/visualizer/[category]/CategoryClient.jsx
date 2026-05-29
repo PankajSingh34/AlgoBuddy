@@ -121,7 +121,7 @@ export default function CategoryClient({ section }) {
   return (
     <div>
       <style>{`
-        .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="Code Lab"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
@@ -132,7 +132,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
         .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
 
-        .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
@@ -153,7 +153,7 @@ export default function CategoryClient({ section }) {
         <div
           className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
           style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-card={section.title || "Custom Code"}
+          data-theme-card={section.title || "Code Lab"}
         >
           <button
             onClick={() => router.push("/visualizer")}
@@ -168,7 +168,7 @@ export default function CategoryClient({ section }) {
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center p-3 flex-shrink-0 transition-colors duration-300"
                 style={{ background: theme.bg }}
-                data-theme-header={section.title || "Custom Code"}
+                data-theme-header={section.title || "Code Lab"}
               >
                 {theme.icon(theme.color)}
               </div>
