@@ -44,7 +44,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://cdn.jsdelivr.net",
+      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://tagmanager.google.com/ https://tagassistant.google.com/ https://challenges.cloudflare.com https://va.vercel-scripts.com https://cdn.jsdelivr.net",
       "frame-src https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
     ].join("; "),
