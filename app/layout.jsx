@@ -29,7 +29,7 @@ export const metadata = {
   publisher: "AlgoBuddy",
   robots: "index, follow",
   icons: {
-    icon: "/favicon.ico?v=3",
+    icon: "/icon.svg",
   },
   openGraph: {
     title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
