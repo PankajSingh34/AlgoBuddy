@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const VISUALIZER_CATEGORY_BY_SEGMENT = {
+  array: "array",
   searching: "array",
   sorting: "array",
   stack: "stack",
@@ -24,8 +25,8 @@ export default function Breadcrumbs({ paths }) {
   const visualizerSegment = pathSegments[1] || "";
   const visualizerCategory =
     VISUALIZER_CATEGORY_BY_SEGMENT[visualizerSegment] || "";
-  const categoryHref = visualizerCategory
-    ? `/visualizer?category=${encodeURIComponent(visualizerCategory)}`
+  const categoryHref = visualizerSegment
+    ? `/visualizer/${visualizerSegment}`
     : "/visualizer";
 
   const getHref = (path, index) => {
