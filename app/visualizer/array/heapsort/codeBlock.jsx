@@ -1,3 +1,3 @@
 "use client";
 
-export { default } from "@/app/visualizer/trees/applications/heapsort/codeBlock";
+export { default } from "@/app/visualizer/tree/applications/heapsort/codeBlock";

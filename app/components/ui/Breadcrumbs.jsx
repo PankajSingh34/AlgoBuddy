@@ -12,6 +12,7 @@ const VISUALIZER_CATEGORY_BY_SEGMENT = {
   linkedlist: "linked list",
   linkedList: "linked list",
   trees: "tree",
+  tree: "tree",
   graph: "graph",
   hashmap: "hashmap",
   recursion: "recursion",

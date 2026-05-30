@@ -436,39 +436,39 @@ const sections = [
         items: [
           {
             name: "Structure & Properties",
-            path: "/visualizer/trees/binaryTree/properties",
+            path: "/visualizer/tree/binaryTree/properties",
           },
           {
             name: "Types of Binary Trees",
-            path: "/visualizer/trees/binaryTree/types",
+            path: "/visualizer/tree/binaryTree/types",
           },
         ],
       },
       {
         title: "Binary Search Tree",
         items: [
-          { name: "Insertion", path: "/visualizer/trees/bst/insertion" },
-          { name: "Deletion", path: "/visualizer/trees/bst/deletion" },
-          { name: "Searching", path: "/visualizer/trees/bst/searching" },
-          { name: "Balancing (AVL)", path: "/visualizer/trees/bst/avl" },
+          { name: "Insertion", path: "/visualizer/tree/bst/insertion" },
+          { name: "Deletion", path: "/visualizer/tree/bst/deletion" },
+          { name: "Searching", path: "/visualizer/tree/bst/searching" },
+          { name: "Balancing (AVL)", path: "/visualizer/tree/bst/avl" },
         ],
       },
       {
         title: "Traversal",
         items: [
-          { name: "Pre-order", path: "/visualizer/trees/traversing/pre-order" },
-          { name: "In-order", path: "/visualizer/trees/traversing/in-order" },
+          { name: "Pre-order", path: "/visualizer/tree/traversing/pre-order" },
+          { name: "In-order", path: "/visualizer/tree/traversing/in-order" },
           {
             name: "Post-order",
-            path: "/visualizer/trees/traversing/post-order",
+            path: "/visualizer/tree/traversing/post-order",
           },
           {
             name: "Level-order (BFS)",
-            path: "/visualizer/trees/traversing/level-order",
+            path: "/visualizer/tree/traversing/level-order",
           },
           {
             name: "Morris Traversal",
-            path: "/visualizer/trees/traversing/morris",
+            path: "/visualizer/tree/traversing/morris",
           },
         ],
       },
@@ -477,15 +477,15 @@ const sections = [
         items: [
           {
             name: "Red-Black Trees",
-            path: "/visualizer/trees/advanced/red-black",
+            path: "/visualizer/tree/advanced/red-black",
           },
-          { name: "B-Trees", path: "/visualizer/trees/advanced/b-trees" },
+          { name: "B-Trees", path: "/visualizer/tree/advanced/b-trees" },
           {
             name: "Trie (Prefix Tree)",
-            path: "/visualizer/trees/advanced/trie",
+            path: "/visualizer/tree/advanced/trie",
           },
-          { name: "Segment Trees", path: "/visualizer/trees/advanced/segment" },
-          { name: "Fenwick Trees", path: "/visualizer/trees/advanced/fenwick" },
+          { name: "Segment Trees", path: "/visualizer/tree/advanced/segment" },
+          { name: "Fenwick Trees", path: "/visualizer/tree/advanced/fenwick" },
         ],
       },
       {
@@ -493,19 +493,19 @@ const sections = [
         items: [
           {
             name: "Lowest Common Ancestor",
-            path: "/visualizer/trees/algorithms/lca",
+            path: "/visualizer/tree/algorithms/lca",
           },
           {
             name: "Tree Diameter",
-            path: "/visualizer/trees/algorithms/diameter",
+            path: "/visualizer/tree/algorithms/diameter",
           },
           {
             name: "Tree Isomorphism",
-            path: "/visualizer/trees/algorithms/isomorphism",
+            path: "/visualizer/tree/algorithms/isomorphism",
           },
           {
             name: "Serialize/Deserialize",
-            path: "/visualizer/trees/algorithms/serialization",
+            path: "/visualizer/tree/algorithms/serialization",
           },
         ],
       },
@@ -514,19 +514,19 @@ const sections = [
         items: [
           {
             name: "Heap Sort",
-            path: "/visualizer/trees/applications/heapsort",
+            path: "/visualizer/tree/applications/heapsort",
           },
           {
             name: "Huffman Coding",
-            path: "/visualizer/trees/applications/huffman",
+            path: "/visualizer/tree/applications/huffman",
           },
           {
             name: "Decision Trees",
-            path: "/visualizer/trees/applications/decision-trees",
+            path: "/visualizer/tree/applications/decision-trees",
           },
           {
             name: "Syntax Trees",
-            path: "/visualizer/trees/applications/syntax-trees",
+            path: "/visualizer/tree/applications/syntax-trees",
           },
         ],
       },
