@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import ComplexityCard from "@/app/components/ui/ComplexityCard";
@@ -651,7 +651,10 @@ export default function ComparisonClient() {
           </div>
 
           {/* Viz Box A */}
-          <div className="p-6 h-[260px] sm:h-[300px] flex items-end justify-center gap-1.5 sm:gap-2 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800">
+          <div 
+            style={{ minHeight: "260px", minWidth: "100%" }}
+            className="p-6 h-[260px] sm:h-[300px] flex items-end justify-center gap-1.5 sm:gap-2 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800"
+          >
             {arrayA.length > 0 ? (
               arrayA.map((val, idx) => {
                 const { bgClass, style } = getBarStyles(idx, val, algoKeyA, currentIndicesA, completedA, maxValue);
@@ -742,7 +745,10 @@ export default function ComparisonClient() {
           </div>
 
           {/* Viz Box B */}
-          <div className="p-6 h-[260px] sm:h-[300px] flex items-end justify-center gap-1.5 sm:gap-2 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800">
+          <div 
+            style={{ minHeight: "260px", minWidth: "100%" }}
+            className="p-6 h-[260px] sm:h-[300px] flex items-end justify-center gap-1.5 sm:gap-2 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800"
+          >
             {arrayB.length > 0 ? (
               arrayB.map((val, idx) => {
                 const { bgClass, style } = getBarStyles(idx, val, algoKeyB, currentIndicesB, completedB, maxValue);
