@@ -323,6 +323,7 @@ const sections = [
   },
   {
     title: "Linked List",
+    slug: "linkedlist",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -704,7 +705,7 @@ const Visualizer = () => {
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
       <div className="w-full relative">
-        
+
         <BackToTop />
         <Footer />
       </div>
