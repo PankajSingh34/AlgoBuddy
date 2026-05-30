@@ -406,7 +406,6 @@ AlgoBuddy/
 │   │   ├── chatbot/                 #   ├── AI chatbot endpoint
 │   │   └── send-review/             #   └── Review submission
 │   │
-│   ├── 📂 blogs/                    # Blog pages & content
 │   ├── 📂 dashboard/                # User dashboard
 │   ├── 📂 login/                    # Auth pages
 │   ├── 📂 visualizer/               # Algorithm visualizer pages
