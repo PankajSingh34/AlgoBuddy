@@ -2,23 +2,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
-import {
-  bubbleSortGen,
-  selectionSortGen,
-  insertionSortGen,
-  mergeSortGen,
-  quickSortGen,
-  heapSortGen,
-} from "@/utils/sortingGenerators";
 import ComplexityCard from "@/app/components/ui/ComplexityCard";
 import AlgorithmComparator from "@/app/components/ui/AlgorithmComparator";
+
 const ALGORITHMS = {
-  bubble: { name: "Bubble Sort", gen: bubbleSortGen, complexity: "O(N²)" },
-  selection: { name: "Selection Sort", gen: selectionSortGen, complexity: "O(N²)" },
-  insertion: { name: "Insertion Sort", gen: insertionSortGen, complexity: "O(N²)" },
-  merge: { name: "Merge Sort", gen: mergeSortGen, complexity: "O(N log N)" },
-  quick: { name: "Quick Sort", gen: quickSortGen, complexity: "O(N log N)" },
-  heap: { name: "Heap Sort", gen: heapSortGen, complexity: "O(N log N)" },
+  bubble: { name: "Bubble Sort", complexity: "O(N²)" },
+  selection: { name: "Selection Sort", complexity: "O(N²)" },
+  insertion: { name: "Insertion Sort", complexity: "O(N²)" },
+  merge: { name: "Merge Sort", complexity: "O(N log N)" },
+  quick: { name: "Quick Sort", complexity: "O(N log N)" },
+  heap: { name: "Heap Sort", complexity: "O(N log N)" },
 };
 
 const getFontSize = (value) => {
@@ -218,14 +211,6 @@ const algorithmComparisons = [
     stable: false,
   },
 ];
-const countSteps = (generatorFunc, arr) => {
-  const gen = generatorFunc([...arr]);
-  let steps = 0;
-  while (!gen.next().done) {
-    steps++;
-  }
-  return steps;
-};
 
 export default function ComparisonClient() {
   const [arraySize, setArraySize] = useState(10);
@@ -249,7 +234,7 @@ export default function ComparisonClient() {
   const [currentIndicesA, setCurrentIndicesA] = useState({});
   const [completedA, setCompletedA] = useState(false);
   const [completionTimeA, setCompletionTimeA] = useState(0);
-  const [generatorA, setGeneratorA] = useState(null);
+  const framesARef = useRef([]);
 
   // Side B States
   const [arrayB, setArrayB] = useState([]);
@@ -260,7 +245,8 @@ export default function ComparisonClient() {
   const [currentIndicesB, setCurrentIndicesB] = useState({});
   const [completedB, setCompletedB] = useState(false);
   const [completionTimeB, setCompletionTimeB] = useState(0);
-  const [generatorB, setGeneratorB] = useState(null);
+  const framesBRef = useRef([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Max value for bar scaling
   const maxValue = useMemo(() => {
@@ -281,7 +267,7 @@ export default function ComparisonClient() {
     setCurrentIndicesA({});
     setCompletedA(false);
     setCompletionTimeA(0);
-    setGeneratorA(null);
+    framesARef.current = [];
 
     // Reset Side B
     setArrayB([...arr]);
@@ -292,7 +278,7 @@ export default function ComparisonClient() {
     setCurrentIndicesB({});
     setCompletedB(false);
     setCompletionTimeB(0);
-    setGeneratorB(null);
+    framesBRef.current = [];
   }, [baseArray]);
 
   useEffect(() => {
@@ -303,63 +289,78 @@ export default function ComparisonClient() {
   useEffect(() => {
     if (!isPlaying) return;
 
-    let activeGenA = generatorA;
-    let activeGenB = generatorB;
+    if (!isSorting && !isGenerating) {
+      setIsGenerating(true);
 
-    if (!isSorting) {
-      activeGenA = ALGORITHMS[algoKeyA].gen([...baseArray]);
-      activeGenB = ALGORITHMS[algoKeyB].gen([...baseArray]);
-      setGeneratorA(activeGenA);
-      setGeneratorB(activeGenB);
+      const generateStates = async () => {
+        try {
+          const worker = new Worker(new URL("@/utils/sortingWorker.js", import.meta.url));
+          
+          const getFrames = (algo, array, id) => new Promise((resolve) => {
+            const listener = (e) => {
+              if (e.data.id === id) {
+                worker.removeEventListener('message', listener);
+                resolve(e.data);
+              }
+            };
+            worker.addEventListener('message', listener);
+            worker.postMessage({ algo, array, id });
+          });
 
-      const stepsA = countSteps(ALGORITHMS[algoKeyA].gen, baseArray);
-      const stepsB = countSteps(ALGORITHMS[algoKeyB].gen, baseArray);
-      setTotalStepsA(stepsA);
-      setTotalStepsB(stepsB);
+          const [resultA, resultB] = await Promise.all([
+            getFrames(algoKeyA, [...baseArray], 'A'),
+            getFrames(algoKeyB, [...baseArray], 'B')
+          ]);
 
-      setIsSorting(true);
+          framesARef.current = resultA.frames || [];
+          framesBRef.current = resultB.frames || [];
+          setTotalStepsA(resultA.steps || 0);
+          setTotalStepsB(resultB.steps || 0);
+          
+          worker.terminate();
+          setIsSorting(true);
+          setIsGenerating(false);
+        } catch (error) {
+          console.error("Worker error computing frames", error);
+          setIsGenerating(false);
+          setIsPlaying(false);
+        }
+      };
+      
+      generateStates();
+      return; // Wait for generation to complete
     }
 
+    if (isGenerating) return;
+
     const interval = setInterval(() => {
-      let nextA = null;
-      let nextB = null;
-      let isDoneA = completedA;
-      let isDoneB = completedB;
+      let isDoneA = completedA || currentStepA >= framesARef.current.length;
+      let isDoneB = completedB || currentStepB >= framesBRef.current.length;
 
-      if (!completedA && activeGenA) {
-        const res = activeGenA.next();
-        if (res.done) {
-          isDoneA = true;
-          setCompletedA(true);
-        } else {
-          nextA = res.value;
+      if (!isDoneA) {
+        const nextA = framesARef.current[currentStepA];
+        if (nextA) {
+          setArrayA(nextA.array);
+          setComparisonsA(prev => prev + nextA.comparisons);
+          setSwapsA(prev => prev + nextA.swaps);
+          setCurrentIndicesA(nextA.currentIndices);
+          setCurrentStepA(prev => prev + 1);
         }
+      } else if (!completedA) {
+        setCompletedA(true);
       }
 
-      if (!completedB && activeGenB) {
-        const res = activeGenB.next();
-        if (res.done) {
-          isDoneB = true;
-          setCompletedB(true);
-        } else {
-          nextB = res.value;
+      if (!isDoneB) {
+        const nextB = framesBRef.current[currentStepB];
+        if (nextB) {
+          setArrayB(nextB.array);
+          setComparisonsB(prev => prev + nextB.comparisons);
+          setSwapsB(prev => prev + nextB.swaps);
+          setCurrentIndicesB(nextB.currentIndices);
+          setCurrentStepB(prev => prev + 1);
         }
-      }
-
-      if (nextA) {
-        setArrayA(nextA.array);
-        setComparisonsA(prev => prev + nextA.comparisons);
-        setSwapsA(prev => prev + nextA.swaps);
-        setCurrentIndicesA(nextA.currentIndices);
-        setCurrentStepA(prev => prev + 1);
-      }
-
-      if (nextB) {
-        setArrayB(nextB.array);
-        setComparisonsB(prev => prev + nextB.comparisons);
-        setSwapsB(prev => prev + nextB.swaps);
-        setCurrentIndicesB(nextB.currentIndices);
-        setCurrentStepB(prev => prev + 1);
+      } else if (!completedB) {
+        setCompletedB(true);
       }
 
       if (isDoneA && isDoneB) {
@@ -368,7 +369,7 @@ export default function ComparisonClient() {
     }, 500 / speed);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isSorting, algoKeyA, algoKeyB, baseArray, speed, completedA, completedB, generatorA, generatorB]);
+  }, [isPlaying, isSorting, isGenerating, algoKeyA, algoKeyB, baseArray, speed, completedA, completedB, currentStepA, currentStepB]);
 
   // Precision elapsed timer
   useEffect(() => {
