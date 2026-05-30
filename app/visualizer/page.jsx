@@ -9,6 +9,7 @@ import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
+import RecentlyViewed from "@/app/components/ui/RecentlyViewed";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -70,9 +71,8 @@ export const metadata = {
 
 const sections = [
   {
-    title: "Code Lab",
-    slug: "code-lab",
-    desc: "Write custom code, run safe step-by-step dry runs, and analyze time & space complexity",
+    title: "Custom Code",
+    desc: "Paste code and inspect a safe step-by-step dry run",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -91,20 +91,16 @@ const sections = [
     ),
     info: {
       About:
-        "The Code Lab provides essential developer tools. Use the Dry Run Visualizer to inspect line-by-line execution state, and the Complexity Analyzer to understand Big O notations, best/worst cases, and optimization insights.",
+        "The custom code dry-run visualizer helps learners paste short algorithm snippets and inspect line-by-line execution state without running unsafe code.",
       Representation: null,
     },
     subsections: [
       {
-        title: "Tools",
+        title: "Dry Run",
         items: [
           {
-            name: "Dry Run Visualizer",
+            name: "User Code Dry Run Visualizer",
             path: "/visualizer/dry-run",
-          },
-          {
-            name: "Complexity Analyzer",
-            path: "/visualizer/complexity-analyzer",
           },
         ],
       },
@@ -138,19 +134,21 @@ const sections = [
       {
         title: "Searching",
         items: [
-          { name: "Linear Search", path: "/visualizer/array/linearsearch" },
-          { name: "Binary Search", path: "/visualizer/array/binarysearch" },
+          { name: "Linear Search", path: "/visualizer/searching/linearsearch" },
+          { name: "Binary Search", path: "/visualizer/searching/binarysearch" },
         ],
       },
       {
         title: "Sorting",
         items: [
-          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
-          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
-          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
-          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
-          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
-          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+          { name: "Bubble Sort", path: "/visualizer/sorting/bubblesort" },
+          { name: "Selection Sort", path: "/visualizer/sorting/selectionsort" },
+          { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
+          { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
+          { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
+          { name: "Heap Sort", path: "/visualizer/sorting/heapsort" },
+          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+          { name: "Comparison Mode", path: "/visualizer/sorting/comparison" },
         ],
       },
     ],
@@ -223,7 +221,7 @@ const sections = [
       {
         title: "Operations",
         items: [
-          { name: "Push & Pop", path: "/visualizer/stack/pushpop" },
+          { name: "Push & Pop", path: "/visualizer/stack/push-pop" },
           { name: "Peek", path: "/visualizer/stack/peek" },
           { name: "Is Empty", path: "/visualizer/stack/isempty" },
           { name: "Is Full", path: "/visualizer/stack/isfull" },
@@ -281,14 +279,14 @@ const sections = [
         items: [
           {
             name: "Enqueue & Dequeue",
-            path: "/visualizer/queue/enqueue-dequeue",
+            path: "/visualizer/queue/operations/enqueue-dequeue",
           },
           {
             name: "Peek Front",
-            path: "/visualizer/queue/peekfront",
+            path: "/visualizer/queue/operations/peek-front",
           },
-          { name: "Is Empty", path: "/visualizer/queue/isempty" },
-          { name: "Is Full", path: "/visualizer/queue/isfull" },
+          { name: "Is Empty", path: "/visualizer/queue/operations/isempty" },
+          { name: "Is Full", path: "/visualizer/queue/operations/isfull" },
         ],
       },
       {
@@ -323,7 +321,6 @@ const sections = [
   },
   {
     title: "Linked List",
-    slug: "linkedlist",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -358,15 +355,15 @@ const sections = [
         items: [
           {
             name: "Singly Linked List",
-            path: "/visualizer/linkedlist/singly",
+            path: "/visualizer/linkedList/types/singly",
           },
           {
             name: "Doubly Linked List",
-            path: "/visualizer/linkedlist/doubly",
+            path: "/visualizer/linkedList/types/doubly",
           },
           {
             name: "Circular Linked List",
-            path: "/visualizer/linkedlist/circular",
+            path: "/visualizer/linkedList/types/circular",
           },
         ],
       },
@@ -375,31 +372,31 @@ const sections = [
         items: [
           {
             name: "Traversal",
-            path: "/visualizer/linkedlist/traversal",
+            path: "/visualizer/linkedList/operations/traversal",
           },
           {
             name: "Insertion",
-            path: "/visualizer/linkedlist/insertion",
+            path: "/visualizer/linkedList/operations/insertion",
           },
           {
             name: "Deletion",
-            path: "/visualizer/linkedlist/deletion",
+            path: "/visualizer/linkedList/operations/deletion",
           },
           {
             name: "Searching",
-            path: "/visualizer/linkedlist/search",
+            path: "/visualizer/linkedList/operations/search",
           },
           {
             name: "Reverse",
-            path: "/visualizer/linkedlist/reverselinkedlist",
+            path: "/visualizer/linkedList/operations/reverse",
           },
           {
             name: "Merge",
-            path: "/visualizer/linkedlist/mergedlists",
+            path: "/visualizer/linkedList/operations/merge",
           },
           {
             name: "Comparison",
-            path: "/visualizer/linkedlist/comparison",
+            path: "/visualizer/linkedList/operations/comparison",
           },
         ],
       },
@@ -436,39 +433,39 @@ const sections = [
         items: [
           {
             name: "Structure & Properties",
-            path: "/visualizer/tree/binaryTree/properties",
+            path: "/visualizer/trees/binaryTree/properties",
           },
           {
             name: "Types of Binary Trees",
-            path: "/visualizer/tree/binaryTree/types",
+            path: "/visualizer/trees/binaryTree/types",
           },
         ],
       },
       {
         title: "Binary Search Tree",
         items: [
-          { name: "Insertion", path: "/visualizer/tree/bst/insertion" },
-          { name: "Deletion", path: "/visualizer/tree/bst/deletion" },
-          { name: "Searching", path: "/visualizer/tree/bst/searching" },
-          { name: "Balancing (AVL)", path: "/visualizer/tree/bst/avl" },
+          { name: "Insertion", path: "/visualizer/trees/bst/insertion" },
+          { name: "Deletion", path: "/visualizer/trees/bst/deletion" },
+          { name: "Searching", path: "/visualizer/trees/bst/searching" },
+          { name: "Balancing (AVL)", path: "/visualizer/trees/bst/avl" },
         ],
       },
       {
         title: "Traversal",
         items: [
-          { name: "Pre-order", path: "/visualizer/tree/traversing/pre-order" },
-          { name: "In-order", path: "/visualizer/tree/traversing/in-order" },
+          { name: "Pre-order", path: "/visualizer/trees/traversing/pre-order" },
+          { name: "In-order", path: "/visualizer/trees/traversing/in-order" },
           {
             name: "Post-order",
-            path: "/visualizer/tree/traversing/post-order",
+            path: "/visualizer/trees/traversing/post-order",
           },
           {
             name: "Level-order (BFS)",
-            path: "/visualizer/tree/traversing/level-order",
+            path: "/visualizer/trees/traversing/level-order",
           },
           {
             name: "Morris Traversal",
-            path: "/visualizer/tree/traversing/morris",
+            path: "/visualizer/trees/traversing/morris",
           },
         ],
       },
@@ -477,15 +474,15 @@ const sections = [
         items: [
           {
             name: "Red-Black Trees",
-            path: "/visualizer/tree/advanced/red-black",
+            path: "/visualizer/trees/advanced/red-black",
           },
-          { name: "B-Trees", path: "/visualizer/tree/advanced/b-trees" },
+          { name: "B-Trees", path: "/visualizer/trees/advanced/b-trees" },
           {
             name: "Trie (Prefix Tree)",
-            path: "/visualizer/tree/advanced/trie",
+            path: "/visualizer/trees/advanced/trie",
           },
-          { name: "Segment Trees", path: "/visualizer/tree/advanced/segment" },
-          { name: "Fenwick Trees", path: "/visualizer/tree/advanced/fenwick" },
+          { name: "Segment Trees", path: "/visualizer/trees/advanced/segment" },
+          { name: "Fenwick Trees", path: "/visualizer/trees/advanced/fenwick" },
         ],
       },
       {
@@ -493,19 +490,19 @@ const sections = [
         items: [
           {
             name: "Lowest Common Ancestor",
-            path: "/visualizer/tree/algorithms/lca",
+            path: "/visualizer/trees/algorithms/lca",
           },
           {
             name: "Tree Diameter",
-            path: "/visualizer/tree/algorithms/diameter",
+            path: "/visualizer/trees/algorithms/diameter",
           },
           {
             name: "Tree Isomorphism",
-            path: "/visualizer/tree/algorithms/isomorphism",
+            path: "/visualizer/trees/algorithms/isomorphism",
           },
           {
             name: "Serialize/Deserialize",
-            path: "/visualizer/tree/algorithms/serialization",
+            path: "/visualizer/trees/algorithms/serialization",
           },
         ],
       },
@@ -514,19 +511,19 @@ const sections = [
         items: [
           {
             name: "Heap Sort",
-            path: "/visualizer/tree/applications/heapsort",
+            path: "/visualizer/trees/applications/heapsort",
           },
           {
             name: "Huffman Coding",
-            path: "/visualizer/tree/applications/huffman",
+            path: "/visualizer/trees/applications/huffman",
           },
           {
             name: "Decision Trees",
-            path: "/visualizer/tree/applications/decision-trees",
+            path: "/visualizer/trees/applications/decision-trees",
           },
           {
             name: "Syntax Trees",
-            path: "/visualizer/tree/applications/syntax-trees",
+            path: "/visualizer/trees/applications/syntax-trees",
           },
         ],
       },
@@ -678,10 +675,6 @@ const sections = [
             name: "Min Max Algorithm",
             path: "/visualizer/ai/minmax",
           },
-          {
-            name: "Alpha Beta Pruning",
-            path: "/visualizer/ai/alpha-beta-pruning",
-          },
         ],
       },
     ],
@@ -704,8 +697,9 @@ const Visualizer = () => {
     >
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
-      <div className="w-full relative">
-
+      <div className="w-full relative z-10">
+        <RecentlyViewed />
+        
         <BackToTop />
         <Footer />
       </div>

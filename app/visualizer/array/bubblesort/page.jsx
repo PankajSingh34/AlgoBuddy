@@ -1,12 +1,14 @@
-import Animation from "@/app/visualizer/array/bubblesort/animation";
-import Content from "@/app/visualizer/array/bubblesort/content";
-import Quiz from "@/app/visualizer/array/bubblesort/quiz";
-import Code from "@/app/visualizer/array/bubblesort/codeBlock";
+import Animation from "@/app/visualizer/sorting/bubblesort/animation";
+import Content from "@/app/visualizer/sorting/bubblesort/content";
+import Quiz from "@/app/visualizer/sorting/bubblesort/quiz";
+import Code from "@/app/visualizer/sorting/bubblesort/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
+import TrackVisit from "@/app/components/ui/TrackVisit";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
+  
 import { MODULE_MAPS } from "@/lib/modulesMap";
 
 export const metadata = {
@@ -38,7 +40,7 @@ export const metadata = {
   openGraph: {
     images: [
       {
-        url: "/og/array/bubbleSort.png",
+        url: "/og/sorting/bubbleSort.png",
         width: 1200,
         height: 630,
         alt: "Bubble Sort Algorithm Visualization",
@@ -49,8 +51,10 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <VisualizerPageLayout
-      paths={createVisualizerPaths("Array", "Bubble Sort")}
+    <>
+      <TrackVisit name="Bubble Sort" path="/visualizer/sorting/bubblesort" category="Sorting" />
+      <VisualizerPageLayout
+      paths={createVisualizerPaths("Sorting", "Bubble Sort")}
       title="Bubble Sort"
       animation={<Animation />}
       content={<Content />}
@@ -69,17 +73,17 @@ export default function Page() {
           links={[
             {
               text: "Selection Sort",
-              url: "/visualizer/array/selectionsort",
+              url: "/visualizer/sorting/selectionsort",
             },
             {
               text: "Insertion Sort",
-              url: "/visualizer/array/insertionsort",
+              url: "/visualizer/sorting/insertionsort",
             },
-            { text: "Merge Sort", url: "/visualizer/array/mergesort" },
-            { text: "Quick Sort", url: "/visualizer/array/quicksort" },
-            { text: "Comparison Mode", url: "/visualizer/array/comparison" },
-            { text: "Counting Sort", url: "/visualizer/array/countingsort" },
-            { text: "Heap Sort", url: "/visualizer/array/heapsort" },
+            { text: "Merge Sort", url: "/visualizer/sorting/mergesort" },
+            { text: "Quick Sort", url: "/visualizer/sorting/quicksort" },
+            { text: "Comparison Mode", url: "/visualizer/sorting/comparison" },
+            { text: "Counting Sort", url: "/visualizer/sorting/countingsort" },
+            { text: "Heap Sort", url: "/visualizer/sorting/heapsort" },
           ]}
         />
       }
