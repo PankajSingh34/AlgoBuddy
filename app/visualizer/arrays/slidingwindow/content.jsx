@@ -18,7 +18,7 @@ const Content = () => {
               The <strong>Sliding Window</strong> technique is an optimization pattern used primarily for arrays and strings. It aims to reduce the use of nested loops and replace them with a single loop, thereby reducing the time complexity from <strong>O(N²)</strong> to <strong>O(N)</strong>.
             </p>
             <p className="text-[#374151] dark:text-[#d1d5db] leading-relaxed">
-              Think of a window as a contiguous subset of elements within the array or string. Depending on the problem, this window can either be of a <strong>fixed size</strong> (e.g., "find the maximum sum of exactly K elements") or a <strong>variable size</strong> (e.g., "find the smallest subarray whose sum is greater than or equal to S").
+              Think of a window as a contiguous subset of elements within the array or string. Depending on the problem, this window can either be of a <strong>fixed size</strong> (e.g., &quot;find the maximum sum of exactly K elements&quot;) or a <strong>variable size</strong> (e.g., &quot;find the smallest subarray whose sum is greater than or equal to S&quot;).
             </p>
           </div>
         </section>
