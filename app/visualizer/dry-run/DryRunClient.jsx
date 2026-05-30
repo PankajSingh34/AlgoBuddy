@@ -535,7 +535,7 @@ export default function DryRunClient() {
         password: joinPassword,
         createdBy: displayName,
       });
-      setSessionJoinUrl(`/visualizer/dry-run?session=${data.session.id}`);
+      setSessionJoinUrl(`/visualizer/dry-run?session=${data.session.joinCode}`);
       setSessionNotice(`Joined session ${data.session.joinCode}.`);
     } catch (error) {
       setSessionNotice(error.message || "Failed to join session.");

@@ -55,6 +55,8 @@ const InsertionSortVisualizer = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ current: -1, comparing: -1, sortedUpTo: -1 });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const animationRef = useRef(null);
   const barRefs = useRef([]);
   const isSortingRef = useRef(false);
@@ -95,6 +97,8 @@ const InsertionSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: -1 });
+    setCurrentPhase("");
+    setStepExplanation("");
     resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
@@ -119,6 +123,8 @@ const InsertionSortVisualizer = () => {
     for (let i = 1; i < n; i++) {
       let current = arr[i];
       let j = i - 1;
+      setCurrentPhase(`Pass ${i} of ${n - 1}`);
+      setStepExplanation(`Inserting ${current} from index ${i} into the sorted portion on the left.`);
       setCurrentIndices({ current: i, comparing: j, sortedUpTo: i - 1 });
       await askChallenge(createInsertionKeyQuestion(arr, i));
       if (!isSortingRef.current) return;
@@ -126,6 +132,7 @@ const InsertionSortVisualizer = () => {
       if (!isSortingRef.current) return;
 
       while (j >= 0 && arr[j] > current) {
+        setStepExplanation(`Comparing ${current} with ${arr[j]} at index ${j}.`);
         setComparisons((c) => c + 1);
         setCurrentStep((prev) => prev + 1);
         arr[j + 1] = arr[j];
@@ -139,11 +146,20 @@ const InsertionSortVisualizer = () => {
           await gsap.to(movingBar, { y: 0, duration: 0.2 });
           gsap.set(movingBar, { clearProps: "transform" });
         }
+        setStepExplanation(`Since ${arr[j]} > ${current}, moving ${arr[j]} one position ahead.`);
         await cancellableDelay();
         if (!isSortingRef.current) return;
         j--;
         setCurrentIndices({ current: i, comparing: j, sortedUpTo: i - 1 });
       }
+
+      if (j >= 0) {
+        setStepExplanation(`Found insertion point for ${current} at index ${j + 1}.`);
+      } else {
+        setStepExplanation(`Reached the beginning of the sorted portion. Inserting ${current} at index ${j + 1}.`);
+      }
+      await cancellableDelay();
+      if (!isSortingRef.current) return;
 
       // place the current element
       arr[j + 1] = current;
@@ -156,6 +172,7 @@ const InsertionSortVisualizer = () => {
         await gsap.to(insertBar, { y: 0, duration: 0.2 });
         gsap.set(insertBar, { clearProps: "transform" });
       }
+      setStepExplanation(`Placed ${current} into the sorted portion at index ${j + 1}.`);
       await cancellableDelay();
       if (!isSortingRef.current) return;
     }
@@ -163,6 +180,8 @@ const InsertionSortVisualizer = () => {
     setSorting(false);
     setSorted(true);
     isSortingRef.current = false;
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
     setCurrentIndices({ current: -1, comparing: -1, sortedUpTo: n - 1 });
   };
 
@@ -269,6 +288,16 @@ const InsertionSortVisualizer = () => {
             <div className="font-medium">Step:</div>
             <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
             <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Inserting element at index ${currentIndices.current}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? 'Completed' : 'Ready to start')}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
+            </div>
           </div>
         </div>
         {/* Visualization */}

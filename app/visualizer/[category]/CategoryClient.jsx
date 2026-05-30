@@ -85,6 +85,18 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "AI Algorithms": {
+    color: "#0891b2",
+    bg: "#ecfeff",
+    border: "#c5eaf0",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M12 2A4 4 0 0 0 8 6v1H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+        <rect x="9" y="13" width="2" height="2" />
+        <rect x="13" y="13" width="2" height="2" />
+      </svg>
+    ),
+  },
 };
 
 const getTheme = (t) =>
@@ -109,7 +121,7 @@ export default function CategoryClient({ section }) {
   return (
     <div>
       <style>{`
-        .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="Code Lab"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
@@ -118,8 +130,9 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
+        .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
 
-        .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
@@ -128,6 +141,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
+        .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
       `}</style>
 
       <motion.div
@@ -139,7 +153,7 @@ export default function CategoryClient({ section }) {
         <div
           className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
           style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-card={section.title || "Custom Code"}
+          data-theme-card={section.title || "Code Lab"}
         >
           <button
             onClick={() => router.push("/visualizer")}
@@ -154,7 +168,7 @@ export default function CategoryClient({ section }) {
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center p-3 flex-shrink-0 transition-colors duration-300"
                 style={{ background: theme.bg }}
-                data-theme-header={section.title || "Custom Code"}
+                data-theme-header={section.title || "Code Lab"}
               >
                 {theme.icon(theme.color)}
               </div>

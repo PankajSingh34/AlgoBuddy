@@ -41,7 +41,11 @@ const MergeSortVisualizer = () => {
     comparing: [],
     levels: [],
     currentLevel: -1,
+    recursionPath: [],
+    mid: -1,
   });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
 
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
@@ -86,7 +90,11 @@ const MergeSortVisualizer = () => {
       comparing: [],
       levels: [],
       currentLevel: -1,
+      recursionPath: [],
+      mid: -1,
     });
+    setCurrentPhase("");
+    setStepExplanation("");
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -110,6 +118,8 @@ const MergeSortVisualizer = () => {
       j = 0,
       k = l;
 
+    setCurrentPhase("Merge Phase");
+    setStepExplanation(`Merging two sorted subarrays: [${l}, ${m}] and [${m + 1}, ${r}].`);
     while (i < n1 && j < n2) {
       setCurrentIndices((prev) => ({
         ...prev,
@@ -117,7 +127,7 @@ const MergeSortVisualizer = () => {
         mergeStart: l,
         mergeEnd: r,
       }));
-
+      setStepExplanation(`Comparing ${L[i]} from the left subarray with ${R[j]} from the right subarray.`);
       setComparisons((prev) => prev + 1);
       setCurrentStep((prev) => prev + 1);
       await cancellableDelay(1000);
@@ -125,9 +135,11 @@ const MergeSortVisualizer = () => {
 
       if (L[i] <= R[j]) {
         arr[k] = L[i];
+        setStepExplanation(`Moving ${L[i]} from the left subarray into position ${k}.`);
         i++;
       } else {
         arr[k] = R[j];
+        setStepExplanation(`Moving ${R[j]} from the right subarray into position ${k}.`);
         j++;
       }
       setSwaps((prev) => prev + 1);
@@ -193,6 +205,8 @@ const MergeSortVisualizer = () => {
     if (l >= r) return;
     const currentPath = [...path, { l, r }];
     const m = l + Math.floor((r - l) / 2);
+    setCurrentPhase("Divide Phase");
+    setStepExplanation(`Splitting array range [${l}, ${r}] into [${l}, ${m}] and [${m + 1}, ${r}].`);
     setCurrentIndices((prev) => ({
       ...prev,
       currentLevel: level,
@@ -224,6 +238,8 @@ const MergeSortVisualizer = () => {
     setArray([...arr]);
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
     isSortingRef.current = false;
     setCurrentIndices({
       left: -1,
@@ -234,6 +250,7 @@ const MergeSortVisualizer = () => {
       levels: [],
       currentLevel: -1,
       recursionPath: [],
+      mid: -1,
     });
   };
 
@@ -419,6 +436,16 @@ const MergeSortVisualizer = () => {
                 : sorted
                 ? 'Sorting complete!'
                 : 'Start sorting to see steps'}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? 'Completed' : 'Ready to start')}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
             </div>
           </div>
         </div>

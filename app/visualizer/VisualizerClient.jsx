@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -83,6 +83,18 @@ const DS_THEME = {
     icon: (c) => (
       <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+      </svg>
+    ),
+  },
+  "AI Algorithms": {
+    color: "#0891b2",
+    bg: "#ecfeff",
+    border: "#c5eaf0",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M12 2A4 4 0 0 0 8 6v1H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+        <rect x="9" y="13" width="2" height="2" />
+        <rect x="13" y="13" width="2" height="2" />
       </svg>
     ),
   },
@@ -307,6 +319,22 @@ function CustomCodeMiniViz({ color }) {
   );
 }
 
+function AIAlgorithmsMiniViz({ color }) {
+  return (
+    <svg viewBox="0 0 80 50" className="w-full h-[48px]">
+      <circle cx="40" cy="10" r="5" fill={color} />
+      <line x1="40" y1="10" x2="25" y2="25" stroke={color} strokeWidth="1.5" opacity="0.4" />
+      <line x1="40" y1="10" x2="55" y2="25" stroke={color} strokeWidth="1.5" opacity="0.4" />
+      <circle cx="25" cy="25" r="4" fill={color} opacity="0.7" />
+      <circle cx="55" cy="25" r="4" fill={color} opacity="0.7" />
+      <line x1="25" y1="25" x2="15" y2="40" stroke={color} strokeWidth="1.5" opacity="0.2" />
+      <line x1="25" y1="25" x2="35" y2="40" stroke={color} strokeWidth="1.5" opacity="0.2" />
+      <circle cx="15" cy="40" r="3" fill={color} opacity="0.4" />
+      <circle cx="35" cy="40" r="3" fill={color} opacity="0.4" />
+    </svg>
+  );
+}
+
 
 const MINI_VIZ = {
   Array: ArrayMiniViz,
@@ -317,7 +345,8 @@ const MINI_VIZ = {
   Graph: GraphMiniViz,
   HashMap: HashMapMiniViz,
   Recursion: RecursionMiniViz,
-  "Custom Code": CustomCodeMiniViz,
+  "Code Lab": CustomCodeMiniViz,
+  "AI Algorithms": AIAlgorithmsMiniViz,
 };
 
 /* ═══════════════════════════════════════
@@ -456,7 +485,7 @@ export default function VisualizerClient({ initialSections }) {
   return (
     <div>
       <style>{`
-        .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="Code Lab"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
@@ -465,7 +494,8 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
-        .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
@@ -474,6 +504,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
+        .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] .mini-viz-inactive { background: #1e3a8a !important; color: #93c5fd !important; }
         .dark [data-theme-card="Queue"] .mini-viz-inactive { background: #166534 !important; color: #86efac !important; }

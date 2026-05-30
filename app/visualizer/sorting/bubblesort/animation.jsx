@@ -60,6 +60,8 @@ const BubbleSortVisualizer = () => {
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
@@ -97,6 +99,8 @@ const BubbleSortVisualizer = () => {
     setCurrentStep(0);
     setTotalSteps(0);
     setCurrentIndices({ i: -1, j: -1 });
+    setCurrentPhase("");
+    setStepExplanation("");
     resetChallengeStats();
     if (animationRef.current) clearTimeout(animationRef.current);
   };
@@ -123,6 +127,8 @@ const BubbleSortVisualizer = () => {
 
     for (let i = 0; i < n - 1; i++) {
       let swapped = false;
+      setCurrentPhase(`Pass ${i + 1} of ${n - 1}`);
+      setStepExplanation(`Starting pass ${i + 1}, comparing adjacent elements.`);
 
       for (let j = 0; j < n - i - 1; j++) {
         if (!isSortingRef.current) return;
@@ -130,11 +136,13 @@ const BubbleSortVisualizer = () => {
         tempComparisons++;
         setComparisons(tempComparisons);
         setCurrentStep((prev) => prev + 1);
+        setStepExplanation(`Comparing ${arr[j]} and ${arr[j + 1]} at indices ${j} and ${j + 1}.`);
 
         await cancellableDelay();
         if (!isSortingRef.current) return;
 
         if (arr[j] > arr[j + 1]) {
+          setStepExplanation(`Since ${arr[j]} > ${arr[j + 1]}, swapping elements at indices ${j} and ${j + 1}.`);
           await askChallenge(createBubbleSwapQuestion(arr, j));
           if (!isSortingRef.current) return;
 
@@ -152,18 +160,30 @@ const BubbleSortVisualizer = () => {
           tempSwaps++;
           setSwaps(tempSwaps);
           setArray([...arr]);
+          setStepExplanation(`Swapped ${arr[j]} and ${arr[j + 1]} to continue sorting this pass.`);
 
+          await cancellableDelay();
+          if (!isSortingRef.current) return;
+        } else {
+          setStepExplanation(`Since ${arr[j]} <= ${arr[j + 1]}, no swap is needed.`);
           await cancellableDelay();
           if (!isSortingRef.current) return;
         }
       }
 
-      if (!swapped) break;
+      if (!swapped) {
+        setStepExplanation(`No swaps occurred in pass ${i + 1}; the array is already sorted.`);
+        setCurrentPhase("Completion Check");
+        await cancellableDelay();
+        break;
+      }
     }
 
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
   };
 
   const reset = () => {
@@ -305,6 +325,16 @@ const BubbleSortVisualizer = () => {
                 : sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint app lib utils --max-warnings=0",
     "test": "npm run lint && npm run test:security",
-    "test:security": "node --test security-tests/linkedlist-xss.test.cjs",
+    "test:security": "node --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs",
     "postbuild": "next-sitemap"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "@upstash/redis": "^1.38.0",
     "@vercel/speed-insights": "^1.2.0",
     "axios": "^1.9.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.9.4",
     "gsap": "^3.13.0",
@@ -44,7 +45,7 @@
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-responsive-carousel": "^3.2.23",
-    "recharts": "^3.1.0",
+    "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "sanitize-html": "^2.17.0"
   },

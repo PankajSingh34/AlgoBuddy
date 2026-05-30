@@ -139,19 +139,17 @@ export async function POST(req) {
       );
     }
 
-    // Send request to OpenRouter using Gemma model
+    // Send request to Google Gemini API using the Gemini 2.5 Flash model
     const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           "Content-Type": "application/json",
+          "X-Goog-Api-Key": process.env.GEMINI_API_KEY,
         },
         body: JSON.stringify({
-          model: "openai/gpt-3.5-turbo",
-          messages,
-          stream: true
+          contents: createGeminiContents(messages),
         }),
       }
     );
@@ -162,7 +160,7 @@ export async function POST(req) {
       return Response.json(
         {
           error:
-            "OpenRouter request failed.",
+            "Gemini API request failed.",
         },
         { status: 500 }
       );
@@ -203,17 +201,11 @@ export async function POST(req) {
               if (line.startsWith("data: ")) {
                 const data = line.replace("data: ", "").trim();
 
-                // End of stream
-                if (data === "[DONE]") {
-                  controller.close();
-                  return;
-                }
-
                 try {
                   const json = JSON.parse(data);
 
                   const content =
-                    json?.choices?.[0]?.delta?.content;
+                    json?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                   if (content) {
                     controller.enqueue(

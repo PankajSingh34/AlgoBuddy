@@ -1,5 +1,4 @@
 "use client";
-import Navbar from "@/app/components/navbar";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useUser } from "@/app/contexts/UserContext";
 import Link from "next/link";
 import ActivityDashboard from "@/app/components/dashboard/ActivityDashboard";
+import PracticeStats from "@/app/components/dashboard/PracticeStats";
 import Footer from "@/app/components/footer";
 import { trackActivity } from "@/lib/activity";
 
@@ -20,12 +20,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.push("/login");
-    } else {
-      fetchModules();
-      trackActivity(user.id, "site_visit");
+      router.replace("/login");
+      return;
     }
-  }, [user, loading]);
+
+    fetchModules();
+    trackActivity(user.id, "site_visit");
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return null;
+  }
 
   async function fetchModules() {
     const { data: modulesData, error: modulesError } = await supabase
@@ -61,9 +66,6 @@ export default function Dashboard() {
 
   return (
     <section className="bg-white dark:bg-neutral-900 min-h-screen">
-      <div>
-        <Navbar />
-      </div>
       <main className="max-w-4xl mx-auto px-4 py-24">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">My Dashboard</h1>
@@ -81,8 +83,9 @@ export default function Dashboard() {
         )}
 
         {user && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-8">
             <ActivityDashboard userId={user.id} />
+            <PracticeStats />
           </div>
         )}
 
@@ -156,3 +159,4 @@ export default function Dashboard() {
     </section>
   );
 }
+

@@ -10,7 +10,8 @@ import {
   quickSortGen,
   heapSortGen,
 } from "@/utils/sortingGenerators";
-
+import ComplexityCard from "@/app/components/ui/ComplexityCard";
+import AlgorithmComparator from "@/app/components/ui/AlgorithmComparator";
 const ALGORITHMS = {
   bubble: { name: "Bubble Sort", gen: bubbleSortGen, complexity: "O(N²)" },
   selection: { name: "Selection Sort", gen: selectionSortGen, complexity: "O(N²)" },
@@ -122,7 +123,101 @@ const getBarStyles = (index, value, algoKey, currentIndices, isCompleted, maxVal
 
   return { bgClass, style: { height: `${Math.max(pctHeight, 15)}%` } };
 };
+const complexityInfo = [
+  {
+    complexity: "O(1)",
+    title: "Constant Time",
+    description:
+      "Execution time stays the same regardless of dataset size.",
+    examples: ["Array access", "Hash lookup"],
+  },
+  {
+    complexity: "O(log N)",
+    title: "Logarithmic Time",
+    description:
+      "Operations shrink the problem space each step.",
+    examples: ["Binary Search", "Balanced BST operations"],
+  },
+  {
+    complexity: "O(N)",
+    title: "Linear Time",
+    description:
+      "Runtime grows proportionally with input size.",
+    examples: ["Linear Search", "Single array traversal"],
+  },
+  {
+    complexity: "O(N log N)",
+    title: "Efficient Sorting",
+    description:
+      "Best practical complexity for comparison sorting algorithms.",
+    examples: ["Merge Sort", "Quick Sort", "Heap Sort"],
+  },
+  {
+    complexity: "O(N²)",
+    title: "Quadratic Time",
+    description:
+      "Performance slows heavily as input size increases.",
+    examples: ["Bubble Sort", "Insertion Sort", "Selection Sort"],
+  },
+  {
+    complexity: "O(2^N)",
+    title: "Exponential Time",
+    description:
+      "Execution grows explosively with each added input.",
+    examples: ["Recursive brute force", "Subset generation"],
+  },
+];
 
+const algorithmComparisons = [
+  {
+    name: "Bubble Sort",
+    best: "O(N)",
+    average: "O(N²)",
+    worst: "O(N²)",
+    space: "O(1)",
+    stable: true,
+  },
+  {
+    name: "Selection Sort",
+    best: "O(N²)",
+    average: "O(N²)",
+    worst: "O(N²)",
+    space: "O(1)",
+    stable: false,
+  },
+  {
+    name: "Insertion Sort",
+    best: "O(N)",
+    average: "O(N²)",
+    worst: "O(N²)",
+    space: "O(1)",
+    stable: true,
+  },
+  {
+    name: "Merge Sort",
+    best: "O(N log N)",
+    average: "O(N log N)",
+    worst: "O(N log N)",
+    space: "O(N)",
+    stable: true,
+  },
+  {
+    name: "Quick Sort",
+    best: "O(N log N)",
+    average: "O(N log N)",
+    worst: "O(N²)",
+    space: "O(log N)",
+    stable: false,
+  },
+  {
+    name: "Heap Sort",
+    best: "O(N log N)",
+    average: "O(N log N)",
+    worst: "O(N log N)",
+    space: "O(1)",
+    stable: false,
+  },
+];
 const countSteps = (generatorFunc, arr) => {
   const gen = generatorFunc([...arr]);
   let steps = 0;
@@ -502,6 +597,11 @@ export default function ComparisonClient() {
               <h2 className="font-extrabold text-neutral-900 dark:text-white text-lg">
                 {ALGORITHMS[algoKeyA].name}
               </h2>
+              {currentStepA > currentStepB && (
+  <span className="inline-flex mt-2 items-center rounded-full bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+    Ahead
+  </span>
+)}
               <p className="text-xs text-neutral-500 font-semibold tracking-wider uppercase">
                 Complexity: {ALGORITHMS[algoKeyA].complexity}
               </p>
@@ -515,6 +615,20 @@ export default function ComparisonClient() {
 
           {/* Metrics Panel A */}
           <div className="grid grid-cols-4 border-b border-neutral-100 dark:border-neutral-800 text-center">
+            <div className="col-span-4 px-4 pt-4">
+  <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+    <div
+      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 transition-all duration-300"
+      style={{
+        width: `${
+          totalStepsB > 0
+            ? (currentStepB / totalStepsB) * 100
+            : 0
+        }%`,
+      }}
+    />
+  </div>
+</div>
             <div className="py-3 border-r border-neutral-100 dark:border-neutral-800">
               <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Comparisons</span>
               <span className="text-lg font-bold text-neutral-800 dark:text-neutral-200">{comparisonsA}</span>
@@ -551,7 +665,7 @@ export default function ComparisonClient() {
                     </span>
                     <div
                       style={style}
-                      className={`w-full rounded-t-lg sm:rounded-t-xl border-t-2 shadow-sm transition-all duration-150 flex items-end justify-center pb-2 font-bold ${getFontSize(val)} ${bgClass}`}
+                      className={`w-full rounded-t-lg sm:rounded-t-xl border-t-2 shadow-sm transition-all duration-300 hover:scale-[1.02] flex items-end justify-center pb-2 font-bold animate-in fade-in slide-in-from-bottom-2 ${getFontSize(val)} ${bgClass}`}
                     >
                       <span className="hidden sm:inline">{val}</span>
                     </div>
@@ -574,6 +688,11 @@ export default function ComparisonClient() {
               <h2 className="font-extrabold text-neutral-900 dark:text-white text-lg">
                 {ALGORITHMS[algoKeyB].name}
               </h2>
+              {currentStepB > currentStepA && (
+  <span className="inline-flex mt-2 items-center rounded-full bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+    Ahead
+  </span>
+)}
               <p className="text-xs text-neutral-500 font-semibold tracking-wider uppercase">
                 Complexity: {ALGORITHMS[algoKeyB].complexity}
               </p>
@@ -587,6 +706,20 @@ export default function ComparisonClient() {
 
           {/* Metrics Panel B */}
           <div className="grid grid-cols-4 border-b border-neutral-100 dark:border-neutral-800 text-center">
+            <div className="col-span-4 px-4 pt-4">
+  <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+    <div
+      className="h-full rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 transition-all duration-300"
+      style={{
+        width: `${
+          totalStepsA > 0
+            ? (currentStepA / totalStepsA) * 100
+            : 0
+        }%`,
+      }}
+    />
+  </div>
+</div>
             <div className="py-3 border-r border-neutral-100 dark:border-neutral-800">
               <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Comparisons</span>
               <span className="text-lg font-bold text-neutral-800 dark:text-neutral-200">{comparisonsB}</span>
@@ -623,7 +756,7 @@ export default function ComparisonClient() {
                     </span>
                     <div
                       style={style}
-                      className={`w-full rounded-t-lg sm:rounded-t-xl border-t-2 shadow-sm transition-all duration-150 flex items-end justify-center pb-2 font-bold ${getFontSize(val)} ${bgClass}`}
+                      className={`w-full rounded-t-lg sm:rounded-t-xl border-t-2 shadow-sm transition-all duration-300 hover:scale-[1.02] flex items-end justify-center pb-2 font-bold animate-in fade-in slide-in-from-bottom-2 ${getFontSize(val)} ${bgClass}`}
                     >
                       <span className="hidden sm:inline">{val}</span>
                     </div>
@@ -643,14 +776,15 @@ export default function ComparisonClient() {
 
       {/* Winner Summary Panel */}
       {winnerMessage && (
-        <div className="mt-8 bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-900 border border-violet-200 dark:border-neutral-800 p-6 rounded-2xl shadow-sm text-center max-w-2xl mx-auto animate-fade-in">
-          <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/40 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-300 dark:border-amber-800 shadow-sm animate-pulse">
+        <div className="mt-8 relative overflow-hidden bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-900 border border-violet-200 dark:border-neutral-800 p-6 rounded-2xl shadow-xl text-center max-w-2xl mx-auto animate-fade-in">
+          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_40%)]" />
+          <div className="relative w-14 h-14 bg-amber-100 dark:bg-amber-900/40 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-300 dark:border-amber-800 shadow-lg animate-pulse">
             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" className="hidden" />
               <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v3c0 2.44 1.72 4.48 4 4.88V19h10v-4.12c2.28-.4 4-2.44 4-4.88V7c0-1.1-.9-2-2-2zm-12 5H5V7h2v3zm12 0h-2V7h2v3z" />
             </svg>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white mb-2">
+          <h2 className="relative text-xl sm:text-3xl font-black tracking-tight text-neutral-900 dark:text-white mb-2">
             {winnerMessage.title}
           </h2>
           <p className="text-neutral-600 dark:text-neutral-300 text-sm sm:text-base leading-relaxed font-semibold">

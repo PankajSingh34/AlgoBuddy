@@ -149,12 +149,9 @@ export default function Navbar() {
         <div className="w-full max-w-[1200px] mx-auto px-8 flex items-center justify-between h-full">
           <Link
             href="/"
-            className="brand-logo text-[26px] text-surface-900 dark:text-white hover:opacity-75 transition-opacity focus-ring"
+            className="brand-logo font-black text-[26px] text-surface-900 dark:text-white hover:opacity-75 transition-opacity focus-ring"
           >
-            Algo
-            <span className="text-primary">
-              Buddy
-            </span>
+            Algo<span className="text-primary font-black">Buddy</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-7">
@@ -162,15 +159,12 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                aria-current={
-                  isActive(l.href)
-                    ? "page"
-                    : undefined
-                }
-                className={`text-[15px] font-medium transition-colors duration-150 focus-ring ${
+                data-text={l.label}
+                aria-current={isActive(l.href) ? "page" : undefined}
+                className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
                   isActive(l.href)
                     ? "text-primary dark:text-primary font-semibold"
-                    : "text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white"
+                    : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
                 }`}
               >
                 {l.label}

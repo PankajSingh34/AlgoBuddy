@@ -42,16 +42,7 @@ async function resolveSessionIdentifier(identifier) {
   const candidate = query.split(/[&#?]/)[0].trim();
   if (!candidate) return "";
 
-  try {
-    const { sessions = [] } = await requestJson("/api/sessions");
-    const match = sessions.find((session) => {
-      const joinCode = String(session.joinCode || "").toUpperCase();
-      return session.id === candidate || joinCode === candidate.toUpperCase();
-    });
-    return match?.id || candidate;
-  } catch {
-    return candidate;
-  }
+  return candidate;
 }
 
 export function useCollaboration({
@@ -225,7 +216,7 @@ export function useCollaboration({
     return envelope;
   }, [clientId, processEnvelope]);
 
-  const attachSession = useCallback(async (nextSession, sessionSecret) => {
+  const attachSession = useCallback(async (nextSession, sessionChannelName) => {
     cleanupTransport();
     seenSequencesRef.current = new Map();
     sequenceRef.current = 0;
@@ -238,7 +229,6 @@ export function useCollaboration({
     setError(null);
     setConnectionStatus("connecting");
 
-    const sessionChannelName = `collab:${nextSession.id}:${sessionSecret}`;
     const channel = supabase.channel(sessionChannelName, {
       config: { broadcast: { self: false } },
     });
@@ -284,7 +274,7 @@ export function useCollaboration({
       body: JSON.stringify({ title, visibility, password, module, createdBy }),
     });
 
-    await attachSession(data.session, data.sessionSecret);
+    await attachSession(data.session, `collab:${data.session.id}:${data.sessionSecret}`);
     grantControl(clientId);
     return data;
   }, [attachSession, clientId, grantControl]);
@@ -300,7 +290,15 @@ export function useCollaboration({
       body: JSON.stringify({ password, createdBy }),
     });
 
-    await attachSession(data.session, data.sessionSecret);
+    const realtime = await requestJson(`/api/sessions/${encodeURIComponent(data.session.id)}/realtime`, {
+      method: "POST",
+      body: JSON.stringify({
+        subscriptionToken: data.subscriptionToken,
+        createdBy,
+      }),
+    });
+
+    await attachSession(data.session, realtime.realtimeChannel);
     return data;
   }, [attachSession]);
 
