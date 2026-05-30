@@ -139,19 +139,19 @@ const sections = [
       {
         title: "Searching",
         items: [
-          { name: "Linear Search", path: "/visualizer/searching/linearsearch" },
-          { name: "Binary Search", path: "/visualizer/searching/binarysearch" },
+          { name: "Linear Search", path: "/visualizer/array/linearsearch" },
+          { name: "Binary Search", path: "/visualizer/array/binarysearch" },
         ],
       },
       {
         title: "Sorting",
         items: [
-          { name: "Bubble Sort", path: "/visualizer/sorting/bubblesort" },
-          { name: "Selection Sort", path: "/visualizer/sorting/selectionsort" },
-          { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
-          { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
-          { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
-          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
+          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
+          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
+          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
+          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
         ],
       },
       {
@@ -230,7 +230,7 @@ const sections = [
       {
         title: "Operations",
         items: [
-          { name: "Push & Pop", path: "/visualizer/stack/push-pop" },
+          { name: "Push & Pop", path: "/visualizer/stack/pushpop" },
           { name: "Peek", path: "/visualizer/stack/peek" },
           { name: "Is Empty", path: "/visualizer/stack/isempty" },
           { name: "Is Full", path: "/visualizer/stack/isfull" },
@@ -288,7 +288,7 @@ const sections = [
         items: [
           {
             name: "Enqueue & Dequeue",
-            path: "/visualizer/queue/operations/enqueue-dequeue",
+            path: "/visualizer/queue/enqueue-dequeue",
           },
           {
             name: "Peek Front",
@@ -364,15 +364,15 @@ const sections = [
         items: [
           {
             name: "Singly Linked List",
-            path: "/visualizer/linkedList/types/singly",
+            path: "/visualizer/linkedlist/singly",
           },
           {
             name: "Doubly Linked List",
-            path: "/visualizer/linkedList/types/doubly",
+            path: "/visualizer/linkedlist/doubly",
           },
           {
             name: "Circular Linked List",
-            path: "/visualizer/linkedList/types/circular",
+            path: "/visualizer/linkedlist/circular",
           },
         ],
       },
@@ -381,31 +381,31 @@ const sections = [
         items: [
           {
             name: "Traversal",
-            path: "/visualizer/linkedList/operations/traversal",
+            path: "/visualizer/linkedlist/traversal",
           },
           {
             name: "Insertion",
-            path: "/visualizer/linkedList/operations/insertion",
+            path: "/visualizer/linkedlist/insertion",
           },
           {
             name: "Deletion",
-            path: "/visualizer/linkedList/operations/deletion",
+            path: "/visualizer/linkedlist/deletion",
           },
           {
             name: "Searching",
-            path: "/visualizer/linkedList/operations/search",
+            path: "/visualizer/linkedlist/search",
           },
           {
             name: "Reverse",
-            path: "/visualizer/linkedList/operations/reverse",
+            path: "/visualizer/linkedlist/reverselinkedlist",
           },
           {
             name: "Merge",
-            path: "/visualizer/linkedList/operations/merge",
+            path: "/visualizer/linkedlist/mergedlists",
           },
           {
             name: "Comparison",
-            path: "/visualizer/linkedList/operations/comparison",
+            path: "/visualizer/linkedlist/comparison",
           },
         ],
       },
