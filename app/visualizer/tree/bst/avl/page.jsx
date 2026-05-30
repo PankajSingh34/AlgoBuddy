@@ -24,24 +24,24 @@ export default function AVLPage() {
       paths={createVisualizerPaths("Tree", "Binary Search Tree", "Balancing (AVL)")}
       title="AVL Tree Balancing"
       animation={
-        <div className="bg-slate-950 text-slate-100 font-sans p-6 rounded-3xl border border-slate-900 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto">
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-lg">
-            <div className="text-xs text-purple-400 font-semibold flex items-center gap-1.5 bg-purple-950/40 px-3 py-1.5 rounded-xl border border-purple-900/35">
+        <div className="bg-white text-slate-900 font-sans p-6 rounded-3xl border border-slate-200 shadow-2xl flex flex-col gap-6 max-w-7xl mx-auto">
+          <div className="bg-slate-50 backdrop-blur-xl border border-slate-200 p-5 rounded-2xl flex justify-between items-center shadow-lg">
+            <div className="text-xs text-purple-600 font-semibold flex items-center gap-1.5 bg-purple-950/40 px-3 py-1.5 rounded-xl border border-purple-900/35">
               <Sparkles className="w-4 h-4 animate-pulse" /> Active Visualizer under development for GSSoc &apos;26!
             </div>
           </div>
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-1">
-              <Info className="w-3.5 h-3.5 text-purple-400" /> Module Status
+          <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold mb-1">
+              <Info className="w-3.5 h-3.5 text-purple-600" /> Module Status
             </div>
-            <p className="text-sm font-medium text-purple-200/90 leading-relaxed">
+            <p className="text-sm font-medium text-purple-800 leading-relaxed">
               Welcome to the AVL Tree learning module! In AVL Trees, the heights of the two child subtrees of any node differ by at most one. Study standard balance factor criteria and tree rotations in your DSA courses, and practice the interactive BST visualizers in the sidebar.
             </p>
           </div>
         </div>
       }
       content={
-        <main className="max-w-4xl mx-auto bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] p-6 space-y-6 shadow-sm mt-8">
+        <main className="max-w-4xl mx-auto bg-white dark:bg-slate-50 rounded-2xl border border-[#e5e7eb] dark:border-slate-200 p-6 space-y-6 shadow-sm mt-8">
           <section>
             <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-4 flex items-center">
               <span className="w-1 h-6 bg-[#a435f0] mr-3 rounded-full"></span>

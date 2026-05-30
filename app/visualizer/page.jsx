@@ -285,10 +285,10 @@ const sections = [
           },
           {
             name: "Peek Front",
-            path: "/visualizer/queue/operations/peek-front",
+            path: "/visualizer/queue/peekfront",
           },
-          { name: "Is Empty", path: "/visualizer/queue/operations/isempty" },
-          { name: "Is Full", path: "/visualizer/queue/operations/isfull" },
+          { name: "Is Empty", path: "/visualizer/queue/isempty" },
+          { name: "Is Full", path: "/visualizer/queue/isfull" },
         ],
       },
       {

@@ -1135,26 +1135,26 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
   const activeQuestion = activeQuizList[quizIdx];
 
   return (
-    <div className="min-h-screen bg-udemy-dark-bg text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-800">
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
         
         {/* Title Block */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-900/50">
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit border border-indigo-200">
               <Layers className="w-3.5 h-3.5" /> Binary Tree Algorithms
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-indigo-400 capitalize">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-800 capitalize">
               {mode.replace('-', ' ')} Traversal
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-sm text-slate-600 mt-1 max-w-xl">
               Visualize recursive call stacks, queue progressions, and constant space threaded Morris algorithms.
             </p>
           </div>
 
           {/* Mode Tabs */}
-          <div className="flex flex-wrap gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+          <div className="flex flex-wrap gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
             {['pre-order', 'in-order', 'post-order', 'level-order', 'morris'].map(tab => (
               <button
                 key={tab}
@@ -1164,8 +1164,8 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                 }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
                   mode === tab 
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-950'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-200'
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-800/50'
                 }`}
               >
                 {tab.replace('-', ' ')}
@@ -1181,13 +1181,13 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Control Bar Card */}
-            <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
+            <div className="bg-slate-50 backdrop-blur-xl border border-slate-200 p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-slate-200/50">
               {/* Insert / Generate Controls */}
               <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
                 <button
                   onClick={generateRandomTree}
                   disabled={isAnimating}
-                  className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
+                  className="px-4 py-2 text-xs font-bold bg-slate-50 hover:bg-[#2a2a2a] text-slate-800 rounded-xl transition-all border border-slate-200 disabled:opacity-40"
                 >
                   🎲 Random Balanced Tree
                 </button>
@@ -1197,7 +1197,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Value (1-99)"
-                    className="w-full sm:w-28 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full sm:w-28 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     disabled={isAnimating}
                     onKeyDown={(e) => e.key === 'Enter' && handleInsert()}
                   />
@@ -1237,42 +1237,42 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
             </div>
 
             {/* Explanation / Progress Bar */}
-            <div className="bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-col gap-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-indigo-400" /> Current Step Activity
+                <span className="text-slate-600 font-semibold flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-indigo-600" /> Current Step Activity
                 </span>
-                <span className="text-slate-400 font-bold bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-[#333]">
+                <span className="text-slate-600 font-bold bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
                   Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
                 </span>
               </div>
-              <div className="text-sm font-medium text-indigo-200/90 leading-relaxed min-h-[40px]">
+              <div className="text-sm font-medium text-indigo-800/90 leading-relaxed min-h-[40px]">
                 {message}
               </div>
             </div>
 
             {/* Tree SVG Visualization Area */}
-            <div className="bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+            <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
               
               {/* Dynamic Overlay labels */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2 text-xs">
-                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950"></span>
-                  <span className="text-slate-400">Current Node (curr)</span>
+                  <span className="text-slate-600">Current Node (curr)</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-950"></span>
-                  <span className="text-slate-400">Visited Node</span>
+                  <span className="text-slate-600">Visited Node</span>
                 </div>
                 {mode === 'morris' && (
                   <>
-                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950"></span>
-                      <span className="text-slate-400">Predecessor (pred)</span>
+                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-200"></span>
+                      <span className="text-slate-600">Predecessor (pred)</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
+                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
                       <span className="w-6 border-t-2 border-dashed border-purple-500"></span>
-                      <span className="text-slate-400">Temporary Thread Link</span>
+                      <span className="text-slate-600">Temporary Thread Link</span>
                     </div>
                   </>
                 )}
@@ -1316,7 +1316,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                           y1={edge.y1}
                           x2={edge.x2}
                           y2={edge.y2}
-                          stroke="#334155"
+                          stroke="#475569"
                           strokeWidth="2.5"
                         />
                       );
@@ -1329,9 +1329,9 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                       const isActive = node.state === 'active';
                       const isVisited = node.isVisited;
 
-                      let nodeColor = 'bg-slate-900 border-slate-700 text-slate-300';
-                      let fillHex = '#0f172a';
-                      let strokeHex = '#334155';
+                      let nodeColor = 'bg-slate-900 border-slate-700 text-slate-700';
+                      let fillHex = '#f0f9ff';
+                      let strokeHex = '#0369a1';
 
                       if (isCurr) {
                         fillHex = '#10b981'; // emerald-500
@@ -1371,7 +1371,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                             fill={fillHex}
                             stroke={strokeHex}
                             strokeWidth="2.5"
-                            className="transition-all duration-300 shadow-xl shadow-black"
+                            className="transition-all duration-300 shadow-xl shadow-slate-200"
                           />
 
                           {/* Inner text node label */}
@@ -1379,7 +1379,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                             x={node.x}
                             y={node.y + 4.5}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            fill="#1e293b"
                             fontSize="12"
                             fontWeight="bold"
                           >
@@ -1399,7 +1399,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                   </svg>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2.5 text-slate-500 py-12">
+                <div className="flex flex-col items-center gap-2.5 text-slate-400 py-12">
                   <AlertCircle className="w-10 h-10 text-slate-700" />
                   <span className="text-sm font-semibold">Workspace Empty</span>
                   <span className="text-xs max-w-xs text-center text-slate-600">Please generate a random tree or insert custom node elements.</span>
@@ -1408,10 +1408,10 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
 
               {/* BFS Queue or Stack Visualization strip */}
               {currentStep && (
-                <div className="w-full mt-4 border-t border-[#333] pt-4 flex flex-col gap-2 bg-[#111] p-4 rounded-xl border border-[#222]">
+                <div className="w-full mt-4 border-t border-slate-200 pt-4 flex flex-col gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
                   {mode === 'level-order' && (
                     <div className="flex items-center gap-3">
-                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider w-16">FIFO Queue:</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider w-16">FIFO Queue:</div>
                       <div className="flex items-center gap-1.5 overflow-x-auto py-1">
                         {currentStep.queue && currentStep.queue.length > 0 ? (
                           currentStep.queue.map((val, qidx) => (
@@ -1420,7 +1420,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                               className={`px-3 py-1 text-xs font-bold rounded-lg border flex items-center justify-center min-w-8 ${
                                 qidx === 0
                                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                  : 'bg-slate-900 border-slate-800 text-slate-400'
+                                  : 'bg-slate-900 border-slate-200 text-slate-600'
                               }`}
                             >
                               {val}
@@ -1435,13 +1435,13 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
 
                   {(mode === 'pre-order' || mode === 'in-order' || mode === 'post-order') && (
                     <div className="flex items-center gap-3">
-                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider w-16">Call Stack:</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider w-16">Call Stack:</div>
                       <div className="flex items-center gap-1.5 overflow-x-auto py-1">
                         {currentStep.stack && currentStep.stack.length > 0 ? (
                           currentStep.stack.map((val, sidx) => (
                             <div
                               key={`s-${sidx}`}
-                              className="px-3 py-1 text-xs font-bold rounded-lg border bg-indigo-950/20 text-indigo-300 border-indigo-500/20"
+                              className="px-3 py-1 text-xs font-bold rounded-lg border bg-indigo-950/20 text-indigo-700 border-indigo-500/20"
                             >
                               {val}
                             </div>
@@ -1454,8 +1454,8 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                   )}
 
                   {/* Active Traversal Result Path Output */}
-                  <div className="flex items-center gap-3 mt-1.5 border-t border-slate-900 pt-2">
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider w-16">Result Path:</div>
+                  <div className="flex items-center gap-3 mt-1.5 border-t border-slate-200 pt-2">
+                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider w-16">Result Path:</div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {currentStep.visited && currentStep.visited.length > 0 ? (
                         currentStep.visited.map((val, pidx) => (
@@ -1481,33 +1481,33 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
               {/* Time Complexity Card */}
-              <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-emerald-400" />
-                    <h3 className="text-sm font-semibold text-slate-200">Time Complexity</h3>
+                    <Layers className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-sm font-semibold text-slate-800">Time Complexity</h3>
                   </div>
-                  <span className="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/40 text-emerald-400 border border-emerald-900/50">
+                  <span className="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/40 text-emerald-600 border border-emerald-900/50">
                     {activeComplexity.time}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   {activeComplexity.timeDesc}
                 </p>
               </div>
 
               {/* Space Complexity Card */}
-              <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-purple-400" />
-                    <h3 className="text-sm font-semibold text-slate-200">Space Complexity</h3>
+                    <Layers className="w-4 h-4 text-purple-600" />
+                    <h3 className="text-sm font-semibold text-slate-800">Space Complexity</h3>
                   </div>
-                  <span className="px-2 py-0.5 text-xs font-bold rounded bg-purple-950/40 text-purple-400 border border-purple-900/50">
+                  <span className="px-2 py-0.5 text-xs font-bold rounded bg-purple-950/40 text-purple-600 border border-purple-900/50">
                     {activeComplexity.space}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                <p className="text-xs text-slate-600 leading-relaxed mt-1">
                   {activeComplexity.spaceDesc}
                 </p>
               </div>
@@ -1519,12 +1519,12 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
           <div className="lg:col-span-4 flex flex-col gap-6 w-full">
             
             {/* Interactive Code Highlighter Card */}
-            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 flex flex-col shadow-lg shadow-black/20">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-4">
-                <BookOpen className="w-4 h-4 text-indigo-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Pseudocode</h2>
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col shadow-lg shadow-slate-200/50">
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-4">
+                <BookOpen className="w-4 h-4 text-indigo-600" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700">Pseudocode</h2>
               </div>
-              <div className="flex flex-col gap-1 font-mono text-xs text-slate-400 bg-[#1a1a1a] p-4 rounded-xl border border-[#333] overflow-x-auto leading-relaxed">
+              <div className="flex flex-col gap-1 font-mono text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-x-auto leading-relaxed">
                 {pseudocode[mode].map((line, idx) => {
                   const isHighlighted = idx === currentHighlightLine;
                   return (
@@ -1532,7 +1532,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                       key={`code-${idx}`}
                       className={`flex gap-3 px-2 py-0.5 rounded transition-all ${
                         isHighlighted 
-                          ? 'bg-indigo-600/25 text-indigo-200 font-semibold border-l-2 border-indigo-500 pl-1.5'
+                          ? 'bg-indigo-600/25 text-indigo-800 font-semibold border-l-2 border-indigo-500 pl-1.5'
                           : ''
                       }`}
                     >
@@ -1545,14 +1545,14 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
             </div>
 
             {/* Quiz Challenge Card */}
-            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4 shadow-lg shadow-black/20">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-lg shadow-slate-200/50">
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
                 <Award className="w-4.5 h-4.5 text-amber-400 animate-pulse" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Quiz Challenge</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700">Quiz Challenge</h2>
               </div>
               
               <div className="flex flex-col gap-3.5">
-                <div className="text-xs font-semibold text-slate-300 leading-normal bg-[#111] p-3 rounded-xl border border-[#222]">
+                <div className="text-xs font-semibold text-slate-700 leading-normal bg-slate-50 p-3 rounded-xl border border-slate-200">
                   {activeQuestion.question}
                 </div>
 
@@ -1562,9 +1562,9 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                     const isSelected = selectedOption === oIdx;
                     const isCorrect = oIdx === activeQuestion.answer;
                     
-                    let btnColor = 'bg-[#1a1a1a] hover:bg-[#222] border-[#333] text-slate-400';
+                    let btnColor = 'bg-slate-50 hover:bg-[#222] border-slate-200 text-slate-600';
                     if (isSelected) {
-                      btnColor = 'bg-indigo-950/40 border-indigo-500 text-indigo-300';
+                      btnColor = 'bg-indigo-950/40 border-indigo-500 text-indigo-700';
                     }
                     if (quizSubmitted) {
                       if (isCorrect) {
@@ -1582,7 +1582,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                         disabled={quizSubmitted}
                       >
                         <span>{opt}</span>
-                        {quizSubmitted && isCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />}
+                        {quizSubmitted && isCorrect && <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />}
                         {quizSubmitted && isSelected && !isCorrect && <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />}
                       </button>
                     );
@@ -1595,14 +1595,14 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                     <button
                       onClick={submitQuiz}
                       disabled={selectedOption === null}
-                      className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-xl transition-all shadow shadow-indigo-950"
+                      className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-xl transition-all shadow shadow-indigo-200"
                     >
                       Submit Answer
                     </button>
                   ) : (
                     <button
                       onClick={nextQuizQuestion}
-                      className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all border border-slate-700"
+                      className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-800 rounded-xl transition-all border border-slate-700"
                     >
                       Next Question
                     </button>
@@ -1611,10 +1611,10 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
 
                 {/* Quiz feedback explanation */}
                 {quizSubmitted && (
-                  <div className="bg-[#1a1a1a] border border-[#333] p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
-                    <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                    <div className="text-[11px] text-slate-400 leading-normal">
-                      <span className="font-semibold text-indigo-300 block mb-0.5">
+                  <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
+                    <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="text-[11px] text-slate-600 leading-normal">
+                      <span className="font-semibold text-indigo-700 block mb-0.5">
                         {selectedOption === activeQuestion.answer ? '🎉 Correct Answer!' : '❌ Incorrect Answer'}
                       </span>
                       {activeQuestion.explanation}
