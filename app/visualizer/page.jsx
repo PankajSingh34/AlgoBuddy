@@ -71,8 +71,9 @@ export const metadata = {
 
 const sections = [
   {
-    title: "Custom Code",
-    desc: "Paste code and inspect a safe step-by-step dry run",
+    title: "Code Lab",
+    slug: "code-lab",
+    desc: "Write custom code, run safe step-by-step dry runs, and analyze time & space complexity",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -91,16 +92,20 @@ const sections = [
     ),
     info: {
       About:
-        "The custom code dry-run visualizer helps learners paste short algorithm snippets and inspect line-by-line execution state without running unsafe code.",
+        "The Code Lab provides essential developer tools. Use the Dry Run Visualizer to inspect line-by-line execution state, and the Complexity Analyzer to understand Big O notations, best/worst cases, and optimization insights.",
       Representation: null,
     },
     subsections: [
       {
-        title: "Dry Run",
+        title: "Tools",
         items: [
           {
-            name: "User Code Dry Run Visualizer",
+            name: "Dry Run Visualizer",
             path: "/visualizer/dry-run",
+          },
+          {
+            name: "Complexity Analyzer",
+            path: "/visualizer/complexity-analyzer",
           },
         ],
       },
@@ -146,9 +151,7 @@ const sections = [
           { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
           { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
-          { name: "Heap Sort", path: "/visualizer/sorting/heapsort" },
           { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
-          { name: "Comparison Mode", path: "/visualizer/sorting/comparison" },
         ],
       },
     ],
@@ -675,6 +678,10 @@ const sections = [
             name: "Min Max Algorithm",
             path: "/visualizer/ai/minmax",
           },
+          {
+            name: "Alpha Beta Pruning",
+            path: "/visualizer/ai/alpha-beta-pruning",
+          },
         ],
       },
     ],
@@ -699,6 +706,7 @@ const Visualizer = () => {
       <VisualizerClient initialSections={clientSections} />
       <div className="w-full relative z-10">
         <RecentlyViewed />
+      <div className="w-full relative">
         
         <BackToTop />
         <Footer />
