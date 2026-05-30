@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
   createOptions,
@@ -52,6 +53,7 @@ const InsertionSortVisualizer = () => {
   } = usePlayback(1);
   const [comparisons, setComparisons] = useState(0);
   const [shifts, setShifts] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({ current: -1, comparing: -1, sortedUpTo: -1 });
@@ -93,6 +95,7 @@ const InsertionSortVisualizer = () => {
 
   const resetStats = () => {
     setComparisons(0);
+    setShowSummary(false);
     setShifts(0);
     setCurrentStep(0);
     setTotalSteps(0);
@@ -179,6 +182,7 @@ const InsertionSortVisualizer = () => {
 
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     isSortingRef.current = false;
     setCurrentPhase("Completed");
     setStepExplanation("Array is fully sorted.");
@@ -336,6 +340,18 @@ const InsertionSortVisualizer = () => {
           )}
         </div>
       </div>
+
+      {showSummary && (
+        <ExecutionSummaryCard
+          title="Sorting Complete"
+          metrics={[
+            { label: "Elements Sorted", value: array.length },
+            { label: "Total Comparisons", value: comparisons },
+            { label: "Total Shifts", value: shifts },
+          ]}
+          onClose={() => setShowSummary(false)}
+        />
+      )}
     </main>
   );
 };

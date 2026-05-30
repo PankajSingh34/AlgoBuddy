@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/storage";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
@@ -59,6 +60,7 @@ const BubbleSortVisualizer = () => {
 
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
   const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
   const [currentPhase, setCurrentPhase] = useState("");
   const [stepExplanation, setStepExplanation] = useState("");
@@ -95,6 +97,7 @@ const BubbleSortVisualizer = () => {
 
   const resetStats = () => {
     setComparisons(0);
+    setShowSummary(false);
     setSwaps(0);
     setCurrentStep(0);
     setTotalSteps(0);
@@ -182,6 +185,7 @@ const BubbleSortVisualizer = () => {
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     setCurrentPhase("Completed");
     setStepExplanation("Array is fully sorted.");
   };
@@ -374,6 +378,18 @@ const BubbleSortVisualizer = () => {
             </div>
           )}
         </div>
+
+        {showSummary && (
+          <ExecutionSummaryCard
+            title="Sorting Complete"
+            metrics={[
+              { label: "Elements Sorted", value: array.length },
+              { label: "Total Comparisons", value: comparisons },
+              { label: "Total Swaps", value: swaps },
+            ]}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
       </div>
     </main>
   );

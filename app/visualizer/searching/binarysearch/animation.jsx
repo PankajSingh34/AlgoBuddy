@@ -8,6 +8,7 @@ import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/stora
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
@@ -35,6 +36,7 @@ const BinarySearch = () => {
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
   const [pendingStart, setPendingStart] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const [autoSort, setAutoSort] = useState(false);
   const [showAutoSort, setShowAutoSort] = useState(false);
 
@@ -69,6 +71,8 @@ const BinarySearch = () => {
     removeFromStorage("binary-speed");
     setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
     setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
+    setShowSummary(false);
+    setIsAnimating(false); setPendingStart(false);
     setIsAnimating(false); 
     setPendingStart(false);
     setAutoSort(false);
@@ -102,6 +106,7 @@ const BinarySearch = () => {
         `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`
       );
       setIsAnimating(false);
+      setShowSummary(true);
       return;
     }
 
@@ -137,6 +142,7 @@ const BinarySearch = () => {
           `✓ arr[${m}] = ${arr[m]} equals target ${targetValue}. Found at index ${m} after ${currentStep} step${currentStep > 1 ? "s" : ""}!`
         );
         setIsAnimating(false);
+        setShowSummary(true);
         gsap.to(elementRefs.current[m], {
           backgroundColor: "#22C55E",
           borderColor: "#15803D",
@@ -466,6 +472,18 @@ const BinarySearch = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showSummary && (
+        <ExecutionSummaryCard
+          title="Search Complete"
+          metrics={[
+            { label: "Array Size", value: array.length },
+            { label: "Target Found", value: foundIndex !== -1 ? "Yes" : "No" },
+            { label: "Total Comparisons", value: stepCount },
+          ]}
+          onClose={() => setShowSummary(false)}
+        />
       )}
     </main>
   );

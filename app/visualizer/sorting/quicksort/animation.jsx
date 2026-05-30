@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
@@ -31,6 +32,7 @@ const QuickSortVisualizer = () => {
   } = usePlayback(1);
   const [comparisons, setComparisons] = useState(0);
   const [swaps, setSwaps] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const [currentIndices, setCurrentIndices] = useState({
@@ -63,6 +65,7 @@ const QuickSortVisualizer = () => {
   // Reset all stats and state
   const resetStats = () => {
     setComparisons(0);
+    setShowSummary(false);
     setSwaps(0);
     setCurrentStep(0);
     setTotalSteps(0);
@@ -222,6 +225,7 @@ const QuickSortVisualizer = () => {
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setShowSummary(true);
     setCurrentPhase("Completed");
     setStepExplanation("Array is fully sorted.");
     setCurrentIndices({
@@ -505,6 +509,18 @@ const QuickSortVisualizer = () => {
           {renderPartitions()}
         </div>
       </div>
+
+      {showSummary && (
+        <ExecutionSummaryCard
+          title="Sorting Complete"
+          metrics={[
+            { label: "Elements Sorted", value: array.length },
+            { label: "Total Comparisons", value: comparisons },
+            { label: "Total Swaps", value: swaps },
+          ]}
+          onClose={() => setShowSummary(false)}
+        />
+      )}
     </main>
   );
 };

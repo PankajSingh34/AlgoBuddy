@@ -6,8 +6,8 @@ import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import ExecutionSummaryCard from "@/app/components/ui/ExecutionSummaryCard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-
 const getFontSize = (value) => {
   const len = String(value).length;
   if (len <= 2) return "text-lg";
@@ -24,6 +24,8 @@ const LinearSearch = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // FIX: "success" | "error" | "warning"
+  const [stepCount, setStepCount] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
   const {
     isPaused,
     speed,
@@ -63,6 +65,8 @@ const LinearSearch = () => {
     setFoundIndex(-1);
     setMessage("");
     setMessageType(""); // FIX: reset message type
+    setStepCount(0);
+    setShowSummary(false);
     setIsAnimating(false);
     setArrayElements("");
     setTarget("");
@@ -149,6 +153,7 @@ const targetValue = parseInt(target);
     for (let index = 0; index < arr.length; index++) {
       if (!isSearchingRef.current) return;
       setCurrentIndex(index);
+      setStepCount(index + 1);
 
       // highlight current
       elementRefs.current.forEach((ref, idx) => {
@@ -170,6 +175,7 @@ const targetValue = parseInt(target);
         setMessage(`Element ${targetValue} found at index ${index}!`);
         setMessageType("success"); // FIX: found → green
         setIsAnimating(false);
+        setShowSummary(true);
         isSearchingRef.current = false;
         gsap.to(elementRefs.current[index], { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0.3 });
         return;
@@ -180,6 +186,7 @@ const targetValue = parseInt(target);
     setMessage(`Element ${targetValue} not found in the array.`);
     setMessageType("error"); // FIX: search result "not found" → red
     setIsAnimating(false);
+    setShowSummary(true);
     isSearchingRef.current = false;
   };
 
@@ -320,6 +327,18 @@ const targetValue = parseInt(target);
             </div>
           </div>
         </div>
+      )}
+
+      {showSummary && (
+        <ExecutionSummaryCard
+          title="Search Complete"
+          metrics={[
+            { label: "Array Size", value: array.length },
+            { label: "Target Found", value: foundIndex !== -1 ? "Yes" : "No" },
+            { label: "Total Comparisons", value: stepCount },
+          ]}
+          onClose={() => setShowSummary(false)}
+        />
       )}
     </main>
   );
