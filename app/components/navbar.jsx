@@ -163,7 +163,7 @@ export default function Navbar() {
                 aria-current={isActive(l.href) ? "page" : undefined}
                 className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
                   isActive(l.href)
-                    ? "text-primary dark:text-primary font-semibold"
+                    ? "text-primary dark:text-primary font-medium"
                     : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
                 }`}
               >
