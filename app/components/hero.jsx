@@ -107,21 +107,14 @@ const HeroSection = () => {
                 Start Visualizing
                 <ArrowRight className="w-4 h-4" />
               </Link>
-
-              <Link
-                href="/blogs"
-                className="inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full border-2 border-surface-900 dark:border-surface-50 text-surface-900 dark:text-surface-50 text-[15px] font-bold hover:bg-surface-900 hover:text-white dark:hover:bg-white dark:hover:text-surface-900 transition-colors duration-200"
-              >
-                Read Blogs
-              </Link>
             </div>
           </div>
 
           {/* ══ RIGHT — DSA visual card ══ */}
           <div className="flex-shrink-0 flex items-center justify-center w-full lg:w-auto">
-            <div className="relative w-full max-w-[460px]">
+            <div className="group relative w-full max-w-[460px] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
               {/* ── main card: code editor window ── */}
-              <div className="rounded-2xl border border-[#d1d7dc] dark:border-[#3e4143] bg-[#1c1d1f] shadow-2xl overflow-hidden">
+              <div className="rounded-2xl border border-[#d1d7dc] dark:border-[#3e4143] bg-[#1c1d1f] shadow-2xl overflow-hidden transition-all duration-300 ease-in-out">
                 {/* title bar */}
                 <div className="flex items-center gap-2 px-4 py-3 bg-[#2d2f31] border-b border-[#3e4143]">
                   <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
@@ -253,20 +246,28 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              {/* ── floating badge top-right ── */}
-              <div className="absolute -top-4 -right-4 flex items-center gap-2 bg-white dark:bg-[#2d2f31] border border-[#d1d7dc] dark:border-[#3e4143] rounded-full pl-2.5 pr-4 py-2 shadow-xl text-[13px] font-semibold text-[#1c1d1f] dark:text-[#f7f9fa]">
-                <span className="w-7 h-7 rounded-full bg-[#a435f0] flex items-center justify-center text-white text-[11px] font-bold">
-                  O
-                </span>
-                O(log n)
+              {/* Floating status badges (positioned absolutely inside the relative wrapper) */}
+              <div
+                className="absolute -top-3 -right-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                aria-hidden
+              >
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: "#a435f0", boxShadow: "0 0 0 6px #a435f022" }}
+                />
+                <span className="font-medium">O(log n)</span>
               </div>
 
-              {/* ── floating badge bottom-left ── */}
-              <div className="absolute -bottom-4 -left-4 flex items-center gap-2 bg-white dark:bg-[#2d2f31] border border-[#d1d7dc] dark:border-[#3e4143] rounded-full pl-2.5 pr-4 py-2 shadow-xl text-[13px] font-semibold text-[#1c1d1f] dark:text-[#f7f9fa]">
-                <span className="w-7 h-7 rounded-full bg-[#28c840] flex items-center justify-center text-white text-[11px] font-bold">
-                  ✓
+              <div
+                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                aria-hidden
+              >
+                <span className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#28c840" }}>
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <path d="M1 4L4 7L9 1" stroke="#07120A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </span>
-                Found at index 5
+                <span className="font-medium">Found at index 5</span>
               </div>
 
               {/* glow */}

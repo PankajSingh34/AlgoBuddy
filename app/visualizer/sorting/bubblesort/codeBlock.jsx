@@ -5,7 +5,6 @@ const codeExamples = {
   javascript: `// Bubble Sort in JavaScript
 function bubbleSort(arr) {
   let n = arr.length;
-  
   // Outer loop for passes
   for (let i = 0; i < n - 1; i++) {
     // Inner loop for comparisons
@@ -18,7 +17,6 @@ function bubbleSort(arr) {
   }
   return arr;
 }
-
 // Usage example
 const unsortedArray = [64, 34, 25, 12, 22, 11, 90];
 console.log("Unsorted array:", unsortedArray);
@@ -27,8 +25,7 @@ console.log("Sorted array:", sortedArray);`,
 
   python: `# Bubble Sort in Python
 def bubble_sort(arr):
-    n = len(arr)
-    
+    n = len(arr)    
     # Outer loop for passes
     for i in range(n - 1):
         # Inner loop for comparisons
@@ -37,7 +34,6 @@ def bubble_sort(arr):
             if arr[j] > arr[j + 1]:
                 arr[j], arr[j + 1] = arr[j + 1], arr[j]
     return arr
-
 # Usage example
 unsorted_array = [64, 34, 25, 12, 22, 11, 90]
 print("Unsorted array:", unsorted_array)
@@ -47,8 +43,7 @@ print("Sorted array:", sorted_array)`,
   java: `// Bubble Sort in Java
 public class BubbleSort {
     public static void bubbleSort(int[] arr) {
-        int n = arr.length;
-        
+        int n = arr.length;    
         for (int i = 0; i < n - 1; i++) {
             for (int j = 0; j < n - i - 1; j++) {
                 if (arr[j] > arr[j + 1]) {
@@ -59,7 +54,6 @@ public class BubbleSort {
             }
         }
     }
-
     public static void main(String[] args) {
         int[] unsortedArray = {64, 34, 25, 12, 22, 11, 90};
         bubbleSort(unsortedArray);
@@ -70,7 +64,6 @@ public class BubbleSort {
 
   c: `// Bubble Sort in C
 #include <stdio.h>
-
 void bubbleSort(int arr[], int n) {
     for (int i = 0; i < n - 1; i++) {
         for (int j = 0; j < n - i - 1; j++) {
@@ -82,7 +75,6 @@ void bubbleSort(int arr[], int n) {
         }
     }
 }
-
 int main() {
     int arr[] = {64, 34, 25, 12, 22, 11, 90};
     int n = sizeof(arr) / sizeof(arr[0]);
@@ -96,7 +88,6 @@ int main() {
 #include <iostream>
 #include <vector>
 using namespace std;
-
 void bubbleSort(vector<int>& arr) {
     int n = arr.size();
     for (int i = 0; i < n - 1; i++) {
@@ -107,7 +98,6 @@ void bubbleSort(vector<int>& arr) {
         }
     }
 }
-
 int main() {
     vector<int> arr = {64, 34, 25, 12, 22, 11, 90};
     bubbleSort(arr);

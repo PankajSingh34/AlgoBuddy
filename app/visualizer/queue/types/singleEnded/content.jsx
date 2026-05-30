@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -21,7 +20,7 @@ const Content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraphs = [
     `A single-ended queue (often just called a queue) is a linear data structure that follows the FIFO (First-In-First-Out) principle. Elements are added (enqueued) at the rear and removed (dequeued) from the front, maintaining strict ordering.`,

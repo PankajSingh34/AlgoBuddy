@@ -40,10 +40,10 @@ const TOPIC_ROWS = [
   ],
 ];
 
-function TopicCard({ label, color, done, lock }) {
+function TopicCard({ label, color, lock }) {
   return (
     <div
-      className="relative flex flex-col gap-1 px-3 py-2 rounded-xl bg-white dark:bg-[#2d2f31] border border-[#e5e7eb] dark:border-[#3e4143] shadow-sm select-none transition-colors duration-300"
+      className="relative flex flex-col gap-1 px-3 py-2 rounded-xl bg-white dark:bg-[#2d2f31] border border-[#e5e7eb] dark:border-[#3e4143] shadow-sm select-none transform-gpu will-change-transform transition-all duration-300 ease-in-out"
       style={{
         filter: lock ? "blur(3px)" : "none",
         opacity: lock ? 0.55 : 1,
@@ -55,11 +55,6 @@ function TopicCard({ label, color, done, lock }) {
       <span className="text-[12px] font-semibold text-[#1a1a1a] dark:text-[#f7f9fa] leading-tight transition-colors duration-300">
         {label}
       </span>
-      {done && (
-        <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white dark:bg-[#2d2f31] border border-[#e5e7eb] dark:border-[#3e4143] flex items-center justify-center text-[10px] text-[#22c55e] font-bold shadow-sm transition-colors duration-300">
-          ✓
-        </span>
-      )}
     </div>
   );
 }

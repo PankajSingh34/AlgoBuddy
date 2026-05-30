@@ -1,17 +1,16 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -22,7 +21,7 @@ const Content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraph = [
     `Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until the list is sorted. It gets its name because smaller elements "bubble" to the top of the list.`,

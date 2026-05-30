@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import PushPop from "@/app/components/ui/PushPop";
 import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const StackVisualizer = () => {
   const [stack, setStack] = useState([]);
@@ -10,6 +11,13 @@ const StackVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [stackLimit] = useState(5); // Set stack capacity
   const [isFull, setIsFull] = useState(false);
+  useVisualizerReset(() => {
+    setStack([]);
+    setOperation(null);
+    setMessage("Stack is empty");
+    setIsAnimating(false);
+    setIsFull(false);
+  });
   const { speed, setSpeed } = usePlayback(1); // Read speed from hook (controlled inside PushPop)
 
   // Check if stack is full

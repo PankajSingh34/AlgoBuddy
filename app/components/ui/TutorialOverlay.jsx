@@ -6,7 +6,12 @@ import gsap from "gsap";
 export default function TutorialOverlay() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [step, setStep] = useState(0);
+  const [videoError, setVideoError] = useState(false);
   const overlayRef = useRef();
+
+  useEffect(() => {
+    setVideoError(false);
+  }, [step]);
 
   useEffect(() => {
     const seenTutorial = localStorage.getItem("tutorialSeen");
@@ -64,21 +69,20 @@ export default function TutorialOverlay() {
           ×
         </button>
         {(step === 1 || step === 2) && (
-          /* 
-            TODO: When tutorial1.mp4 and tutorial2.mp4 are added to the /public/tutorials/ directory, 
-            remove this div placeholder and restore the video element below:
-            
+          !videoError ? (
             <video 
               src={`/tutorials/tutorial${step}.mp4`} 
               autoPlay 
               loop 
               muted 
+              onError={() => setVideoError(true)}
               className="w-full aspect-video rounded-lg mb-4" 
-            /> 
-          */
-          <div className="w-full aspect-video rounded-lg mb-4 bg-gray-100 dark:bg-surface-800 border border-gray-200 dark:border-surface-700 flex flex-col items-center justify-center">
-            <span className="text-gray-500 dark:text-gray-400 font-medium">Video tutorial coming soon</span>
-          </div>
+            />
+          ) : (
+            <div className="w-full aspect-video rounded-lg mb-4 bg-gray-100 dark:bg-surface-800 border border-gray-200 dark:border-surface-700 flex flex-col items-center justify-center">
+              <span className="text-gray-500 dark:text-gray-400 font-medium">Video tutorial coming soon</span>
+            </div>
+          )
         )}
         <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
           {step === 0 && "Welcome to AlgoBuddy!"}

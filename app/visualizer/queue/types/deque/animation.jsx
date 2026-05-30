@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const DequeVisualizer = () => {
   const [deque, setDeque] = useState([]);
@@ -9,6 +10,13 @@ const DequeVisualizer = () => {
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Deque is empty");
   const [isAnimating, setIsAnimating] = useState(false);
+  useVisualizerReset(() => {
+    setDeque([]);
+    setInputValue("");
+    setOperation(null);
+    setMessage("Deque is empty");
+    setIsAnimating(false);
+  });
   const { speed, setSpeed } = usePlayback(1);
 
   /* ---------- helpers ---------- */

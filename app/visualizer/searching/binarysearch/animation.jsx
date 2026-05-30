@@ -8,6 +8,7 @@ import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/stora
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -34,9 +35,12 @@ const BinarySearch = () => {
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
   const [pendingStart, setPendingStart] = useState(false);
+  const [autoSort, setAutoSort] = useState(false);
+  const [showAutoSort, setShowAutoSort] = useState(false);
 
   const {
     isPaused,
+    isPausedRef,
     speed,
     speedRef,
     setSpeed,
@@ -46,7 +50,7 @@ const BinarySearch = () => {
   } = usePlayback(() => loadFromStorage("binary-speed", 1));
 
   const animationRef = useRef(null);
-  const isPausedRef = useRef(false);
+  const wasPausedRef = useRef(false);
   const searchStateRef = useRef({ l: 0, h: 0, arr: [], targetValue: 0, step: 0 });
   const formRef = useRef(null);
   const elementRefs = useRef([]);
@@ -65,8 +69,12 @@ const BinarySearch = () => {
     removeFromStorage("binary-speed");
     setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
     setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
-    setIsAnimating(false); setPendingStart(false);
+    setIsAnimating(false); 
+    setPendingStart(false);
+    setAutoSort(false);
+    setShowAutoSort(false);
     isPausedRef.current = false;
+    wasPausedRef.current = false;
     setArrayElements(""); setTarget(""); setSpeed(1);
     if (formRef.current) formRef.current.reset();
     elementRefs.current.forEach((ref) => {
@@ -152,7 +160,7 @@ const BinarySearch = () => {
         }, delay * 0.6);
       }
     }, delay);
-  }, [speedRef]);
+  }, [speedRef, isPausedRef]);
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -183,19 +191,39 @@ const BinarySearch = () => {
       return;
     }
 
-    const isSorted = elements.every((el, idx) => idx === 0 || el >= elements[idx - 1]);
-    if (!isSorted) {
+    const isSorted = elements.every(
+      (el, idx) => idx === 0 || el >= elements[idx - 1]
+    );
+
+    if (!isSorted && !autoSort) {
       setMessage("Array must be sorted in ascending order.");
       setMessageType("warning");
+      setShowAutoSort(true);
       return;
     }
 
-    searchStateRef.current = { l: 0, h: elements.length - 1, arr: elements, targetValue, step: 0 };
-    setArray(elements);
+    let processedElements = [...elements];
+
+    if (!isSorted && autoSort) {  
+      processedElements.sort((a, b) => a - b);
+      setArrayElements(processedElements.join(", "));
+      setShowAutoSort(false);
+    }
+
+    searchStateRef.current = {
+      l: 0,
+      h: processedElements.length - 1,
+      arr: processedElements,
+      targetValue,
+      step: 0
+    };
+
+    setArray(processedElements);
     setI(0);
-    setJ(elements.length - 1);
+    setJ(processedElements.length - 1);
     setIsAnimating(true);
     isPausedRef.current = false;
+    wasPausedRef.current = false;
     setPendingStart(true);
   };
 
@@ -206,10 +234,38 @@ const BinarySearch = () => {
     }
   }, [pendingStart, array, animateBinarySearch]);
 
+  useEffect(() => {
+    if (isPaused) {
+      wasPausedRef.current = true;
+    } else if (wasPausedRef.current && isAnimating) {
+      wasPausedRef.current = false;
+      clearTimeout(animationRef.current);
+      animateBinarySearch();
+    }
+  }, [isPaused, isAnimating, animateBinarySearch]);
+
   const togglePlayPauseRef = useRef(togglePlayPause);
   useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
 
   const isAnimatingRef = useRef(isAnimating);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setI(-1);
+    setJ(-1);
+    setMid(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+    setStepExplanation("");
+    setStepCount(0);
+    setPendingStart(false);
+    setAutoSort(false);
+    setShowAutoSort(false);
+    });
   useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   useEffect(() => {
@@ -228,7 +284,7 @@ const BinarySearch = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  useEffect(() => { return () => clearTimeout(animationRef.current); }, []);
+
 
   const messageClass =
     messageType === "success"
@@ -325,6 +381,19 @@ const BinarySearch = () => {
       {message && (
         <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
           <p className="text-center font-medium">{message}</p>
+
+          {showAutoSort && (
+            <div className="mt-3 flex justify-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoSort}
+                  onChange={(e) => setAutoSort(e.target.checked)}
+                />
+                <span>Auto-sort the array for me</span>
+              </label>
+            </div>
+          )}
         </div>
       )}
 

@@ -50,7 +50,6 @@ public class LinearSearch {
         }
         return -1; // Return -1 if not found
     }
-
     public static void main(String[] args) {
         int[] numbers = {10, 20, 30, 40, 50};
         int target = 30;
@@ -66,7 +65,6 @@ public class LinearSearch {
 
   c: `// Linear Search in C
 #include <stdio.h>
-
 int linearSearch(int arr[], int size, int target) {
     for (int i = 0; i < size; i++) {
         if (arr[i] == target) {
@@ -75,20 +73,16 @@ int linearSearch(int arr[], int size, int target) {
     }
     return -1; // Return -1 if not found
 }
-
 int main() {
     int numbers[] = {10, 20, 30, 40, 50};
     int size = sizeof(numbers) / sizeof(numbers[0]);
     int target = 30;
-
     int result = linearSearch(numbers, size, target);
-
     if (result != -1) {
         printf("Element found at index: %d\\n", result);
     } else {
         printf("Element not found\\n");
     }
-
     return 0;
 }`,
 
@@ -105,19 +99,15 @@ int linearSearch(const vector<int>& arr, int target) {
     }
     return -1; // Return -1 if not found
 }
-
 int main() {
     vector<int> numbers = {10, 20, 30, 40, 50};
     int target = 30;
-
     int result = linearSearch(numbers, target);
-
     if (result != -1) {
         cout << "Element found at index: " << result << endl;
     } else {
         cout << "Element not found" << endl;
     }
-    
     return 0;
 }`,
 };

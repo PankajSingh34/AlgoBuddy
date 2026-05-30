@@ -85,6 +85,23 @@ body {
   font-weight: 700;
 }
 
+.visualizer-page h1,
+.visualizer-page h2,
+.visualizer-page h3,
+.visualizer-page h4,
+.visualizer-page h5,
+.visualizer-page h6 {
+  font-family: 'Source Sans 3', 'Source Sans Pro', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* Navbar Brand Typography */
+.brand-logo {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
 .dark body {
   color: var(--udemy-dark-text);
   background: var(--udemy-dark-bg);

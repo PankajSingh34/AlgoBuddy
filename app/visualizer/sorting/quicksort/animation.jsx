@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -40,9 +41,24 @@ const QuickSortVisualizer = () => {
     stack: [],
     partitions: [],
   });
+  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");
   const animationRef = useRef(null);
   const isSortingRef = useRef(false);
   const resolveRef = useRef(null);
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setSorting(false);
+    setSorted(false);
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ pivot: -1, left: -1, right: -1, partitionIndex: -1, stack: [], partitions: [] });
+  });
 
   // Reset all stats and state
   const resetStats = () => {
@@ -58,6 +74,8 @@ const QuickSortVisualizer = () => {
       stack: [],
       partitions: [],
     });
+    setCurrentPhase("");
+    setStepExplanation("");
     if (animationRef.current) {
       clearTimeout(animationRef.current);
     }
@@ -77,6 +95,8 @@ const QuickSortVisualizer = () => {
     const pivot = arr[high];
     let i = low - 1;
 
+    setCurrentPhase(`Partitioning range [${low}, ${high}]`);
+    setStepExplanation(`Choosing pivot ${pivot} at index ${high}.`);
     setCurrentIndices((prev) => ({
       ...prev,
       pivot: high,
@@ -90,13 +110,15 @@ const QuickSortVisualizer = () => {
         left: j,
         right: i,
       }));
-
+      setStepExplanation(`Comparing ${arr[j]} at index ${j} with pivot ${pivot}.`);
       setComparisons((prev) => prev + 1);
+      setCurrentStep((prev) => prev + 1);
       await cancellableDelay(1000);
       if (!isSortingRef.current) return -1;
 
       if (arr[j] < pivot) {
         i++;
+        setStepExplanation(`Since ${arr[j]} < pivot, swapping elements at indices ${i} and ${j}.`);
         [arr[i], arr[j]] = [arr[j], arr[i]];
         setSwaps((prev) => prev + 1);
         setArray([...arr]);
@@ -111,9 +133,14 @@ const QuickSortVisualizer = () => {
         }
         await cancellableDelay(1000);
         if (!isSortingRef.current) return -1;
+      } else {
+        setStepExplanation(`Since ${arr[j]} >= pivot, leaving ${arr[j]} on the right side.`);
+        await cancellableDelay(1000);
+        if (!isSortingRef.current) return -1;
       }
     }
 
+    setStepExplanation(`Placing pivot ${pivot} into its correct position at index ${i + 1}.`);
     [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
     setSwaps((prev) => prev + 1);
     setArray([...arr]);
@@ -152,10 +179,13 @@ const QuickSortVisualizer = () => {
       const { low, high } = stack.pop();
 
       if (low < high) {
+        setCurrentPhase(`Partition Step: [${low}, ${high}]`);
+        setStepExplanation(`Processing partition range [${low}, ${high}] in the current Quick Sort stack.`);
         // Show current partition being processed
         setCurrentIndices((prev) => ({
           ...prev,
           partitions: [...prev.partitions, { low, high }],
+          stack: [...stack],
         }));
 
         const pi = await partition(arr, low, high);
@@ -170,12 +200,13 @@ const QuickSortVisualizer = () => {
           right: -1,
         }));
 
+        setStepExplanation(`Partition completed. Pivot is now at index ${pi}.`);
+        await cancellableDelay(1000);
+        if (!isSortingRef.current) return;
+
         // Push right subarray first so left is processed first
         stack.push({ low: pi + 1, high });
         stack.push({ low, high: pi - 1 });
-
-        await cancellableDelay(1000);
-        if (!isSortingRef.current) return;
 
         // Remove completed partition
         setCurrentIndices((prev) => ({
@@ -186,12 +217,13 @@ const QuickSortVisualizer = () => {
         }));
       }
     }
-        setCurrentStep((prev) => prev + 1);
 
     setArray([...arr]);
     isSortingRef.current = false;
     setSorting(false);
     setSorted(true);
+    setCurrentPhase("Completed");
+    setStepExplanation("Array is fully sorted.");
     setCurrentIndices({
       pivot: -1,
       left: -1,
@@ -330,6 +362,7 @@ const QuickSortVisualizer = () => {
                   resetStats();
                 }}
                 disabled={sorting}
+                currentArray={array}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -342,6 +375,7 @@ const QuickSortVisualizer = () => {
               </button>
               <button
                 onClick={reset}
+                disabled={sorting}
                 className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base"
               >
                 Reset All
@@ -354,8 +388,6 @@ const QuickSortVisualizer = () => {
               isPaused={isPaused}
               onTogglePlayPause={togglePlayPause}
               speed={speed}
-              onIncreaseSpeed={increaseSpeed}
-              onDecreaseSpeed={decreaseSpeed}
               onSpeedChange={setSpeed}
             />
           )}
@@ -399,6 +431,16 @@ const QuickSortVisualizer = () => {
                 : sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
+            </div>
+          </div>
+          <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+            <div className="font-medium">Phase:</div>
+            <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+            </div>
+            <div className="font-medium mt-2">Explanation:</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>

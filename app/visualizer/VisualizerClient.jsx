@@ -1,8 +1,8 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiArrowLeft, FiSearch, FiChevronRight } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { FiSearch, FiChevronRight } from "react-icons/fi";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
@@ -83,6 +83,18 @@ const DS_THEME = {
     icon: (c) => (
       <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+      </svg>
+    ),
+  },
+  "AI Algorithms": {
+    color: "#0891b2",
+    bg: "#ecfeff",
+    border: "#c5eaf0",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M12 2A4 4 0 0 0 8 6v1H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+        <rect x="9" y="13" width="2" height="2" />
+        <rect x="13" y="13" width="2" height="2" />
       </svg>
     ),
   },
@@ -307,6 +319,22 @@ function CustomCodeMiniViz({ color }) {
   );
 }
 
+function AIAlgorithmsMiniViz({ color }) {
+  return (
+    <svg viewBox="0 0 80 50" className="w-full h-[48px]">
+      <circle cx="40" cy="10" r="5" fill={color} />
+      <line x1="40" y1="10" x2="25" y2="25" stroke={color} strokeWidth="1.5" opacity="0.4" />
+      <line x1="40" y1="10" x2="55" y2="25" stroke={color} strokeWidth="1.5" opacity="0.4" />
+      <circle cx="25" cy="25" r="4" fill={color} opacity="0.7" />
+      <circle cx="55" cy="25" r="4" fill={color} opacity="0.7" />
+      <line x1="25" y1="25" x2="15" y2="40" stroke={color} strokeWidth="1.5" opacity="0.2" />
+      <line x1="25" y1="25" x2="35" y2="40" stroke={color} strokeWidth="1.5" opacity="0.2" />
+      <circle cx="15" cy="40" r="3" fill={color} opacity="0.4" />
+      <circle cx="35" cy="40" r="3" fill={color} opacity="0.4" />
+    </svg>
+  );
+}
+
 
 const MINI_VIZ = {
   Array: ArrayMiniViz,
@@ -317,305 +345,110 @@ const MINI_VIZ = {
   Graph: GraphMiniViz,
   HashMap: HashMapMiniViz,
   Recursion: RecursionMiniViz,
-  "Custom Code": CustomCodeMiniViz,
+  "Code Lab": CustomCodeMiniViz,
+  "AI Algorithms": AIAlgorithmsMiniViz,
 };
 
 /* ═══════════════════════════════════════
    DS Card — homepage-style window card
    ═══════════════════════════════════════ */
-function DSCard({ section, theme, onClick, delay }) {
+function DSCard({ section, theme, delay }) {
   const MiniViz = MINI_VIZ[section.title];
   const count = section.subsections
     ? section.subsections.reduce((a, s) => a + s.items.length, 0)
     : 0;
+  const href = `/visualizer/${section.slug}`;
 
   return (
-    <motion.button
-      onClick={onClick}
+    <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="group w-full h-full text-left cursor-pointer"
+      className="group w-full h-full"
     >
-      <div
-        className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col"
-        style={{ borderColor: theme.border }}
-        data-theme-card={section.title || "Custom Code"}
-      >
-        {/* title bar */}
+      <Link href={href} className="block w-full h-full text-left cursor-pointer">
         <div
-          className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
-          style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-header={section.title || "Custom Code"}
-        >
-          <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-          <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-surface-300">
-            {section.title.toLowerCase().replace(/\s/g, "")}.js
-          </span>
-        </div>
-
-        {/* card body */}
-        <div
-          className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
+          className="rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col"
+          style={{ borderColor: theme.border }}
           data-theme-card={section.title || "Custom Code"}
         >
-          {/* icon + title */}
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
-              style={{ background: theme.bg }}
-              data-theme-header={section.title || "Custom Code"}
-            >
-              {theme.icon(theme.color)}
-            </div>
-            <div>
-              <h3 className="text-[18px] font-extrabold text-surface-900 dark:text-white transition-colors">
-                {section.title}
-              </h3>
-              <p className="text-[12px] text-surface-500 dark:text-surface-400 font-medium transition-colors">
-                {count} algorithm{count !== 1 ? "s" : ""} to explore
-              </p>
-            </div>
-          </div>
-
-          {/* description */}
-          <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
-            {section.desc}
-          </p>
-
-          {/* mini visualization */}
-          {MiniViz && (
-            <div
-              className="rounded-lg p-3 mb-4 border transition-colors duration-300"
-              style={{ background: theme.bg, borderColor: theme.border }}
-              data-theme-header={section.title || "Custom Code"}
-            >
-              <MiniViz color={theme.color} />
-            </div>
-          )}
-
-          {/* CTA pill */}
+          {/* title bar */}
           <div
-            className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
-              group-hover:gap-3 transition-all duration-200"
-            style={{ background: theme.color }}
+            className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
+            style={{ background: theme.bg, borderColor: theme.border }}
+            data-theme-header={section.title || "Custom Code"}
           >
-            Explore {section.title}
-            <FiChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+            <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+            <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+            <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+            <span className="ml-2 text-[12px] font-mono text-surface-500 dark:text-surface-300">
+              {section.title.toLowerCase().replace(/\s/g, "")}.js
+            </span>
           </div>
-        </div>
-      </div>
-    </motion.button>
-  );
-}
 
-/* ═══════════════════════════════════════
-   Module View — drill-down page
-   ═══════════════════════════════════════ */
-function ModuleView({ section, theme, onBack }) {
-  const count = section.subsections
-    ? section.subsections.reduce((a, s) => a + s.items.length, 0)
-    : 0;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div
-        className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
-        style={{ background: theme.bg, borderColor: theme.border }}
-        data-theme-card={section.title}
-      >
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
-            hover:text-surface-900 dark:hover:text-surface-100 transition-colors duration-200 mb-5"
-        >
-          <FiArrowLeft className="w-4 h-4" /> Back to all topics
-        </button>
-
-        <div className="flex items-center gap-4 mb-3">
+          {/* card body */}
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center p-3 flex-shrink-0 transition-colors duration-300"
-            style={{ background: theme.bg }}
-            data-theme-header={section.title}
+            className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
+            data-theme-card={section.title || "Custom Code"}
           >
-            {theme.icon(theme.color)}
-          </div>
-          <div>
-            <h2 className="text-[2rem] sm:text-[2.8rem] font-black leading-[1.1] tracking-tighter text-surface-900 dark:text-white transition-colors duration-300">
-              {section.title}
-            </h2>
-            <p className="text-[14px] text-surface-600 dark:text-surface-300 mt-1 transition-colors duration-300">
-              {count} algorithm{count !== 1 ? "s" : ""} · {section.desc}
+            {/* icon + title */}
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
+                style={{ background: theme.bg }}
+                data-theme-header={section.title || "Custom Code"}
+              >
+                {theme.icon(theme.color)}
+              </div>
+              <div>
+                <h3 className="text-[18px] font-extrabold text-surface-900 dark:text-white transition-colors">
+                  {section.title}
+                </h3>
+                <p className="text-[12px] text-surface-500 dark:text-surface-400 font-medium transition-colors">
+                  {count} algorithm{count !== 1 ? "s" : ""} to explore
+                </p>
+              </div>
+            </div>
+
+            {/* description */}
+            <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
+              {section.desc}
             </p>
+
+            {/* mini visualization */}
+            {MiniViz && (
+              <div
+                className="rounded-lg p-3 mb-4 border transition-colors duration-300"
+                style={{ background: theme.bg, borderColor: theme.border }}
+                data-theme-header={section.title || "Custom Code"}
+              >
+                <MiniViz color={theme.color} />
+              </div>
+            )}
+
+            {/* CTA pill */}
+            <div
+              className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
+                group-hover:gap-3 transition-all duration-200"
+              style={{ background: theme.color }}
+            >
+              Explore {section.title}
+              <FiChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-200" />
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="space-y-8">
-        {section.subsections?.map((sub, si) => (
-          <motion.div
-            key={si}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: si * 0.08 }}
-          >
-            <h4
-              className="text-[13px] font-bold uppercase tracking-wider mb-4 pl-1"
-              style={{ color: theme.color }}
-            >
-              {sub.title}
-            </h4>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {sub.items.map((item, ii) => (
-                <Link
-                  key={ii}
-                  href={item.path}
-                  className="group/item flex items-center justify-between p-4 rounded-xl border
-                    bg-white dark:bg-[#2d2f31] dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
-                  style={{ borderColor: theme.border }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[14px] font-bold transition-colors duration-300"
-                      style={{ background: theme.color + "15", color: theme.color }}
-                      data-theme-header={section.title}
-                    >
-                      {ii + 1}
-                    </div>
-                    <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/item:text-primary transition-colors">
-                      {item.name}
-                    </span>
-                  </div>
-                  <FiChevronRight
-                    className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/item:translate-x-1 transition-all duration-200"
-                    style={{ color: theme.color + "60" }}
-                  />
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      </Link>
     </motion.div>
   );
 }
 
 /* ═══════════════════════════════════════
-   Main Client Component
+   Main Client Component — Grid only
    ═══════════════════════════════════════ */
 export default function VisualizerClient({ initialSections }) {
-  const [activeSection, setActiveSection] = useState(null);
   const [search, setSearch] = useState("");
-
-  // Sync state with URL search parameters (category) and restore scroll coordinates
-  useEffect(() => {
-    const handleUrlState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const category = params.get("category");
-      if (category) {
-        const section = initialSections.find((s) => s.title.toLowerCase() === category.toLowerCase());
-        if (section) {
-          setActiveSection(section);
-
-          // Restore module scroll position
-          const savedModulePos = sessionStorage.getItem("visualizerModuleScrollPosition");
-          if (savedModulePos) {
-            const scrollPos = parseInt(savedModulePos, 10);
-            if (!isNaN(scrollPos) && scrollPos > 0) {
-              setTimeout(() => {
-                window.scrollTo({
-                  top: scrollPos,
-                  behavior: "instant",
-                });
-              }, 100);
-            }
-          }
-          return;
-        }
-      }
-
-      // If no category parameter, show grid view
-      setActiveSection(null);
-
-      // Restore grid scroll position
-      const savedGridPos = sessionStorage.getItem("visualizerGridScrollPosition");
-      if (savedGridPos) {
-        const scrollPos = parseInt(savedGridPos, 10);
-        if (!isNaN(scrollPos) && scrollPos > 0) {
-          setTimeout(() => {
-            window.scrollTo({
-              top: scrollPos,
-              behavior: "instant",
-            });
-          }, 100);
-        }
-      }
-    };
-
-    // Run on mount
-    handleUrlState();
-
-    // Listen to browser Back/Forward navigation
-    window.addEventListener("popstate", handleUrlState);
-    return () => window.removeEventListener("popstate", handleUrlState);
-  }, [initialSections]);
-
-  // Track window scroll position in sessionStorage
-  useEffect(() => {
-    const handleScroll = () => {
-      if (activeSection) {
-        sessionStorage.setItem("visualizerModuleScrollPosition", window.scrollY.toString());
-      } else {
-        sessionStorage.setItem("visualizerGridScrollPosition", window.scrollY.toString());
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [activeSection]);
-
-  const handleCardClick = (section) => {
-    // Save grid scroll position before entering the module view
-    sessionStorage.setItem("visualizerGridScrollPosition", window.scrollY.toString());
-    
-    // Update URL to include category search query in browser history
-    window.history.pushState(null, "", `?category=${encodeURIComponent(section.title.toLowerCase())}`);
-    
-    // Reset module scroll position to top
-    sessionStorage.setItem("visualizerModuleScrollPosition", "0");
-    
-    setActiveSection(section);
-    window.scrollTo(0, 0);
-  };
-
-  const handleBackToGrid = () => {
-    // Revert URL to base visualizer path
-    window.history.pushState(null, "", "/visualizer");
-    
-    setActiveSection(null);
-
-    // Restore grid scroll position after transition stabilizes
-    const savedGridPos = sessionStorage.getItem("visualizerGridScrollPosition");
-    if (savedGridPos) {
-      const scrollPos = parseInt(savedGridPos, 10);
-      if (!isNaN(scrollPos)) {
-        setTimeout(() => {
-          window.scrollTo({
-            top: scrollPos,
-            behavior: "instant",
-          });
-        }, 100);
-      }
-    }
-  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
@@ -630,11 +463,7 @@ export default function VisualizerClient({ initialSections }) {
             return { ...sub, items: subHit ? sub.items : items };
           })
           .filter((sub) => sub.items.length > 0);
-        return {
-          ...sec,
-          subsections: subs,
-          _hit: titleHit || (subs && subs.length > 0),
-        };
+        return { ...sec, subsections: subs, _hit: titleHit || (subs && subs.length > 0) };
       })
       .filter((s) => s._hit);
   }, [search, initialSections]);
@@ -646,8 +475,7 @@ export default function VisualizerClient({ initialSections }) {
     initialSections.forEach((sec) =>
       sec.subsections?.forEach((sub) =>
         sub.items.forEach((item) => {
-          if (item.name.toLowerCase().includes(q))
-            r.push({ ...item, ds: sec.title });
+          if (item.name.toLowerCase().includes(q)) r.push({ ...item, ds: sec.title });
         }),
       ),
     );
@@ -657,10 +485,7 @@ export default function VisualizerClient({ initialSections }) {
   return (
     <div>
       <style>{`
-        /* Overriding inline styles aggressively for perfect dark mode */
-        
-        /* Dark mode solid card body elevations */
-        .dark [data-theme-card="Custom Code"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="Code Lab"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
@@ -669,9 +494,8 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Graph"] { background: #2c1215 !important; border-color: #991b1b !important; }
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
-
-        /* Dark mode solid card headers & icons */
-        .dark [data-theme-header="Custom Code"] { background: #3e4143 !important; border-color: #4b5563 !important; }
+        .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
@@ -680,8 +504,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-header="Graph"] { background: #3d171b !important; border-color: #991b1b !important; }
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
-
-        /* Mini Viz Overrides for Dark Mode (Rich saturated colors) */
+        .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] .mini-viz-inactive { background: #1e3a8a !important; color: #93c5fd !important; }
         .dark [data-theme-card="Queue"] .mini-viz-inactive { background: #166534 !important; color: #86efac !important; }
@@ -692,134 +515,97 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Recursion"] .mini-viz-inactive { background: #115e59 !important; color: #99f6e4 !important; border-color: #115e59 !important; }
         .dark .mini-viz-line { stroke: #4b5563 !important; }
       `}</style>
-      
-      {/* ═══════ CONTENT AREA ═══════ */}
-      <section
-        className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300"
-      >
+
+      <section className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto">
-          {/* page heading + search */}
-          {!activeSection && !search.trim() && (
+          {!search.trim() && (
             <div className="text-center mb-14">
               <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
                 Algorithm <span className="text-primary">Visualizer</span>
               </h1>
               <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
-                Pick any data structure, tap an algorithm, and watch it run step
-                by step. Learning DSA has never been this fun.
+                Pick any data structure, tap an algorithm, and watch it run step by step. Learning DSA has never been this fun.
               </p>
             </div>
           )}
 
-          {/* Search Bar */}
           <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search algorithms and topics..."
-                className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-          <AnimatePresence mode="wait">
-            {search.trim() ? (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
+              placeholder="Search algorithms and topics..."
+              className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
               >
-                {flatResults.length > 0 ? (
-                  <div className="max-w-3xl mx-auto">
-                    <p className="text-[13px] font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-5">
-                      {flatResults.length} result
-                      {flatResults.length !== 1 ? "s" : ""}
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {flatResults.map((item, i) => {
-                        const t = getTheme(item.ds);
-                        return (
-                          <Link
-                            key={i}
-                            href={item.path}
-                            className="group/r flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#2d2f31] border dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
-                            style={{ borderColor: t.border }}
-                          >
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 flex-shrink-0 transition-colors"
-                              style={{ background: t.bg }}
-                              data-theme-header={item.ds}
-                            >
-                              {t.icon(t.color)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/r:text-primary transition-colors">
-                                {item.name}
-                              </span>
-                              <span className="block text-[11px] text-surface-500 dark:text-surface-400">
-                                {item.ds}
-                              </span>
-                            </div>
-                            <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                      <FiSearch className="h-6 w-6 text-surface-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">
-                      No results found
-                    </h3>
-                    <p className="text-surface-500 dark:text-surface-400 text-[15px]">
-                      Try a different search term
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            ) : activeSection ? (
-              <ModuleView
-                key={`module-${activeSection.title}`}
-                section={activeSection}
-                theme={getTheme(activeSection.title)}
-                onBack={handleBackToGrid}
-              />
-            ) : (
-              <motion.div
-                key="grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-                  {filtered.map((section, i) => (
-                    <DSCard
-                      key={section.title}
-                      section={section}
-                      theme={getTheme(section.title)}
-                      onClick={() => handleCardClick(section)}
-                      delay={i * 0.07}
-                    />
-                  ))}
-                </div>
-              </motion.div>
+                x
+              </button>
             )}
-          </AnimatePresence>
+          </div>
+
+          {search.trim() ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+              {flatResults.length > 0 ? (
+                <div className="max-w-3xl mx-auto">
+                  <p className="text-[13px] font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-5">
+                    {flatResults.length} result{flatResults.length !== 1 ? "s" : ""}
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {flatResults.map((item, i) => {
+                      const t = getTheme(item.ds);
+                      return (
+                        <Link
+                          key={i}
+                          href={item.path}
+                          className="group/r flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#2d2f31] border dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
+                          style={{ borderColor: t.border }}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 flex-shrink-0"
+                            style={{ background: t.bg }}
+                            data-theme-header={item.ds}
+                          >
+                            {t.icon(t.color)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/r:text-primary transition-colors">{item.name}</span>
+                            <span className="block text-[11px] text-surface-500 dark:text-surface-400">{item.ds}</span>
+                          </div>
+                          <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                    <FiSearch className="h-6 w-6 text-surface-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">No results found</h3>
+                  <p className="text-surface-500 dark:text-surface-400 text-[15px]">Try a different search term</p>
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+                {filtered.map((section, i) => (
+                  <DSCard
+                    key={section.title}
+                    section={section}
+                    theme={getTheme(section.title)}
+                    delay={i * 0.07}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </section>
     </div>
