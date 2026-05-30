@@ -154,6 +154,12 @@ const sections = [
           { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
         ],
       },
+      {
+        title: "Interview Patterns",
+        items: [
+          { name: "Sliding Window", path: "/visualizer/arrays/slidingwindow" },
+        ],
+      },
     ],
   },
   {
