@@ -28,7 +28,7 @@ function getValidUrl(value) {
   try {
     const url = new URL(trimmed);
     return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
-  } catch {
+  } catch (_e) {
     return null;
   }
 }
@@ -100,7 +100,7 @@ export async function POST(req) {
     let body;
     try {
       body = await req.json();
-    } catch {
+    } catch (_e) {
       return Response.json({ error: "Invalid JSON request body." }, { status: 400 });
     }
 
