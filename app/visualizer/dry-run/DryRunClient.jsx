@@ -17,7 +17,7 @@ import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/app/contexts/UserContext";
 import { useCollaboration } from "@/app/components/ui/useCollaboration";
-import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import Editor from "@monaco-editor/react";
 
 const SAMPLES = {
   JavaScript: `const numbers = [5, 2, 8, 1];

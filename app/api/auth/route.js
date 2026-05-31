@@ -2,39 +2,26 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabaseConfig";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 
+function requireEnv(name, value) {
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
 // Service-role client is only used for signup so it can create users regardless
 // of RLS policies. It is never used for login — that goes through the anon client
 // so that Supabase's own per-user RLS applies from the first request.
-function getValidUrl(value) {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed || trimmed.startsWith("Your ")) return null;
-  try {
-    const url = new URL(trimmed);
-    return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
-  } catch {
-    return null;
-  }
-}
-
-function getValidKey(value) {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  return trimmed && !trimmed.startsWith("Your ") ? trimmed : null;
-}
-
-const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
-
-const supabaseAdmin =
-  supabaseUrl && supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : null;
+const supabaseAdmin = createClient(
+  SUPABASE_URL,
+  requireEnv("SUPABASE_SERVICE_KEY", process.env.SUPABASE_SERVICE_KEY),
+);
 
 const AUTH_RATE_LIMIT_PREFIX = "auth";
 
@@ -201,13 +188,6 @@ export async function POST(req) {
     }
 
     if (action === "signup") {
-      if (!supabaseAdmin) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Auth server is not configured." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
-      }
-
       const { error } = await supabaseAdmin.auth.signUp({
         email,
         password,
@@ -242,20 +222,13 @@ export async function POST(req) {
         );
       }
 
-      if (!supabaseUrl || !supabaseAnonKey) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Auth server is not configured." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
-      }
-
       const cookieStore = await cookies();
 
       // createServerClient writes the session into cookies automatically when
       // signInWithPassword resolves. Tokens are never placed in the response body.
       const client = createServerClient(
-        supabaseUrl,
-        supabaseAnonKey,
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
         {
           cookies: {
             getAll() {
