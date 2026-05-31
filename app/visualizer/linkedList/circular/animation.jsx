@@ -4,9 +4,9 @@ import { gsap } from 'gsap';
 import Footer from '@/app/components/footer';
 import ResetButton from '@/app/components/ui/resetButton';
 import ExploreOther from '@/app/components/ui/exploreOther';
-import Content from "@/app/visualizer/linkedlist/circular/content";
-import Quiz from '@/app/visualizer/linkedlist/circular/quiz';
-import CodeBlock from "@/app/visualizer/linkedlist/circular/codeBlock";
+import Content from "@/app/visualizer/linkedList/circular/content";
+import Quiz from '@/app/visualizer/linkedList/circular/quiz';
+import CodeBlock from "@/app/visualizer/linkedList/circular/codeBlock";
 import BackToTop from '@/app/components/ui/backtotop';
 import GoBackButton from "@/app/components/ui/goback";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
@@ -134,7 +134,7 @@ const CircularLinkedListVisualizer = () => {
         <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
           Visualize Circular Linked List Operations
         </p>
-        
+
         {/* Input Form */}
         <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8 border border-gray-200 dark:border-gray-700">
           <div className="mb-4">
@@ -164,7 +164,7 @@ const CircularLinkedListVisualizer = () => {
         </div>
 
         {/* Visualization Area */}
-          <div className="relative max-w-4xl mx-auto">
+        <div className="relative max-w-4xl mx-auto">
           {list.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-dashed border-gray-300 dark:border-gray-700">
               <div className="inline-block p-6 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
@@ -241,7 +241,7 @@ const CircularLinkedListVisualizer = () => {
                   const centerY = 0;
                   const nodeX = centerX + radius * Math.cos(angle);
                   const nodeY = centerY + radius * Math.sin(angle);
-                  
+
                   return (
                     <div
                       key={node.id}
@@ -290,7 +290,7 @@ const CircularLinkedListVisualizer = () => {
         </p>
         <Quiz />
 
-        <CodeBlock/>
+        <CodeBlock />
 
         <ExploreOther
           title="Explore Other Types"
@@ -301,7 +301,7 @@ const CircularLinkedListVisualizer = () => {
         />
 
       </main>
-      <BackToTop/>
+      <BackToTop />
       <Footer />
     </div>
   );
