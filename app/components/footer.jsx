@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { FaGithub, FaLinkedin, FaEnvelope, FaDiscord, FaYoutube, FaTwitter } from "react-icons/fa6";
+import { FaGithub, FaLinkedin, FaEnvelope, FaDiscord, FaYoutube, FaTwitter, FaInstagram } from "react-icons/fa6";
 
 import PrivacyPolicyModal from "@/app/components/PrivacyPolicyModal";
 import TermsOfServiceModal from "@/app/components/termsOfServicesModal";
@@ -46,7 +46,7 @@ const Footer = () => {
                 </a>
 
                 <a
-                  href="https://www.linkedin.com/in/pankaj-singh-2a968b212/"
+                  href="https://www.linkedin.com/company/algobuddy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={socialIcon}
@@ -56,11 +56,21 @@ const Footer = () => {
                 </a>
 
                 <a
-                  href="mailto:singhps588@gmail.com"
+                  href="mailto:AlgoBuddy.connect@gmail.com"
                   className={socialIcon}
                   aria-label="Email"
                 >
                   <FaEnvelope className="w-4 h-4" />
+                </a>
+
+                <a
+                  href="https://www.instagram.com/algobuddy.connect/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialIcon}
+                  aria-label="Instagram"
+                >
+                  <FaInstagram className="w-4 h-4" />
                 </a>
               </div>
 
@@ -117,7 +127,7 @@ const Footer = () => {
                 Join our community and connect with learners and developers.
               </p>
               <div className="space-y-4">
-                <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a href="https://discord.gg/PqnazRxPc" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
                 <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
@@ -126,7 +136,7 @@ const Footer = () => {
                 <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaYoutube className="w-4 h-4" /> YouTube
                 </a>
-                <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a href="https://x.com/AlgoBuddy_" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
