@@ -3,21 +3,15 @@ import {
   listCollaborationSessions,
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
 
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const limit = searchParams.get("limit") ?? undefined;
+  const cursor = searchParams.get("cursor") ?? undefined;
 
-export async function GET() {
-  const sessions = await listCollaborationSessions();
-  return Response.json({ sessions });
+  const { sessions, nextCursor } = await listCollaborationSessions({ limit, cursor });
+  return Response.json({ sessions, nextCursor: nextCursor ?? null });
 }
 
 export async function POST(request) {
@@ -52,7 +46,7 @@ export async function POST(request) {
     return Response.json({
       session,
       sessionSecret,
-      joinUrl: `/visualizer/dry-run?session=${session.id}`,
+      joinUrl: `/visualizer/dry-run?session=${session.joinCode}`,
     });
   } catch (error) {
     return Response.json(

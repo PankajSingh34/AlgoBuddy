@@ -6,6 +6,7 @@ import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
   createOptions,
   useSortingChallenge,
@@ -57,8 +58,8 @@ const SelectionSortVisualizer = () => {
       i: -1,    // Current outer loop index
       j: -1,    // Current inner loop index
       min: -1   // Current minimum element index
-    });
-    const animationRef = useRef(null);
+    });  const [currentPhase, setCurrentPhase] = useState("");
+  const [stepExplanation, setStepExplanation] = useState("");    const animationRef = useRef(null);
     const resolveRef = useRef(null);
     const isSortingRef = useRef(false);
     const {
@@ -98,6 +99,8 @@ const SelectionSortVisualizer = () => {
       setCurrentStep(0);
       setTotalSteps(0);
       setCurrentIndices({ i: -1, j: -1, min: -1 });
+      setCurrentPhase("");
+      setStepExplanation("");
       resetChallengeStats();
       if (animationRef.current) {
         clearTimeout(animationRef.current);
@@ -124,6 +127,8 @@ const SelectionSortVisualizer = () => {
       
       for (let i = 0; i < n - 1; i++) {
         let minIndex = i;
+        setCurrentPhase(`Pass ${i + 1} of ${n - 1}`);
+        setStepExplanation(`Selecting minimum element from the remaining array starting at index ${i}.`);
         setCurrentIndices({ i, j: i + 1, min: minIndex });
         
         for (let j = i + 1; j < n; j++) {
@@ -131,25 +136,24 @@ const SelectionSortVisualizer = () => {
           tempComparisons++;
           setComparisons(tempComparisons);
           setCurrentStep((prev) => prev + 1);
-  
+          setStepExplanation(`Comparing ${arr[j]} at index ${j} with current minimum ${arr[minIndex]} at index ${minIndex}.`);
+
           await cancellableDelay();
           if (!isSortingRef.current) return;
-  
+
           if (arr[j] < arr[minIndex]) {
             minIndex = j;
             setCurrentIndices(prev => ({ ...prev, min: minIndex }));
-            
-            setCurrentIndices(prev => ({ ...prev, min: minIndex }));
-            
+            setStepExplanation(`Found new minimum ${arr[j]} at index ${j}.`);
             await cancellableDelay();
             if (!isSortingRef.current) return;
           }
         }
 
-        await askChallenge(createSelectionMinimumQuestion(arr, minIndex, i));
-        if (!isSortingRef.current) return;
-        
         if (minIndex !== i) {
+          setStepExplanation(`Swapping minimum ${arr[minIndex]} into position ${i}.`);
+          await cancellableDelay();
+          if (!isSortingRef.current) return;
           [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
           tempSwaps++;
           setSwaps(tempSwaps);
@@ -174,6 +178,8 @@ const SelectionSortVisualizer = () => {
           
           await cancellableDelay();
           if (!isSortingRef.current) return;
+        } else {
+          setStepExplanation(`Index ${i} already contains the minimum element ${arr[minIndex]}. No swap needed.`);
         }
       }
       
@@ -199,6 +205,8 @@ const SelectionSortVisualizer = () => {
       isSortingRef.current = false;
       setSorting(false);
       setSorted(true);
+      setCurrentPhase("Completed");
+      setStepExplanation("Array is fully sorted.");
       setCurrentIndices({ i: -1, j: -1, min: -1 });
     };
   
@@ -214,6 +222,19 @@ const SelectionSortVisualizer = () => {
     };
   
     // Clean up on unmount
+  useVisualizerReset(() => {
+    isSortingRef.current = false;
+    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
+    if (animationRef.current) clearTimeout(animationRef.current);
+    setArray([]);
+    setSorting(false);
+    setSorted(false);
+    setComparisons(0);
+    setSwaps(0);
+    setCurrentStep(0);
+    setTotalSteps(0);
+    setCurrentIndices({ i: -1, j: -1, minIdx: -1 });
+  });
     useEffect(() => {
       return () => {
         if (animationRef.current) {
@@ -257,6 +278,7 @@ const SelectionSortVisualizer = () => {
                     onUseCustomArray={handleCustomArray}
                     disabled={sorting}
                     placeholder="e.g. 5, 3, 8, 1, 2"
+                    currentArray={array}
                   />
                 </div>
                 <div className="flex flex-col">
@@ -269,6 +291,7 @@ const SelectionSortVisualizer = () => {
                   </button>
                   <button
                     onClick={reset}
+                    disabled={sorting}
                     className="w-full bg-transparent border border-[#a435f0] text-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 mt-4 px-4 py-2 rounded transition-colors"
                   >
                     Reset All
@@ -281,8 +304,6 @@ const SelectionSortVisualizer = () => {
                   isPaused={isPaused}
                   onTogglePlayPause={togglePlayPause}
                   speed={speed}
-                  onIncreaseSpeed={increaseSpeed}
-                  onDecreaseSpeed={decreaseSpeed}
                   onSpeedChange={setSpeed}
                 />
               )}
@@ -330,6 +351,16 @@ const SelectionSortVisualizer = () => {
                 <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
                 <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Finding minimum from index ${currentIndices.i}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
               </div>
+              <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
+                <div className="font-medium">Phase:</div>
+                <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+                  {currentPhase || (sorted ? 'Completed' : 'Ready to start')}
+                </div>
+                <div className="font-medium mt-2">Explanation:</div>
+                <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                  {stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
+                </div>
+              </div>
             </div>
 
             {/* Visualization */}
@@ -355,7 +386,7 @@ const SelectionSortVisualizer = () => {
                                 ? "bg-pink-400 dark:bg-pink-600 border-pink-600 dark:border-pink-400"
                                 : isSorted
                                 ? "bg-green-400 dark:bg-green-600 border-green-600 dark:border-green-400"
-                                : "bg-blue-400 dark:bg-blue-600 border-blue-600 dark:border-blue-400"
+                                : "bg-primary/80 dark:bg-primary border-primary dark:border-primary/80"
                             }`}
                         >
                           {value}

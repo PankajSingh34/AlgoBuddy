@@ -11,7 +11,6 @@ function quickSort(arr, left = 0, right = arr.length - 1) {
   }
   return arr;
 }
-
 function partition(arr, left, right) {
   const pivot = arr[right];
   let i = left;
@@ -24,7 +23,6 @@ function partition(arr, left, right) {
   [arr[i], arr[right]] = [arr[right], arr[i]];
   return i;
 }
-
 // Usage example
 const numbers = [10, 7, 8, 9, 1, 5];
 console.log("Before sorting:", numbers);
@@ -40,7 +38,6 @@ def quick_sort(arr, low=0, high=None):
         quick_sort(arr, low, pivot_index - 1)
         quick_sort(arr, pivot_index + 1, high)
     return arr
-
 def partition(arr, low, high):
     pivot = arr[high]
     i = low
@@ -50,7 +47,6 @@ def partition(arr, low, high):
             i += 1
     arr[i], arr[high] = arr[high], arr[i]
     return i
-
 # Usage example
 numbers = [10, 7, 8, 9, 1, 5]
 print("Before sorting:", numbers)
@@ -66,7 +62,6 @@ public class QuickSort {
             quickSort(arr, pivotIndex + 1, high);
         }
     }
-
     private static int partition(int[] arr, int low, int high) {
         int pivot = arr[high];
         int i = low;
@@ -79,13 +74,11 @@ public class QuickSort {
         swap(arr, i, high);
         return i;
     }
-
     private static void swap(int[] arr, int i, int j) {
         int temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }
-
     public static void main(String[] args) {
         int[] numbers = {10, 7, 8, 9, 1, 5};
         quickSort(numbers, 0, numbers.length - 1);
@@ -97,13 +90,11 @@ public class QuickSort {
 
   c: `// Quick Sort in C
 #include <stdio.h>
-
 void swap(int* a, int* b) {
     int temp = *a;
     *a = *b;
     *b = temp;
 }
-
 int partition(int arr[], int low, int high) {
     int pivot = arr[high];
     int i = low;
@@ -116,7 +107,6 @@ int partition(int arr[], int low, int high) {
     swap(&arr[i], &arr[high]);
     return i;
 }
-
 void quickSort(int arr[], int low, int high) {
     if (low < high) {
         int pivotIndex = partition(arr, low, high);
@@ -124,7 +114,6 @@ void quickSort(int arr[], int low, int high) {
         quickSort(arr, pivotIndex + 1, high);
     }
 }
-
 int main() {
     int numbers[] = {10, 7, 8, 9, 1, 5};
     int n = sizeof(numbers) / sizeof(numbers[0]);
@@ -137,7 +126,6 @@ int main() {
 #include <iostream>
 #include <vector>
 using namespace std;
-
 int partition(vector<int>& arr, int low, int high) {
     int pivot = arr[high];
     int i = low;
@@ -150,7 +138,6 @@ int partition(vector<int>& arr, int low, int high) {
     swap(arr[i], arr[high]);
     return i;
 }
-
 void quickSort(vector<int>& arr, int low, int high) {
     if (low < high) {
         int pivotIndex = partition(arr, low, high);
@@ -158,7 +145,6 @@ void quickSort(vector<int>& arr, int low, int high) {
         quickSort(arr, pivotIndex + 1, high);
     }
 }
-
 int main() {
     vector<int> numbers = {10, 7, 8, 9, 1, 5};
     quickSort(numbers, 0, numbers.size() - 1);

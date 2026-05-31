@@ -29,7 +29,7 @@ export const metadata = {
   publisher: "AlgoBuddy",
   robots: "index, follow",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/icon.svg",
   },
   openGraph: {
     title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
@@ -65,7 +65,7 @@ export default async function RootLayout({ children }) {
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />
-        <link rel="icon" href="/favicon.ico?v=2" />
+        <link rel="icon" href="/favicon.ico?v=3" />
 
         {/* Prevent flash: apply saved theme before React hydrates */}
         <Script
@@ -83,6 +83,13 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
+        {/* Google AdSense Script */}
+<Script
+  async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5588131730389378"
+  crossOrigin="anonymous"
+  strategy="afterInteractive"
+/>
 
         {/* Google Analytics Script */}
         {GA_ID && (

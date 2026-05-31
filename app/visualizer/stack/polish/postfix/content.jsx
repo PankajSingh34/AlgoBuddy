@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Content = () => {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const updateTheme = useCallback(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    setTheme(savedTheme);
+  }, []);
 
   useEffect(() => {
-    const updateTheme = () => {
-      const savedTheme = localStorage.getItem("theme") || "light";
-      setTheme(savedTheme);
-    };
-
     updateTheme();
     setMounted(true);
 
@@ -21,7 +20,7 @@ const Content = () => {
       window.removeEventListener("storage", updateTheme);
       window.removeEventListener("themeChange", updateTheme);
     };
-  }, []);
+  }, [updateTheme]);
 
   const paragraph = [
     `Postfix notation (also called Reverse Polish Notation) is a way of writing expressions where the operator comes after the operands.`,
@@ -107,62 +106,62 @@ const Content = () => {
             Operator Precedence Table
           </h1>
           <div className="prose dark:prose-invert max-w-none overflow-x-auto">
-            <table className="min-w-full border-collapse border border-blue-700">
+            <table className="min-w-full border-collapse border border-primary-dark">
               <thead>
                 <tr className="bg-blue-50 dark:bg-blue-900/20">
-                  <th className="border border-blue-700 px-4 py-2 font-semibold">
+                  <th className="border border-primary-dark px-4 py-2 font-semibold">
                     Operator
                   </th>
-                  <th className="border border-blue-700 px-4 py-2 font-semibold">
+                  <th className="border border-primary-dark px-4 py-2 font-semibold">
                     Meaning
                   </th>
-                  <th className="border border-blue-700 px-4 py-2 font-semibold">
+                  <th className="border border-primary-dark px-4 py-2 font-semibold">
                     Precedence
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ( )
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Parentheses
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Highest
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     ^ %
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Exponentiation / Modulus
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     2
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     * /
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Multiplication / Division
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     3
                   </td>
                 </tr>
                 <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     + -
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     Addition / Subtraction
                   </td>
-                  <td className="border border-blue-700 px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
+                  <td className="border border-primary-dark px-4 py-2 text-[#374151] dark:text-[#d1d5db]">
                     4 (Lowest)
                   </td>
                 </tr>

@@ -1,17 +1,54 @@
 'use client';
-
 import { useState } from 'react';
+import usePlayback from '@/app/hooks/usePlayback';
+import LinearMemoryControls from '@/app/components/ui/LinearMemoryControls';
 
-const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, setOperation }) => {
+const PushPop = ({
+  stack,
+  setStack,
+  isAnimating,
+  setIsAnimating,
+  message,
+  setMessage,
+  operation,
+  setOperation,
+  extraActions,
+  capacity,
+  setCapacity,
+  stackLimit,
+  speed: parentSpeed,
+  setSpeed: parentSetSpeed
+}) => {
   const [inputValue, setInputValue] = useState('');
+  const [capacityInput, setCapacityInput] = useState('');
+  const localPlayback = usePlayback(1);
+  const speed = parentSpeed !== undefined ? parentSpeed : localPlayback.speed;
+  const setSpeed = parentSetSpeed !== undefined ? parentSetSpeed : localPlayback.setSpeed;
+
+  const limit = capacity !== undefined && capacity !== null ? capacity : stackLimit;
+
+  // Handle setting capacity
+  const handleSetCapacity = () => {
+    const size = parseInt(capacityInput, 10);
+    if (isNaN(size) || size < 1 || size > 10) {
+      setMessage('Please enter a valid capacity between 1 and 10.');
+      return;
+    }
+    setCapacity(size);
+    setCapacityInput('');
+    setMessage(`Stack capacity set to ${size}. Ready for operations!`);
+  };
 
   // Push operation
   const push = () => {
+    if (limit && stack.length >= limit) {
+      setMessage(`Stack Overflow! Cannot push. top (${stack.length - 1}) >= size - 1 (${limit - 1})`);
+      return;
+    }
     if (!inputValue.trim()) {
       setMessage('Please enter a value');
       return;
     }
-
     setIsAnimating(true);
     setOperation(`Pushing "${inputValue}"...`);
     
@@ -21,7 +58,7 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, set
       setMessage(`"${inputValue}" pushed to stack`);
       setInputValue('');
       setIsAnimating(false);
-    }, 1000);
+    }, 1000 / speed);
   };
 
   // Pop operation
@@ -30,7 +67,6 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, set
       setMessage('Stack is empty!');
       return;
     }
-
     setIsAnimating(true);
     const poppedValue = stack[0];
     setOperation(`Popping "${poppedValue}"...`);
@@ -40,7 +76,7 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, set
       setOperation(null);
       setMessage(`"${poppedValue}" popped from stack`);
       setIsAnimating(false);
-    }, 1000);
+    }, 1000 / speed);
   };
 
   // Peek operation
@@ -49,7 +85,6 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, set
       setMessage('Stack is empty!');
       return;
     }
-
     setIsAnimating(true);
     setOperation(`Peeking at "${stack[0]}"`);
     
@@ -57,52 +92,55 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, setMessage, set
       setOperation(null);
       setMessage(`Top element is "${stack[0]}"`);
       setIsAnimating(false);
-    }, 1000);
+    }, 1000 / speed);
   };
 
+  // Handle capacity-not-set state
+  if (capacity === null) {
+    return (
+      <LinearMemoryControls
+        inputValue={capacityInput}
+        setInputValue={setCapacityInput}
+        placeholder="Enter capacity (1-10)..."
+        isAnimating={isAnimating}
+        operation={operation}
+        message={message}
+        speed={speed}
+        onSpeedChange={setSpeed}
+        actions={[
+          { label: "Set Capacity", onClick: handleSetCapacity, variant: "primary", needsInput: true }
+        ]}
+      />
+    );
+  }
+
+  const actions = [
+    { label: "Push", onClick: push, variant: "primary", needsInput: true, disabled: limit && stack.length >= limit },
+    { label: "Pop", onClick: pop, disabled: stack.length === 0, variant: "secondary" },
+    { label: "Peek", onClick: peek, disabled: stack.length === 0, variant: "secondary" },
+    { label: "Reset", onClick: () => { setStack([]); setMessage('Stack cleared'); }, variant: "outline" },
+  ];
+
+  // If stack is empty, allow user to change size (locking capacity once an element is pushed)
+  if (stack.length === 0 && setCapacity) {
+    actions.push({ label: "Change Size", onClick: () => { setCapacity(null); setMessage('Please enter a new stack capacity.'); }, variant: "secondary" });
+  }
+
+  if (extraActions) {
+    actions.push(...extraActions);
+  }
+
   return (
-    <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md mb-4 border border-gray-200 dark:border-gray-700">
-      <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Enter value"
-          className="flex-1 p-2 border rounded dark:bg-neutral-900 focus:ring-2 focus:ring-blue-500"
-          disabled={isAnimating}
-        />
-        <button
-          onClick={push}
-          disabled={isAnimating}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50 sm:w-auto w-full"
-        >
-          Push
-        </button>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <button
-          onClick={pop}
-          disabled={isAnimating || stack.length === 0}
-          className="bg-green-500 text-black px-4 py-2 rounded disabled:opacity-50"
-        >
-          Pop
-        </button>
-        <button
-          onClick={peek}
-          disabled={isAnimating || stack.length === 0}
-          className="bg-amber-500 text-black px-4 py-2 rounded disabled:opacity-50"
-        >
-          Peek
-        </button>
-        <button
-          onClick={() => setStack([])}
-          className="bg-red-500 text-white px-4 py-2 rounded col-span-2 sm:col-span-1"
-          disabled={isAnimating}
-        >
-          Reset
-        </button>
-      </div>
-    </div>
+    <LinearMemoryControls
+      inputValue={inputValue}
+      setInputValue={setInputValue}
+      isAnimating={isAnimating}
+      operation={operation}
+      message={message}
+      speed={speed}
+      onSpeedChange={setSpeed}
+      actions={actions}
+    />
   );
 };
 

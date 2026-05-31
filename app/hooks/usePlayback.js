@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 export default function usePlayback(initialSpeed = 1) {
   const [isPaused, setIsPaused] = useState(false);
@@ -18,7 +17,7 @@ export default function usePlayback(initialSpeed = 1) {
       isPausedRef.current = next;
 
       // If UNPAUSING, resolve the paused promise instantly so the sorting loop resumes
-      if (!next && pauseResolveRef.current) {
+      if (!next && pauseResolveRef.current && pausePromiseRef.current) {
         pauseResolveRef.current();
         pausePromiseRef.current = null;
         pauseResolveRef.current = null;

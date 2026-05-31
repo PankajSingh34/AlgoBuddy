@@ -1,13 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 1. Added useEffect here
 
 const CustomArrayInput = ({ 
   onUseCustomArray = (numbers) => console.log("Received:", numbers),
   disabled = false, 
-  className = "" 
+  className = "",
+  currentArray = [] // 2. Added this new prop
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
+
+  // 3. Added this block to listen for changes from the parent
+  useEffect(() => {
+    if (currentArray && currentArray.length > 0) {
+      setInputValue(currentArray.join(", "));
+    } else {
+      setInputValue("");
+    }
+  }, [currentArray]);
 
   const handleSubmit = () => {
     setError("");

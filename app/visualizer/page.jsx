@@ -1,5 +1,4 @@
 import React from "react";
-import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import VisualizerClient from "./VisualizerClient";
 import ArrayModal from "@/app/components/models/ArrayModal";
@@ -10,6 +9,7 @@ import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
+import RecentlyViewed from "@/app/components/ui/RecentlyViewed";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -71,8 +71,9 @@ export const metadata = {
 
 const sections = [
   {
-    title: "Custom Code",
-    desc: "Paste code and inspect a safe step-by-step dry run",
+    title: "Code Lab",
+    slug: "code-lab",
+    desc: "Write custom code, run safe step-by-step dry runs, and analyze time & space complexity",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -91,16 +92,20 @@ const sections = [
     ),
     info: {
       About:
-        "The custom code dry-run visualizer helps learners paste short algorithm snippets and inspect line-by-line execution state without running unsafe code.",
+        "The Code Lab provides essential developer tools. Use the Dry Run Visualizer to inspect line-by-line execution state, and the Complexity Analyzer to understand Big O notations, best/worst cases, and optimization insights.",
       Representation: null,
     },
     subsections: [
       {
-        title: "Dry Run",
+        title: "Tools",
         items: [
           {
-            name: "User Code Dry Run Visualizer",
+            name: "Dry Run Visualizer",
             path: "/visualizer/dry-run",
+          },
+          {
+            name: "Complexity Analyzer",
+            path: "/visualizer/complexity-analyzer",
           },
         ],
       },
@@ -146,6 +151,53 @@ const sections = [
           { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
           { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
+          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+        ],
+      },
+      {
+        title: "Interview Patterns",
+        items: [
+          { name: "Sliding Window", path: "/visualizer/arrays/slidingwindow" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Recursion",
+    desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.306 7.5L20 9"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Recursion is a programming technique where a function calls itself to solve smaller instances of the same problem. A recursive function consists of a base case (to stop recursion) and a recursive case (to continue).",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Recursion Topics",
+        items: [
+          { name: "Basic Recursion", path: "/visualizer/recursion/basic-recursion" },
+          { name: "Functional & Parameterized Recursion", path: "/visualizer/recursion/functional-parameterized" },
+          { name: "Multiple Recursive Calls", path: "/visualizer/recursion/multiple-calls" },
+          { name: "Recursion on Subsequences", path: "/visualizer/recursion/subsequences" },
+          { name: "Backtracking", path: "/visualizer/recursion/backtracking" },
+          { name: "Recursion Trees", path: "/visualizer/recursion/trees" },
+          { name: "Call Stack Visualization", path: "/visualizer/recursion/stack" },
+          { name: "Recursive Binary Search", path: "/visualizer/recursion/binary-search" },
         ],
       },
     ],
@@ -523,7 +575,7 @@ const sections = [
   },
   {
     title: "Graph",
-    desc: "BFS, DFS, Dijkstra, MST & topological sort",
+    desc: "BFS, DFS, shortest paths, MST & topological sort",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -580,6 +632,10 @@ const sections = [
             path: "/visualizer/graph/dijkstra",
           },
           {
+            name: "Floyd-Warshall Algorithm",
+            path: "/visualizer/graph/floyd-warshall",
+          },
+          {
             name: "Prim's Algorithm",
             path: "/visualizer/graph/prim",
           },
@@ -595,23 +651,66 @@ const sections = [
       },
     ],
   },
+  {
+    title: "AI Algorithms",
+    slug: "ai",
+    desc: "Search algorithms used in Artificial Intelligence (Min Max, Alpha Beta Pruning, etc.)",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "AI algorithms involve search and optimization techniques used to find the best possible moves or paths, often used in game theory like Chess or Tic-Tac-Toe. Examples include Min Max and Alpha Beta Pruning.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Adversarial Search",
+        items: [
+          {
+            name: "Min Max Algorithm",
+            path: "/visualizer/ai/minmax",
+          },
+          {
+            name: "Alpha Beta Pruning",
+            path: "/visualizer/ai/alpha-beta-pruning",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 const Visualizer = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
      passing to the client component. Icons are fine — they're
      plain <svg> elements. */
-  const clientSections = sections.map(({ info, ...rest }) => rest);
+  const clientSections = sections.map(({ info, ...rest }) => ({
+    ...rest,
+    slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-")
+  }));
 
   return (
     <div
       className="min-h-screen bg-white dark:bg-[#1c1d1f] text-gray-800 dark:text-gray-200 flex flex-col"
       style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
     >
-      <Navbar />
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
-      <div className="w-full relative z-10">
+      <div className="w-full relative">
         
         <BackToTop />
         <Footer />
@@ -621,3 +720,4 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
+

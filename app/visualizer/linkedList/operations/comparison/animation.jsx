@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
@@ -13,6 +14,13 @@ const LinkedListComparison = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPointers, setCurrentPointers] = useState({ list1: 0, list2: 0 });
   const [comparisonResult, setComparisonResult] = useState(null);
+  useVisualizerReset(() => {
+    setList1([]);
+    setList2([]);
+    setIsAnimating(false);
+    setCurrentPointers({ list1: 0, list2: 0 });
+    setComparisonResult(null);
+  });
   const list1Refs = useRef([]);
   const list2Refs = useRef([]);
   const animationTimeline = useRef(gsap.timeline());
@@ -131,7 +139,7 @@ const LinkedListComparison = () => {
           <button
             onClick={animateComparison}
             disabled={isAnimating || list1.length === 0 || list2.length === 0}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700 disabled:bg-gray-400 sm:px-6"
+            className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400 sm:px-6"
           >
             {isAnimating ? "Comparing..." : "Compare Lists"}
           </button>

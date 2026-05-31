@@ -8,6 +8,7 @@ import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/stora
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -20,11 +21,9 @@ const BinarySearch = () => {
   const [arrayElements, setArrayElements] = useState(() =>
     loadFromStorage("binary-array-elements", "")
   );
-
   const [target, setTarget] = useState(() =>
     loadFromStorage("binary-target", "")
   );
-
   const [array, setArray] = useState([]);
   const [i, setI] = useState(-1);
   const [j, setJ] = useState(-1);
@@ -35,12 +34,13 @@ const BinarySearch = () => {
   const [messageType, setMessageType] = useState("");
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
-
-  // FIX: pendingStart flag triggers animation AFTER array renders
   const [pendingStart, setPendingStart] = useState(false);
+  const [autoSort, setAutoSort] = useState(false);
+  const [showAutoSort, setShowAutoSort] = useState(false);
 
   const {
     isPaused,
+    isPausedRef,
     speed,
     speedRef,
     setSpeed,
@@ -50,28 +50,13 @@ const BinarySearch = () => {
   } = usePlayback(() => loadFromStorage("binary-speed", 1));
 
   const animationRef = useRef(null);
-  const isPausedRef = useRef(false);
-
-  const searchStateRef = useRef({
-    l: 0,
-    h: 0,
-    arr: [],
-    targetValue: 0,
-    step: 0,
-  });
-
+  const wasPausedRef = useRef(false);
+  const searchStateRef = useRef({ l: 0, h: 0, arr: [], targetValue: 0, step: 0 });
   const formRef = useRef(null);
   const elementRefs = useRef([]);
 
-  // Persist state
-  useEffect(() => {
-    saveToStorage("binary-array-elements", arrayElements);
-  }, [arrayElements]);
-
-  useEffect(() => {
-    saveToStorage("binary-target", target);
-  }, [target]);
-
+  useEffect(() => { saveToStorage("binary-array-elements", arrayElements); }, [arrayElements]);
+  useEffect(() => { saveToStorage("binary-target", target); }, [target]);
   useEffect(() => {
     saveToStorage("binary-speed", speed);
     speedRef.current = speed;
@@ -79,62 +64,35 @@ const BinarySearch = () => {
 
   const handleReset = () => {
     clearTimeout(animationRef.current);
-
     removeFromStorage("binary-array-elements");
     removeFromStorage("binary-target");
     removeFromStorage("binary-speed");
-
-    setArray([]);
-    setI(-1);
-    setJ(-1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
-    setStepExplanation("");
-    setStepCount(0);
-    setIsAnimating(false);
+    setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
+    setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
+    setIsAnimating(false); 
     setPendingStart(false);
+    setAutoSort(false);
+    setShowAutoSort(false);
     isPausedRef.current = false;
-
-    setArrayElements("");
-    setTarget("");
-    setSpeed(1);
-
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-
+    wasPausedRef.current = false;
+    setArrayElements(""); setTarget(""); setSpeed(1);
+    if (formRef.current) formRef.current.reset();
     elementRefs.current.forEach((ref) => {
-      if (ref) {
-        gsap.to(ref, {
-          backgroundColor: "#E5E7EB",
-          borderColor: "#D1D5DB",
-          duration: 0,
-        });
-      }
+      if (ref) gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0 });
     });
   };
 
   const generateRandomArray = () => {
     if (isAnimating) return;
-
-    // FIX: improved range 5–10 for more educational value
     const size = Math.floor(Math.random() * 6) + 5;
-
     const elements = Array.from({ length: size }, () =>
       Math.floor(Math.random() * 100)
     ).sort((a, b) => a - b);
-
     setArrayElements(elements.join(", "));
   };
 
-  // FIX: animateBinarySearch is now a stable useCallback so it can be
-  // safely referenced in effects without stale closures.
   const animateBinarySearch = useCallback(() => {
     const { l, h, arr, targetValue } = searchStateRef.current;
-    // FIX: delay is read from speedRef on EVERY call, so mid-animation
-    // speed changes take effect immediately on the very next step.
     const delay = 1500 / speedRef.current;
 
     if (l > h) {
@@ -155,9 +113,9 @@ const BinarySearch = () => {
     setJ(h);
     setMid(m);
     setStepCount(currentStep);
-
-    const midExplanation = `Step ${currentStep}: low=${l}, high=${h} → mid = ⌊(${l} + ${h}) / 2⌋ = ${m}. Comparing arr[${m}] = ${arr[m]} with target ${targetValue}.`;
-    setStepExplanation(midExplanation);
+    setStepExplanation(
+      `Step ${currentStep}: low=${l}, high=${h} → mid = ⌊(${l} + ${h}) / 2⌋ = ${m}. Comparing arr[${m}] = ${arr[m]} with target ${targetValue}.`
+    );
 
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
@@ -202,23 +160,14 @@ const BinarySearch = () => {
         }, delay * 0.6);
       }
     }, delay);
-  }, [speedRef]); // stable — reads all live values via refs
+  }, [speedRef, isPausedRef]);
 
   const handleGo = (e) => {
     e.preventDefault();
     clearTimeout(animationRef.current);
-
-    setArray([]);
-    setI(-1);
-    setJ(-1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
-    setStepExplanation("");
-    setStepCount(0);
-    setIsAnimating(false);
-    setPendingStart(false);
+    setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
+    setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
+    setIsAnimating(false); setPendingStart(false);
 
     if (!arrayElements || !target) {
       setMessage("Please fill in all fields.");
@@ -227,9 +176,7 @@ const BinarySearch = () => {
     }
 
     const rawElements = arrayElements.split(",").map((el) => el.trim());
-    const hasDecimals = rawElements.some((el) => el.includes("."));
-
-    if (hasDecimals) {
+    if (rawElements.some((el) => el.includes("."))) {
       setMessage("Only integers are supported. Please remove decimal values.");
       setMessageType("warning");
       return;
@@ -248,34 +195,38 @@ const BinarySearch = () => {
       (el, idx) => idx === 0 || el >= elements[idx - 1]
     );
 
-    if (!isSorted) {
+    if (!isSorted && !autoSort) {
       setMessage("Array must be sorted in ascending order.");
       setMessageType("warning");
+      setShowAutoSort(true);
       return;
+    }
+
+    let processedElements = [...elements];
+
+    if (!isSorted && autoSort) {  
+      processedElements.sort((a, b) => a - b);
+      setArrayElements(processedElements.join(", "));
+      setShowAutoSort(false);
     }
 
     searchStateRef.current = {
       l: 0,
-      h: elements.length - 1,
-      arr: elements,
+      h: processedElements.length - 1,
+      arr: processedElements,
       targetValue,
-      step: 0,
+      step: 0
     };
 
-    setArray(elements);
+    setArray(processedElements);
     setI(0);
-    setJ(elements.length - 1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
+    setJ(processedElements.length - 1);
     setIsAnimating(true);
-
-    // FIX: signal the effect to start animation after the array renders
+    isPausedRef.current = false;
+    wasPausedRef.current = false;
     setPendingStart(true);
   };
 
-  // FIX: start animation only after array has actually rendered into the DOM
   useEffect(() => {
     if (pendingStart && array.length > 0) {
       setPendingStart(false);
@@ -283,20 +234,57 @@ const BinarySearch = () => {
     }
   }, [pendingStart, array, animateBinarySearch]);
 
-  // Sync isPausedRef with isPaused from usePlayback
   useEffect(() => {
-    isPausedRef.current = isPaused;
-    if (!isPaused && isAnimating) {
+    if (isPaused) {
+      wasPausedRef.current = true;
+    } else if (wasPausedRef.current && isAnimating) {
+      wasPausedRef.current = false;
       clearTimeout(animationRef.current);
       animateBinarySearch();
     }
   }, [isPaused, isAnimating, animateBinarySearch]);
 
-  useVisualizerKeyboard({ isAnimating, togglePlayPause });
+  const togglePlayPauseRef = useRef(togglePlayPause);
+  useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
+
+  const isAnimatingRef = useRef(isAnimating);
+  useVisualizerReset(() => {
+    clearTimeout(animationRef.current);
+    setArrayElements("");
+    setTarget("");
+    setArray([]);
+    setI(-1);
+    setJ(-1);
+    setMid(-1);
+    setFoundIndex(-1);
+    setIsAnimating(false);
+    setMessage("");
+    setMessageType("");
+    setStepExplanation("");
+    setStepCount(0);
+    setPendingStart(false);
+    setAutoSort(false);
+    setShowAutoSort(false);
+    });
+  useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   useEffect(() => {
-    return () => clearTimeout(animationRef.current);
+    const handleKeyDown = (e) => {
+      if (
+        e.code === "Space" &&
+        isAnimatingRef.current &&
+        document.activeElement.tagName !== "INPUT" &&
+        document.activeElement.tagName !== "BUTTON"
+      ) {
+        e.preventDefault();
+        togglePlayPauseRef.current();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+
 
   const messageClass =
     messageType === "success"
@@ -310,7 +298,6 @@ const BinarySearch = () => {
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
         Visualize how Binary Search efficiently finds an element in a sorted array.
       </p>
-
       <form
         ref={formRef}
         onSubmit={handleGo}
@@ -340,7 +327,6 @@ const BinarySearch = () => {
             </button>
           </div>
         </div>
-
         <div className="mb-4">
           <label className="block text-gray-700 dark:text-gray-300 mb-2" htmlFor="target">
             Target Element
@@ -361,22 +347,53 @@ const BinarySearch = () => {
             </div>
           </div>
         </div>
-
         {isAnimating && (
-          <PlaybackControls
-            isPaused={isPaused}
-            onTogglePlayPause={togglePlayPause}
-            speed={speed}
-            onIncreaseSpeed={increaseSpeed}
-            onDecreaseSpeed={decreaseSpeed}
-            onSpeedChange={setSpeed}
-          />
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
+            <button
+              type="button"
+              onClick={togglePlayPause}
+              className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
+            >
+              {isPaused ? <Play size={20} /> : <Pause size={20} />}
+              {isPaused ? "Play" : "Pause"}
+            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={decreaseSpeed}
+                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                disabled={speed <= 0.5}
+              >-</button>
+              <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center">
+                Speed: {speed}x
+              </span>
+              <button
+                type="button"
+                onClick={increaseSpeed}
+                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                disabled={speed >= 5}
+              >+</button>
+            </div>
+          </div>
         )}
       </form>
 
       {message && (
         <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
           <p className="text-center font-medium">{message}</p>
+
+          {showAutoSort && (
+            <div className="mt-3 flex justify-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoSort}
+                  onChange={(e) => setAutoSort(e.target.checked)}
+                />
+                <span>Auto-sort the array for me</span>
+              </label>
+            </div>
+          )}
         </div>
       )}
 
@@ -402,13 +419,12 @@ const BinarySearch = () => {
               </div>
               <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span><span className="font-semibold text-yellow-600 dark:text-yellow-400">■ Yellow</span> = mid index</span>
-                <span><span className="font-semibold text-blue-500 dark:text-blue-400">■ Blue</span> = active search range</span>
+                <span><span className="font-semibold text-primary dark:text-[#c27cf7]">■ Blue</span> = active search range</span>
                 <span><span className="font-semibold text-gray-400">■ Gray</span> = eliminated</span>
                 <span><span className="font-semibold text-green-500">■ Green</span> = found</span>
               </div>
             </div>
           )}
-
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
               Array Visualization
@@ -435,7 +451,7 @@ const BinarySearch = () => {
                             label === "mid"
                               ? "text-yellow-600 dark:text-yellow-400 font-semibold"
                               : label === "low" || label === "high"
-                              ? "text-blue-500 dark:text-blue-400 font-semibold"
+                              ? "text-primary dark:text-[#c27cf7] font-semibold"
                               : ""
                           }
                         >

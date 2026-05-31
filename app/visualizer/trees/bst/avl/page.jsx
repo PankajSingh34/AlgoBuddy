@@ -57,9 +57,9 @@ export default function AVLPage() {
         <ExploreOther
           title="Explore other BST operations"
           links={[
-            { text: "Insertion", url: "../bst/insertion" },
-            { text: "Deletion", url: "../bst/deletion" },
-            { text: "Searching", url: "../bst/searching" }
+            { text: "Insertion", url: "/visualizer/trees/bst/insertion" },
+            { text: "Deletion", url: "/visualizer/trees/bst/deletion" },
+            { text: "Searching", url: "/visualizer/trees/bst/searching" }
           ]}
         />
       }
