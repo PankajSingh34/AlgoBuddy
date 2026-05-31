@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import ComplexityGraph from "./components/ComplexityGraph";
 import ComplexityCard from "./components/ComplexityCard";
 import AlgorithmComparator from "./components/AlgorithmComparator";
+import CodeEstimator from "./components/CodeEstimator";
 import {
   generateComplexityData,
 } from "./utils/complexityFunctions";
@@ -122,10 +123,13 @@ export default function ComplexityAnalyzerClient() {
       </div>
 
       {/* Graph */}
-            <ComplexityGraph
+      <ComplexityGraph
         data={graphData}
         selectedComplexities={selectedComplexities}
       />
+
+      {/* AI Complexity Estimator */}
+      <CodeEstimator />
 
       {/* Educational Cards */}
       <div className="mt-8">
