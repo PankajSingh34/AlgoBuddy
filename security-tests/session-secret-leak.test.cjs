@@ -183,7 +183,7 @@ test("joinCollaborationSession resolves random join codes without anonymous list
   const joined = await joinCollaborationSession(session.joinCode, { userId: "user_join_by_code" });
   assert.ok(!joined.error, "valid join code must allow joining");
   assert.equal(joined.session.id, session.id, "join code must resolve to the session ID server-side");
-  assert.equal(joined.session.joinCode, session.joinCode, "join response may return the code to the joining user");
+  assert.equal(joined.session.joinCode, undefined, "join code must not be exposed after joining");
   assert.ok(joined.subscriptionToken, "join must return a realtime subscription token");
   assert.equal(joined.sessionSecret, undefined, "join must not return the long-lived session secret");
 });

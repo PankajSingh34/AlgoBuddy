@@ -80,6 +80,7 @@ test("listCollaborationSessions returns only discoverable fields", async () => {
     "createdAt",
     "updatedAt",
     "participantCount",
+    "presenterId",
   ]);
 
   for (const session of sessions) {

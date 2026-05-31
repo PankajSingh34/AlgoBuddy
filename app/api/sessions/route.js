@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import {
   createCollaborationSession,
   listCollaborationSessions,
+  validateCsrfOrigin,
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
@@ -75,6 +76,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    if (!validateCsrfOrigin(request)) {
+      return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+    }
     const { user, configured } = await getAuthenticatedUser();
     if (configured && !user) {
       return Response.json(
