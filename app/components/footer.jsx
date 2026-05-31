@@ -130,10 +130,10 @@ const Footer = () => {
                 <a href="https://discord.gg/PqnazRxPc" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
-                <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a href="https://github.com/PankajSingh34" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaGithub className="w-4 h-4" /> GitHub
                 </a>
-                <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a href="https://www.youtube.com/@AlgoBuddy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
                   <FaYoutube className="w-4 h-4" /> YouTube
                 </a>
                 <a href="https://x.com/AlgoBuddy_" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
