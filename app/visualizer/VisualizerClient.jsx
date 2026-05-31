@@ -518,16 +518,7 @@ export default function VisualizerClient({ initialSections }) {
 
       <section className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto">
-          {!search.trim() && (
-            <div className="text-center mb-14">
-              <h1 className="text-[2.6rem] sm:text-[3.4rem] lg:text-[4rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-white mb-4 transition-colors">
-                Algorithm <span className="text-primary">Visualizer</span>
-              </h1>
-              <p className="text-[1.1rem] text-surface-600 dark:text-surface-400 leading-relaxed max-w-[480px] mx-auto transition-colors">
-                Pick any data structure, tap an algorithm, and watch it run step by step. Learning DSA has never been this fun.
-              </p>
-            </div>
-          )}
+          
 
           <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />

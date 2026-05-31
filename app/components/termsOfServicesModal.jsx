@@ -81,12 +81,12 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
       <div className="relative bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text max-w-3xl w-full rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 max-h-[90vh] flex flex-col border border-udemy-border dark:border-udemy-dark-border">
         {/* Header with close button */}
         <div className="sticky top-0 bg-white dark:bg-udemy-dark-surface border-b border-udemy-border dark:border-udemy-dark-border p-4 flex justify-between items-center z-10">
-          <h2 className="text-2xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
             Terms of Service
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-purple-50 dark:hover:bg-udemy-dark-bg transition-colors text-udemy-muted dark:text-udemy-dark-muted hover:text-udemy-purple dark:hover:text-udemy-purple-light"
+            className="p-1.5 rounded-md border border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
             aria-label="Close"
           >
             <FiX className="w-6 h-6" />
@@ -106,9 +106,9 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
             <ul>
               {termsSections.map((item, index) => (
                 <li key={index} className="mb-4">
-                  <div className="bg-purple-50/25 dark:bg-udemy-dark-bg/50 p-5 rounded-xl border border-purple-100/40 dark:border-udemy-dark-border hover:border-udemy-purple/20 dark:hover:border-udemy-purple-light/10 transition-all duration-300">
+                  <div className="bg-neutral-50 dark:bg-neutral-800/40 p-5 rounded-xl border border-neutral-200 dark:border-neutral-700 transition-all duration-300">
                     <div className="flex items-start">
-                      <span className="w-6 h-6 flex-shrink-0 font-poppins font-semibold bg-purple-100 dark:bg-udemy-purple/20 rounded-full flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light mr-3 mt-0.5">
+                      <span className="w-6 h-6 flex-shrink-0 font-semibold bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-300 mr-3 mt-0.5">
                         {item.id}
                       </span>
                       <h3 className="text-xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-2">
@@ -120,7 +120,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
                         {item.points.map((subitem, subindex) => (
                           <li
                             key={subindex}
-                            className="list-disc text-udemy-purple dark:text-udemy-purple-light pl-1"
+                            className="list-disc text-neutral-500 pl-1"
                           >
                             <span className="text-udemy-muted dark:text-udemy-dark-muted">
                               {subitem}
@@ -138,7 +138,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
                       <div className="pl-9 mt-2">
                         <a
                           href={`mailto:${item.contact}`}
-                          className="font-semibold text-udemy-purple dark:text-udemy-purple-light hover:text-udemy-purple-dark dark:hover:text-udemy-purple hover:underline transition-colors duration-200"
+                          className="font-medium text-neutral-900 dark:text-neutral-100 hover:underline"
                         >
                           {item.contact}
                         </a>
@@ -161,7 +161,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
         <div className="sticky bottom-0 bg-white dark:bg-udemy-dark-surface border-t border-udemy-border dark:border-udemy-dark-border p-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-udemy-purple hover:bg-udemy-purple-dark text-white font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 text-sm"
+            className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
           >
             I Agree
           </button>
