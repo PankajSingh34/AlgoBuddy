@@ -7,6 +7,7 @@ import { FiChevronLeft, FiExternalLink, FiVideo, FiBookOpen } from "react-icons/
 import { toast } from "react-hot-toast";
 import Footer from "@/app/components/footer";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
+import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
 
 export default function TopicPracticeSheet() {
@@ -227,6 +228,7 @@ export default function TopicPracticeSheet() {
                       <th className="py-4 px-6 text-center">Visualizer</th>
                       <th className="py-4 px-6 text-center">Practice</th>
                       <th className="py-4 px-6 text-center">Difficulty</th>
+                      <th className="py-4 px-6 text-center">Companies</th>
                       <th className="py-4 px-6 text-center">Status</th>
                     </tr>
                   </thead>
@@ -304,6 +306,11 @@ export default function TopicPracticeSheet() {
                               }`}>
                               {item.difficulty}
                             </span>
+                          </td>
+
+                          {/* Companies */}
+                          <td className="py-4 px-6 text-center">
+                            <CompanyLogos companies={item.companies} />
                           </td>
 
                           {/* Progress Status Dropdown */}
