@@ -30,7 +30,6 @@
     "framer-motion": "^12.9.4",
     "gsap": "^3.13.0",
     "highlight.js": "^11.11.1",
-    "isolated-vm": "^6.1.2",
     "lucide-react": "^0.511.0",
     "monaco-themes": "^0.4.5",
     "next": "^16.2.6",
