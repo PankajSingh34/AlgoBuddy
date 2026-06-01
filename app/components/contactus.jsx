@@ -44,6 +44,8 @@ const ContactUs = () => {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -52,24 +54,50 @@ const ContactUs = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSubmitted(false);
 
-    console.log(formData);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          category: formData.category,
+          message: formData.message,
+          captchaToken: "",
+        }),
+      });
 
-    setSubmitted(true);
+      const data = await res.json();
 
-    setTimeout(() => {
-      setSubmitted(false);
-    }, 4000);
+      if (!res.ok) {
+        setError(data?.message || "Failed to send message. Please try again.");
+        return;
+      }
 
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      category: "General",
-      message: "",
-    });
+      setSubmitted(true);
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        category: "General",
+        message: "",
+      });
+
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 4000);
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,7 +111,7 @@ const ContactUs = () => {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/10 text-primary text-sm font-medium">
             <Sparkles size={16} />
-            We’d Love to Hear From You
+            We'd Love to Hear From You
           </div>
 
           <h1 className="mt-6 text-5xl md:text-6xl font-black tracking-tight leading-tight">
@@ -111,10 +139,8 @@ const ContactUs = () => {
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition">
                     <Mail size={24} />
                   </div>
-
                   <div>
                     <h3 className="font-semibold text-lg">Email</h3>
-
                     <p className="text-udemy-dark-muted text-sm mt-1">
                       singhps588@gmail.com
                     </p>
@@ -125,10 +151,8 @@ const ContactUs = () => {
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition">
                     <Phone size={24} />
                   </div>
-
                   <div>
                     <h3 className="font-semibold text-lg">Phone</h3>
-
                     <p className="text-udemy-dark-muted text-sm mt-1">
                       +91 XXXXX XXXXX
                     </p>
@@ -139,10 +163,8 @@ const ContactUs = () => {
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition">
                     <MapPin size={24} />
                   </div>
-
                   <div>
                     <h3 className="font-semibold text-lg">Location</h3>
-
                     <p className="text-udemy-dark-muted text-sm mt-1">India</p>
                   </div>
                 </div>
@@ -151,10 +173,8 @@ const ContactUs = () => {
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition">
                     <Clock3 size={24} />
                   </div>
-
                   <div>
                     <h3 className="font-semibold text-lg">Response Time</h3>
-
                     <p className="text-udemy-dark-muted text-sm mt-1">
                       Usually within 24-48 hours
                     </p>
@@ -165,7 +185,6 @@ const ContactUs = () => {
               {/* Social Buttons */}
               <div className="mt-10">
                 <h3 className="font-semibold text-lg mb-4">Connect With Us</h3>
-
                 <div className="flex items-center gap-4">
                   <a
                     href="https://github.com/PankajSingh34"
@@ -175,7 +194,6 @@ const ContactUs = () => {
                   >
                     <Github size={24} />
                   </a>
-
                   <a
                     href="https://www.linkedin.com/in/pankaj-singh-2a968b212/"
                     target="_blank"
@@ -194,23 +212,19 @@ const ContactUs = () => {
                 <MessageSquare className="text-primary" size={26} />
                 <h3 className="text-2xl font-bold">Need Quick Help?</h3>
               </div>
-
               <p className="text-udemy-dark-muted leading-relaxed">
                 For faster communication, mention the exact issue, feature, or
                 topic in your subject line.
               </p>
-
               <div className="mt-6 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-white">
                   <CheckCircle2 size={18} className="text-primary" />
                   Bug Reports
                 </div>
-
                 <div className="flex items-center gap-2 text-sm text-white">
                   <CheckCircle2 size={18} className="text-primary" />
                   Feature Requests
                 </div>
-
                 <div className="flex items-center gap-2 text-sm text-white">
                   <CheckCircle2 size={18} className="text-primary" />
                   Collaboration Ideas
@@ -219,12 +233,11 @@ const ContactUs = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
+          {/* RIGHT SIDE — Contact Form */}
           <div className="bg-udemy-dark-surface/80 backdrop-blur-xl border border-udemy-dark-border rounded-3xl p-8 shadow-2xl">
             <h2 className="text-3xl font-bold mb-2">Send a Message</h2>
-
             <p className="text-udemy-dark-muted mb-8">
-              Fill out the form below and we’ll get back to you soon.
+              Fill out the form below and we'll get back to you soon.
             </p>
 
             {submitted && (
@@ -234,13 +247,19 @@ const ContactUs = () => {
               </div>
             )}
 
+            {error && (
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-red-400">
+                <span className="text-lg">&#9888;</span>
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Full Name
                   </label>
-
                   <input
                     type="text"
                     name="name"
@@ -251,12 +270,10 @@ const ContactUs = () => {
                     className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Email Address
                   </label>
-
                   <input
                     type="email"
                     name="email"
@@ -274,7 +291,6 @@ const ContactUs = () => {
                   <label className="block text-sm font-medium mb-2">
                     Subject
                   </label>
-
                   <input
                     type="text"
                     name="subject"
@@ -285,12 +301,10 @@ const ContactUs = () => {
                     className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Category
                   </label>
-
                   <select
                     name="category"
                     value={formData.category}
@@ -310,7 +324,6 @@ const ContactUs = () => {
                 <label className="block text-sm font-medium mb-2">
                   Message
                 </label>
-
                 <textarea
                   name="message"
                   required
@@ -324,13 +337,42 @@ const ContactUs = () => {
 
               <button
                 type="submit"
-                className="group w-full bg-primary hover:opacity-90 transition-all duration-300 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2"
+                disabled={isLoading}
+                className="group w-full bg-primary hover:opacity-90 transition-all duration-300 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Send Message
-                <Send
-                  size={18}
-                  className="group-hover:translate-x-1 transition"
-                />
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
+                    </svg>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send
+                      size={18}
+                      className="group-hover:translate-x-1 transition"
+                    />
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -340,7 +382,6 @@ const ContactUs = () => {
         <section className="mt-24">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-black">Frequently Asked Questions</h2>
-
             <p className="text-udemy-dark-muted mt-4">
               Quick answers to common questions.
             </p>
@@ -359,7 +400,6 @@ const ContactUs = () => {
                   className="w-full text-left px-6 py-5 flex items-center justify-between"
                 >
                   <span className="font-semibold text-lg">{faq.question}</span>
-
                   <span className="text-primary text-2xl">
                     {activeFaq === index ? "-" : "+"}
                   </span>
