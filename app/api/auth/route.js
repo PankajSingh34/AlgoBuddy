@@ -137,6 +137,16 @@ function genericAuthError() {
 
 export async function POST(req) {
   try {
+    // Enforce Redis in production environments to prevent silent in-memory bypasses
+    const isProduction = process.env.NODE_ENV === "production";
+    const hasRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (isProduction && !hasRedis) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Server misconfigured: Redis environment variables are not set." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     let body;
     try {
       body = await req.json();

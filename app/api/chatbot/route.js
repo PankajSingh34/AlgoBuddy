@@ -3,12 +3,12 @@
  * Path: src/app/api/chatbot/route.js
  *
  * Architecture:
- *  - Next.js App Router POST handler
- *  - Server-Sent Events (SSE) via ReadableStream + TextEncoder
- *  - Conversational memory via full message history array (clamped to 20)
- *  - Dual-role system prompt: AlgoBuddy Product Guide + DSA Expert
- *  - Complete DSA algorithm knowledge: Basic → Advanced with examples
- *  - Provider: Google Gemini (gemini-2.0-flash)
+ * - Next.js App Router POST handler
+ * - Server-Sent Events (SSE) via ReadableStream + TextEncoder
+ * - Conversational memory via full message history array (clamped to 20)
+ * - Dual-role system prompt: AlgoBuddy Product Guide + DSA Expert
+ * - Complete DSA algorithm knowledge: Basic → Advanced with examples
+ * - Provider: Google Gemini (gemini-2.0-flash)
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -201,12 +201,9 @@ function validateMessages(messages) {
   return { valid: true };
 }
 
-// ─── Convert message history to Gemini format ─────────────────────────────────
-// Gemini uses "user" and "model" roles (not "assistant"),
-// and history must not include the final user turn (sent separately).
-function toGeminiHistory(messages) {
-  // All turns except the last one go into history
-  return messages.slice(0, -1).map((msg) => ({
+// ─── Convert message history to Gemini contents schema ────────────────────────
+function toGeminiContents(messages) {
+  return messages.map((msg) => ({
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],
   }));
@@ -244,21 +241,19 @@ export async function POST(request) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        // Build Gemini model with system instruction
+        // Build Gemini model configuration with direct system instruction context mapping
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
           generationConfig: { maxOutputTokens: MAX_TOKENS },
         });
 
-        // Start chat with all turns except the last
-        const chat = model.startChat({
-          history: toGeminiHistory(clampedMessages),
+        // Pass the fully structured content array to generateContentStream
+        // This avoids history-alternation validation errors with the Welcome message format
+        const structuredContents = toGeminiContents(clampedMessages);
+        const result = await model.generateContentStream({
+          contents: structuredContents,
         });
-
-        // Send the latest user message as a streaming request
-        const lastMessage = clampedMessages[clampedMessages.length - 1];
-        const result = await chat.sendMessageStream(lastMessage.content);
 
         for await (const chunk of result.stream) {
           const text = chunk.text();
@@ -272,10 +267,7 @@ export async function POST(request) {
         console.error("[AlgoBot API Error]", err?.message ?? err);
         enqueue({
           type: "error",
-          message:
-            err?.status != null
-              ? `AI service error (${err.status}): ${err.message ?? "Unknown error."}`
-              : "An unexpected server error occurred. Please try again in a moment.",
+          message: "AI service connection error. Please verify your local configuration and try again.",
         });
       } finally {
         controller.close();

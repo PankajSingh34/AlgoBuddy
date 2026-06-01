@@ -12,6 +12,32 @@ const Footer = () => {
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showCookieModal, setShowCookieModal] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterEmailError, setNewsletterEmailError] = useState("");
+
+  const validateEmail = (value) => {
+    if (!value) {
+      setNewsletterEmailError("");
+      return true;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      setNewsletterEmailError("Please enter a valid email address");
+      return false;
+    }
+    setNewsletterEmailError("");
+    return true;
+  };
+
+  const handleNewsletterSubscribe = (e) => {
+    e.preventDefault();
+    if (!validateEmail(newsletterEmail)) {
+      return;
+    }
+    // TODO: Implement newsletter subscription API call here
+    // For now, just clear the form on successful validation
+    setNewsletterEmail("");
+  };
 
   const footerHeading = "text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600";
   const footerLink = "block text-gray-400 hover:text-white transition-colors duration-300 text-sm";
@@ -81,16 +107,34 @@ const Footer = () => {
                   Subscribe to get the latest updates, features, and tutorials.
                 </p>
 
-                <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
-                  />
-                  <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
-                    Subscribe
-                  </button>
-                </div>
+                <form onSubmit={handleNewsletterSubscribe} noValidate>
+                  <div className={`flex overflow-hidden rounded-xl border bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm ${
+                    newsletterEmailError ? "border-red-500/50" : "border-white/10"
+                  }`}>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={newsletterEmail}
+                      onChange={(e) => {
+                        setNewsletterEmail(e.target.value);
+                        validateEmail(e.target.value);
+                      }}
+                      className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={newsletterEmail && newsletterEmailError}
+                      className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium transition-colors"
+                    >
+                      Subscribe
+                    </button>
+                  </div>
+                  {newsletterEmailError && (
+                    <p className="mt-2 text-sm text-red-400">
+                      {newsletterEmailError}
+                    </p>
+                  )}
+                </form>
               </div>
             </div>
 

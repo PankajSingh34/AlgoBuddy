@@ -4,20 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const VISUALIZER_SLUG_BY_SEGMENT = {
-  searching: "array",
-  sorting: "array",
-  arrays: "array",
-  stack: "stack",
-  queue: "queue",
   linkedlist: "linked-list",
-  linkedList: "linked-list",
-  trees: "tree",
-  graph: "graph",
-  hashmap: "hashmap",
-  recursion: "recursion",
   "dry-run": "code-lab",
   "complexity-analyzer": "code-lab",
-  ai: "ai",
 };
 
 export default function Breadcrumbs({ paths }) {

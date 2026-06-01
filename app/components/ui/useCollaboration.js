@@ -46,14 +46,6 @@ async function resolveSessionIdentifier(identifier) {
   return candidate;
 }
 
-function resolveSessionSecret(channelName) {
-  if (typeof channelName !== "string") return "";
-  const parts = channelName.split(":");
-  if (parts.length < 3) return "";
-  return sanitizeSessionText(parts.slice(2).join(":"), 240);
-}
-
-
 export function useCollaboration({
   displayName = "Anonymous",
   onRemoteStateDelta,
@@ -71,7 +63,6 @@ export function useCollaboration({
   const channelRef = useRef(null);
   const broadcastRef = useRef(null);
   const sessionRef = useRef(null);
-  const sessionSecretRef = useRef("");
   const sequenceRef = useRef(0);
   const seenSequencesRef = useRef(new Map());
   const processedEventIdsRef = useRef(new Set());
@@ -246,7 +237,7 @@ export function useCollaboration({
     return envelope;
   }, [clientId, processEnvelope]);
 
-  const attachSession = useCallback(async (nextSession, sessionChannelName, sessionSecret = "") => {
+  const attachSession = useCallback(async (nextSession, sessionChannelName) => {
     cleanupTransport();
     seenSequencesRef.current = new Map();
     processedEventIdsRef.current = new Set();
@@ -256,7 +247,6 @@ export function useCollaboration({
     const initialPresenterId = nextSession.presenterId || null;
     setPresenterId(initialPresenterId);
     presenterIdRef.current = initialPresenterId;
-    sessionSecretRef.current = sessionSecret || resolveSessionSecret(sessionChannelName);
     sessionRef.current = nextSession;
     setSession(nextSession);
     setError(null);
@@ -308,14 +298,9 @@ export function useCollaboration({
       throw new Error("Only the current presenter can transfer control.");
     }
 
-    const sessionSecret = sessionSecretRef.current;
-    if (!sessionSecret) {
-      throw new Error("Session secret is unavailable.");
-    }
-
     await requestJson(`/api/sessions/${encodeURIComponent(activeSession.id)}/presenter`, {
       method: "POST",
-      body: JSON.stringify({ presenterId: presenter, sessionSecret }),
+      body: JSON.stringify({ presenterId: presenter }),
     });
 
     return sendEnvelope("control:grant", { presenterId: presenter });
@@ -327,7 +312,7 @@ export function useCollaboration({
       body: JSON.stringify({ title, visibility, password, module, createdBy }),
     });
 
-    await attachSession(data.session, `collab:${data.session.id}:${data.sessionSecret}`, data.sessionSecret);
+    await attachSession(data.session, `collab:${data.session.id}`);
     await grantControl(clientId);
     return data;
   }, [attachSession, clientId, grantControl]);
@@ -351,7 +336,7 @@ export function useCollaboration({
       }),
     });
 
-    await attachSession(data.session, realtime.realtimeChannel, resolveSessionSecret(realtime.realtimeChannel));
+    await attachSession(data.session, realtime.realtimeChannel);
     return data;
   }, [attachSession]);
 
@@ -366,14 +351,12 @@ export function useCollaboration({
 
     cleanupTransport();
     sessionRef.current = null;
-    sessionSecretRef.current = "";
     setSession(null);
     setConnectionStatus("idle");
     setParticipants([]);
     setAnnotations([]);
     setPresenterId(null);
     presenterIdRef.current = null;
-    sessionSecretRef.current = "";
     seenSequencesRef.current = new Map();
     processedEventIdsRef.current = new Set();
   }, [cleanupTransport, sendEnvelope]);
