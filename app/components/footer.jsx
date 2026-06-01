@@ -1,21 +1,34 @@
-"use client";
+'use client'
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { FaGithub, FaLinkedin, FaEnvelope, FaDiscord, FaYoutube, FaTwitter, FaInstagram } from "react-icons/fa6";
+import React, { useState } from 'react'
+import Link from 'next/link'
+import {
+  FaGithub,
+  FaLinkedin,
+  FaEnvelope,
+  FaDiscord,
+  FaYoutube,
+  FaTwitter,
+  FaInstagram,
+} from 'react-icons/fa6'
 
-import PrivacyPolicyModal from "@/app/components/PrivacyPolicyModal";
-import TermsOfServiceModal from "@/app/components/termsOfServicesModal";
-import CookiePolicyModal from "@/app/components/cookie";
+import PrivacyPolicyModal from '@/app/components/PrivacyPolicyModal'
+import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
+import CookiePolicyModal from '@/app/components/cookie'
+import CodeOfConductModel from '@/app/components/CodeOfConductModel'
 
 const Footer = () => {
-  const [showPolicyModal, setShowPolicyModal] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showCookieModal, setShowCookieModal] = useState(false);
+  const [showPolicyModal, setShowPolicyModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showCookieModal, setShowCookieModal] = useState(false)
+  const [ShowShowOfConduct, setShowCodeOfConductModal] = useState(false)
 
-  const footerHeading = "text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600";
-  const footerLink = "block text-gray-400 hover:text-white transition-colors duration-300 text-sm";
-  const socialIcon = "w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-primary/20 hover:border-primary/50 hover:text-white transition-all duration-300";
+  const footerHeading =
+    'text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600'
+  const footerLink =
+    'block text-gray-400 hover:text-white transition-colors duration-300 text-sm'
+  const socialIcon =
+    'w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-primary/20 hover:border-primary/50 hover:text-white transition-all duration-300'
 
   return (
     <>
@@ -98,12 +111,24 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Quick Links</h3>
               <div className="space-y-4">
-                <Link href="/" className={footerLink}>Home</Link>
-                <Link href="/visualizations" className={footerLink}>Visualizations</Link>
-                <Link href="/data-structures" className={footerLink}>Data Structures</Link>
-                <Link href="/algorithms" className={footerLink}>Algorithms</Link>
-                <Link href="/about" className={footerLink}>About Us</Link>
-                <Link href="/contactus" className={footerLink}>Contact Us</Link>
+                <Link href="/" className={footerLink}>
+                  Home
+                </Link>
+                <Link href="/visualizer" className={footerLink}>
+                  Visualizations
+                </Link>
+                {/* <Link href="/data-structures" className={footerLink}>
+                  Data Structures
+                </Link> */}
+                {/* <Link href="/algorithms" className={footerLink}>
+                  Algorithms
+                </Link> */}
+                <Link href="/about" className={footerLink}>
+                  About Us
+                </Link>
+                <Link href="/contactus" className={footerLink}>
+                  Contact Us
+                </Link>
               </div>
             </div>
 
@@ -111,12 +136,24 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Resources</h3>
               <div className="space-y-4">
-                <Link href="/tutorials" className={footerLink}>Tutorials</Link>
-                <Link href="/cheatsheets" className={footerLink}>Cheatsheets</Link>
-                <Link href="/practice" className={footerLink}>Practice Problems</Link>
-                <Link href="/roadmaps" className={footerLink}>Roadmaps</Link>
-                <Link href="/blog" className={footerLink}>Blog</Link>
-                <Link href="/faq" className={footerLink}>FAQ</Link>
+                {/* <Link href="/tutorials" className={footerLink}>
+                  Tutorials
+                </Link>
+                <Link href="/cheatsheets" className={footerLink}>
+                  Cheatsheets
+                </Link>
+                <Link href="/practice" className={footerLink}>
+                  Practice Problems
+                </Link>
+                <Link href="/roadmaps" className={footerLink}>
+                  Roadmaps
+                </Link>
+                <Link href="/blog" className={footerLink}>
+                  Blog
+                </Link> */}
+                <Link href="/faq" className={footerLink}>
+                  FAQ
+                </Link>
               </div>
             </div>
 
@@ -127,16 +164,34 @@ const Footer = () => {
                 Join our community and connect with learners and developers.
               </p>
               <div className="space-y-4">
-                <a href="https://discord.gg/PqnazRxPc" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a
+                  href="https://discord.gg/PqnazRxPc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
-                <a href="https://github.com/PankajSingh34" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a
+                  href="https://github.com/PankajSingh34"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
                   <FaGithub className="w-4 h-4" /> GitHub
                 </a>
-                <a href="#" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a
+                  href="#"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
                   <FaYoutube className="w-4 h-4" /> YouTube
                 </a>
-                <a href="https://x.com/AlgoBuddy_" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm">
+                <a
+                  href="https://x.com/AlgoBuddy_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
                   <FaTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
@@ -146,18 +201,30 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Legal</h3>
               <div className="space-y-4">
-                <button onClick={() => setShowPolicyModal(true)} className={footerLink}>
+                <button
+                  onClick={() => setShowPolicyModal(true)}
+                  className={footerLink}
+                >
                   Privacy Policy
                 </button>
-                <button onClick={() => setShowTermsModal(true)} className={footerLink}>
+                <button
+                  onClick={() => setShowTermsModal(true)}
+                  className={footerLink}
+                >
                   Terms of Service
                 </button>
-                <button onClick={() => setShowCookieModal(true)} className={footerLink}>
+                <button
+                  onClick={() => setShowCookieModal(true)}
+                  className={footerLink}
+                >
                   Cookies Policy
                 </button>
-                <Link href="/code-of-conduct" className={footerLink}>
+                <button
+                  onClick={() => setShowCodeOfConductModal(true)}
+                  className={footerLink}
+                >
                   Code of Conduct
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -166,17 +233,31 @@ const Footer = () => {
           <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} AlgoBuddy. All rights reserved.</p>
             <p>
-              Made with <span className="text-primary">💜</span> by developers, for developers.
+              Made with <span className="text-primary">💜</span> by developers,
+              for developers.
             </p>
           </div>
         </div>
       </footer>
 
-      <PrivacyPolicyModal isOpen={showPolicyModal} onClose={() => setShowPolicyModal(false)} />
-      <TermsOfServiceModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
-      <CookiePolicyModal isOpen={showCookieModal} onClose={() => setShowCookieModal(false)} />
+      <PrivacyPolicyModal
+        isOpen={showPolicyModal}
+        onClose={() => setShowPolicyModal(false)}
+      />
+      <TermsOfServiceModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+      <CookiePolicyModal
+        isOpen={showCookieModal}
+        onClose={() => setShowCookieModal(false)}
+      />
+      <CodeOfConductModel
+        isOpen={ShowShowOfConduct}
+        onClose={() => setShowCodeOfConductModal(false)}
+      />
     </>
-  );
-};
+  )
+}
 
-export default Footer;
+export default Footer
