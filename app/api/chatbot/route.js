@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 const MAX_MESSAGES_PER_REQUEST = 20;
 const MAX_TOTAL_CHARS = 4000;
 const MAX_PER_MESSAGE_LENGTH = 2000;
+const VALID_ROLES = new Set(["user", "assistant"]);
 
 const SYSTEM_PROMPT = `You are the AlgoBuddy AI Assistant, an interactive helper for students and developers learning Data Structures and Algorithms (DSA). Your goal is to explain concepts in simple, easy-to-understand words, avoid jargon where possible, and provide clear step-by-step guidance.
 
@@ -20,16 +21,43 @@ Capabilities & Guidelines:
 7. Keep responses concise and structured. Do not overwhelm the user with walls of text.
 8. If asked about something unrelated to programming, computer science, or DSA, politely redirect the conversation back to algorithms and data structures.`;
 
-function validatePayload(messages) {
+function getValidUrl(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed || trimmed.startsWith("Your ")) return null;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function getValidKey(value) {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  return trimmed && !trimmed.startsWith("Your ") ? trimmed : null;
+}
+
+const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+function validateMessages(messages) {
   if (!messages || !Array.isArray(messages)) {
     return "Invalid or missing 'messages' array.";
   }
-  if (messages.length > MAX_MESSAGES_PER_REQUEST) {
-    return `Cannot process more than ${MAX_MESSAGES_PER_REQUEST} messages at once.`;
+
+  if (messages.length === 0 || messages.length > MAX_MESSAGES_PER_REQUEST) {
+    return `Messages count must be between 1 and ${MAX_MESSAGES_PER_REQUEST}.`;
   }
 
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i];
+  for (const [i, msg] of messages.entries()) {
+    if (!msg || typeof msg !== "object") {
+      return `Message at index ${i} is not a valid object.`;
+    }
+    if (!VALID_ROLES.has(msg.role)) {
+      return `Invalid role "${msg.role}" at index ${i}. Must be "user" or "assistant".`;
+    }
     if (typeof msg.content !== "string") {
       return `Message content at index ${i} must be a string.`;
     }
@@ -69,34 +97,29 @@ function createGeminiContents(messages) {
 
 export async function POST(req) {
   try {
-    // 1. Parse Request Body
     let body;
     try {
       body = await req.json();
-    } catch {
+    } catch (_e) {
       return Response.json({ error: "Invalid JSON request body." }, { status: 400 });
     }
 
     const { messages, captchaToken } = body || {};
-
-    // 2. Turnstile Captcha Verification
-    if (!captchaToken) {
-      return Response.json({ error: "Captcha token missing. Please refresh the page and try again." }, { status: 403 });
+    const validationError = validateMessages(messages);
+    if (validationError) {
+      return Response.json({ error: validationError }, { status: 400 });
     }
-    
+
     const ip = getClientIp(req.headers);
+    if (!captchaToken) {
+      return Response.json({ error: "Captcha token missing." }, { status: 403 });
+    }
+
     const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
       return Response.json({ error: captcha.error }, { status: 403 });
     }
 
-    // 3. Validate Messages Payload
-    const validationError = validatePayload(messages);
-    if (validationError) {
-      return Response.json({ error: validationError }, { status: 400 });
-    }
-
-    // 4. Rate Limiting Check
     const { allowed } = await checkRateLimit(`chatbot:${ip}`);
     if (!allowed) {
       return Response.json(
@@ -105,9 +128,6 @@ export async function POST(req) {
       );
     }
 
-    // 5. Authentication Check
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) {
       return Response.json({ error: "Auth server is not configured." }, { status: 500 });
     }
@@ -131,124 +151,51 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    // 6. Gemini API Integration
     if (!process.env.GEMINI_API_KEY) {
       return Response.json(
-        { error: "Gemini API Key is missing. Please add GEMINI_API_KEY to your env configuration." },
+        { error: "Gemini API Key is missing. Please add GEMINI_API_KEY to your .env.local file." },
         { status: 500 }
       );
     }
 
-    // Send request to Google Gemini API using the Gemini 2.5 Flash model
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse",
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": process.env.GEMINI_API_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: createGeminiContents(messages),
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          },
         }),
       }
     );
 
-    
-    // Handle API errors
-    if (!response.ok) {
-      return Response.json(
-        {
-          error:
-            "Gemini API request failed.",
-        },
-        { status: 500 }
-      );
+    if (!geminiRes.ok) {
+      const errData = await geminiRes.json();
+      throw new Error(errData?.error?.message || "Gemini API request failed.");
     }
 
-    // Extract assistant reply
-    
-    if (!response.body) {
-      return Response.json(
-        {
-          error: "No response stream available.",
-        },
-        { status: 500 }
-      );
+    const geminiData = await geminiRes.json();
+    const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!replyText) {
+      throw new Error("No response received from Gemini API.");
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body.getReader();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              break;
-            }
-
-            const chunk = decoder.decode(value);
-
-            // SSE messages come line-by-line
-            const lines = chunk.split("\n");
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.replace("data: ", "").trim();
-
-                try {
-                  const json = JSON.parse(data);
-
-                  const content =
-                    json?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                  if (content) {
-                    controller.enqueue(
-                      encoder.encode(content)
-                    );
-                  }
-                } catch (err) {
-                  console.error(
-                    "Stream parsing error:",
-                    err
-                  );
-                }
-              }
-            }
-          }
-
-          controller.close();
-        } catch (err) {
-          console.error("Streaming error:", err);
-          controller.error(err);
-        } finally {
-          reader.releaseLock();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+    return Response.json({
+      message: {
+        role: "assistant",
+        content: replyText,
       },
     });
   } catch (error) {
     console.error("Chatbot API error:", error);
-
     return Response.json(
-      {
-        error:
-          error.message ||
-          "An error occurred while processing your request.",
-      },
+      { error: "An error occurred while processing your request." },
       { status: 500 }
     );
   }
-} 
+}
