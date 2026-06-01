@@ -153,6 +153,7 @@ const sections = [
           { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
           { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
           { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+          { name: "Sorting Race Arena", path: "/visualizer/sorting/race-arena" },
         ],
       },
       {
