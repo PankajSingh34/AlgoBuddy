@@ -56,6 +56,7 @@ export default function Page() {
     <VisualizerPageLayout
       paths={createVisualizerPaths("Searching", "Binary Search")}
       title="Binary Search"
+      lastUpdated="2026-01-01"
       animation={<Animation />}
       content={<Content />}
       code={<Code />}

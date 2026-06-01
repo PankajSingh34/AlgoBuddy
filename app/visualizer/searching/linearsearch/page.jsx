@@ -57,6 +57,7 @@ export default function Page() {
     <VisualizerPageLayout
       paths={createVisualizerPaths("Searching", "Linear Search")}
       title="Linear Search"
+      lastUpdated="2026-01-01"
       headerActions={<ArticleActions />}
       animation={<LinearSearchAnimation />}
       content={<Content />}

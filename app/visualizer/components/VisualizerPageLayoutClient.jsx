@@ -5,6 +5,7 @@ import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ReadingTime from "@/app/components/ui/ReadingTime";
+import LastUpdated from "@/app/components/ui/LastUpdated";
 import VisualizerSessionControls from "./VisualizerSessionControls";
 
 function VisualizerPageSection({ children, className }) {
@@ -18,6 +19,7 @@ function VisualizerPageSection({ children, className }) {
 export default function VisualizerPageLayoutClient({
   paths,
   title,
+  lastUpdated,
   headerDescription,
   headerActions,
   animation,
@@ -55,7 +57,10 @@ export default function VisualizerPageLayoutClient({
             <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] dark:text-white mb-4">
               {title}
             </h1>
-            <ReadingTime targetRef={contentRef} />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <ReadingTime targetRef={contentRef} />
+              <LastUpdated date={lastUpdated} />
+            </div>
             {headerDescription && (
               <p className="text-lg text-[#6b7280] dark:text-[#9ca3af]">
                 {headerDescription}

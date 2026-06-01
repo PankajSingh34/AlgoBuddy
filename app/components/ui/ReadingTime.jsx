@@ -43,7 +43,7 @@ export default function ReadingTime({ targetRef }) {
   }
 
   return (
-    <p className="text-sm text-[#6b7280] dark:text-[#9ca3af] mb-4">
+    <p className="text-sm text-[#6b7280] dark:text-[#9ca3af]">
       📖 {readingTime} min read
     </p>
   );
