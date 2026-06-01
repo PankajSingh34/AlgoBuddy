@@ -9,6 +9,8 @@ import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
+import RecentlyViewed from "@/app/components/ui/RecentlyViewed";
+import BookmarkSection from "@/app/components/ui/BookmarkSection";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -70,8 +72,9 @@ export const metadata = {
 
 const sections = [
   {
-    title: "Custom Code",
-    desc: "Paste code and inspect a safe step-by-step dry run",
+    title: "Code Lab",
+    slug: "code-lab",
+    desc: "Write custom code, run safe step-by-step dry runs, and analyze time & space complexity",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -90,16 +93,20 @@ const sections = [
     ),
     info: {
       About:
-        "The custom code dry-run visualizer helps learners paste short algorithm snippets and inspect line-by-line execution state without running unsafe code.",
+        "The Code Lab provides essential developer tools. Use the Dry Run Visualizer to inspect line-by-line execution state, and the Complexity Analyzer to understand Big O notations, best/worst cases, and optimization insights.",
       Representation: null,
     },
     subsections: [
       {
-        title: "Dry Run",
+        title: "Tools",
         items: [
           {
-            name: "User Code Dry Run Visualizer",
+            name: "Dry Run Visualizer",
             path: "/visualizer/dry-run",
+          },
+          {
+            name: "Complexity Analyzer",
+            path: "/visualizer/complexity-analyzer",
           },
         ],
       },
@@ -146,6 +153,12 @@ const sections = [
           { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
           { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
           { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+        ],
+      },
+      {
+        title: "Interview Patterns",
+        items: [
+          { name: "Sliding Window", path: "/visualizer/arrays/slidingwindow" },
         ],
       },
     ],
@@ -444,6 +457,9 @@ const sections = [
           { name: "Insertion", path: "/visualizer/trees/bst/insertion" },
           { name: "Deletion", path: "/visualizer/trees/bst/deletion" },
           { name: "Searching", path: "/visualizer/trees/bst/searching" },
+          { name: "In-order Traversal", path: "/visualizer/trees/bst/in-order" },
+          { name: "Pre-order Traversal", path: "/visualizer/trees/bst/pre-order" },
+          { name: "Post-order Traversal", path: "/visualizer/trees/bst/post-order" },
           { name: "Balancing (AVL)", path: "/visualizer/trees/bst/avl" },
         ],
       },
@@ -474,6 +490,8 @@ const sections = [
             path: "/visualizer/trees/advanced/red-black",
           },
           { name: "B-Trees", path: "/visualizer/trees/advanced/b-trees" },
+          { name: "AVL Tree Insertion", path: "/visualizer/trees/avl/insertion" },
+          { name: "AVL Tree Deletion", path: "/visualizer/trees/avl/deletion" },
           {
             name: "Trie (Prefix Tree)",
             path: "/visualizer/trees/advanced/trie",
@@ -506,6 +524,11 @@ const sections = [
       {
         title: "Applications",
         items: [
+          {
+            name: "Heap (Min/Max)",
+            path: "/visualizer/trees/heap/min-heap",
+          },
+          { name: "Heap (Max)", path: "/visualizer/trees/heap/max-heap" },
           {
             name: "Heap Sort",
             path: "/visualizer/trees/applications/heapsort",
@@ -672,6 +695,10 @@ const sections = [
             name: "Min Max Algorithm",
             path: "/visualizer/ai/minmax",
           },
+          {
+            name: "Alpha Beta Pruning",
+            path: "/visualizer/ai/alpha-beta-pruning",
+          },
         ],
       },
     ],
@@ -694,8 +721,10 @@ const Visualizer = () => {
     >
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
-      <div className="w-full relative z-10">
+      <div className="w-full relative">
         
+        <BookmarkSection />
+        <RecentlyViewed />
         <BackToTop />
         <Footer />
       </div>

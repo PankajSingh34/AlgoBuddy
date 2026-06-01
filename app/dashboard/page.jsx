@@ -20,12 +20,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.push("/login");
-    } else {
-      fetchModules();
-      trackActivity(user.id, "site_visit");
+      router.replace("/login");
+      return;
     }
-  }, [user, loading]);
+
+    fetchModules();
+    trackActivity(user.id, "site_visit");
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return null;
+  }
 
   async function fetchModules() {
     const { data: modulesData, error: modulesError } = await supabase
@@ -33,7 +38,7 @@ export default function Dashboard() {
       .select("*");
 
     if (modulesError) {
-      console.error(modulesError);
+      console.error("Modules fetch error:", modulesError.message || modulesError);
       return;
     }
 
@@ -43,7 +48,7 @@ export default function Dashboard() {
       .eq("user_id", user.id);
 
     if (progressError) {
-      console.error(progressError);
+      console.error("Progress fetch error:", progressError.message || progressError);
       return;
     }
 

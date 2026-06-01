@@ -4,7 +4,10 @@ import {
   getPublicCollaborationSession,
   joinCollaborationSession,
   updateCollaborationSession,
+  validateCsrfOrigin,
 } from "@/lib/collaboration/sessionStore";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
 
 function getSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -66,16 +69,38 @@ export async function GET(_request, { params }) {
 }
 
 export async function POST(request, { params }) {
+  if (!validateCsrfOrigin(request)) {
+    return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+  }
+
+  const { user, configured } = await getAuthenticatedUser();
+  if (configured && !user) {
+    return Response.json(
+      { error: "Authentication required" },
+      { status: 401 },
+    );
+  }
+
+  const ip = getClientIp(request.headers);
+  const { allowed } = await checkRateLimit(`collab:join:${ip}:${params.sessionId}`);
+  if (!allowed) {
+    return Response.json(
+      { error: "Too many join attempts. Please try again shortly." },
+      { status: 429 },
+    );
+  }
+
   const body = await request.json().catch(() => ({}));
   const result = await joinCollaborationSession(params.sessionId, {
     password: body.password,
+    userId: configured ? user?.id || "" : body.createdBy || "anonymous",
   });
 
   if (result.error) {
     return Response.json({ error: result.error }, { status: result.status || 400 });
   }
 
-  await updateCollaborationSession(params.sessionId, {
+  await updateCollaborationSession(result.session.id, {
     participantCount: Math.max(0, (result.session?.participantCount || 0) + 1),
   });
 

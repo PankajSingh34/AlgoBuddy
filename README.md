@@ -105,6 +105,8 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 
 - Linear Search
 - Binary Search
+- Sorting Comparison Mode
+- Sliding Window Technique
 
 </td>
 <td>
@@ -406,7 +408,6 @@ AlgoBuddy/
 │   │   ├── chatbot/                 #   ├── AI chatbot endpoint
 │   │   └── send-review/             #   └── Review submission
 │   │
-│   ├── 📂 blogs/                    # Blog pages & content
 │   ├── 📂 dashboard/                # User dashboard
 │   ├── 📂 login/                    # Auth pages
 │   ├── 📂 visualizer/               # Algorithm visualizer pages

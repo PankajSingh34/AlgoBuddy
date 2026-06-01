@@ -28,14 +28,14 @@ We accept contributions in the following areas:
 
 | Area                   | Description                                       |
 | ---------------------- | ------------------------------------------------- |
-| **Bug Fixes**          | Resolve existing bugs and issues                  |
+| **Bug Fixes**          | Resolve existing bugs and issues ([Bug Report](.github/ISSUE_TEMPLATE/bug_report.yml)) |
 | **UI/UX Improvements** | Enhance responsiveness, accessibility, and design |
 | **New Visualizers**    | Add new DSA visualizers and animations            |
 | **Documentation**      | Improve guides, README, and contributor docs      |
 | **Performance**        | Optimize application performance and efficiency   |
 | **Theme Enhancements** | Improve dark/light mode experience                |
 
-Feel free to suggest new contribution ideas by opening an issue first.
+Feel free to suggest new contribution ideas by opening a [Feature Request](.github/ISSUE_TEMPLATE/feature_request.yml) first.
 
 ---
 

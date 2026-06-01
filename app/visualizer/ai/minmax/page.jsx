@@ -46,7 +46,7 @@ export default function Page() {
       exploreOther={
         <ExploreOther
           title="Explore other topics"
-          links={[{ text: "Alpha Beta Pruning", url: "#" }]}
+          links={[{ text: "Alpha Beta Pruning", url: "/visualizer/ai/alpha-beta-pruning" }]}
         />
       }
     />

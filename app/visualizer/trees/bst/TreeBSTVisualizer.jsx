@@ -1,20 +1,15 @@
 "use client";
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Footer from "@/app/components/footer";
+import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
   Info,
   Layers,
   BookOpen,
   Award,
   CheckCircle,
-  AlertCircle,
-  Sparkles
+  AlertCircle
 } from "lucide-react";
 
 class TreeNode {
@@ -99,6 +94,30 @@ const pseudocode = {
     "  }",
     "  return root;",
     "}"
+  ],
+  "in-order": [
+    "inOrder(node) {",
+    "  if (node == null) return;",
+    "  inOrder(node.left);",
+    "  visit(node);",
+    "  inOrder(node.right);",
+    "}"
+  ],
+  "pre-order": [
+    "preOrder(node) {",
+    "  if (node == null) return;",
+    "  visit(node);",
+    "  preOrder(node.left);",
+    "  preOrder(node.right);",
+    "}"
+  ],
+  "post-order": [
+    "postOrder(node) {",
+    "  if (node == null) return;",
+    "  postOrder(node.left);",
+    "  postOrder(node.right);",
+    "  visit(node);",
+    "}"
   ]
 };
 
@@ -120,8 +139,28 @@ const complexityInfo = {
     timeDesc: "Where h is the height of the tree. Finding the successor or predecessor in Case 3 requires traversing the right child's left spine.",
     space: "O(h)",
     spaceDesc: "Recursively rebuilds subtrees from leaf to pivot point, requiring O(h) call stack memory."
+  },
+  "in-order": {
+    time: "O(N)",
+    timeDesc: "Every node in the tree is visited exactly once.",
+    space: "O(H)",
+    spaceDesc: "H is the height of the tree. The call stack grows with the depth of the recursion."
+  },
+  "pre-order": {
+    time: "O(N)",
+    timeDesc: "Every node in the tree is visited exactly once.",
+    space: "O(H)",
+    spaceDesc: "H is the height of the tree. The call stack grows with the depth of the recursion."
+  },
+  "post-order": {
+    time: "O(N)",
+    timeDesc: "Every node in the tree is visited exactly once.",
+    space: "O(H)",
+    spaceDesc: "H is the height of the tree. The call stack grows with the depth of the recursion."
   }
 };
+
+const traversalModes = ["in-order", "pre-order", "post-order"];
 
 const quizzes = {
   searching: [
@@ -175,6 +214,45 @@ const quizzes = {
       answer: 1,
       explanation: "The inorder successor represents the smallest value that is larger than the target node's value. This is located by going to the right child and then following the left pointers to the very bottom."
     }
+  ],
+  "in-order": [
+    {
+      question: "What is the visiting order of In-Order traversal?",
+      options: [
+        "Root, Left, Right",
+        "Left, Root, Right",
+        "Left, Right, Root",
+        "Right, Root, Left"
+      ],
+      answer: 1,
+      explanation: "In-Order traversal first visits the left subtree, then the current node, then the right subtree."
+    }
+  ],
+  "pre-order": [
+    {
+      question: "What is the visiting order of Pre-Order traversal?",
+      options: [
+        "Root, Left, Right",
+        "Left, Root, Right",
+        "Left, Right, Root",
+        "Right, Root, Left"
+      ],
+      answer: 0,
+      explanation: "Pre-Order traversal visits the current node before exploring its children."
+    }
+  ],
+  "post-order": [
+    {
+      question: "What is the visiting order of Post-Order traversal?",
+      options: [
+        "Root, Left, Right",
+        "Left, Root, Right",
+        "Left, Right, Root",
+        "Right, Root, Left"
+      ],
+      answer: 2,
+      explanation: "Post-Order traversal visits both subtrees before processing the current node."
+    }
   ]
 };
 
@@ -187,12 +265,12 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const [steps, setSteps] = useState([]);
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [speed, setSpeed] = useState(1);
   const [message, setMessage] = useState("Add nodes or select a mode to begin.");
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
+  const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
 
   const resetPlayback = useCallback(() => {
@@ -554,6 +632,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
             visited: [...path],
             explanation: `Traversing successor search path: Node ${succ.value}.`,
             codeLine: 7,
+            stepType: "find-successor",
             highlightedNodes: {
               ...Object.fromEntries(path.slice(0, -1).map(v => [v, 'active'])),
               [node.value]: 'found',
@@ -578,6 +657,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
           visited: [...path],
           explanation: `Inorder successor located: Node ${minSucc.value} (smallest value in right subtree).`,
           codeLine: 7,
+          stepType: "highlight-successor",
           highlightedNodes: {
             ...Object.fromEntries(path.slice(0, -1).map(v => [v, 'active'])),
             [node.value]: 'found',
@@ -590,8 +670,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
         records.push({
           currentNode: node.value,
           visited: [...path],
-          explanation: `Copy successor's value ${minSucc.value} to target node, overwriting it.`,
+          explanation: `Swap the value of Node ${node.value} with successor Node ${minSucc.value}.`,
           codeLine: 8,
+          stepType: "swap-values",
+          swapValues: {
+            targetValue: node.value,
+            successorValue: minSucc.value
+          },
           highlightedNodes: {
             ...Object.fromEntries(path.slice(0, -1).map(v => [v, 'active'])),
             [node.value]: 'inserted',
@@ -603,8 +688,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
         records.push({
           currentNode: minSucc.value,
           visited: [...path],
-          explanation: `Recursively delete the duplicate successor Node ${minSucc.value} from the right subtree.`,
+          explanation: `Delete the old successor leaf Node ${minSucc.value} from the right subtree.`,
           codeLine: 9,
+          stepType: "delete-successor",
+          swapValues: {
+            targetValue: node.value,
+            successorValue: minSucc.value
+          },
           highlightedNodes: {
             ...Object.fromEntries(path.slice(0, -1).map(v => [v, 'active'])),
             [node.value]: 'active',
@@ -618,10 +708,273 @@ export default function TreeBSTVisualizer({ initialMode }) {
     return records;
   };
 
+  const generateInOrderSteps = (treeRoot) => {
+    const records = [];
+    const visited = [];
+
+    const traverse = (node) => {
+      if (!node) return;
+
+      if (node.left) {
+        records.push({
+          currentNode: node.left.value,
+          visited: [...visited],
+          explanation: `Move to the left child of ${node.value} -> ${node.left.value}.`,
+          codeLine: 1,
+          highlightedNodes: { [node.value]: "active", [node.left.value]: "visiting" }
+        });
+        traverse(node.left);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no left child. Backtracking to visit it now.`,
+          codeLine: 1,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+
+      visited.push(node.value);
+      records.push({
+        currentNode: node.value,
+        visited: [...visited],
+        explanation: `Visit node ${node.value} and add it to the inorder result.`,
+        codeLine: 2,
+        highlightedNodes: { [node.value]: "visiting" }
+      });
+
+      if (node.right) {
+        records.push({
+          currentNode: node.right.value,
+          visited: [...visited],
+          explanation: `Move to the right child of ${node.value} -> ${node.right.value}.`,
+          codeLine: 3,
+          highlightedNodes: { [node.value]: "active", [node.right.value]: "visiting" }
+        });
+        traverse(node.right);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no right child. Backtracking...`,
+          codeLine: 3,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+    };
+
+    records.push({
+      currentNode: treeRoot.value,
+      visited: [],
+      explanation: `Start In-Order traversal from the root node ${treeRoot.value}.`,
+      codeLine: 0,
+      highlightedNodes: {}
+    });
+
+    traverse(treeRoot);
+
+    records.push({
+      currentNode: null,
+      visited: [...visited],
+      explanation: `In-Order traversal is complete! Visited nodes: [${visited.join(", ")}].`,
+      codeLine: 4,
+      highlightedNodes: {}
+    });
+
+    return records;
+  };
+
+  const generatePreOrderSteps = (treeRoot) => {
+    const records = [];
+    const visited = [];
+
+    const traverse = (node) => {
+      if (!node) return;
+
+      visited.push(node.value);
+      records.push({
+        currentNode: node.value,
+        visited: [...visited],
+        explanation: `Visit node ${node.value} before traversing its children.`,
+        codeLine: 2,
+        highlightedNodes: { [node.value]: "visiting" }
+      });
+
+      if (node.left) {
+        records.push({
+          currentNode: node.left.value,
+          visited: [...visited],
+          explanation: `Move to the left child of ${node.value} -> ${node.left.value}.`,
+          codeLine: 3,
+          highlightedNodes: { [node.value]: "active", [node.left.value]: "visiting" }
+        });
+        traverse(node.left);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no left child. Skipping left subtree.`,
+          codeLine: 3,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+
+      if (node.right) {
+        records.push({
+          currentNode: node.right.value,
+          visited: [...visited],
+          explanation: `Move to the right child of ${node.value} -> ${node.right.value}.`,
+          codeLine: 4,
+          highlightedNodes: { [node.value]: "active", [node.right.value]: "visiting" }
+        });
+        traverse(node.right);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no right child. Skipping right subtree.`,
+          codeLine: 4,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+    };
+
+    records.push({
+      currentNode: treeRoot.value,
+      visited: [],
+      explanation: `Start Pre-Order traversal from the root node ${treeRoot.value}.`,
+      codeLine: 0,
+      highlightedNodes: {}
+    });
+
+    traverse(treeRoot);
+
+    records.push({
+      currentNode: null,
+      visited: [...visited],
+      explanation: `Pre-Order traversal is complete! Visited nodes: [${visited.join(", ")}].`,
+      codeLine: 5,
+      highlightedNodes: {}
+    });
+
+    return records;
+  };
+
+  const generatePostOrderSteps = (treeRoot) => {
+    const records = [];
+    const visited = [];
+
+    const traverse = (node) => {
+      if (!node) return;
+
+      if (node.left) {
+        records.push({
+          currentNode: node.left.value,
+          visited: [...visited],
+          explanation: `Move to the left child of ${node.value} -> ${node.left.value}.`,
+          codeLine: 1,
+          highlightedNodes: { [node.value]: "active", [node.left.value]: "visiting" }
+        });
+        traverse(node.left);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no left child. Backtracking...`,
+          codeLine: 1,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+
+      if (node.right) {
+        records.push({
+          currentNode: node.right.value,
+          visited: [...visited],
+          explanation: `Move to the right child of ${node.value} -> ${node.right.value}.`,
+          codeLine: 2,
+          highlightedNodes: { [node.value]: "active", [node.right.value]: "visiting" }
+        });
+        traverse(node.right);
+      } else {
+        records.push({
+          currentNode: node.value,
+          visited: [...visited],
+          explanation: `Node ${node.value} has no right child. Backtracking...`,
+          codeLine: 2,
+          highlightedNodes: { [node.value]: "active" }
+        });
+      }
+
+      visited.push(node.value);
+      records.push({
+        currentNode: node.value,
+        visited: [...visited],
+        explanation: `Visit node ${node.value} after both subtrees are done.`,
+        codeLine: 4,
+        highlightedNodes: { [node.value]: "visiting" }
+      });
+    };
+
+    records.push({
+      currentNode: treeRoot.value,
+      visited: [],
+      explanation: `Start Post-Order traversal from the root node ${treeRoot.value}.`,
+      codeLine: 0,
+      highlightedNodes: {}
+    });
+
+    traverse(treeRoot);
+
+    records.push({
+      currentNode: null,
+      visited: [...visited],
+      explanation: `Post-Order traversal is complete! Visited nodes: [${visited.join(", ")}].`,
+      codeLine: 5,
+      highlightedNodes: {}
+    });
+
+    return records;
+  };
+
+  const preCalculateSteps = () => {
+    if (!root) return [];
+
+    switch (mode) {
+      case "searching":
+        return generateSearchSteps(root, activeOperationValue ?? parseInt(inputValue));
+      case "insertion":
+        return inputValue ? generateInsertSteps(root, parseInt(inputValue)) : [];
+      case "deletion":
+        return generateDeleteSteps(root, activeOperationValue ?? parseInt(inputValue));
+      case "in-order":
+        return generateInOrderSteps(root);
+      case "pre-order":
+        return generatePreOrderSteps(root);
+      case "post-order":
+        return generatePostOrderSteps(root);
+      default:
+        return [];
+    }
+  };
+
   const startVisualizer = () => {
     if (!root && mode !== "insertion") {
       setMessage("⚠️ Please generate a random tree or enter an insert element first!");
       return;
+    }
+
+    if (traversalModes.includes(mode)) {
+      if (steps.length === 0) {
+        const preCalculated = preCalculateSteps();
+        if (preCalculated.length === 0) {
+          setMessage("⚠️ Please generate a random tree first!");
+          return;
+        }
+        setSteps(preCalculated);
+        setCurrentStepIdx(0);
+        setIsAnimating(true);
+        return;
+      }
     }
 
     if (mode === "searching" || mode === "deletion") {
@@ -667,8 +1020,10 @@ export default function TreeBSTVisualizer({ initialMode }) {
         // Permanently write to tree state if write operation completed successfully
         if (mode === "insertion" || mode === "deletion") {
           setRoot(targetTreeRoot);
+          setMessage("Operation completed successfully!");
+        } else {
+          setMessage(currentStep.explanation);
         }
-        setMessage("Operation completed successfully!");
       }
     }, 1800 / speed);
 
@@ -772,8 +1127,10 @@ export default function TreeBSTVisualizer({ initialMode }) {
     const currentStep = steps[currentStepIdx];
     const showInsertedNode = currentStep?.isNodeCreated || false;
 
-    // Use old tree before insertion node is officially visualised
-    const activeTree = (mode === "insertion" && !showInsertedNode) ? root : targetTreeRoot || root;
+    // Use the animated target tree only during write operations.
+    const activeTree = (mode === "insertion" || mode === "deletion")
+      ? ((mode === "insertion" && !showInsertedNode) ? root : targetTreeRoot || root)
+      : root;
 
     if (!activeTree) return { renderNodes: [], renderEdges: [] };
     const { nodesList, edgesList } = calculateCoordinates(activeTree);
@@ -817,6 +1174,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const activeComplexity = complexityInfo[mode];
   const activeQuizList = quizzes[mode];
   const activeQuestion = activeQuizList[quizIdx];
+  const isTraversalMode = traversalModes.includes(mode);
 
   return (
     <div className="min-h-screen bg-udemy-dark-bg text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -839,7 +1197,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
           {/* Mode Selector Tabs */}
           <div className="flex flex-wrap gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
-            {["searching", "insertion", "deletion"].map(tab => (
+            {["searching", "insertion", "deletion", "in-order", "pre-order", "post-order"].map(tab => (
               <button
                 key={tab}
                 onClick={() => {
@@ -879,81 +1237,36 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     type="number"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={mode === "searching" ? "Find key (1-99)" : mode === "deletion" ? "Delete key" : "Insert key (1-99)"}
+                    placeholder={isTraversalMode ? "Traversal uses the current tree" : mode === "searching" ? "Find key (1-99)" : mode === "deletion" ? "Delete key" : "Insert key (1-99)"}
                     className="w-full sm:w-28 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     disabled={isAnimating}
-                    onKeyDown={(e) => e.key === "Enter" && (mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
+                    onKeyDown={(e) => e.key === "Enter" && (isTraversalMode ? startVisualizer() : mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
                   />
                   <button
-                    onClick={() => (mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
+                    onClick={() => (isTraversalMode ? startVisualizer() : mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
                     disabled={isAnimating}
                     className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:opacity-40 text-white rounded-xl transition-all font-semibold"
                   >
-                    {mode === "searching" ? "Search" : mode === "deletion" ? "Delete" : "Insert"}
+                    {isTraversalMode ? "Traverse" : mode === "searching" ? "Search" : mode === "deletion" ? "Delete" : "Insert"}
                   </button>
                 </div>
               </div>
 
               {/* Playback Controls */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-                  <button
-                    onClick={stepBackward}
-                    disabled={currentStepIdx <= 0 || steps.length === 0}
-                    className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"
-                    title="Previous Step"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={isAnimating ? pauseVisualizer : startVisualizer}
-                    className={`p-2 rounded-xl transition-all ${
-                      isAnimating
-                        ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/35 border border-amber-800/40"
-                        : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-950"
-                    }`}
-                  >
-                    {isAnimating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
-                  </button>
-                  <button
-                    onClick={stepForward}
-                    disabled={steps.length > 0 && currentStepIdx >= steps.length - 1}
-                    className="p-1.5 text-slate-400 hover:text-slate-200 disabled:opacity-30 rounded-lg"
-                    title="Next Step"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={resetPlayback}
-                    className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg"
-                    title="Reset Playback"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleResetTree}
-                  className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30"
-                >
-                  Clear Tree
-                </button>
-              </div>
-
-              {/* Speed Slider */}
-              <div className="flex items-center gap-3 w-full md:w-36 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/80">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Speed</span>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="4"
-                  step="0.5"
-                  value={speed}
-                  onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                  className="w-full accent-indigo-500 h-1 bg-slate-800 rounded-lg cursor-pointer"
-                />
-                <span className="text-xs font-bold text-indigo-400 w-8">{speed}x</span>
-              </div>
+              <PlaybackControls
+                isPlaying={isAnimating}
+                onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+                onStepForward={stepForward}
+                onStepBackward={stepBackward}
+                onReset={resetPlayback}
+                onClear={handleResetTree}
+                clearLabel="Clear Tree"
+                speed={speed}
+                onSpeedChange={setSpeed}
+                disabled={steps.length === 0 && !isAnimating}
+                showPlayPause={true}
+                progressText={`Step ${currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / ${steps.length || 0}`}
+              />
             </div>
 
             {/* Explanation Area */}
@@ -966,7 +1279,10 @@ export default function TreeBSTVisualizer({ initialMode }) {
                   Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
                 </span>
               </div>
-              <div className="text-sm font-medium text-indigo-200/90 leading-relaxed min-h-[40px]">
+              <div
+                className="text-[14px] leading-relaxed min-h-[24px] text-center"
+                style={{ color: "var(--color-muted)" }}
+              >
                 {message}
               </div>
             </div>
@@ -1039,6 +1355,15 @@ export default function TreeBSTVisualizer({ initialMode }) {
                       const isDeleted = node.state === "deleted";
                       const isPred = node.state === "predecessor";
                       const isVisited = node.isVisited;
+                      const swapValues = currentStep?.swapValues || null;
+                      const isSwapPhase = currentStep?.stepType === "swap-values" || currentStep?.stepType === "delete-successor";
+                      const displayValue = swapValues && isSwapPhase
+                        ? (node.value === swapValues.targetValue
+                            ? swapValues.successorValue
+                            : node.value === swapValues.successorValue
+                              ? swapValues.targetValue
+                              : node.value)
+                        : node.value;
 
                       let fillHex = "#0f172a";
                       let strokeHex = "#334155";
@@ -1099,7 +1424,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                             fontSize="12"
                             fontWeight="bold"
                           >
-                            {node.value}
+                            {displayValue}
                           </text>
 
                           {/* Label labels */}
@@ -1124,7 +1449,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                 <div className="flex flex-col items-center gap-2.5 text-slate-500 py-12">
                   <AlertCircle className="w-10 h-10 text-slate-700" />
                   <span className="text-sm font-semibold">Workspace Empty</span>
-                  <span className="text-xs max-w-xs text-center text-slate-600">Please generate a random tree or insert custom node elements.</span>
+                  <span className="text-xs max-w-xs text-center text-slate-600">Enter a value and click Insert, Search, or Delete to begin.</span>
                 </div>
               )}
             </div>

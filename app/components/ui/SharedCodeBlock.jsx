@@ -3,12 +3,19 @@ import { useState, useRef } from "react";
 import { FaCopy, FaCheck, FaCode } from "react-icons/fa";
 import { motion } from "framer-motion";
 import hljs from "highlight.js";
+import sanitizeHtml from "sanitize-html";
 import "highlight.js/styles/github.css";
 import "highlight.js/styles/github-dark.css";
 
 const highlightCode = (code, language) => {
   const validLanguage = hljs.getLanguage(language) ? language : "plaintext";
-  return hljs.highlight(code, { language: validLanguage }).value;
+  const rawHtml = hljs.highlight(code, { language: validLanguage }).value;
+  return sanitizeHtml(rawHtml, {
+    allowedTags: ['span'],
+    allowedAttributes: {
+      span: ['class', 'style']
+    }
+  });
 };
 
 // color is the tailwind text color class, e.g., "text-purple-500"

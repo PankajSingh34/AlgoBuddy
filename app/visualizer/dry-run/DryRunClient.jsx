@@ -374,17 +374,24 @@ export default function DryRunClient() {
   const suppressBroadcastRef = useRef(false);
   const sendStateRef = useRef(null);
   const fileInputRef = useRef(null);
+  const collaborationRef = useRef(null);
+  const followPresenterRef = useRef(followPresenter);
+
+  useEffect(() => {
+    followPresenterRef.current = followPresenter;
+  }, [followPresenter]);
 
   const displayName =
     user?.user_metadata?.name || user?.email?.split("@")[0] || "Anonymous";
 
   function handleRemoteStateDelta(delta) {
+    const collab = collaborationRef.current || collaboration;
     const effectivePresenterId =
-      delta.presenterId !== undefined ? delta.presenterId : collaboration.presenterId;
+      delta.presenterId !== undefined ? delta.presenterId : collab.presenterId;
     const isPresenter =
-      effectivePresenterId && effectivePresenterId === collaboration.clientId;
+      effectivePresenterId && effectivePresenterId === collab.clientId;
 
-    if (!followPresenter && !isPresenter) {
+    if (!followPresenterRef.current && !isPresenter) {
       return;
     }
 
@@ -415,6 +422,8 @@ export default function DryRunClient() {
     displayName,
     onRemoteStateDelta: handleRemoteStateDelta,
   });
+
+  collaborationRef.current = collaboration;
 
   const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId } =
     collaboration;
@@ -535,7 +544,7 @@ export default function DryRunClient() {
         password: joinPassword,
         createdBy: displayName,
       });
-      setSessionJoinUrl(`/visualizer/dry-run?session=${data.session.id}`);
+      setSessionJoinUrl(`/visualizer/dry-run?session=${data.session.joinCode}`);
       setSessionNotice(`Joined session ${data.session.joinCode}.`);
     } catch (error) {
       setSessionNotice(error.message || "Failed to join session.");
@@ -938,7 +947,7 @@ export default function DryRunClient() {
               </button>
               <button
                 type="button"
-                onClick={() => collaboration.grantControl()}
+                onClick={() => collaboration.grantControl().catch(() => {})}
                 className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
               >
                 Handoff to me

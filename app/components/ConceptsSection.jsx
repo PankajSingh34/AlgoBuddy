@@ -9,14 +9,14 @@ const CONCEPTS = [
     body: "Step-by-step interactive visualizations make even complex algorithms feel intuitive. See exactly what's happening at every step.",
     cta: { label: "Try Sorting", href: "/visualizer" },
     visual: <SortingVisual />,
-    bgClass: "bg-[#f0fdf4] dark:bg-[#0d1f14] transition-colors duration-300", // Green theme
+    bgClass: "bg-[#f0fdf4] dark:bg-[#161616] transition-colors duration-300", // Green theme
   },
   {
     heading: "Code that\nmakes sense",
     body: "Watch the algorithm execute line by line alongside the visualization. Learn how code maps to real behaviour.",
     cta: { label: "Try Searching", href: "/visualizer" },
     visual: <SearchVisual />,
-    bgClass: "bg-[#faf5ff] dark:bg-[#12091f] transition-colors duration-300", // Purple theme
+    bgClass: "bg-[#faf5ff] dark:bg-[#1c1d1f] transition-colors duration-300", // Purple theme
     flip: true,
   },
   {
@@ -24,7 +24,7 @@ const CONCEPTS = [
     body: "Manipulate data structures directly — push, pop, enqueue, dequeue — and see the state update in real time.",
     cta: { label: "Try Stack & Queue", href: "/visualizer" },
     visual: <StackVisual />,
-    bgClass: "bg-[#eff6ff] dark:bg-[#0a1220] transition-colors duration-300", // Blue theme
+    bgClass: "bg-[#eff6ff] dark:bg-[#161616] transition-colors duration-300", // Blue theme
   },
 ];
 
@@ -276,7 +276,7 @@ export default function ConceptsSection() {
       ))}
 
      {/* ── "More effective, more fun" block ── */}
-      <div className="py-20 px-6 bg-[#f0fdf4] dark:bg-[#0d1f14] transition-colors duration-300">
+      <div className="py-20 px-6 bg-[#f0fdf4] dark:bg-[#1c1d1f] transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24">
 
           {/* Text side */}

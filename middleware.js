@@ -14,11 +14,15 @@ function isValidHttpUrl(value) {
 }
 
 function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey || !isValidHttpUrl(supabaseUrl)) {
     return null;
+  }
+
+  if (supabaseUrl.startsWith("http://localhost:")) {
+    supabaseUrl = supabaseUrl.replace("http://localhost:", "http://127.0.0.1:");
   }
 
   return { supabaseUrl, supabaseAnonKey };
@@ -71,5 +75,6 @@ export const config = {
   matcher: [
     // Run on all routes except Next.js internals and static file extensions.
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    
   ],
 };

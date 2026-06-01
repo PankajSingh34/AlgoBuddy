@@ -246,6 +246,30 @@ const HeroSection = () => {
                 </div>
               </div>
 
+              {/* Floating status badges (positioned absolutely inside the relative wrapper) */}
+              <div
+                className="absolute -top-3 -right-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                aria-hidden
+              >
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: "#a435f0", boxShadow: "0 0 0 6px #a435f022" }}
+                />
+                <span className="font-medium">O(log n)</span>
+              </div>
+
+              <div
+                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                aria-hidden
+              >
+                <span className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#28c840" }}>
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <path d="M1 4L4 7L9 1" stroke="#07120A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <span className="font-medium">Found at index 5</span>
+              </div>
+
               {/* glow */}
               <div className="absolute inset-0 rounded-2xl bg-[#a435f0]/8 blur-3xl -z-10 scale-110" />
             </div>

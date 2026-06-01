@@ -9,6 +9,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useVisualizerSession } from "@/app/contexts/VisualizerSessionContext";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -35,6 +36,8 @@ const BinarySearch = () => {
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
   const [pendingStart, setPendingStart] = useState(false);
+  const [autoSort, setAutoSort] = useState(false);
+  const [showAutoSort, setShowAutoSort] = useState(false);
 
   const {
     isPaused,
@@ -67,7 +70,10 @@ const BinarySearch = () => {
     removeFromStorage("binary-speed");
     setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
     setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
-    setIsAnimating(false); setPendingStart(false);
+    setIsAnimating(false); 
+    setPendingStart(false);
+    setAutoSort(false);
+    setShowAutoSort(false);
     isPausedRef.current = false;
     wasPausedRef.current = false;
     setArrayElements(""); setTarget(""); setSpeed(1);
@@ -186,17 +192,36 @@ const BinarySearch = () => {
       return;
     }
 
-    const isSorted = elements.every((el, idx) => idx === 0 || el >= elements[idx - 1]);
-    if (!isSorted) {
+    const isSorted = elements.every(
+      (el, idx) => idx === 0 || el >= elements[idx - 1]
+    );
+
+    if (!isSorted && !autoSort) {
       setMessage("Array must be sorted in ascending order.");
       setMessageType("warning");
+      setShowAutoSort(true);
       return;
     }
 
-    searchStateRef.current = { l: 0, h: elements.length - 1, arr: elements, targetValue, step: 0 };
-    setArray(elements);
+    let processedElements = [...elements];
+
+    if (!isSorted && autoSort) {  
+      processedElements.sort((a, b) => a - b);
+      setArrayElements(processedElements.join(", "));
+      setShowAutoSort(false);
+    }
+
+    searchStateRef.current = {
+      l: 0,
+      h: processedElements.length - 1,
+      arr: processedElements,
+      targetValue,
+      step: 0
+    };
+
+    setArray(processedElements);
     setI(0);
-    setJ(elements.length - 1);
+    setJ(processedElements.length - 1);
     setIsAnimating(true);
     isPausedRef.current = false;
     wasPausedRef.current = false;
@@ -223,6 +248,117 @@ const BinarySearch = () => {
   const togglePlayPauseRef = useRef(togglePlayPause);
   useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
 
+  const { registerCallbacks, unregisterCallbacks } = useVisualizerSession();
+
+  const syncElementColors = useCallback((currI, currJ, currMid, currFoundIndex, currArray) => {
+    if (!currArray || currArray.length === 0) return;
+    setTimeout(() => {
+      elementRefs.current.forEach((ref, index) => {
+        if (!ref) return;
+        if (index === currFoundIndex) {
+          gsap.to(ref, { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0 });
+        } else if (index === currMid) {
+          gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0 });
+        } else if (index >= currI && index <= currJ) {
+          gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0 });
+        } else {
+          gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0 });
+        }
+      });
+    }, 50);
+  }, []);
+
+  const stateRef = useRef();
+  stateRef.current = {
+    arrayElements,
+    target,
+    speed,
+    array,
+    i,
+    j,
+    mid,
+    foundIndex,
+    isAnimating,
+    stepCount,
+    stepExplanation,
+    message,
+    messageType,
+    autoSort,
+    showAutoSort,
+    searchState: searchStateRef.current,
+  };
+
+  useEffect(() => {
+    registerCallbacks(
+      "binary-search",
+      () => ({
+        arrayElements: stateRef.current.arrayElements,
+        target: stateRef.current.target,
+        speed: stateRef.current.speed,
+        array: stateRef.current.array,
+        i: stateRef.current.i,
+        j: stateRef.current.j,
+        mid: stateRef.current.mid,
+        foundIndex: stateRef.current.foundIndex,
+        isAnimating: stateRef.current.isAnimating,
+        stepCount: stateRef.current.stepCount,
+        stepExplanation: stateRef.current.stepExplanation,
+        message: stateRef.current.message,
+        messageType: stateRef.current.messageType,
+        autoSort: stateRef.current.autoSort,
+        showAutoSort: stateRef.current.showAutoSort,
+        searchState: {
+          l: stateRef.current.searchState.l,
+          h: stateRef.current.searchState.h,
+          arr: stateRef.current.searchState.arr,
+          targetValue: stateRef.current.searchState.targetValue,
+          step: stateRef.current.searchState.step,
+        },
+      }),
+      (state) => {
+        clearTimeout(animationRef.current);
+        setArrayElements(state.arrayElements || "");
+        setTarget(state.target || "");
+        setSpeed(state.speed || 1);
+        setArray(state.array || []);
+        setI(state.i !== undefined ? state.i : -1);
+        setJ(state.j !== undefined ? state.j : -1);
+        setMid(state.mid !== undefined ? state.mid : -1);
+        setFoundIndex(state.foundIndex !== undefined ? state.foundIndex : -1);
+        setIsAnimating(state.isAnimating || false);
+        setMessage(state.message || "");
+        setMessageType(state.messageType || "");
+        setStepExplanation(state.stepExplanation || "");
+        setStepCount(state.stepCount || 0);
+        setAutoSort(state.autoSort || false);
+        setShowAutoSort(state.showAutoSort || false);
+        setPendingStart(false);
+
+        if (state.searchState) {
+          searchStateRef.current = {
+            l: state.searchState.l,
+            h: state.searchState.h,
+            arr: state.searchState.arr || [],
+            targetValue: state.searchState.targetValue,
+            step: state.searchState.step,
+          };
+        }
+
+        syncElementColors(
+          state.i !== undefined ? state.i : -1,
+          state.j !== undefined ? state.j : -1,
+          state.mid !== undefined ? state.mid : -1,
+          state.foundIndex !== undefined ? state.foundIndex : -1,
+          state.array || []
+        );
+      }
+    );
+
+    return () => {
+      unregisterCallbacks("binary-search");
+    };
+  }, [registerCallbacks, unregisterCallbacks, syncElementColors, setSpeed]);
+
   const isAnimatingRef = useRef(isAnimating);
   useVisualizerReset(() => {
     clearTimeout(animationRef.current);
@@ -239,7 +375,9 @@ const BinarySearch = () => {
     setStepExplanation("");
     setStepCount(0);
     setPendingStart(false);
-  });
+    setAutoSort(false);
+    setShowAutoSort(false);
+    });
   useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   useEffect(() => {
@@ -355,6 +493,19 @@ const BinarySearch = () => {
       {message && (
         <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
           <p className="text-center font-medium">{message}</p>
+
+          {showAutoSort && (
+            <div className="mt-3 flex justify-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoSort}
+                  onChange={(e) => setAutoSort(e.target.checked)}
+                />
+                <span>Auto-sort the array for me</span>
+              </label>
+            </div>
+          )}
         </div>
       )}
 

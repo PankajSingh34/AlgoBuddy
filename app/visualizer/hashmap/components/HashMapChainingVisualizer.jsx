@@ -139,7 +139,7 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
       setOperation(`Traversing chained bucket ${index}: checking "${bucket[i].key}"`);
       await sleep(600);
       if (bucket[i].key === key) {
-        setOperation(`Key "${key}" found with value "${bucket[i].value}"`);
+        setOperation(`Key "${key}" found at index ${index} with value "${bucket[i].value}"`);
         await sleep(700);
         setIsAnimating(false);
         resetHighlights();

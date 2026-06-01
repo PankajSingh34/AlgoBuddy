@@ -367,6 +367,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     setCurrentFrame(0);
     setIsPlaying(false);
   };
+  const moveNode = (id, x, y) => {
+  setNodes((current) =>
+    current.map((node) =>
+      node.id === id
+        ? { ...node, x, y }
+        : node
+    )
+  );
+};
 
   const removeNode = (id) => {
     setNodes((current) => current.filter((node) => node.id !== id));
@@ -440,19 +449,20 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
 
         <GraphCanvas
-          nodes={nodes}
-          edges={edges}
-          onAddNode={addNode}
-          onAddEdge={addEdge}
-          onRemoveNode={removeNode}
-          onRemoveEdge={removeEdge}
-          onReverseEdge={reverseEdge}
-          animationState={!isEditing ? currentFrameData : {}}
-          interactive={isEditing}
-          isWeighted={isWeighted}
-          isDirected={isDirected}
-          className="w-full"
-        />
+  nodes={nodes}
+  edges={edges}
+  onAddNode={addNode}
+  onAddEdge={addEdge}
+  onRemoveNode={removeNode}
+  onRemoveEdge={removeEdge}
+  onReverseEdge={reverseEdge}
+  onMoveNode={moveNode}
+  animationState={!isEditing ? currentFrameData : {}}
+  interactive={isEditing}
+  isWeighted={isWeighted}
+  isDirected={isDirected}
+  className="w-full"
+/>
 
         {/* Controls Bar */}
         <PlaybackControls

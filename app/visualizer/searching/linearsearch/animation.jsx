@@ -7,6 +7,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useVisualizerSession } from "@/app/contexts/VisualizerSessionContext";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -182,6 +183,60 @@ const targetValue = parseInt(target);
     setIsAnimating(false);
     isSearchingRef.current = false;
   };
+
+  const { registerCallbacks, unregisterCallbacks } = useVisualizerSession();
+
+  const stateRef = useRef();
+  stateRef.current = {
+    arrayElements,
+    target,
+    array,
+    currentIndex,
+    foundIndex,
+    isAnimating,
+    message,
+    messageType,
+    speed,
+  };
+
+  useEffect(() => {
+    registerCallbacks(
+      "linear-search",
+      () => ({
+        arrayElements: stateRef.current.arrayElements,
+        target: stateRef.current.target,
+        array: stateRef.current.array,
+        currentIndex: stateRef.current.currentIndex,
+        foundIndex: stateRef.current.foundIndex,
+        isAnimating: stateRef.current.isAnimating,
+        message: stateRef.current.message,
+        messageType: stateRef.current.messageType,
+        speed: stateRef.current.speed,
+      }),
+      (state) => {
+        isSearchingRef.current = false;
+        clearTimeout(animationRef.current);
+        if (resolveRef.current) {
+          resolveRef.current();
+          resolveRef.current = null;
+        }
+
+        setArrayElements(state.arrayElements || "");
+        setTarget(state.target || "");
+        setSpeed(state.speed || 1);
+        setArray(state.array || []);
+        setCurrentIndex(state.currentIndex !== undefined ? state.currentIndex : -1);
+        setFoundIndex(state.foundIndex !== undefined ? state.foundIndex : -1);
+        setIsAnimating(state.isAnimating || false);
+        setMessage(state.message || "");
+        setMessageType(state.messageType || "");
+      }
+    );
+
+    return () => {
+      unregisterCallbacks("linear-search");
+    };
+  }, [registerCallbacks, unregisterCallbacks, setSpeed]);
 
   useVisualizerKeyboard({
     onStart: () => {}, // Handled by Go button

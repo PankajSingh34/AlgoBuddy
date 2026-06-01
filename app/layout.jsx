@@ -2,6 +2,7 @@ import "./globals.css";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/app/contexts/UserContext";
+import { VisualizerSessionProvider } from "@/app/contexts/VisualizerSessionContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
@@ -29,7 +30,7 @@ export const metadata = {
   publisher: "AlgoBuddy",
   robots: "index, follow",
   icons: {
-    icon: "/favicon.svg?v=3",
+    icon: "/icon.svg",
   },
   openGraph: {
     title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
@@ -83,6 +84,13 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
+        {/* Google AdSense Script */}
+<Script
+  async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5588131730389378"
+  crossOrigin="anonymous"
+  strategy="afterInteractive"
+/>
 
         {/* Google Analytics Script */}
         {GA_ID && (
@@ -111,11 +119,13 @@ export default async function RootLayout({ children }) {
         >
           Skip to content
         </a>
-        <UserProvider>
-          <ClientLayoutWrapper>
-            <div id="main-content">{children}</div>
-          </ClientLayoutWrapper>
-        </UserProvider>
+        <VisualizerSessionProvider>
+          <UserProvider>
+            <ClientLayoutWrapper>
+              <div id="main-content">{children}</div>
+            </ClientLayoutWrapper>
+          </UserProvider>
+        </VisualizerSessionProvider>
         <SpeedInsights />
       </body>
     </html>
