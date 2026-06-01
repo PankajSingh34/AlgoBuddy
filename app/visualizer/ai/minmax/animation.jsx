@@ -24,8 +24,10 @@ const MinMax = () => {
   } = usePlayback(() => 1);
 
   const animationRef = useRef(null);
+  const isAnimatingRef = useRef(false);
 
   const handleReset = () => {
+    isAnimatingRef.current = false;
     setIsAnimating(false);
     setMessage("Enter 8 comma-separated numbers for leaf nodes.");
     setStepExplanation("");
@@ -57,11 +59,13 @@ const MinMax = () => {
     // Level 0: max node (index 0)
     
     const evaluate = async (nodeIndex, depth, isMax) => {
+      if (!isAnimatingRef.current) return null;
       if (depth === 3) {
         newClasses[nodeIndex] = "bg-green-500 text-white border-green-700";
         setCurrentNodeClass({...newClasses});
         setStepExplanation(`Evaluating leaf node at distance ${nodeIndex - 7}, value: ${nodes[nodeIndex].val}`);
         await delay(1000);
+        if (!isAnimatingRef.current) return null;
         return nodes[nodeIndex].val;
       }
       
@@ -69,12 +73,15 @@ const MinMax = () => {
       setCurrentNodeClass({...newClasses});
       setStepExplanation(`Visiting ${isMax ? "Max" : "Min"} node.`);
       await delay(1000);
+      if (!isAnimatingRef.current) return null;
       
       const leftChild = 2 * nodeIndex + 1;
       const rightChild = 2 * nodeIndex + 2;
       
       const leftVal = await evaluate(leftChild, depth + 1, !isMax);
+      if (!isAnimatingRef.current) return null;
       const rightVal = await evaluate(rightChild, depth + 1, !isMax);
+      if (!isAnimatingRef.current) return null;
       
       const bestVal = isMax ? Math.max(leftVal, rightVal) : Math.min(leftVal, rightVal);
       
@@ -88,11 +95,13 @@ const MinMax = () => {
       
       setStepExplanation(`${isMax ? "Max" : "Min"} node completed. Chose ${bestVal} from (${leftVal}, ${rightVal}).`);
       await delay(1000);
+      if (!isAnimatingRef.current) return null;
       
       return bestVal;
     };
     
     const rootVal = await evaluate(0, 0, true);
+    if (!isAnimatingRef.current) return;
     setStepExplanation(`Algorithm finished. Optimal value is ${rootVal}.`);
     setMessage(`Finished! Optimal value: ${rootVal}`);
     setIsAnimating(false);
@@ -121,9 +130,12 @@ const MinMax = () => {
     setTreeNodes(initNodes);
     setCurrentNodeClass({});
     setIsAnimating(true);
+    isAnimatingRef.current = true;
     
     setTimeout(() => {
-        runMinMax(initNodes);
+        if (isAnimatingRef.current) {
+            runMinMax(initNodes);
+        }
     }, 1000);
   };
 
