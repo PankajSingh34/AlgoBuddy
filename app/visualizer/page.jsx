@@ -147,12 +147,13 @@ const sections = [
       {
         title: "Sorting",
         items: [
-          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
-          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
-          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
-          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
-          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
-          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+          { name: "Bubble Sort", path: "/visualizer/sorting/bubblesort" },
+          { name: "Selection Sort", path: "/visualizer/sorting/selectionsort" },
+          { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
+          { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
+          { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
+          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+          { name: "Sorting Race Arena", path: "/visualizer/sorting/race-arena" },
         ],
       },
       {
@@ -658,6 +659,43 @@ const sections = [
           {
             name: "Topological Sort",
             path: "/visualizer/graph/topological-sort",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualize recursive memoization trees, 2D dependency grids, and state transitions for classical DP problems",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Dynamic Programming (DP) solves complex problems by breaking them down into simpler subproblems, solving each subproblem just once, and storing their solutions (using memoization or tabulation) to avoid redundant computations.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Grid & Memoization",
+        items: [
+          {
+            name: "Memoization & Dependency Grid",
+            path: "/visualizer/dp/memo-grid",
           },
         ],
       },
