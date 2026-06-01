@@ -253,7 +253,7 @@ const sections = [
           },
           {
             name: "Using Linked List",
-            path: "/visualizer/stack/implementation/usingLinkedList",
+            path: "/visualizer/stack/implementation/usinglinkedlist",
           },
         ],
       },
@@ -323,7 +323,7 @@ const sections = [
           },
           {
             name: "Using Linked List",
-            path: "/visualizer/queue/implementation/linkedList",
+            path: "/visualizer/queue/implementation/linkedlist",
           },
         ],
       },
