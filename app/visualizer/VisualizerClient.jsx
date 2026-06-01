@@ -450,13 +450,39 @@ function DSCard({ section, theme, delay }) {
 export default function VisualizerClient({ initialSections }) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
-const searchRef = useRef(null);
-const [searchHistory, setSearchHistory] = useState(() => {
-  try {
-    return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
-  } catch { return []; }
-});
-const [showHistory, setShowHistory] = useState(false);
+  const searchRef = useRef(null);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
+  // Session persistence for visualizer
+  const [session, setSession] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("visualizer_session") || "{}");
+    } catch { return {}; }
+  });
+  useEffect(() => {
+    localStorage.setItem("visualizer_session", JSON.stringify(session));
+  }, [session]);
+  const { lastPath, restored } = session;
+  // Prompt to restore previous session on mount
+  useEffect(() => {
+    if (lastPath && !restored) {
+      const ok = window.confirm("A previous visualizer session was found. Do you want to restore it?");
+      if (ok) {
+        // restore logic can be expanded per visualizer
+        setSession(prev => ({ ...prev, restored: true }));
+        // For example, navigate to lastPath (if using Next router)
+        // router.push(lastPath);
+      } else {
+        // clear saved session
+        localStorage.removeItem("visualizer_session");
+        setSession({});
+      }
+    }
+  }, [lastPath, restored]);
 
 // Keyboard shortcut Ctrl+K or /
 useEffect(() => {
