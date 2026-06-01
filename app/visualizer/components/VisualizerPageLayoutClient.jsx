@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import ReadingTime from "@/app/components/ui/ReadingTime";
 import VisualizerSessionControls from "./VisualizerSessionControls";
-import { calculateReadingTime } from "@/lib/readingTime";
 
 function VisualizerPageSection({ children, className }) {
   if (!children) {
@@ -34,93 +34,72 @@ export default function VisualizerPageLayoutClient({
   moduleSectionClassName = "px-6 md:px-12 my-12",
   exploreSectionClassName = "px-6",
 }) {
+  const [mounted, setMounted] = useState(false);
   const contentRef = useRef(null);
-  const [readingTime, setReadingTime] = useState(null);
 
   useEffect(() => {
-    if (!contentRef.current) {
-      return;
-    }
+    setMounted(true);
+  }, []);
 
-    const text = contentRef.current.textContent ?? "";
-    setReadingTime(calculateReadingTime(text));
-  }, [content]);
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
-      <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#1c1d1f] dark:text-[#f5f5f5]">
-        <section className="px-6 md:px-12">
-          <div className="mb-4 mt-2">
-            <Breadcrumbs paths={paths} />
-          </div>
+      <div className="min-h-screen bg-[#fafafa] dark:bg-black">
+        <div className="max-w-6xl mx-auto py-8">
+          <Breadcrumbs paths={paths} />
 
-          <div className="flex flex-col items-center">
-            <h1
-              className="mb-0 text-center text-4xl font-black text-[#1a1a1a] dark:text-white md:text-5xl"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                letterSpacing: "-0.03em",
-              }}
-            >
+          <div className="my-8 md:my-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] dark:text-white mb-4">
               {title}
             </h1>
-
-            {readingTime ? (
-              <p className="mt-3 text-base font-medium text-[#4b5563] dark:text-[#9ca3af]">
-                📖 {readingTime} min read
-              </p>
-            ) : null}
-
-            {headerDescription ? (
-              <p className="mt-4 max-w-2xl text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
+            <ReadingTime targetRef={contentRef} />
+            {headerDescription && (
+              <p className="text-lg text-[#6b7280] dark:text-[#9ca3af]">
                 {headerDescription}
               </p>
-            ) : null}
-
-            {headerActions ? <div className="mt-4">{headerActions}</div> : null}
-
-            <VisualizerSessionControls />
+            )}
+            {headerActions && <div className="mt-4">{headerActions}</div>}
           </div>
 
-          <div className="mx-auto my-10 h-px max-w-4xl bg-gradient-to-r from-transparent via-[#d1d7dc] to-transparent dark:via-[#333]" />
-        </section>
-
-        <VisualizerPageSection className={animationSectionClassName}>
-          {animation}
-        </VisualizerPageSection>
-
-        <VisualizerPageSection className={contentSectionClassName}>
-          <div ref={contentRef}>{content}</div>
-        </VisualizerPageSection>
-
-        <VisualizerPageSection className={codeSectionClassName}>
-          {code}
-        </VisualizerPageSection>
-
-        <VisualizerPageSection className={quizSectionClassName}>
-          {quiz}
-        </VisualizerPageSection>
-
-        {extraSections.map(({ content: extraContent, className }, index) => (
-          <VisualizerPageSection
-            key={`${title}-extra-section-${index}`}
-            className={className}
-          >
-            {extraContent}
+          <VisualizerPageSection className={`my-8 md:my-12 ${animationSectionClassName}`}>
+            {animation}
           </VisualizerPageSection>
-        ))}
 
-        <VisualizerPageSection className={moduleSectionClassName}>
-          {moduleCard}
-        </VisualizerPageSection>
+          <VisualizerSessionControls />
 
-        <VisualizerPageSection className={exploreSectionClassName}>
-          {exploreOther}
-        </VisualizerPageSection>
+          <VisualizerPageSection className={`my-8 md:my-12 ${contentSectionClassName}`}>
+            <div ref={contentRef}>{content}</div>
+          </VisualizerPageSection>
+
+          <VisualizerPageSection className={`my-8 md:my-12 ${codeSectionClassName}`}>
+            {code}
+          </VisualizerPageSection>
+
+          <VisualizerPageSection className={`my-8 md:my-12 ${quizSectionClassName}`}>
+            {quiz}
+          </VisualizerPageSection>
+
+          <VisualizerPageSection className={moduleSectionClassName}>
+            {moduleCard}
+          </VisualizerPageSection>
+
+          <VisualizerPageSection className={exploreSectionClassName}>
+            {exploreOther}
+          </VisualizerPageSection>
+
+          {extraSections.map((section, index) => (
+            <VisualizerPageSection key={index} className={section.className}>
+              {section.content}
+            </VisualizerPageSection>
+          ))}
+        </div>
       </div>
 
-      <BackToTop />
       <Footer />
+      <BackToTop />
     </>
   );
 }

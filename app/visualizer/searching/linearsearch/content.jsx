@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 const Content = () => {
   const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
+
   const updateTheme = useCallback(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
     setTheme(savedTheme);
@@ -60,7 +61,8 @@ const Content = () => {
   ];
 
   return (
-    <main className="max-w-4xl mx-auto">
+    <main className="max-w-4xl mx-auto">
+
       <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is Linear Search */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
