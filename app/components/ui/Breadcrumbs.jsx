@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const VISUALIZER_CATEGORY_BY_SEGMENT = {
+  array: "array",
   searching: "array",
   sorting: "array",
   stack: "stack",

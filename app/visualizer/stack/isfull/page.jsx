@@ -65,10 +65,11 @@ export default function Page() {
           links={[
             { text: "Peek", url: "/visualizer/stack/peek" },
             { text: "Is Empty", url: "/visualizer/stack/isempty" },
-            { text: "Push Pop", url: "/visualizer/stack/push-pop" },
+            { text: "Push Pop", url: "/visualizer/stack/pushpop" },
           ]}
         />
       }
     />
   );
 }
+

@@ -64,7 +64,7 @@ export default function Page() {
         <ExploreOther
           title="Explore other operations"
           links={[
-            { text: "Push & Pop", url: "/visualizer/stack/push-pop" },
+            { text: "Push & Pop", url: "/visualizer/stack/pushpop" },
             { text: "Is Empty", url: "/visualizer/stack/isempty" },
             { text: "Is Full", url: "/visualizer/stack/isfull" },
           ]}
@@ -73,3 +73,4 @@ export default function Page() {
     />
   );
 }
+

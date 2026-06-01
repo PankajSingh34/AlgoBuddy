@@ -48,10 +48,11 @@ export default function Page() {
           links={[
             { text: "Factorial (Linear Recursion)", url: "/visualizer/recursion/factorial" },
             { text: "Sum of First N Numbers", url: "/visualizer/recursion/sum-of-n" },
-            { text: "Stack operations", url: "/visualizer/stack/push-pop" }
+            { text: "Stack operations", url: "/visualizer/stack/pushpop" }
           ]}
         />
       }
     />
   );
 }
+

@@ -47,10 +47,11 @@ export default function Page() {
           links={[
             { text: "Factorial Recursion", url: "/visualizer/recursion/factorial" },
             { text: "Fibonacci (Tree Recursion)", url: "/visualizer/recursion/fibonacci" },
-            { text: "Stack operations", url: "/visualizer/stack/push-pop" }
+            { text: "Stack operations", url: "/visualizer/stack/pushpop" }
           ]}
         />
       }
     />
   );
 }
+

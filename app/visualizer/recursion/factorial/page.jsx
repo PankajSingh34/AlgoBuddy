@@ -48,10 +48,11 @@ export default function Page() {
           links={[
             { text: "Sum of First N Numbers", url: "/visualizer/recursion/sum-of-n" },
             { text: "Fibonacci (Tree Recursion)", url: "/visualizer/recursion/fibonacci" },
-            { text: "Stack operations", url: "/visualizer/stack/push-pop" }
+            { text: "Stack operations", url: "/visualizer/stack/pushpop" }
           ]}
         />
       }
     />
   );
 }
+
