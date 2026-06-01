@@ -25,8 +25,10 @@ const AlphaBetaPruning = () => {
   } = usePlayback(() => 1);
 
   const animationRef = useRef(null);
+  const isAnimatingRef = useRef(false);
 
   const handleReset = () => {
+    isAnimatingRef.current = false;
     setIsAnimating(false);
     setMessage("Enter 8 comma-separated numbers for leaf nodes.");
     setStepExplanation("");
@@ -54,11 +56,13 @@ const AlphaBetaPruning = () => {
     let newPruned = { ...prunedNodes };
 
     const evaluate = async (nodeIndex, depth, alpha, beta, isMax) => {
+      if (!isAnimatingRef.current) return null;
       if (depth === 3) {
         newClasses[nodeIndex] = "bg-green-500 text-white border-green-700";
         setCurrentNodeClass({ ...newClasses });
         setStepExplanation(`Evaluating leaf node: ${nodes[nodeIndex].val}`);
         await delay(1000);
+        if (!isAnimatingRef.current) return null;
         return nodes[nodeIndex].val;
       }
 
@@ -69,6 +73,7 @@ const AlphaBetaPruning = () => {
       setCurrentNodeClass({ ...newClasses });
       setStepExplanation(`Visiting ${isMax ? "Max" : "Min"} node. α=${alpha === -Infinity ? "-∞" : alpha}, β=${beta === Infinity ? "∞" : beta}`);
       await delay(1000);
+      if (!isAnimatingRef.current) return null;
 
       const leftChild = 2 * nodeIndex + 1;
       const rightChild = 2 * nodeIndex + 2;
@@ -77,6 +82,7 @@ const AlphaBetaPruning = () => {
 
       // Left Child
       const leftVal = await evaluate(leftChild, depth + 1, alpha, beta, !isMax);
+      if (!isAnimatingRef.current) return null;
       if (isMax) {
         bestVal = Math.max(bestVal, leftVal);
         alpha = Math.max(alpha, bestVal);
@@ -91,6 +97,7 @@ const AlphaBetaPruning = () => {
       setTreeNodes([...nodes]);
       setStepExplanation(`Back at ${isMax ? "Max" : "Min"} node. Updated ${isMax ? "α" : "β"} to ${isMax ? alpha : beta}. Check α=${alpha === -Infinity ? "-∞" : alpha} ≥ β=${beta === Infinity ? "∞" : beta}?`);
       await delay(1000);
+      if (!isAnimatingRef.current) return null;
 
       // Pruning check
       if (beta <= alpha) {
@@ -109,15 +116,17 @@ const AlphaBetaPruning = () => {
         setPrunedNodes({ ...newPruned });
         
         await delay(1500);
+        if (!isAnimatingRef.current) return null;
       } else {
         // Right Child
         const rightVal = await evaluate(rightChild, depth + 1, alpha, beta, !isMax);
+        if (!isAnimatingRef.current) return null;
         if (isMax) {
           bestVal = Math.max(bestVal, rightVal);
           alpha = Math.max(alpha, bestVal);
         } else {
           bestVal = Math.min(bestVal, rightVal);
-          beta = Math.min(beta, bestVal);
+          beta = Math.min(beta, rightVal);
         }
         nodes[nodeIndex].val = bestVal;
         nodes[nodeIndex].alpha = alpha;
@@ -129,11 +138,13 @@ const AlphaBetaPruning = () => {
       setCurrentNodeClass({ ...newClasses });
       setStepExplanation(`Node ${nodeIndex} completed. Value: ${bestVal}`);
       await delay(1000);
+      if (!isAnimatingRef.current) return null;
 
       return bestVal;
     };
 
     const rootVal = await evaluate(0, 0, -Infinity, Infinity, true);
+    if (!isAnimatingRef.current) return;
     setStepExplanation(`Algorithm finished. Optimal value: ${rootVal}`);
     setMessage(`Finished! Optimal value: ${rootVal}`);
     setIsAnimating(false);
@@ -157,6 +168,7 @@ const AlphaBetaPruning = () => {
 
     setTreeNodes(initNodes);
     setIsAnimating(true);
+    isAnimatingRef.current = true;
     setCurrentNodeClass({});
     setPrunedNodes({});
     runAlphaBeta(initNodes);
