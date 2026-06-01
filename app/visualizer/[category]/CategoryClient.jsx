@@ -150,11 +150,7 @@ export default function CategoryClient({ section }) {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Header Card */}
-        <div
-          className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
-          style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-card={section.title || "Code Lab"}
-        >
+        <div className="mb-8 transition-colors duration-300">
           <button
             onClick={() => router.push("/visualizer")}
             className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
