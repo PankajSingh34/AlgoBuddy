@@ -277,7 +277,7 @@ export default function ConceptsSection() {
 
      {/* ── "More effective, more fun" block ── */}
       <div className="py-20 px-6 bg-[#f0fdf4] dark:bg-[#1c1d1f] transition-colors duration-300">
-        <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24">
+        <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
 
           {/* Text side */}
           <div className="flex-1 flex flex-col gap-5 items-start">

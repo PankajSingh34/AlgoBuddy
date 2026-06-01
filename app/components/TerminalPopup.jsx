@@ -82,7 +82,13 @@ const TerminalPopup = ({ isOpen, onClose, email }) => {
         startCursor();
         // auto-close shortly after complete
         autoCloseTimeout = setTimeout(() => {
-          try { onClose(); } catch (e) {}
+          try { 
+            if (typeof onClose === 'function') {
+              onClose(); 
+            }
+          } catch (e) {
+            console.error("Error in onClose callback:", e);
+          }
         }, 2800);
         return;
       }

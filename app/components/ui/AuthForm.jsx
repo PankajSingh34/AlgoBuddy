@@ -127,7 +127,7 @@ export default function AuthForm({ isLogin = true }) {
             </Link>
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-serif">
+            <h1 className="text-2xl font-bold font-sans">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-purple-200 text-sm mt-1">

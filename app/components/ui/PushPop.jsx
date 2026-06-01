@@ -3,16 +3,46 @@ import { useState } from 'react';
 import usePlayback from '@/app/hooks/usePlayback';
 import LinearMemoryControls from '@/app/components/ui/LinearMemoryControls';
 
-const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, message, setMessage, operation, setOperation, extraActions, stackLimit, speed: parentSpeed, setSpeed: parentSetSpeed }) => {
+const PushPop = ({
+  stack,
+  setStack,
+  isAnimating,
+  setIsAnimating,
+  message,
+  setMessage,
+  operation,
+  setOperation,
+  extraActions,
+  capacity,
+  setCapacity,
+  stackLimit,
+  speed: parentSpeed,
+  setSpeed: parentSetSpeed
+}) => {
   const [inputValue, setInputValue] = useState('');
+  const [capacityInput, setCapacityInput] = useState('');
   const localPlayback = usePlayback(1);
   const speed = parentSpeed !== undefined ? parentSpeed : localPlayback.speed;
   const setSpeed = parentSetSpeed !== undefined ? parentSetSpeed : localPlayback.setSpeed;
 
+  const limit = capacity !== undefined && capacity !== null ? capacity : stackLimit;
+
+  // Handle setting capacity
+  const handleSetCapacity = () => {
+    const size = parseInt(capacityInput, 10);
+    if (isNaN(size) || size < 1 || size > 10) {
+      setMessage('Please enter a valid capacity between 1 and 10.');
+      return;
+    }
+    setCapacity(size);
+    setCapacityInput('');
+    setMessage(`Stack capacity set to ${size}. Ready for operations!`);
+  };
+
   // Push operation
   const push = () => {
-    if (stackLimit && stack.length >= stackLimit) {
-      setMessage("Stack is full! Cannot push more items.");
+    if (limit && stack.length >= limit) {
+      setMessage(`Stack Overflow! Cannot push. top (${stack.length - 1}) >= size - 1 (${limit - 1})`);
       return;
     }
     if (!inputValue.trim()) {
@@ -65,6 +95,41 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, message, setMes
     }, 1000 / speed);
   };
 
+  // Handle capacity-not-set state
+  if (capacity === null) {
+    return (
+      <LinearMemoryControls
+        inputValue={capacityInput}
+        setInputValue={setCapacityInput}
+        placeholder="Enter capacity (1-10)..."
+        isAnimating={isAnimating}
+        operation={operation}
+        message={message}
+        speed={speed}
+        onSpeedChange={setSpeed}
+        actions={[
+          { label: "Set Capacity", onClick: handleSetCapacity, variant: "primary", needsInput: true }
+        ]}
+      />
+    );
+  }
+
+  const actions = [
+    { label: "Push", onClick: push, variant: "primary", needsInput: true, disabled: limit && stack.length >= limit },
+    { label: "Pop", onClick: pop, disabled: stack.length === 0, variant: "secondary" },
+    { label: "Peek", onClick: peek, disabled: stack.length === 0, variant: "secondary" },
+    { label: "Reset", onClick: () => { setStack([]); setMessage('Stack cleared'); }, variant: "outline" },
+  ];
+
+  // If stack is empty, allow user to change size (locking capacity once an element is pushed)
+  if (stack.length === 0 && setCapacity) {
+    actions.push({ label: "Change Size", onClick: () => { setCapacity(null); setMessage('Please enter a new stack capacity.'); }, variant: "secondary" });
+  }
+
+  if (extraActions) {
+    actions.push(...extraActions);
+  }
+
   return (
     <LinearMemoryControls
       inputValue={inputValue}
@@ -74,13 +139,7 @@ const PushPop = ({ stack, setStack, isAnimating, setIsAnimating, message, setMes
       message={message}
       speed={speed}
       onSpeedChange={setSpeed}
-      actions={[
-        { label: "Push", onClick: push, variant: "primary", needsInput: true, disabled: stackLimit && stack.length >= stackLimit },
-        { label: "Pop", onClick: pop, disabled: stack.length === 0, variant: "secondary" },
-        { label: "Peek", onClick: peek, disabled: stack.length === 0, variant: "secondary" },
-        { label: "Reset", onClick: () => setStack([]), variant: "outline" },
-        ...(extraActions || [])
-      ]}
+      actions={actions}
     />
   );
 };

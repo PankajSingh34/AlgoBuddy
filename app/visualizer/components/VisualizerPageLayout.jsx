@@ -1,6 +1,7 @@
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import VisualizerSessionControls from "./VisualizerSessionControls";
 
 export function createVisualizerPaths(...segments) {
   return [
@@ -66,6 +67,9 @@ export default function VisualizerPageLayout({
             ) : null}
 
             {headerActions ? <div className="mt-4">{headerActions}</div> : null}
+
+            {/* Session Controls Wrapper */}
+            <VisualizerSessionControls />
           </div>
 
           <div className="mx-auto my-10 h-px max-w-4xl bg-gradient-to-r from-transparent via-[#d1d7dc] to-transparent dark:via-[#333]" />

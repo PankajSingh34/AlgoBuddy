@@ -168,7 +168,7 @@ const ContactUs = () => {
 
                 <div className="flex items-center gap-4">
                   <a
-                    href="https://github.com/PankajSingh34"
+                    href="https://github.com/PankajSingh34/AlgoBuddy"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-14 h-14 rounded-2xl border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"

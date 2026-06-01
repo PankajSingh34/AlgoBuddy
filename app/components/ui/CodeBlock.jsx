@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { FaCopy, FaCheck, FaCode } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import hljs from 'highlight.js';
@@ -8,7 +8,107 @@ import 'highlight.js/styles/atom-one-dark.css';
 import 'highlight.js/styles/github.css';
 import 'highlight.js/styles/github-dark.css';
 
+/**
+ * Cleanly translates a given JavaScript implementation into standard textbook pseudocode.
+ * Runs fully dynamically on the client so that every visualizer gets an immediate, elegant
+ * pseudocode tab without requiring manual rewrites in 100+ separate files.
+ */
+export const generatePseudocode = (jsCode) => {
+  if (!jsCode) return '';
+  
+  let lines = jsCode.split('\n');
+  let result = [];
+  
+  for (let line of lines) {
+    let clean = line;
+    
+    // Replace variable declarations with assignment arrows
+    clean = clean.replace(/\b(const|let|var)\b\s+([a-zA-Z0-9_$]+)\s*=\s*/g, '$2 ← ');
+    
+    // Replace function/methods declarations
+    clean = clean.replace(/\bfunction\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)\s*\{?/g, 'algorithm $1($2)');
+    clean = clean.replace(/\bclass\s+([a-zA-Z0-9_$]+)\s*\{?/g, 'structure $1');
+    clean = clean.replace(/\bconstructor\s*\(([^)]*)\)\s*\{?/g, 'initialize($1)');
+    
+    // Replace comparison operators
+    clean = clean.replace(/===/g, ' = ');
+    clean = clean.replace(/==/g, ' = ');
+    clean = clean.replace(/!==/g, ' ≠ ');
+    clean = clean.replace(/!=/g, ' ≠ ');
+    
+    // Replace boolean operators
+    clean = clean.replace(/&&/g, ' AND ');
+    clean = clean.replace(/\|\|/g, ' OR ');
+    clean = clean.replace(/!(?!=)/g, ' NOT ');
+    
+    // Replace loop controls
+    clean = clean.replace(/for\s*\(\s*let\s+([a-zA-Z0-9_$]+)\s*=\s*([^;]+);\s*\1\s*<\s*([^;]+);\s*[^)]+\)/g, 'for $1 from $2 to $3 - 1 do');
+    clean = clean.replace(/for\s*\(\s*let\s+([a-zA-Z0-9_$]+)\s*=\s*([^;]+);\s*\1\s*<=\s*([^;]+);\s*[^)]+\)/g, 'for $1 from $2 to $3 do');
+    clean = clean.replace(/for\s*\(\s*(const|let|var)\s+([a-zA-Z0-9_$]+)\s+of\s+([^)]+)\)/g, 'for each $2 in $3 do');
+    
+    // Replace standard flow blocks
+    clean = clean.replace(/if\s*\(([^)]+)\)\s*\{?/g, 'if $1 then');
+    clean = clean.replace(/while\s*\(([^)]+)\)\s*\{?/g, 'while $1 do');
+    
+    // Strip braces and semicolons
+    clean = clean.replace(/;\s*$/g, '');
+    clean = clean.replace(/\{\s*$/g, '');
+    clean = clean.replace(/^\s*\}\s*$/g, '');
+    clean = clean.replace(/\s*\}\s*else\s*\{?/g, ' else');
+    clean = clean.replace(/\s*\}\s*else\s+if\s*\(([^)]+)\)\s*\{?/g, ' else if $1 then');
+    
+    // If the line is empty (only braces stripped), skip it
+    if (line.trim() !== '' && clean.trim() === '') {
+      continue;
+    }
+    
+    result.push(clean);
+  }
+  
+  return result.join('\n');
+};
+
+/**
+ * Highlights a block of code dynamically. Prepares custom premium highlighting for
+ * pseudocode keywords to match the editor's visual style.
+ */
 export const highlightCode = (code, language) => {
+  if (language === 'pseudocode') {
+    let escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+      
+    // Use a single-pass regex matching comments, strings, keywords, operators, and numbers to prevent any HTML tag conflict
+    const regex = /(\/\/.*)|("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|\b(algorithm|procedure|structure|initialize|declare|for each|for|to|do|while|if|then|else|return|AND|OR|NOT)\b|(←)|\b(\d+)\b/g;
+
+    const highlighted = escaped.replace(regex, (match, comment, string, keyword, operator, number) => {
+      if (comment !== undefined) {
+        return `<span class="hljs-comment" style="color: #5c6370; font-style: italic;">${comment}</span>`;
+      }
+      if (string !== undefined) {
+        return `<span class="hljs-string" style="color: #98c379;">${string}</span>`;
+      }
+      if (keyword !== undefined) {
+        return `<span class="hljs-keyword" style="color: #c678dd; font-weight: bold;">${keyword}</span>`;
+      }
+      if (operator !== undefined) {
+        return `<span class="hljs-operator" style="color: #56b6c2;">${operator}</span>`;
+      }
+      if (number !== undefined) {
+        return `<span class="hljs-number" style="color: #d19a66;">${number}</span>`;
+      }
+      return match;
+    });
+
+    return sanitizeHtml(highlighted, {
+      allowedTags: ['span'],
+      allowedAttributes: {
+        span: ['class', 'style']
+      }
+    });
+  }
+
   const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
   const rawHtml = hljs.highlight(code, { language: validLanguage }).value;
   return sanitizeHtml(rawHtml, {
@@ -20,6 +120,7 @@ export const highlightCode = (code, language) => {
 };
 
 const LANGUAGES = [
+  { id: 'pseudocode', name: 'Pseudocode' },
   { id: 'javascript', name: 'JavaScript' },
   { id: 'python', name: 'Python' },
   { id: 'java', name: 'Java' },
@@ -27,7 +128,6 @@ const LANGUAGES = [
   { id: 'cpp', name: 'C++' },
 ];
 
-/* ─── Small helper — traffic-light dot with hover tooltip (macOS variant) ─── */
 const TrafficDot = ({ color, hoverTitle }) => {
   const [hovered, setHovered] = useState(false);
   return (
@@ -52,20 +152,29 @@ const TrafficDot = ({ color, hoverTitle }) => {
   );
 };
 
-/**
- * Shared code-block component used across all visualizer pages.
- *
- * @param {Object}  props
- * @param {'macos'|'standard'} [props.variant='standard'] — visual style
- * @param {string}  [props.title]        — heading text (standard variant)
- * @param {Object}  props.codeExamples   — { javascript: `...`, python: `...`, … }
- * @param {Object}  [props.fileNames]    — { javascript: 'file.js', … } (macOS variant)
- */
 const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [selectedLanguage, setSelectedLanguage] = useState('pseudocode');
   const [copied, setCopied] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const topRef = useRef(null);
+
+  const resolvedCode = useMemo(() => {
+    if (selectedLanguage === 'pseudocode') {
+      return codeExamples?.pseudocode || generatePseudocode(codeExamples?.javascript || codeExamples?.js || '');
+    }
+    let code = codeExamples?.[selectedLanguage];
+    if (!code) {
+      if (selectedLanguage === 'c') {
+        code = codeExamples?.cpp || codeExamples?.c_cpp || codeExamples?.cppCode;
+      } else if (selectedLanguage === 'cpp') {
+        code = codeExamples?.c || codeExamples?.cCode;
+      }
+      if (!code) {
+        code = codeExamples?.javascript || codeExamples?.js || codeExamples?.python || codeExamples?.java || '';
+      }
+    }
+    return code;
+  }, [selectedLanguage, codeExamples]);
 
   const copyToClipboard = async (text) => {
     try {
@@ -105,14 +214,12 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
               userSelect: 'none',
             }}
           >
-            {/* Traffic-light buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <TrafficDot color="#ff5f57" hoverTitle="Close" />
               <TrafficDot color="#febc2e" hoverTitle="Minimize" />
               <TrafficDot color="#28c840" hoverTitle="Maximize" />
             </div>
 
-            {/* Centred filename */}
             <span
               style={{
                 position: 'absolute',
@@ -126,14 +233,21 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                 pointerEvents: 'none',
               }}
             >
-              {fileNames?.[selectedLanguage] ?? ''}
+              {selectedLanguage === 'pseudocode' 
+                ? 'algorithm.txt' 
+                : (fileNames?.[selectedLanguage] ?? {
+                    javascript: 'solution.js',
+                    python: 'solution.py',
+                    java: 'Solution.java',
+                    c: 'solution.c',
+                    cpp: 'solution.cpp'
+                  }[selectedLanguage] ?? 'solution.txt')}
             </span>
 
-            {/* Copy button */}
             <motion.button
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              onClick={() => copyToClipboard(codeExamples[selectedLanguage])}
+              onClick={() => copyToClipboard(resolvedCode)}
               aria-label="Copy code"
               style={{
                 display: 'flex',
@@ -161,7 +275,6 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     exit={{ opacity: 0 }}
                     style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
                   >
-                    {/* checkmark */}
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 6l3 3 5-5" stroke="#30d158" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -175,7 +288,6 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     exit={{ opacity: 0 }}
                     style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
                   >
-                    {/* clipboard icon */}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                       <rect x="9" y="2" width="10" height="14" rx="2" stroke="#c8c8cc" strokeWidth="2" />
                       <path d="M5 6H4a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="#c8c8cc" strokeWidth="2" strokeLinecap="round" />
@@ -239,7 +351,6 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                 padding: '20px 24px 24px',
               }}
             >
-              {/* line-number gutter + code */}
               <pre
                 style={{
                   margin: 0,
@@ -250,7 +361,6 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                   gap: '20px',
                 }}
               >
-                {/* gutter */}
                 <span
                   aria-hidden="true"
                   style={{
@@ -265,7 +375,7 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     fontSize: '13.5px',
                   }}
                 >
-                  {codeExamples[selectedLanguage]
+                  {resolvedCode
                     .split('\n')
                     .map((_, i) => (
                       <span key={i} style={{ display: 'block' }}>
@@ -274,7 +384,6 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     ))}
                 </span>
 
-                {/* highlighted code */}
                 <code
                   className={`language-${selectedLanguage}`}
                   style={{
@@ -287,7 +396,7 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     whiteSpace: 'pre',
                   }}
                   dangerouslySetInnerHTML={{
-                    __html: highlightCode(codeExamples[selectedLanguage], selectedLanguage),
+                    __html: highlightCode(resolvedCode, selectedLanguage),
                   }}
                 />
               </pre>
@@ -324,7 +433,7 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => copyToClipboard(codeExamples[selectedLanguage])}
+            onClick={() => copyToClipboard(resolvedCode)}
             className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-gray-800 dark:text-gray-100 text-sm font-medium"
             aria-label="Copy code"
           >
@@ -388,14 +497,13 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                 <code
                   className={`language-${selectedLanguage}`}
                   dangerouslySetInnerHTML={{
-                    __html: highlightCode(codeExamples[selectedLanguage], selectedLanguage),
+                    __html: highlightCode(resolvedCode, selectedLanguage),
                   }}
                 />
               </pre>
             </motion.div>
           </AnimatePresence>
 
-          {/* Language indicator (shown on hover) */}
           <AnimatePresence>
             {isHovered && (
               <motion.div

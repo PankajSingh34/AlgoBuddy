@@ -4,19 +4,10 @@ import {
   getPublicCollaborationSession,
   joinCollaborationSession,
   updateCollaborationSession,
+  validateCsrfOrigin,
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
-
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
+import { getClientIp } from "@/lib/getClientIp";
 
 function getSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -78,6 +69,10 @@ export async function GET(_request, { params }) {
 }
 
 export async function POST(request, { params }) {
+  if (!validateCsrfOrigin(request)) {
+    return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+  }
+
   const { user, configured } = await getAuthenticatedUser();
   if (configured && !user) {
     return Response.json(
@@ -105,9 +100,11 @@ export async function POST(request, { params }) {
     return Response.json({ error: result.error }, { status: result.status || 400 });
   }
 
-  await updateCollaborationSession(result.session.id, {
-    participantCount: Math.max(0, (result.session?.participantCount || 0) + 1),
-  });
+  if (result.isNewParticipant) {
+    await updateCollaborationSession(result.session.id, {
+      participantCount: Math.max(0, (result.session?.participantCount || 0) + 1),
+    });
+  }
 
   return Response.json(result);
 }

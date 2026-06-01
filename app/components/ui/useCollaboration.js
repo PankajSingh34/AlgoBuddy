@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   createSessionEvent,
   deserializeSessionTrace,
+  canApplyPrivilegedSessionEvent,
   replaySessionTrace,
   sanitizeSessionText,
   serializeSessionTrace,
@@ -64,6 +65,7 @@ export function useCollaboration({
   const sessionRef = useRef(null);
   const sequenceRef = useRef(0);
   const seenSequencesRef = useRef(new Map());
+  const processedEventIdsRef = useRef(new Set());
   const callbacksRef = useRef({ onRemoteStateDelta });
   const currentDisplayNameRef = useRef(displayName);
   const recordingRef = useRef(recording);
@@ -117,6 +119,21 @@ export function useCollaboration({
 
   const processEnvelope = useCallback((envelope) => {
     if (!envelope || typeof envelope !== "object") return;
+
+    if (envelope.id && processedEventIdsRef.current.has(envelope.id)) {
+      return;
+    }
+
+    if (envelope.id) {
+      if (processedEventIdsRef.current.size > 5000) {
+        processedEventIdsRef.current = new Set();
+      }
+      processedEventIdsRef.current.add(envelope.id);
+    }
+
+    if (!canApplyPrivilegedSessionEvent({ presenterId: presenterIdRef.current }, envelope)) {
+      return;
+    }
 
     const lastSeen = seenSequencesRef.current.get(envelope.senderId) || 0;
     if (Number.isFinite(envelope.sequence) && envelope.sequence <= lastSeen) {
@@ -178,6 +195,10 @@ export function useCollaboration({
         const nextPresenterId = envelope.payload?.presenterId || null;
         presenterIdRef.current = nextPresenterId;
         setPresenterId(nextPresenterId);
+        sessionRef.current = sessionRef.current
+          ? { ...sessionRef.current, presenterId: nextPresenterId }
+          : sessionRef.current;
+        setSession((current) => (current ? { ...current, presenterId: nextPresenterId } : current));
         return;
       }
       default:
@@ -219,11 +240,13 @@ export function useCollaboration({
   const attachSession = useCallback(async (nextSession, sessionChannelName) => {
     cleanupTransport();
     seenSequencesRef.current = new Map();
+    processedEventIdsRef.current = new Set();
     sequenceRef.current = 0;
     setParticipants([]);
     setAnnotations([]);
-    setPresenterId(null);
-    presenterIdRef.current = null;
+    const initialPresenterId = nextSession.presenterId || null;
+    setPresenterId(initialPresenterId);
+    presenterIdRef.current = initialPresenterId;
     sessionRef.current = nextSession;
     setSession(nextSession);
     setError(null);
@@ -263,8 +286,23 @@ export function useCollaboration({
     return nextSession;
   }, [cleanupTransport, processEnvelope, sendEnvelope]);
 
-  const grantControl = useCallback((nextPresenterId) => {
+  const grantControl = useCallback(async (nextPresenterId) => {
+    const activeSession = sessionRef.current;
+    if (!activeSession) {
+      throw new Error("Join or create a session first.");
+    }
+
     const presenter = nextPresenterId || clientId;
+    const currentPresenterId = presenterIdRef.current;
+    if (currentPresenterId && currentPresenterId !== clientId && currentPresenterId !== presenter) {
+      throw new Error("Only the current presenter can transfer control.");
+    }
+
+    await requestJson(`/api/sessions/${encodeURIComponent(activeSession.id)}/presenter`, {
+      method: "POST",
+      body: JSON.stringify({ presenterId: presenter }),
+    });
+
     return sendEnvelope("control:grant", { presenterId: presenter });
   }, [clientId, sendEnvelope]);
 
@@ -274,8 +312,8 @@ export function useCollaboration({
       body: JSON.stringify({ title, visibility, password, module, createdBy }),
     });
 
-    await attachSession(data.session, `collab:${data.session.id}:${data.sessionSecret}`);
-    grantControl(clientId);
+    await attachSession(data.session, `collab:${data.session.id}`);
+    await grantControl(clientId);
     return data;
   }, [attachSession, clientId, grantControl]);
 
@@ -320,6 +358,7 @@ export function useCollaboration({
     setPresenterId(null);
     presenterIdRef.current = null;
     seenSequencesRef.current = new Map();
+    processedEventIdsRef.current = new Set();
   }, [cleanupTransport, sendEnvelope]);
 
   const requestControl = useCallback(() => {
@@ -367,13 +406,13 @@ export function useCollaboration({
   const exportRecording = useCallback(() => {
     return serializeSessionTrace({
       metadata: {
-        session,
-        presenterId,
+        session: sessionRef.current,
+        presenterId: presenterIdRef.current,
         exportedBy: clientId,
       },
       events: recordedEvents,
     });
-  }, [clientId, presenterId, recordedEvents, session]);
+  }, [clientId, recordedEvents]);
 
   const importRecording = useCallback((text, initialSnapshot = {}) => {
     const trace = deserializeSessionTrace(text);

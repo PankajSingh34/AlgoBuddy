@@ -44,6 +44,7 @@ export default function GraphCanvas({
   interactive = true,
   className = "",
   onAddNode,
+  onMoveNode,
   onAddEdge,
   onRemoveNode,
   onRemoveEdge,
@@ -51,7 +52,7 @@ export default function GraphCanvas({
 }) {
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
-
+  const [draggingNode, setDraggingNode] = useState(null);
   const getNodeState = (id) => {
     if (animationState.visitingNodes?.has(id) || id === currentNode) return "visiting";
     if (animationState.visitedNodes?.has(id) || visitedSet?.has(id)) return "visited";
@@ -84,7 +85,35 @@ export default function GraphCanvas({
     },
     [edgeStart, interactive, onAddEdge]
   );
+  const handleNodeMouseDown = useCallback(
+  (e, id) => {
+    if (!interactive || !onMoveNode) return;
 
+    e.stopPropagation();
+
+    setDraggingNode(id);
+  },
+  [interactive, onMoveNode]
+);
+
+const handleMouseMove = useCallback(
+  (e) => {
+    if (!draggingNode || !onMoveNode || !svgRef.current) return;
+
+    const rect = svgRef.current.getBoundingClientRect();
+
+    onMoveNode(
+      draggingNode,
+      e.clientX - rect.left,
+      e.clientY - rect.top
+    );
+  },
+  [draggingNode, onMoveNode]
+);
+
+const handleMouseUp = useCallback(() => {
+  setDraggingNode(null);
+}, []);
   const handleNodeRightClick = useCallback(
     (e, id) => {
       if (!interactive || !onRemoveNode) return;
@@ -136,6 +165,9 @@ export default function GraphCanvas({
       className={className}
       style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
       onClick={handleCanvasClick}
+      onMouseMove={handleMouseMove}
+onMouseUp={handleMouseUp}
+onMouseLeave={handleMouseUp}
     >
       <defs>
         <marker
@@ -249,6 +281,7 @@ export default function GraphCanvas({
           <g
             key={node.id}
             onClick={(e) => handleNodeClick(e, node.id)}
+            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
             onContextMenu={(e) => handleNodeRightClick(e, node.id)}
             style={{ cursor: interactive ? "pointer" : "default" }}
           >

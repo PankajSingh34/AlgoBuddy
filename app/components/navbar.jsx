@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
 import { supabase } from "@/lib/supabase";
-import {Moon,Sun,Menu,X,ChevronDown,LayoutDashboard,LogOut,} from "lucide-react";
+import { Moon, Sun, Menu, X, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -154,22 +154,27 @@ export default function Navbar() {
             Algo<span className="text-primary font-black">Buddy</span>
           </Link>
 
+          {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
-            {NAV_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                data-text={l.label}
-                aria-current={isActive(l.href) ? "page" : undefined}
-                className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
-                  isActive(l.href)
-                    ? "text-primary dark:text-primary font-semibold"
-                    : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
+              
+              return (
+                <Link
+                  key={l.href}
+                  href={dynamicHref}
+                  data-text={l.label}
+                  aria-current={isActive(l.href) ? "page" : undefined}
+                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
+                    isActive(l.href)
+                      ? "text-primary dark:text-primary font-semibold"
+                      : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -279,33 +284,38 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* Mobile Drawer Links with Auth Interception */}
       {menuOpen && (
         <div
           id="mobile-menu"
           className="fixed top-[72px] left-0 right-0 bottom-0 z-[9997] bg-white dark:bg-surface-900 overflow-y-auto border-t border-surface-200 dark:border-surface-700"
         >
           <div className="py-2">
-            {NAV_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() =>
-                  setMenuOpen(false)
-                }
-                aria-current={
-                  isActive(l.href)
-                    ? "page"
-                    : undefined
-                }
-                className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${
-                  isActive(l.href)
-                    ? "text-primary bg-primary/5 dark:bg-primary/10"
-                    : "text-surface-700 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface hover:text-surface-900 dark:hover:text-white"
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
+
+              return (
+                <Link
+                  key={l.href}
+                  href={dynamicHref}
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
+                  aria-current={
+                    isActive(l.href)
+                      ? "page"
+                      : undefined
+                  }
+                  className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${
+                    isActive(l.href)
+                      ? "text-primary bg-primary/5 dark:bg-primary/10"
+                      : "text-surface-700 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface hover:text-surface-900 dark:hover:text-white"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="px-6 py-4 border-t border-surface-200 dark:border-surface-700">

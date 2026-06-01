@@ -168,20 +168,22 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const visible = entries.filter((entry) => entry.isIntersecting);
 
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        }
-      },
-      {
-        root: scrollRef.current,
-        rootMargin: "-25% 0px -55% 0px",
-        threshold: [0.1, 0.25, 0.5, 0.75],
-      }
-    );
+        if (visible.length === 0) return;
+
+        const mostVisible = visible.reduce((prev, current) =>
+          current.intersectionRatio > prev.intersectionRatio ? current : prev
+      );
+
+      setActiveSection(mostVisible.target.id);
+    },
+    {
+      root: scrollRef.current,
+      rootMargin: "-25% 0px -55% 0px",
+      threshold: [0.1, 0.25, 0.5, 0.75],
+    }
+  );
 
     policySections.forEach((item) => {
       const section = sectionRefs.current[item.id];
@@ -197,9 +199,13 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
     const max = node.scrollHeight - node.clientHeight;
     const progress = max > 0 ? (node.scrollTop / max) * 100 : 0;
     setScrollProgress(Math.min(100, Math.max(0, progress)));
+    if (node.scrollTop + node.clientHeight >= node.scrollHeight - 10) {
+    setActiveSection("contact-information");
+    }
   };
 
   const scrollToSection = (id) => {
+    console.log("Scrolling to:", id);
     const scroller = scrollRef.current;
     const section = sectionRefs.current[id];
     if (!scroller || !section) return;
@@ -333,7 +339,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-9">
+                <div className="space-y-9 pb-24">
                   {policySections.map((item) => (
                     <section
                       key={item.id}
@@ -347,7 +353,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                         {item.title}
                       </h3>
                       {item.points && (
-                        <ul className="mt-3.5 space-y-1.5 pl-5 text-[14px] leading-6 text-neutral-700 marker:text-neutral-500 dark:text-neutral-300 dark:marker:text-neutral-400 sm:text-[15px] sm:leading-7">
+                        <ul className="mt-3 space-y-1 pl-5 text-[13px] leading-5 text-neutral-700 marker:text-neutral-500 dark:text-neutral-300 dark:marker:text-neutral-400 sm:text-[15px] sm:leading-7">
                           {item.points.map((subitem) => (
                             <li key={subitem} className="list-disc">
                               {subitem}
@@ -356,12 +362,12 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                         </ul>
                       )}
                       {item.data && (
-                        <p className="mt-3.5 text-[14px] leading-6 text-neutral-700 dark:text-neutral-300 sm:text-[15px] sm:leading-7">
+                        <p className="mt-2.5 text-[13px] leading-5 text-neutral-700 dark:text-neutral-300 sm:text-[15px] sm:leading-7">
                           {item.data}
                         </p>
                       )}
                       {item.contact && (
-                        <p className="mt-2 text-[14px] leading-6 text-neutral-700 dark:text-neutral-300 sm:text-[15px] sm:leading-7">
+                        <p className="mt-2 text-[13px] leading-5 text-neutral-700 dark:text-neutral-300 sm:text-[15px] sm:leading-7">
                           {item.contact}
                         </p>
                       )}

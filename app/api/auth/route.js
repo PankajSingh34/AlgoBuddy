@@ -11,8 +11,12 @@ import { verifyTurnstile } from "@/lib/verifyTurnstile";
 // so that Supabase's own per-user RLS applies from the first request.
 function getValidUrl(value) {
   if (!value) return null;
-  const trimmed = String(value).trim();
+  let trimmed = String(value).trim();
   if (!trimmed || trimmed.startsWith("Your ")) return null;
+  // Node 18+ fetch localhost IPv6 issue fix
+  if (trimmed.startsWith("http://localhost:")) {
+    trimmed = trimmed.replace("http://localhost:", "http://127.0.0.1:");
+  }
   try {
     const url = new URL(trimmed);
     return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
@@ -30,6 +34,7 @@ function getValidKey(value) {
 const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
+const turnstileConfigured = process.env.TURNSTILE_CONFIGURED === "true";
 
 const supabaseAdmin =
   supabaseUrl && supabaseServiceKey
@@ -132,6 +137,16 @@ function genericAuthError() {
 
 export async function POST(req) {
   try {
+    // Enforce Redis in production environments to prevent silent in-memory bypasses
+    const isProduction = process.env.NODE_ENV === "production";
+    const hasRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (isProduction && !hasRedis) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Server misconfigured: Redis environment variables are not set." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     let body;
     try {
       body = await req.json();
@@ -160,18 +175,27 @@ export async function POST(req) {
 
     const ip = getClientIp(req.headers);
 
-    const isSecretMissing = 
-      !process.env.TURNSTILE_SECRET_KEY || 
-      process.env.TURNSTILE_SECRET_KEY.includes("Your") ||
-      process.env.TURNSTILE_SECRET_KEY === "undefined";
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    const isConfigured = turnstileConfigured && turnstileSecretKey && turnstileSecretKey !== "undefined";
 
     let captcha;
-    if (isSecretMissing) {
-      // If the secret key is missing or clearly not set, skip verification but log a warning.
-      console.warn("TURNSTILE_SECRET_KEY is not set. Skipping captcha verification. This should only be used for local development.");
+    if (!isConfigured) {
+      const isProduction = process.env.NODE_ENV === "production";
+      const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
+
+      if (isProduction && !explicitBypass) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Server misconfigured: CAPTCHA secret key is not set." }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      if (!explicitBypass) {
+        console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
+      }
+
       captcha = { ok: true };
     } else {
-      // If a real key exists (like on production), run the strict verification check!
       captcha = await verifyTurnstile(String(captchaToken), { ip });
     }
 
@@ -201,19 +225,22 @@ export async function POST(req) {
     }
 
     if (action === "signup") {
-      if (!supabaseAdmin) {
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+        ? String(process.env.SUPABASE_SERVICE_KEY).trim()
+        : null;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
         return new Response(
           JSON.stringify({ success: false, message: "Auth server is not configured." }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
 
-      const { error } = await supabaseAdmin.auth.signUp({
+      const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: { display_name: name },
-        },
+        email_confirm: true,
+        user_metadata: { display_name: name },
       });
 
       if (error) {
@@ -226,7 +253,7 @@ export async function POST(req) {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Signup successful. Verification email sent.",
+          message: "Signup successful. You can now log in!",
           trigger: true,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },

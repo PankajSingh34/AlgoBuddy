@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { FiChevronRight, FiSearch, FiBookOpen } from "react-icons/fi";
 import { Award, Zap, BookOpen, Layers } from "lucide-react";
 import Footer from "@/app/components/footer";
+import BackToTop from "@/app/components/ui/backtotop";
 import { practiceData } from "@/lib/practiceData";
 
 /* ─── colour + icon theme per DS ─── */
@@ -589,6 +590,7 @@ export default function PracticeHub() {
       </section>
 
       <Footer />
+      <BackToTop />
     </div>
   );
 }

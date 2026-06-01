@@ -1,31 +1,92 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import {
   createCollaborationSession,
   listCollaborationSessions,
+  validateCsrfOrigin,
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
 
-function getClientIp(headers) {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim();
-    if (first) return first;
+function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  try {
+    const parsed = new URL(supabaseUrl);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  } catch {
+    return null;
   }
-  const realIp = headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
+  return { supabaseUrl, supabaseAnonKey };
+}
+
+async function getAuthenticatedUser() {
+  const config = getSupabaseConfig();
+  if (!config) {
+    return { user: null, configured: false };
+  }
+
+  const cookieStore = await cookies();
+  const client = createServerClient(config.supabaseUrl, config.supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieStore.set(name, value, options);
+        });
+      },
+    },
+  });
+
+  const { data } = await client.auth.getUser();
+  return { user: data?.user ?? null, configured: true };
 }
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const limit = searchParams.get("limit") ?? undefined;
-  const cursor = searchParams.get("cursor") ?? undefined;
+  const ip = getClientIp(request.headers);
+  const { allowed } = await checkRateLimit(`collab:list:${ip}`);
+  if (!allowed) {
+    return Response.json(
+      { error: "Too many requests. Please try again shortly." },
+      { status: 429 },
+    );
+  }
 
-  const { sessions, nextCursor } = await listCollaborationSessions({ limit, cursor });
+  const { searchParams } = new URL(request.url);
+  const limitParam = searchParams.get("limit");
+  const cursor = searchParams.get("cursor");
+
+  if (cursor !== null && (typeof cursor !== "string" || cursor.trim() === "")) {
+    return Response.json(
+      { error: "Invalid cursor parameter." },
+      { status: 400 },
+    );
+  }
+
+  const limit = limitParam ? Number(limitParam) : undefined;
+  const { sessions, nextCursor } = await listCollaborationSessions({
+    limit: limit && !Number.isNaN(limit) ? limit : undefined,
+    cursor: cursor ?? undefined,
+  });
   return Response.json({ sessions, nextCursor: nextCursor ?? null });
 }
 
 export async function POST(request) {
   try {
+    if (!validateCsrfOrigin(request)) {
+      return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+    }
+    const { user, configured } = await getAuthenticatedUser();
+    if (configured && !user) {
+      return Response.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
+    }
+
     const ip = getClientIp(request.headers);
     const { allowed } = await checkRateLimit(`collab:create:${ip}`);
     if (!allowed) {
@@ -36,7 +97,8 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => null);
-    const { title, visibility, password, module, createdBy } = body || {};
+    const { title, visibility, password, module } = body || {};
+    const createdBy = configured ? user?.id || "" : body?.createdBy || "";
 
     if (visibility === "private" && !password) {
       return Response.json(
@@ -45,7 +107,7 @@ export async function POST(request) {
       );
     }
 
-    const { session, sessionSecret } = await createCollaborationSession({
+    const result = await createCollaborationSession({
       title,
       visibility,
       password,
@@ -54,9 +116,9 @@ export async function POST(request) {
     });
 
     return Response.json({
-      session,
-      sessionSecret,
-      joinUrl: `/visualizer/dry-run?session=${session.joinCode}`,
+      session: result.session,
+      ...(configured ? { sessionSecret: result.sessionSecret } : {}),
+      joinUrl: `/visualizer/dry-run?session=${result.session.joinCode}`,
     });
   } catch (error) {
     return Response.json(
