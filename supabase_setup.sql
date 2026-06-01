@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS public.user_progress CASCADE;
 DROP TABLE IF EXISTS public.user_activity CASCADE;
 DROP TABLE IF EXISTS public.modules CASCADE;
 DROP TABLE IF EXISTS public.problem_bookmarks CASCADE;
+DROP TABLE IF EXISTS public.recently_viewed CASCADE;
 
 -- 2. Create the modules table
 CREATE TABLE public.modules (
@@ -50,6 +51,16 @@ CREATE TABLE public.problem_bookmarks (
   UNIQUE(user_id, problem_id)
 );
 
+-- 4.6. Create the recently_viewed table
+CREATE TABLE public.recently_viewed (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  problem_id TEXT NOT NULL,
+  topic_slug TEXT NOT NULL,
+  viewed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(user_id, problem_id)
+);
+
 -- 5. Seed the modules table with all 17 completed visualizer modules
 INSERT INTO public.modules (id, title, description, difficulty, estimated_time, order_index, image) VALUES
   ('378adcd8-7356-4d10-84cf-1dad1cbd496a', 'Linear Search', 'Find an element in an array sequentially.', 'Beginner', '10 mins', 1, 'linearSearch.png'),
@@ -75,6 +86,7 @@ ALTER TABLE public.modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_activity ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.problem_bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recently_viewed ENABLE ROW LEVEL SECURITY;
 
 -- 7. Create RLS Policies
 -- Modules: Anyone (including anonymous users) can read modules
@@ -96,6 +108,11 @@ CREATE POLICY "Users manage own bookmarks" ON public.problem_bookmarks
   USING (auth.uid() = user_id) 
   WITH CHECK (auth.uid() = user_id);
 
+-- Recently Viewed: Authenticated users can read/write their own recently viewed list
+CREATE POLICY "Users manage own recently viewed" ON public.recently_viewed 
+  USING (auth.uid() = user_id) 
+  WITH CHECK (auth.uid() = user_id);
+
 -- 8. Explicitly grant permissions on schema & tables to bypass "permission denied" errors
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 
@@ -110,3 +127,6 @@ GRANT ALL ON TABLE public.user_activity TO postgres, service_role;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.problem_bookmarks TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.problem_bookmarks TO postgres, service_role;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.recently_viewed TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.recently_viewed TO postgres, service_role;

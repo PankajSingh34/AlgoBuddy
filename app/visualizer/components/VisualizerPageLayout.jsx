@@ -2,6 +2,7 @@ import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import VisualizerSessionControls from "./VisualizerSessionControls";
+import RecentlyViewedTracker from "./RecentlyViewedTracker";
 
 export function createVisualizerPaths(...segments) {
   return [
@@ -42,6 +43,7 @@ export default function VisualizerPageLayout({
 }) {
   return (
     <>
+      <RecentlyViewedTracker title={title} />
 
       <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#1c1d1f] dark:text-[#f5f5f5]">
         <section className="px-6 md:px-12">

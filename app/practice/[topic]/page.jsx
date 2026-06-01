@@ -10,6 +10,7 @@ import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
+import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
 
 export default function TopicPracticeSheet() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function TopicPracticeSheet() {
   const [mounted, setMounted] = useState(false);
 
   const { isBookmarked, toggleBookmark } = useProblemBookmarks();
+  const { trackProblem } = useRecentlyViewed();
 
   // Retrieve topic definition matching param slug
   const topic = useMemo(() => {
@@ -267,6 +269,7 @@ export default function TopicPracticeSheet() {
                               onClick={() => {
                                 setSelectedProblem(item);
                                 setIsDrawerOpen(true);
+                                trackProblem(item.id, topicSlug);
                               }}
                               className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm"
                               style={{
@@ -285,6 +288,7 @@ export default function TopicPracticeSheet() {
                             {item.visualizerUrl ? (
                               <Link
                                 href={item.visualizerUrl}
+                                onClick={() => trackProblem(item.id, topicSlug)}
                                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm"
                                 style={{
                                   color: t.color,
@@ -306,6 +310,7 @@ export default function TopicPracticeSheet() {
                               href={item.practiceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={() => trackProblem(item.id, topicSlug)}
                               className="inline-flex items-center gap-1 text-xs font-bold text-surface-600 dark:text-surface-300 hover:text-[#ffa116] hover:scale-105 transition-all duration-250"
                             >
                               LeetCode <FiExternalLink size={12} className="opacity-75" />

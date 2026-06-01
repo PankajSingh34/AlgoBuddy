@@ -10,6 +10,7 @@ import PracticeStats from "@/app/components/dashboard/PracticeStats";
 import Footer from "@/app/components/footer";
 import { trackActivity } from "@/lib/activity";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
+import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
 import { practiceData } from "@/lib/practiceData";
 
 export default function Dashboard() {
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [progress, setProgress] = useState({});
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const { bookmarks, loading: loadingBookmarks } = useProblemBookmarks();
+  const { recentlyViewed, loading: loadingRecent, clearRecentlyViewed } = useRecentlyViewed();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -112,6 +114,121 @@ export default function Dashboard() {
             <PracticeStats />
           </div>
         )}
+
+        {/* Recently Viewed Problems Section */}
+        <section className="mb-8 border-t border-dashed border-surface-200 dark:border-neutral-800 pt-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl text-surface-800 dark:text-surface-200 flex items-center gap-2 font-bold">
+              <span>🕒 Recently Viewed Problems</span>
+              {mounted && recentlyViewed.length > 0 && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                  {recentlyViewed.length}
+                </span>
+              )}
+            </h2>
+            {mounted && recentlyViewed.length > 0 && (
+              <button
+                onClick={clearRecentlyViewed}
+                className="text-xs font-bold text-surface-400 hover:text-red-500 transition duration-200"
+              >
+                Clear History
+              </button>
+            )}
+          </div>
+
+          {loadingRecent ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : !mounted ? null : recentlyViewed.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-surface-200 dark:border-neutral-800 rounded-2xl p-6">
+              <p className="text-surface-500 dark:text-surface-400 mb-4">
+                You haven't viewed any problems recently.
+              </p>
+              <Link
+                href="/practice"
+                className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
+              >
+                Explore Practice Sheet
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {recentlyViewed.map((item) => {
+                const problem = getProblemDetails(item.id);
+                if (!problem) return null; // Gracefully handles deleted problems
+
+                const formatTime = (isoString) => {
+                  try {
+                    const date = new Date(isoString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHrs = Math.floor(diffMins / 60);
+                    const diffDays = Math.floor(diffHrs / 24);
+
+                    if (diffMins < 1) return "Just now";
+                    if (diffMins < 60) return `${diffMins}m ago`;
+                    if (diffHrs < 24) return `${diffHrs}h ago`;
+                    if (diffDays === 1) return "Yesterday";
+                    if (diffDays < 7) return `${diffDays}d ago`;
+                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                  } catch {
+                    return "Recently";
+                  }
+                };
+
+                return (
+                  <div
+                    key={item.id}
+                    className="card-surface p-5 flex flex-col justify-between border border-surface-200 dark:border-neutral-800 rounded-2xl hover:shadow-md transition-shadow duration-300 relative group bg-white dark:bg-neutral-800"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
+                          problem.difficulty === "Easy"
+                            ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                            : problem.difficulty === "Medium"
+                              ? "bg-yellow-50 text-yellow-750 dark:bg-yellow-950/30 dark:text-yellow-450"
+                              : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                        }`}>
+                          {problem.difficulty}
+                        </span>
+                        
+                        <span className="text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+                          {problem.topicTitle}
+                        </span>
+                      </div>
+
+                      <h3 className="text-md font-bold text-surface-800 dark:text-surface-200 mb-2 leading-snug">
+                        {problem.name}
+                      </h3>
+                      
+                      <p className="text-xs text-surface-500 dark:text-surface-400 line-clamp-2 leading-relaxed">
+                        {problem.theory?.summary || "Practice topic problem sheet."}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-dashed border-surface-100 dark:border-neutral-800">
+                      <div className="flex justify-between items-center mb-3 text-[10px] text-surface-400 dark:text-neutral-500">
+                        <span>
+                          Viewed: {formatTime(item.viewedAt)}
+                        </span>
+                      </div>
+                      
+                      <Link
+                        href={problem.visualizerUrl || `/practice/${problem.topicSlug}`}
+                        className="inline-flex w-full items-center justify-center h-9 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary-dark transition duration-300 shadow-sm"
+                      >
+                        Continue →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         <section className="mb-8">
           <h2 className="text-xl text-surface-800 dark:text-surface-200 mb-4">Modules Completed</h2>
