@@ -48,169 +48,6 @@ export default function DpAnimation() {
   const gridContainerRef = useRef(null);
   const playTimerRef = useRef(null);
 
-  // Generate steps based on active algorithm and mode
-  useEffect(() => {
-    setIsPlaying(false);
-    setCurrentStepIdx(0);
-    setHoveredCell(null);
-    setArrows([]);
-
-    if (algo === "knapsack") {
-      if (mode === "tabulation") {
-        generateKnapsackTabulationSteps();
-      } else {
-        generateKnapsackMemoizationSteps();
-      }
-    } else {
-      if (mode === "tabulation") {
-        generateLcsTabulationSteps();
-      } else {
-        generateLcsMemoizationSteps();
-      }
-    }
-  }, [
-    algo,
-    mode,
-    generateKnapsackTabulationSteps,
-    generateKnapsackMemoizationSteps,
-    generateLcsTabulationSteps,
-    generateLcsMemoizationSteps,
-  ]);
-
-  // Handle auto-play stepping
-  useEffect(() => {
-    if (isPlaying) {
-      playTimerRef.current = setInterval(() => {
-        setCurrentStepIdx((prev) => {
-          if (prev >= steps.length - 1) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, speed);
-    } else {
-      if (playTimerRef.current) {
-        clearInterval(playTimerRef.current);
-      }
-    }
-    return () => {
-      if (playTimerRef.current) {
-        clearInterval(playTimerRef.current);
-      }
-    };
-  }, [isPlaying, steps, speed]);
-
-  // Recalculate dependency arrows when hovered cell changes
-  useEffect(() => {
-    if (!hoveredCell || !gridContainerRef.current || mode !== "tabulation") {
-      setArrows([]);
-      return;
-    }
-
-    const { r, c } = hoveredCell;
-    const containerRect = gridContainerRef.current.getBoundingClientRect();
-    const currentEl = document.getElementById(`cell-${r}-${c}`);
-    if (!currentEl) return;
-
-    const currentRect = currentEl.getBoundingClientRect();
-    const currentCenter = {
-      x: currentRect.left - containerRect.left + currentRect.width / 2,
-      y: currentRect.top - containerRect.top + currentRect.height / 2,
-    };
-
-    const newArrows = [];
-
-    // Calculate source dependencies
-    if (algo === "knapsack") {
-      // Row 0 or Column 0 don't have dependencies
-      if (r > 0) {
-        // Exclusion dependency: cell above
-        const elExclude = document.getElementById(`cell-${r - 1}-${c}`);
-        if (elExclude) {
-          const rect = elExclude.getBoundingClientRect();
-          newArrows.push({
-            from: {
-              x: rect.left - containerRect.left + rect.width / 2,
-              y: rect.top - containerRect.top + rect.height / 2,
-            },
-            to: currentCenter,
-            color: "#6366f1", // purple/indigo
-            label: "Exclude",
-          });
-        }
-
-        // Inclusion dependency: cell above at remaining capacity
-        const itemWeight = items[r - 1].weight;
-        if (c >= itemWeight) {
-          const elInclude = document.getElementById(`cell-${r - 1}-${c - itemWeight}`);
-          if (elInclude) {
-            const rect = elInclude.getBoundingClientRect();
-            newArrows.push({
-              from: {
-                x: rect.left - containerRect.left + rect.width / 2,
-                y: rect.top - containerRect.top + rect.height / 2,
-              },
-              to: currentCenter,
-              color: "#10b981", // emerald green
-              label: "Include",
-            });
-          }
-        }
-      }
-    } else {
-      // LCS algorithm
-      if (r > 0 && c > 0) {
-        if (str1[r - 1] === str2[c - 1]) {
-          // Matching chars -> diagonal dependency
-          const elDiag = document.getElementById(`cell-${r - 1}-${c - 1}`);
-          if (elDiag) {
-            const rect = elDiag.getBoundingClientRect();
-            newArrows.push({
-              from: {
-                x: rect.left - containerRect.left + rect.width / 2,
-                y: rect.top - containerRect.top + rect.height / 2,
-              },
-              to: currentCenter,
-              color: "#10b981",
-              label: "Match (+1)",
-            });
-          }
-        } else {
-          // Mismatch -> max of top or left cell
-          const elTop = document.getElementById(`cell-${r - 1}-${c}`);
-          const elLeft = document.getElementById(`cell-${r}-${c - 1}`);
-          if (elTop) {
-            const rect = elTop.getBoundingClientRect();
-            newArrows.push({
-              from: {
-                x: rect.left - containerRect.left + rect.width / 2,
-                y: rect.top - containerRect.top + rect.height / 2,
-              },
-              to: currentCenter,
-              color: "#f59e0b",
-              label: "Exclude Str1",
-            });
-          }
-          if (elLeft) {
-            const rect = elLeft.getBoundingClientRect();
-            newArrows.push({
-              from: {
-                x: rect.left - containerRect.left + rect.width / 2,
-                y: rect.top - containerRect.top + rect.height / 2,
-              },
-              to: currentCenter,
-              color: "#3b82f6",
-              label: "Exclude Str2",
-            });
-          }
-        }
-      }
-    }
-
-    setArrows(newArrows);
-  }, [hoveredCell, algo, items, str1, str2, mode]);
-
   // Solver: Knapsack Tabulation
   const generateKnapsackTabulationSteps = useCallback(() => {
     const list = [];
@@ -527,6 +364,169 @@ export default function DpAnimation() {
     solve(rLen - 1, cLen - 1);
     setSteps(list);
   }, [str1, str2]);
+
+  // Generate steps based on active algorithm and mode
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentStepIdx(0);
+    setHoveredCell(null);
+    setArrows([]);
+
+    if (algo === "knapsack") {
+      if (mode === "tabulation") {
+        generateKnapsackTabulationSteps();
+      } else {
+        generateKnapsackMemoizationSteps();
+      }
+    } else {
+      if (mode === "tabulation") {
+        generateLcsTabulationSteps();
+      } else {
+        generateLcsMemoizationSteps();
+      }
+    }
+  }, [
+    algo,
+    mode,
+    generateKnapsackTabulationSteps,
+    generateKnapsackMemoizationSteps,
+    generateLcsTabulationSteps,
+    generateLcsMemoizationSteps,
+  ]);
+
+  // Handle auto-play stepping
+  useEffect(() => {
+    if (isPlaying) {
+      playTimerRef.current = setInterval(() => {
+        setCurrentStepIdx((prev) => {
+          if (prev >= steps.length - 1) {
+            setIsPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, speed);
+    } else {
+      if (playTimerRef.current) {
+        clearInterval(playTimerRef.current);
+      }
+    }
+    return () => {
+      if (playTimerRef.current) {
+        clearInterval(playTimerRef.current);
+      }
+    };
+  }, [isPlaying, steps, speed]);
+
+  // Recalculate dependency arrows when hovered cell changes
+  useEffect(() => {
+    if (!hoveredCell || !gridContainerRef.current || mode !== "tabulation") {
+      setArrows([]);
+      return;
+    }
+
+    const { r, c } = hoveredCell;
+    const containerRect = gridContainerRef.current.getBoundingClientRect();
+    const currentEl = document.getElementById(`cell-${r}-${c}`);
+    if (!currentEl) return;
+
+    const currentRect = currentEl.getBoundingClientRect();
+    const currentCenter = {
+      x: currentRect.left - containerRect.left + currentRect.width / 2,
+      y: currentRect.top - containerRect.top + currentRect.height / 2,
+    };
+
+    const newArrows = [];
+
+    // Calculate source dependencies
+    if (algo === "knapsack") {
+      // Row 0 or Column 0 don't have dependencies
+      if (r > 0) {
+        // Exclusion dependency: cell above
+        const elExclude = document.getElementById(`cell-${r - 1}-${c}`);
+        if (elExclude) {
+          const rect = elExclude.getBoundingClientRect();
+          newArrows.push({
+            from: {
+              x: rect.left - containerRect.left + rect.width / 2,
+              y: rect.top - containerRect.top + rect.height / 2,
+            },
+            to: currentCenter,
+            color: "#6366f1", // purple/indigo
+            label: "Exclude",
+          });
+        }
+
+        // Inclusion dependency: cell above at remaining capacity
+        const itemWeight = items[r - 1].weight;
+        if (c >= itemWeight) {
+          const elInclude = document.getElementById(`cell-${r - 1}-${c - itemWeight}`);
+          if (elInclude) {
+            const rect = elInclude.getBoundingClientRect();
+            newArrows.push({
+              from: {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2,
+              },
+              to: currentCenter,
+              color: "#10b981", // emerald green
+              label: "Include",
+            });
+          }
+        }
+      }
+    } else {
+      // LCS algorithm
+      if (r > 0 && c > 0) {
+        if (str1[r - 1] === str2[c - 1]) {
+          // Matching chars -> diagonal dependency
+          const elDiag = document.getElementById(`cell-${r - 1}-${c - 1}`);
+          if (elDiag) {
+            const rect = elDiag.getBoundingClientRect();
+            newArrows.push({
+              from: {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2,
+              },
+              to: currentCenter,
+              color: "#10b981",
+              label: "Match (+1)",
+            });
+          }
+        } else {
+          // Mismatch -> max of top or left cell
+          const elTop = document.getElementById(`cell-${r - 1}-${c}`);
+          const elLeft = document.getElementById(`cell-${r}-${c - 1}`);
+          if (elTop) {
+            const rect = elTop.getBoundingClientRect();
+            newArrows.push({
+              from: {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2,
+              },
+              to: currentCenter,
+              color: "#f59e0b",
+              label: "Exclude Str1",
+            });
+          }
+          if (elLeft) {
+            const rect = elLeft.getBoundingClientRect();
+            newArrows.push({
+              from: {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top + rect.height / 2,
+              },
+              to: currentCenter,
+              color: "#3b82f6",
+              label: "Exclude Str2",
+            });
+          }
+        }
+      }
+    }
+
+    setArrows(newArrows);
+  }, [hoveredCell, algo, items, str1, str2, mode]);
 
   const handleCustomInputSubmit = (e) => {
     e.preventDefault();
