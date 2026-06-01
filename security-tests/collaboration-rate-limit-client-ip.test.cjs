@@ -9,7 +9,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
-const ipUrl = pathToFileURL(path.join(__dirname, "..", "lib", "getClientIp.js")).href;
+const ipUrl = pathToFileURL(path.join(__dirname, "..", "src", "lib", "getClientIp.js")).href;
 
 async function load() {
   return import(ipUrl);

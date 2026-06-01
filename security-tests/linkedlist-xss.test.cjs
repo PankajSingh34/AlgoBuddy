@@ -11,7 +11,7 @@ test("createLinkedListTempNode renders untrusted input as text, not HTML", async
     path.join(
       __dirname,
       "..",
-      "app/visualizer/linkedlist/utils/createTempNode.js",
+      "src/app/visualizer/linkedlist/utils/createTempNode.js",
     ),
   ).href;
 
