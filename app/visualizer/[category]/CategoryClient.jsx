@@ -2,7 +2,8 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronRight } from "react-icons/fi";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 
 const DS_THEME = {
   Array: {
@@ -150,18 +151,8 @@ export default function CategoryClient({ section }) {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Header Card */}
-        <div
-          className="rounded-2xl border p-8 sm:p-10 mb-10 transition-colors duration-300"
-          style={{ background: theme.bg, borderColor: theme.border }}
-          data-theme-card={section.title || "Code Lab"}
-        >
-          <button
-            onClick={() => router.push("/visualizer")}
-            className="inline-flex items-center gap-2 text-[13px] font-bold text-surface-500 dark:text-surface-400
-              hover:text-surface-900 dark:hover:text-surface-100 transition-colors duration-200 mb-5"
-          >
-            <FiArrowLeft className="w-4 h-4" /> Back to all topics
-          </button>
+        <div className="mb-8 transition-colors duration-300">
+
 
           <div className="flex items-center gap-5">
             {theme.icon && (
@@ -180,9 +171,7 @@ export default function CategoryClient({ section }) {
               >
                 {section.title}
               </h1>
-              <p className="text-[14px] text-surface-600 dark:text-surface-300 mt-1 font-medium">
-                {count} algorithm{count !== 1 ? "s" : ""} · {section.desc}
-              </p>
+
             </div>
           </div>
         </div>

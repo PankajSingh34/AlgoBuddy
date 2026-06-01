@@ -24,7 +24,7 @@ export default function Page() {
     <>
       <TrackVisit name="Heap Sort" path="/visualizer/sorting/heapsort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Heap Sort")}
+        paths={createVisualizerPaths("Array", "Heap Sort")}
         title="Heap Sort"
         animation={<Animation />}
         content={<Content />}

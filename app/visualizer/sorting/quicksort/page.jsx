@@ -24,7 +24,7 @@ export default function Page() {
     <>
       <TrackVisit name="Quick Sort" path="/visualizer/sorting/quicksort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Quick Sort")}
+        paths={createVisualizerPaths("Array", "Quick Sort")}
         title="Quick Sort"
         animation={<Animation />}
         content={<Content />}

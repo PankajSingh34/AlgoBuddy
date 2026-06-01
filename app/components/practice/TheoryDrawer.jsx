@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X, Play, Clock, ShieldAlert, CheckCircle2, ArrowRight, Layers } from "lucide-react";
+import { X, Play, Clock, ShieldAlert, CheckCircle2, ArrowRight, Layers, Bookmark } from "lucide-react";
 import Link from "next/link";
+import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 
-export default function TheoryDrawer({ isOpen, onClose, problem }) {
+export default function TheoryDrawer({ isOpen, onClose, problem, topicSlug }) {
   const [activeTab, setActiveTab] = useState("concept");
   const [animationStep, setAnimationStep] = useState(0);
+  const { isBookmarked, toggleBookmark } = useProblemBookmarks();
 
   // Reset tab and animation on problem change
   useEffect(() => {
@@ -35,7 +37,20 @@ export default function TheoryDrawer({ isOpen, onClose, problem }) {
             <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 dark:bg-primary/20 dark:text-purple-300 px-2.5 py-1 rounded-full">
               Theory Module
             </span>
-            <h2 className="text-2xl font-black mt-2 text-surface-900 dark:text-white">{name}</h2>
+            <h2 className="text-2xl font-black mt-2 text-surface-900 dark:text-white flex items-center gap-2">
+              {name}
+              <button
+                onClick={() => toggleBookmark(problem.id, topicSlug)}
+                className={`p-1.5 rounded-lg border transition hover:scale-105 active:scale-95 duration-200 ${
+                  isBookmarked(problem.id)
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-500 dark:bg-amber-950/20"
+                    : "bg-surface-50/20 border-surface-200/50 text-surface-400 hover:text-surface-600 dark:border-neutral-800 dark:text-neutral-500 dark:hover:text-neutral-300"
+                }`}
+                title={isBookmarked(problem.id) ? "Unbookmark problem" : "Bookmark problem"}
+              >
+                <Bookmark size={14} className={isBookmarked(problem.id) ? "fill-amber-500 text-amber-500" : ""} />
+              </button>
+            </h2>
             <span className={`inline-block text-[11px] font-bold mt-1 ${
               difficulty === "Easy" ? "text-green-500" :
               difficulty === "Medium" ? "text-yellow-500" : "text-red-500"

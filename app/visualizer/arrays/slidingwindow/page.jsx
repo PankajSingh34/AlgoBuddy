@@ -39,7 +39,7 @@ export const metadata = {
 export default function Page() {
   return (
     <VisualizerPageLayout
-      paths={createVisualizerPaths("Interview Patterns", "Sliding Window")}
+      paths={createVisualizerPaths("Array", "Sliding Window")}
       title="Sliding Window Technique"
       animation={<Animation />}
       content={<Content />}

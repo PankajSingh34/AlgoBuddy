@@ -54,7 +54,7 @@ export const metadata = {
 export default function Page() {
   return (
     <VisualizerPageLayout
-      paths={createVisualizerPaths("Searching", "Binary Search")}
+      paths={createVisualizerPaths("Array", "Binary Search")}
       title="Binary Search"
       animation={<Animation />}
       content={<Content />}

@@ -20,7 +20,7 @@ export default function Page() {
     <>
       <TrackVisit name="Counting Sort" path="/visualizer/sorting/countingsort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Counting Sort")}
+        paths={createVisualizerPaths("Array", "Counting Sort")}
         title="Counting Sort"
         animation={<Animation />}
         content={<Content />}

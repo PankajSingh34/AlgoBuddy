@@ -3,18 +3,21 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const VISUALIZER_CATEGORY_BY_SEGMENT = {
+const VISUALIZER_SLUG_BY_SEGMENT = {
   searching: "array",
   sorting: "array",
+  arrays: "array",
   stack: "stack",
   queue: "queue",
-  linkedlist: "linked list",
-  linkedList: "linked list",
+  linkedlist: "linked-list",
+  linkedList: "linked-list",
   trees: "tree",
   graph: "graph",
   hashmap: "hashmap",
   recursion: "recursion",
-  "dry-run": "custom code",
+  "dry-run": "code-lab",
+  "complexity-analyzer": "code-lab",
+  ai: "ai",
 };
 
 export default function Breadcrumbs({ paths }) {
@@ -22,11 +25,8 @@ export default function Breadcrumbs({ paths }) {
   const pathSegments = pathname?.split("/").filter(Boolean) ?? [];
   const isVisualizer = pathSegments[0] === "visualizer";
   const visualizerSegment = pathSegments[1] || "";
-  const visualizerCategory =
-    VISUALIZER_CATEGORY_BY_SEGMENT[visualizerSegment] || "";
-  const categoryHref = visualizerCategory
-    ? `/visualizer?category=${encodeURIComponent(visualizerCategory)}`
-    : "/visualizer";
+  const visualizerSlug = VISUALIZER_SLUG_BY_SEGMENT[visualizerSegment] || visualizerSegment;
+  const categoryHref = `/visualizer/${visualizerSlug}`;
 
   const getHref = (path, index) => {
     if (path.href) return path.href;

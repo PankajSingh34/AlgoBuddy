@@ -738,6 +738,10 @@ const sections = [
             name: "Alpha Beta Pruning",
             path: "/visualizer/ai/alpha-beta-pruning",
           },
+          {
+            name: "Monte Carlo Tree Search (MCTS)",
+            path: "/visualizer/ai/mcts",
+          },
         ],
       },
     ],

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { sections } from "@/lib/visualizerSections";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import CategoryClient from "./CategoryClient";
 
 // Pre-render all category pages at build time for SEO
@@ -34,11 +35,19 @@ export default async function CategoryPage({ params }) {
 
   return (
     <div
-      className="min-h-screen bg-white dark:bg-[#1c1d1f] text-gray-800 dark:text-gray-200 flex flex-col"
-      style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
+      className="min-h-screen bg-white dark:bg-[#1c1d1f] text-[#1a1a1a] dark:text-[#f5f5f5] flex flex-col"
     >
+      <div className="w-full px-6 md:px-12 pt-6">
+        <div className="mb-4 mt-2">
+          <Breadcrumbs paths={[
+            { name: "Home", href: "/" },
+            { name: "Visualizer", href: "/visualizer" },
+            { name: section.title }
+          ]} />
+        </div>
+      </div>
 
-      <main className="flex-1 max-w-[1100px] w-full mx-auto px-5 pt-24 pb-20">
+      <main className="flex-1 max-w-[1100px] w-full mx-auto px-5 pt-4 pb-20">
         <CategoryClient section={section} />
       </main>
 

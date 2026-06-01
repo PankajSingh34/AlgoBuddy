@@ -452,6 +452,7 @@ export default function VisualizerClient({ initialSections }) {
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
 const searchRef = useRef(null);
 const [searchHistory, setSearchHistory] = useState(() => {
+  if (typeof window === "undefined") return [];
   try {
     return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
   } catch { return []; }

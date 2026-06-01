@@ -33,7 +33,7 @@ export const metadata = {
 export default function ComparisonPage() {
   return (
     <VisualizerPageLayout
-      paths={createVisualizerPaths("Sorting", "Comparison Mode")}
+      paths={createVisualizerPaths("Array", "Comparison Mode")}
       title="Sorting Comparison Mode"
       headerDescription="Select two sorting algorithms to run synchronously side-by-side on the identical dataset, and inspect their performance characteristics in real time."
       animation={<ComparisonClient />}

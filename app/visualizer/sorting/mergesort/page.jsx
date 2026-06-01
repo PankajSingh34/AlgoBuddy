@@ -20,7 +20,7 @@ export default function Page() {
     <>
       <TrackVisit name="Merge Sort" path="/visualizer/sorting/mergesort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Merge Sort")}
+        paths={createVisualizerPaths("Array", "Merge Sort")}
         title="Merge Sort"
         animation={<Animation />}
         content={<Content />}

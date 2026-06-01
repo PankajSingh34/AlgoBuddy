@@ -9,6 +9,8 @@ import ActivityDashboard from "@/app/components/dashboard/ActivityDashboard";
 import PracticeStats from "@/app/components/dashboard/PracticeStats";
 import Footer from "@/app/components/footer";
 import { trackActivity } from "@/lib/activity";
+import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
+import { practiceData } from "@/lib/practiceData";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -16,6 +18,28 @@ export default function Dashboard() {
   const [modules, setModules] = useState([]);
   const [progress, setProgress] = useState({});
   const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const { bookmarks, loading: loadingBookmarks } = useProblemBookmarks();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getProblemDetails = (problemId) => {
+    for (const topic of practiceData) {
+      for (const sub of topic.subsections) {
+        const found = sub.items.find((item) => item.id === problemId);
+        if (found) {
+          return {
+            ...found,
+            topicTitle: topic.title,
+            topicSlug: topic.slug,
+          };
+        }
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -150,6 +174,89 @@ export default function Dashboard() {
               );
             }
           })()}
+        </section>
+
+        {/* Bookmarked Problems Section */}
+        <section className="mb-8 border-t border-dashed border-surface-200 dark:border-neutral-800 pt-8">
+          <h2 className="text-xl text-surface-800 dark:text-surface-200 mb-4 flex items-center gap-2 font-bold">
+            <span>🔖 Bookmarked Problems</span>
+            {mounted && bookmarks.length > 0 && (
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
+                {bookmarks.length}
+              </span>
+            )}
+          </h2>
+
+          {loadingBookmarks ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : !mounted ? null : bookmarks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-surface-200 dark:border-neutral-800 rounded-2xl p-6">
+              <p className="text-surface-500 dark:text-surface-400 mb-4">
+                You haven't bookmarked any problems yet.
+              </p>
+              <Link
+                href="/practice"
+                className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white active:scale-95 transition-all duration-200"
+              >
+                Explore Practice Sheet
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {bookmarks.map((bookmark) => {
+                const problem = getProblemDetails(bookmark.id);
+                if (!problem) return null;
+
+                return (
+                  <div
+                    key={bookmark.id}
+                    className="card-surface p-5 flex flex-col justify-between border border-surface-200 dark:border-neutral-800 rounded-2xl hover:shadow-md transition-shadow duration-300 relative group bg-white dark:bg-neutral-800"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
+                          problem.difficulty === "Easy"
+                            ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                            : problem.difficulty === "Medium"
+                              ? "bg-yellow-50 text-yellow-750 dark:bg-yellow-950/30 dark:text-yellow-450"
+                              : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                        }`}>
+                          {problem.difficulty}
+                        </span>
+                        
+                        <span className="text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+                          {problem.topicTitle}
+                        </span>
+                      </div>
+
+                      <h3 className="text-md font-bold text-surface-800 dark:text-surface-200 mb-2 leading-snug">
+                        {problem.name}
+                      </h3>
+                      
+                      <p className="text-xs text-surface-500 dark:text-surface-400 line-clamp-2 leading-relaxed">
+                        {problem.theory?.summary || "Practice topic problem sheet."}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-dashed border-surface-100 dark:border-neutral-800 flex justify-between items-center">
+                      <span className="text-[10px] text-surface-400 dark:text-neutral-500">
+                        Bookmarked: {new Date(bookmark.createdAt).toLocaleDateString()}
+                      </span>
+                      
+                      <Link
+                        href={`/practice/${problem.topicSlug}`}
+                        className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1"
+                      >
+                        Solve →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       </main>
 

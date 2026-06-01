@@ -24,7 +24,7 @@ export default function Page() {
     <>
       <TrackVisit name="Selection Sort" path="/visualizer/sorting/selectionsort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Selection Sort")}
+        paths={createVisualizerPaths("Array", "Selection Sort")}
         title="Selection Sort"
         animation={<Animation />}
         content={<Content />}

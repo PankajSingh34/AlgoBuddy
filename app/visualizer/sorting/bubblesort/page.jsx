@@ -20,7 +20,7 @@ export default function Page() {
     <>
       <TrackVisit name="Bubble Sort" path="/visualizer/sorting/bubblesort" category="Sorting" />
       <VisualizerPageLayout
-        paths={createVisualizerPaths("Sorting", "Bubble Sort")}
+        paths={createVisualizerPaths("Array", "Bubble Sort")}
         title="Bubble Sort"
         animation={<Animation />}
         content={<Content />}

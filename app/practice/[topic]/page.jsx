@@ -3,12 +3,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { FiChevronLeft, FiExternalLink, FiVideo, FiBookOpen } from "react-icons/fi";
+import { FiChevronLeft, FiExternalLink, FiVideo, FiBookOpen, FiBookmark } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Footer from "@/app/components/footer";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
+import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 
 export default function TopicPracticeSheet() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function TopicPracticeSheet() {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const { isBookmarked, toggleBookmark } = useProblemBookmarks();
 
   // Retrieve topic definition matching param slug
   const topic = useMemo(() => {
@@ -242,7 +245,20 @@ export default function TopicPracticeSheet() {
                         >
                           {/* Name */}
                           <td className="py-4 px-6 font-bold text-sm text-surface-900 dark:text-white">
-                            {item.name}
+                            <div className="flex items-center gap-2.5">
+                              <button
+                                onClick={() => toggleBookmark(item.id, topicSlug)}
+                                className={`p-1.5 rounded-lg border transition hover:scale-105 active:scale-95 duration-200 ${
+                                  mounted && isBookmarked(item.id)
+                                    ? "bg-amber-500/10 border-amber-500/30 text-amber-500 dark:bg-amber-950/20"
+                                    : "bg-surface-50/20 border-surface-200/50 text-surface-400 hover:text-surface-600 dark:border-neutral-800 dark:text-neutral-500 dark:hover:text-neutral-300"
+                                }`}
+                                title={mounted && isBookmarked(item.id) ? "Unbookmark problem" : "Bookmark problem"}
+                              >
+                                <FiBookmark size={14} className={mounted && isBookmarked(item.id) ? "fill-amber-500 text-amber-500" : ""} />
+                              </button>
+                              <span>{item.name}</span>
+                            </div>
                           </td>
 
                           {/* Theory Link */}
@@ -348,6 +364,7 @@ export default function TopicPracticeSheet() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         problem={selectedProblem}
+        topicSlug={topicSlug}
       />
     </div>
   );
