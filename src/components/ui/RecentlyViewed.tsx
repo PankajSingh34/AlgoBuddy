@@ -1,8 +1,9 @@
 "use client";
-import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
+import React from "react";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import Link from "next/link";
 
-export default function RecentlyViewed() {
+const RecentlyViewed: React.FC = () => {
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   if (recentlyViewed.length === 0) return null;
 
@@ -32,4 +33,6 @@ export default function RecentlyViewed() {
       </div>
     </div>
   );
-}
+};
+
+export default RecentlyViewed;

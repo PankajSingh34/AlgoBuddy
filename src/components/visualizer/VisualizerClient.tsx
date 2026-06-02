@@ -1,11 +1,41 @@
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
-import { useBookmark } from "@/app/hooks/useBookmark";
+import { useBookmark } from "@/hooks/useBookmark";
+
+interface SubsectionItem {
+  name: string;
+  path: string;
+}
+
+interface Subsection {
+  title: string;
+  items: SubsectionItem[];
+}
+
+interface Section {
+  title: string;
+  slug: string;
+  desc?: string;
+  subsections?: Subsection[];
+  _hit?: boolean;
+}
+
+interface VisualizerClientProps {
+  initialSections: Section[];
+}
+
+interface DSTheme {
+  color: string;
+  bg: string;
+  border: string;
+  icon: (color: string) => React.ReactNode;
+}
+
 /* ─── colour + icon theme per DS ─── */
-const DS_THEME = {
+const DS_THEME: Record<string, DSTheme> = {
   Array: {
     color: "#a435f0",
     bg: "#faf5ff",
@@ -100,7 +130,7 @@ const DS_THEME = {
   },
 };
 
-const getTheme = (t) =>
+const getTheme = (t: string): DSTheme =>
   DS_THEME[t] || {
     icon: (c) => (
       <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -115,7 +145,11 @@ const getTheme = (t) =>
 /* ═══════════════════════════════════════
    Mini Visuals for cards
    ═══════════════════════════════════════ */
-function ArrayMiniViz({ color }) {
+interface MiniVizProps {
+  color: string;
+}
+
+const ArrayMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const bars = [65, 30, 80, 45, 55, 20, 70];
   const highlight = 2;
   return (
@@ -132,9 +166,9 @@ function ArrayMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-function StackMiniViz({ color }) {
+const StackMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const items = ["8", "17", "42"];
   return (
     <div className="flex flex-col gap-1">
@@ -152,9 +186,9 @@ function StackMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-function QueueMiniViz({ color }) {
+const QueueMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const items = ["A", "B", "C", "D"];
   return (
     <div className="flex gap-1 items-center">
@@ -175,9 +209,9 @@ function QueueMiniViz({ color }) {
       </span>
     </div>
   );
-}
+};
 
-function LinkedListMiniViz({ color }) {
+const LinkedListMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const nodes = [7, 3, 9, 1];
   return (
     <div className="flex items-center gap-0.5">
@@ -203,9 +237,9 @@ function LinkedListMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-function TreeMiniViz({ color }) {
+const TreeMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   return (
     <svg viewBox="0 0 80 50" className="w-full h-[48px]">
       <line x1="40" y1="10" x2="20" y2="30" stroke={color + "40"} strokeWidth="1.5" className="mini-viz-line" />
@@ -219,9 +253,9 @@ function TreeMiniViz({ color }) {
       <circle cx="30" cy="45" r="4" fill={color + "30"} className="mini-viz-inactive-node" />
     </svg>
   );
-}
+};
 
-function GraphMiniViz({ color }) {
+const GraphMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   return (
     <svg viewBox="0 0 80 50" className="w-full h-[48px]">
       <line x1="15" y1="15" x2="40" y2="10" stroke={color + "40"} strokeWidth="1.5" className="mini-viz-line" />
@@ -237,9 +271,9 @@ function GraphMiniViz({ color }) {
       <circle cx="55" cy="38" r="5" fill={color} />
     </svg>
   );
-}
+};
 
-function HashMapMiniViz({ color }) {
+const HashMapMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const buckets = [
     { key: "k1", val: "v1" },
     { key: null, val: null },
@@ -271,9 +305,9 @@ function HashMapMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-function RecursionMiniViz({ color }) {
+const RecursionMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const frames = ["f(3)", "f(2)", "f(1)"];
   return (
     <div className="flex flex-col gap-1 items-center justify-center h-[48px] w-full">
@@ -293,10 +327,9 @@ function RecursionMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-
-function CustomCodeMiniViz({ color }) {
+const CustomCodeMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   const lines = [
     { width: "75%", highlight: true },
     { width: "55%", highlight: false },
@@ -317,9 +350,9 @@ function CustomCodeMiniViz({ color }) {
       ))}
     </div>
   );
-}
+};
 
-function AIAlgorithmsMiniViz({ color }) {
+const AIAlgorithmsMiniViz: React.FC<MiniVizProps> = ({ color }) => {
   return (
     <svg viewBox="0 0 80 50" className="w-full h-[48px]">
       <circle cx="40" cy="10" r="5" fill={color} />
@@ -333,10 +366,9 @@ function AIAlgorithmsMiniViz({ color }) {
       <circle cx="35" cy="40" r="3" fill={color} opacity="0.4" />
     </svg>
   );
-}
+};
 
-
-const MINI_VIZ = {
+const MINI_VIZ: Record<string, React.FC<MiniVizProps>> = {
   Array: ArrayMiniViz,
   Stack: StackMiniViz,
   Queue: QueueMiniViz,
@@ -352,7 +384,13 @@ const MINI_VIZ = {
 /* ═══════════════════════════════════════
    DS Card — homepage-style window card
    ═══════════════════════════════════════ */
-function DSCard({ section, theme, delay }) {
+interface DSCardProps {
+  section: Section;
+  theme: DSTheme;
+  delay: number;
+}
+
+const DSCard: React.FC<DSCardProps> = ({ section, theme, delay }) => {
   const MiniViz = MINI_VIZ[section.title];
   const count = section.subsections
     ? section.subsections.reduce((a, s) => a + s.items.length, 0)
@@ -442,52 +480,60 @@ function DSCard({ section, theme, delay }) {
       </Link>
     </motion.div>
   );
-}
+};
 
 /* ═══════════════════════════════════════
    Main Client Component — Grid only
    ═══════════════════════════════════════ */
-export default function VisualizerClient({ initialSections }) {
+interface FlatResult extends SubsectionItem {
+  ds: string;
+}
+
+export default function VisualizerClient({ initialSections }: VisualizerClientProps) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
-const searchRef = useRef(null);
-const [searchHistory, setSearchHistory] = useState(() => {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
-  } catch { return []; }
-});
-const [showHistory, setShowHistory] = useState(false);
-
-// Keyboard shortcut Ctrl+K or /
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey && e.key === "k") || e.key === "/") {
-      e.preventDefault();
-      searchRef.current?.focus();
-      setShowHistory(true);
+  const searchRef = useRef<HTMLInputElement>(null);
+  
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
+    } catch {
+      return [];
     }
-    if (e.key === "Escape") {
-      searchRef.current?.blur();
-      setShowHistory(false);
+  });
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Keyboard shortcut Ctrl+K or /
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.key === "k") || e.key === "/") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        setShowHistory(true);
+      }
+      if (e.key === "Escape") {
+        searchRef.current?.blur();
+        setShowHistory(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Save search history
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (val.trim().length > 2) {
+      setSearchHistory((prev) => {
+        const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
+        localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
+        return updated;
+      });
     }
   };
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, []);
 
-// Save search history
-const handleSearchChange = (e) => {
-  const val = e.target.value;
-  setSearch(val);
-  if (val.trim().length > 2) {
-    setSearchHistory((prev) => {
-      const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
-      localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
-      return updated;
-    });
-  }
-};
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
     const q = search.toLowerCase();
@@ -509,13 +555,13 @@ const handleSearchChange = (e) => {
   const flatResults = useMemo(() => {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
-    const r = [];
+    const r: FlatResult[] = [];
     initialSections.forEach((sec) =>
       sec.subsections?.forEach((sub) =>
         sub.items.forEach((item) => {
           if (item.name.toLowerCase().includes(q)) r.push({ ...item, ds: sec.title });
-        }),
-      ),
+        })
+      )
     );
     return r;
   }, [search, initialSections]);
@@ -556,18 +602,16 @@ const handleSearchChange = (e) => {
 
       <section className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto">
-          
-
           <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
             <input
               type="text"
               ref={searchRef}
-value={search}
-onChange={handleSearchChange}
-onFocus={() => setShowHistory(true)}
-onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-placeholder="Search algorithms... (Press / or Ctrl+K)"
+              value={search}
+              onChange={handleSearchChange}
+              onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+              placeholder="Search algorithms... (Press / or Ctrl+K)"
               className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
             />
             {search && (
@@ -609,18 +653,18 @@ placeholder="Search algorithms... (Press / or Ctrl+K)"
                             <span className="block text-[11px] text-surface-500 dark:text-surface-400">{item.ds}</span>
                           </div>
                           <button
-  onClick={(e) => {
-    e.preventDefault();
-    isBookmarked(item.path)
-      ? removeBookmark(item.path)
-      : addBookmark({ name: item.name, path: item.path, category: item.ds });
-  }}
-  className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
->
-  <FiBookmark
-    className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
-  />
-</button>
+                            onClick={(e) => {
+                              e.preventDefault();
+                              isBookmarked(item.path)
+                                ? removeBookmark(item.path)
+                                : addBookmark({ name: item.name, path: item.path, category: item.ds });
+                            }}
+                            className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                          >
+                            <FiBookmark
+                              className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
+                            />
+                          </button>
                           <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
                         </Link>
                       );

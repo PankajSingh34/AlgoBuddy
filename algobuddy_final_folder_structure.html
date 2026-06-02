@@ -1,0 +1,179 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.root{padding:20px 16px;font-family:var(--font-mono);font-size:13px;line-height:2}
+.row{display:flex;align-items:baseline;gap:0;white-space:pre}
+.folder{color:var(--color-text-primary);font-weight:500}
+.file{color:var(--color-text-secondary)}
+.dim{color:var(--color-text-tertiary);font-size:11px;font-family:var(--font-sans);margin-left:10px;font-style:italic}
+.pill{display:inline-block;font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;margin-left:7px;vertical-align:middle;font-family:var(--font-sans);line-height:1.6}
+.p-page{background:var(--color-background-info);color:var(--color-text-info)}
+.p-ui{background:var(--color-background-success);color:var(--color-text-success)}
+.p-logic{background:var(--color-background-warning);color:var(--color-text-warning)}
+.p-infra{background:var(--color-background-danger);color:var(--color-text-danger)}
+.section{font-family:var(--font-sans);font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:var(--color-text-tertiary);margin:16px 0 2px 0;padding-left:2px}
+hr{border:none;border-top:1px solid var(--color-border-tertiary);margin:14px 0 10px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--font-sans);font-size:11px;color:var(--color-text-secondary);margin-bottom:14px}
+</style>
+
+<div class="root">
+<h2 class="sr-only">AlgoBuddy professional folder structure for a 100-contributor Next.js project</h2>
+
+<div class="legend">
+  <span><span class="pill p-page">pages</span> routing &amp; pages</span>
+  <span><span class="pill p-ui">ui</span> components &amp; styles</span>
+  <span><span class="pill p-logic">logic</span> business logic</span>
+  <span><span class="pill p-infra">infra</span> config &amp; tooling</span>
+</div>
+<hr>
+
+<div id="tree"></div>
+</div>
+
+<script>
+const T = [
+  [0,'d','AlgoBuddy/'],
+  [1,'d','src/','All application source code lives here'],
+  [2,'s','Pages & routing'],
+  [2,'d','app/','Next.js 14 App Router root','page'],
+  [3,'d','(auth)/','login, oauth callback, signup','page'],
+  [4,'f','login/page.tsx'],
+  [4,'f','login/layout.tsx'],
+  [4,'f','callback/page.tsx'],
+  [3,'d','(marketing)/','public landing, blogs','page'],
+  [4,'f','page.tsx','home page'],
+  [4,'f','blogs/'],
+  [4,'f','blogs/[slug]/page.tsx'],
+  [3,'d','(dashboard)/','auth-gated user pages','page'],
+  [4,'f','dashboard/page.tsx'],
+  [4,'f','dashboard/layout.tsx'],
+  [3,'d','visualizer/','algorithm pages','page'],
+  [4,'f','[algorithm]/page.tsx'],
+  [4,'f','layout.tsx'],
+  [3,'d','api/','server-side API routes','page'],
+  [4,'f','auth/route.ts'],
+  [4,'f','contact/route.ts'],
+  [4,'f','send-review/route.ts'],
+  [3,'f','layout.tsx','root layout'],
+  [3,'f','not-found.tsx'],
+  [2,'s','UI components'],
+  [2,'d','components/','all React components','ui'],
+  [3,'d','ui/','design system primitives','ui'],
+  [4,'f','Button.tsx'],
+  [4,'f','Input.tsx'],
+  [4,'f','Modal.tsx'],
+  [4,'f','Badge.tsx'],
+  [3,'d','layout/','shell components','ui'],
+  [4,'f','Navbar.tsx'],
+  [4,'f','Footer.tsx'],
+  [4,'f','Sidebar.tsx'],
+  [3,'d','visualizer/','algorithm visualizer widgets','ui'],
+  [4,'f','SortingVisualizer.tsx'],
+  [4,'f','LinkedListVisualizer.tsx'],
+  [4,'f','TreeVisualizer.tsx'],
+  [4,'f','QueueVisualizer.tsx'],
+  [4,'f','StackVisualizer.tsx'],
+  [3,'d','dashboard/','heatmap, streak, progress','ui'],
+  [4,'f','ActivityHeatmap.tsx'],
+  [4,'f','StreakCounter.tsx'],
+  [4,'f','ProgressCard.tsx'],
+  [3,'d','blog/','blog card, search, filter','ui'],
+  [4,'f','BlogCard.tsx'],
+  [4,'f','BlogSearch.tsx'],
+  [2,'s','Business logic'],
+  [2,'d','features/','domain-grouped logic & state','logic'],
+  [3,'d','auth/','auth context & helpers','logic'],
+  [4,'f','AuthContext.tsx'],
+  [4,'f','useAuth.ts'],
+  [4,'f','auth.helpers.ts'],
+  [3,'d','user/','user context & hooks','logic'],
+  [4,'f','UserContext.tsx'],
+  [4,'f','useUser.ts'],
+  [3,'d','algorithms/','pure algorithm implementations','logic'],
+  [4,'f','sorting.ts','bubble, merge, quick, insert…'],
+  [4,'f','searching.ts','linear, binary'],
+  [4,'f','linkedList.ts'],
+  [4,'f','tree.ts'],
+  [4,'f','stack.ts'],
+  [4,'f','queue.ts'],
+  [2,'s','Shared utilities'],
+  [2,'d','lib/','third-party clients','infra'],
+  [3,'f','supabase.ts'],
+  [3,'f','supabase.server.ts','service-role client'],
+  [3,'f','gtag.ts'],
+  [3,'f','activityTracker.ts'],
+  [2,'d','hooks/','reusable custom hooks','infra'],
+  [3,'f','useLocalStorage.ts'],
+  [3,'f','useTheme.ts'],
+  [3,'f','useDebounce.ts'],
+  [2,'d','utils/','pure helper functions','infra'],
+  [3,'f','format.ts'],
+  [3,'f','validators.ts'],
+  [3,'f','cn.ts','classname utility'],
+  [2,'d','types/','shared TypeScript types','infra'],
+  [3,'f','algorithm.ts'],
+  [3,'f','user.ts'],
+  [3,'f','blog.ts'],
+  [2,'d','config/','app-level constants','infra'],
+  [3,'f','algorithms.ts','metadata & categories'],
+  [3,'f','routes.ts','route constants'],
+  [2,'s','Static & docs'],
+  [1,'d','public/','images, icons, fonts','infra'],
+  [1,'d','docs/','project documentation','infra'],
+  [2,'f','ARCHITECTURE.md'],
+  [2,'f','specs/'],
+  [1,'d','.github/','CI & contribution templates','infra'],
+  [2,'f','workflows/ci.yml'],
+  [2,'f','ISSUE_TEMPLATE/'],
+  [2,'f','PULL_REQUEST_TEMPLATE.md'],
+  [1,'s','Root config files'],
+  [1,'f','.env.local.example','rename from EnvExample.txt'],
+  [1,'f','.gitignore'],
+  [1,'f','next.config.mjs'],
+  [1,'f','tailwind.config.js'],
+  [1,'f','postcss.config.mjs'],
+  [1,'f','eslint.config.mjs'],
+  [1,'f','jsconfig.json'],
+  [1,'f','next-sitemap.config.js'],
+  [1,'f','package.json'],
+  [1,'f','README.md'],
+  [1,'f','CODE_OF_CONDUCT.md'],
+  [1,'f','CONTRIBUTING.md'],
+];
+
+const pillMap = {page:'p-page',ui:'p-ui',logic:'p-logic',infra:'p-infra'};
+const icons = {d:'<i class="ti ti-folder" aria-hidden="true" style="font-size:14px;margin-right:4px;opacity:.7"></i>',f:'<i class="ti ti-file" aria-hidden="true" style="font-size:13px;margin-right:4px;opacity:.5"></i>'};
+const container = document.getElementById('tree');
+
+T.forEach(row=>{
+  const [depth, type, name, comment, tag] = row;
+  if(type==='s'){
+    const d=document.createElement('div');
+    d.className='section';
+    d.textContent=name;
+    container.appendChild(d);
+    return;
+  }
+  const div=document.createElement('div');
+  div.className='row';
+  const pad='  '.repeat(depth);
+  const isFolder=type==='d';
+  const span=document.createElement('span');
+  span.className=isFolder?'folder':'file';
+  span.innerHTML=pad+(icons[type]||'')+name;
+  if(tag){
+    const p=document.createElement('span');
+    p.className='pill '+(pillMap[tag]||'');
+    p.textContent=tag;
+    span.appendChild(p);
+  }
+  if(comment){
+    const c=document.createElement('span');
+    c.className='dim';
+    c.textContent='// '+comment;
+    span.appendChild(c);
+  }
+  div.appendChild(span);
+  container.appendChild(div);
+});
+</script>

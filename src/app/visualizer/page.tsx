@@ -1,6 +1,6 @@
 import React from "react";
-import Footer from "@/app/components/footer";
-import VisualizerClient from "./VisualizerClient";
+import Footer from "@/components/layout/Footer";
+import VisualizerClient from "@/components/visualizer/VisualizerClient";
 import ArrayModal from "@/app/components/models/ArrayModal";
 import StackModal from "@/app/components/models/StackModel";
 import QueueModal from "@/app/components/models/QueueModal";
@@ -8,8 +8,7 @@ import LinkedListModal from "@/app/components/models/LinkedListModal";
 import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
-import BackToTop from "../components/ui/backtotop";
-import RecentlyViewed from "@/app/components/ui/RecentlyViewed";
+import BackToTop from "@/components/ui/backtotop";
 import BookmarkSection from "@/app/components/ui/BookmarkSection";
 
 export const metadata = {
@@ -70,7 +69,32 @@ export const metadata = {
   },
 };
 
-const sections = [
+interface SubsectionItem {
+  name: string;
+  path: string;
+}
+
+interface Subsection {
+  title: string;
+  items: SubsectionItem[];
+}
+
+interface SectionInfo {
+  About: string;
+  Representation: React.ReactNode | null;
+  Types?: string;
+}
+
+interface Section {
+  title: string;
+  slug?: string;
+  desc: string;
+  icon: React.ReactNode;
+  info: SectionInfo;
+  subsections?: Subsection[];
+}
+
+const sections: Section[] = [
   {
     title: "Code Lab",
     slug: "code-lab",
@@ -435,7 +459,7 @@ const sections = [
       About:
         "Hierarchical data structure; has root, nodes, edges; each node has parent/child; no cycles; Used in hierarchies, file systems, searching.",
       Types: "binary tree, BST, AVL, etc.",
-      Representation: <TreeModal maxLevel={3} />,
+      Representation: <TreeModal {...({ maxLevel: 3 } as any)} />,
     },
     subsections: [
       {
@@ -710,7 +734,7 @@ const sections = [
   },
 ];
 
-const Visualizer = () => {
+const Visualizer: React.FC = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
      passing to the client component. Icons are fine — they're
      plain <svg> elements. */
@@ -727,9 +751,7 @@ const Visualizer = () => {
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
       <div className="w-full relative">
-        
         <BookmarkSection />
-        <RecentlyViewed />
         <BackToTop />
         <Footer />
       </div>
@@ -738,4 +760,3 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
-

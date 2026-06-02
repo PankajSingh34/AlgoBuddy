@@ -1,13 +1,20 @@
 import { notFound } from "next/navigation";
 import { algorithmRegistry } from "@/config/algorithms";
 import { sections } from "@/lib/visualizerSections";
-import CategoryClient from "@/app/visualizer/components/CategoryClient";
-import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
-import BackToTop from "@/app/components/ui/backtotop";
-import Footer from "@/app/components/footer";
+import CategoryClient from "@/components/visualizer/CategoryClient";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import BackToTop from "@/components/ui/backtotop";
+import Footer from "@/components/layout/Footer";
+import React from "react";
+
+interface PageProps {
+  params: Promise<{
+    slug: string[];
+  }>;
+}
 
 export async function generateStaticParams() {
-  const params = [];
+  const params: { slug: string[] }[] = [];
   
   // Category slugs
   sections.forEach(s => params.push({ slug: [s.slug] }));
@@ -20,7 +27,7 @@ export async function generateStaticParams() {
   return params;
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params }: PageProps) {
   const resolvedParams = await params;
   const slugArray = resolvedParams.slug;
   
@@ -34,14 +41,15 @@ export async function generateMetadata({ params }) {
     }
   } else {
     const slugKey = slugArray.join('/');
-    if (algorithmRegistry[slugKey]) {
-      return algorithmRegistry[slugKey].metadata;
+    const algo = (algorithmRegistry as Record<string, any>)[slugKey];
+    if (algo) {
+      return algo.metadata;
     }
   }
   return {};
 }
 
-export default async function DynamicRouterPage({ params }) {
+export default async function DynamicRouterPage({ params }: PageProps) {
   const resolvedParams = await params;
   const slugArray = resolvedParams.slug;
   
@@ -72,8 +80,9 @@ export default async function DynamicRouterPage({ params }) {
   
   // 2. Handle Algorithm Page (/visualizer/array/linearsearch or deeper)
   const slugKey = slugArray.join('/');
-  if (!algorithmRegistry[slugKey]) notFound();
+  const algo = (algorithmRegistry as Record<string, any>)[slugKey];
+  if (!algo) notFound();
   
-  const AlgorithmComponent = algorithmRegistry[slugKey].component;
+  const AlgorithmComponent = algo.component;
   return <AlgorithmComponent />;
 }
