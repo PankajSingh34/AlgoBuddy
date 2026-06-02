@@ -1,0 +1,37 @@
+import Animation from "@/app/visualizer/array/countingsort/animation";
+import Content from "@/app/visualizer/array/countingsort/content";
+import Quiz from "@/app/visualizer/array/countingsort/quiz";
+import Code from "@/app/visualizer/array/countingsort/codeBlock";
+import ExploreOther from "@/app/components/ui/exploreOther";
+import ModuleCard from "@/app/components/ui/ModuleCard";
+import TrackVisit from "@/app/components/ui/TrackVisit";
+import VisualizerPageLayout, { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
+import { MODULE_MAPS } from "@/lib/modulesMap";
+
+
+
+export default function Page() {
+  return (
+    <>
+      <TrackVisit name="Counting Sort" path="/visualizer/array/countingsort" category="Sorting" />
+      <VisualizerPageLayout
+        paths={createVisualizerPaths("Array", "Counting Sort")}
+        title="Counting Sort"
+        animation={<Animation />}
+        content={<Content />}
+        code={<Code />}
+        quiz={<Quiz />}
+        moduleCard={<ModuleCard moduleId={MODULE_MAPS.countingSort} description="Mark Counting Sort as done and view it on your dashboard" initialDone={false} />}
+        exploreOther={<ExploreOther title="Explore Sorting Algorithms" links={[
+          { text: "Bubble Sort", url: "/visualizer/array/bubblesort" },
+          { text: "Selection Sort", url: "/visualizer/array/selectionsort" },
+          { text: "Insertion Sort", url: "/visualizer/array/insertionsort" },
+          { text: "Merge Sort", url: "/visualizer/array/mergesort" },
+          { text: "Quick Sort", url: "/visualizer/array/quicksort" },
+          { text: "Comparison Mode", url: "/visualizer/array/comparison" },
+          { text: "Heap Sort", url: "/visualizer/array/heapsort" },
+        ]} />}
+      />
+    </>
+  );
+}

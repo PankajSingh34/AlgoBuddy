@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 // Scan app/ folder recursively, include only folders with page.jsx
-function getAllPages(dir = "app", prefix = "") {
+function getAllPages(dir = "./src/app", prefix = "") {
   const routes = [];
   const items = fs.readdirSync(dir);
 

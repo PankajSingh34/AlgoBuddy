@@ -6,12 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app lib utils --max-warnings=0",
+    "lint": "eslint src --max-warnings=0",
     "test": "npm run lint && npm run test:security",
     "test:security": "node --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs security-tests/collaboration-rate-limit-client-ip.test.cjs",
     "postbuild": "next-sitemap"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "@google/generative-ai": "^0.24.1",
     "@gsap/react": "^2.1.2",
     "@marsidev/react-turnstile": "^1.3.0",
     "@monaco-editor/react": "^4.7.0",
@@ -51,6 +53,8 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
+    "@emnapi/core": "^1.10.0",
+    "@emnapi/runtime": "^1.10.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "autoprefixer": "^10.4.21",
