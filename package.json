@@ -30,6 +30,7 @@
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.9.4",
+    "groq-sdk": "^1.2.1",
     "gsap": "^3.13.0",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.511.0",

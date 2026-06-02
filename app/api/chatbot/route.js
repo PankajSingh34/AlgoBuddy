@@ -1,17 +1,16 @@
 /**
  * AlgoBuddy AI Chatbot — Backend API Route
- * Path: src/app/api/chatbot/route.js
+ * Path: app/api/chatbot/route.js
  *
  * Architecture:
  * - Next.js App Router POST handler
  * - Server-Sent Events (SSE) via ReadableStream + TextEncoder
  * - Conversational memory via full message history array (clamped to 20)
  * - Dual-role system prompt: AlgoBuddy Product Guide + DSA Expert
- * - Complete DSA algorithm knowledge: Basic → Advanced with examples
- * - Provider: Google Gemini (gemini-2.0-flash)
+ * - Provider: Groq (llama-3.3-70b-versatile) — Free tier, fast responses
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are **AlgoBot** 🤖 — the official AI assistant embedded inside **AlgoBuddy** (https://www.algobuddy.me), a free, open-source, interactive platform built to help students and developers master Data Structures & Algorithms (DSA) through visualizations, practice, and progress tracking.
@@ -179,10 +178,12 @@ GENERAL FORMATTING RULES
 - NEVER fabricate AlgoBuddy features that don't exist
 - Be warm, encouraging, and make learning feel fun!`;
 
-// ─── Gemini Client ────────────────────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// ─── Groq Client ──────────────────────────────────────────────────────────────
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
-const MODEL = "gemini-2.0-flash";
+const MODEL = "llama-3.3-70b-versatile"; // Free tier, fast & capable
 const MAX_TOKENS = 2048;
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -192,21 +193,16 @@ function validateMessages(messages) {
 
   for (const msg of messages) {
     if (!["user", "assistant"].includes(msg.role))
-      return { valid: false, error: `Invalid role: "${msg.role}". Must be "user" or "assistant".` };
+      return {
+        valid: false,
+        error: `Invalid role: "${msg.role}". Must be "user" or "assistant".`,
+      };
     if (typeof msg.content !== "string" || msg.content.trim().length === 0)
       return { valid: false, error: "Each message must have non-empty string content." };
     if (msg.content.length > 10000)
       return { valid: false, error: "Message content exceeds 10,000 character limit." };
   }
   return { valid: true };
-}
-
-// ─── Convert message history to Gemini contents schema ────────────────────────
-function toGeminiContents(messages) {
-  return messages.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
 }
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
@@ -232,7 +228,11 @@ export async function POST(request) {
   }
 
   // Clamp to last 20 turns to manage token budget
-  const clampedMessages = messages.slice(-20);
+  // Also filter out any empty messages to avoid API errors
+  const clampedMessages = messages
+    .slice(-20)
+    .filter((m) => m.content && m.content.trim().length > 0);
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -241,22 +241,24 @@ export async function POST(request) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
       try {
-        // Build Gemini model configuration with direct system instruction context mapping
-        const model = genAI.getGenerativeModel({
+        // Build messages array with system prompt for Groq
+        const groqMessages = [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...clampedMessages.map(({ role, content }) => ({ role, content })),
+        ];
+
+        // Create streaming chat completion with Groq
+        const streamResponse = await groq.chat.completions.create({
           model: MODEL,
-          systemInstruction: SYSTEM_PROMPT,
-          generationConfig: { maxOutputTokens: MAX_TOKENS },
+          messages: groqMessages,
+          max_tokens: MAX_TOKENS,
+          stream: true,
+          temperature: 0.7,
         });
 
-        // Pass the fully structured content array to generateContentStream
-        // This avoids history-alternation validation errors with the Welcome message format
-        const structuredContents = toGeminiContents(clampedMessages);
-        const result = await model.generateContentStream({
-          contents: structuredContents,
-        });
-
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
+        // Stream chunks to client
+        for await (const chunk of streamResponse) {
+          const text = chunk.choices[0]?.delta?.content || "";
           if (text) {
             enqueue({ type: "delta", content: text });
           }
@@ -265,9 +267,12 @@ export async function POST(request) {
         enqueue({ type: "done" });
       } catch (err) {
         console.error("[AlgoBot API Error]", err?.message ?? err);
+
+        // Send a user-friendly error message
         enqueue({
           type: "error",
-          message: "AI service connection error. Please verify your local configuration and try again.",
+          message:
+            "AI service connection error. Please verify your local configuration and try again.",
         });
       } finally {
         controller.close();
