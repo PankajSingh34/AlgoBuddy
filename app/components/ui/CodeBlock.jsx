@@ -6,6 +6,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'highlight.js/styles/github.css';
 import 'highlight.js/styles/github-dark.css';
+import { saveCopiedSnippet } from "@/utils/recentSnippets";
 
 export const highlightCode = (code, language) => {
   const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
@@ -60,15 +61,23 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
   const [isHovered, setIsHovered] = useState(false);
   const topRef = useRef(null);
 
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-  };
+ const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+
+    saveCopiedSnippet({
+      id: Date.now().toString(),
+      title: title || "Code Snippet",
+      language: selectedLanguage,
+      code: text,
+    });
+
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  } catch (err) {
+    console.error("Failed to copy text:", err);
+  }
+};
 
   /* ═══════════════════════════ macOS variant ═══════════════════════════ */
   if (variant === 'macos') {
