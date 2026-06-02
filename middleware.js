@@ -9,8 +9,8 @@ export async function middleware(request) {
   // propagates the new cookies into both the outgoing request and response so
   // that server components and client components see consistent session state.
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    "https://skmqquqodcxxcydkfupj.supabase.co",
+     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrbXFxdXFvZGN4eGN5ZGtmdXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNzc0ODIsImV4cCI6MjA5NTk1MzQ4Mn0.QXZJzVYHVNIji5pXbJmROtYn7lianKh8Cuy6rPX8xNY", 
     {
       cookies: {
         getAll() {

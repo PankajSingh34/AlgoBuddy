@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import emailjs from "@emailjs/browser";
 import Link from "next/link";
 import {
   Calendar,
@@ -12,6 +13,12 @@ import PopularTopics from "@/app/blogs/components/PopularTopics";
 import TerminalPopup from "@/app/components/TerminalPopup";
 import blogData from "@/app/blogs/data/blogs.json";
 
+const PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;r
+
+emailjs.init(PUBLIC_KEY);
+
 const BlogPage = () => {
   // State management
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,7 +26,25 @@ const BlogPage = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [status, setStatus] = useState("idle");
   const searchRef = useRef(null);
+
+  const handleSubscribe = async () => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!subscriberEmail.trim() || !regex.test(subscriberEmail)) {
+    setStatus("invalid"); return;
+  }
+  setStatus("sending");
+  try {
+    await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+      subscriber_email: subscriberEmail,
+    });
+    setStatus("success");
+    setSubscriberEmail("");
+  } catch {
+    setStatus("error");
+  }
+};
 
   // Filtered blogs
   const filteredBlogs = blogData.filter((blog) => {
@@ -108,15 +133,16 @@ const BlogPage = () => {
                 className="flex-1 w-full px-4 py-3 rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 text-surface-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
-                onClick={() => {
-                  if (subscriberEmail.trim()) {
-                    setIsTerminalOpen(true);
-                  }
-                }}
+                onClick={handleSubscribe}
+                
                 className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg text-md font-medium hover:opacity-90 transition"
               >
                 Subscribe
               </button>
+              {status === "invalid" && <p className="text-red-400 text-xs mt-1">Enter a valid email.</p>}
+              {status === "sending" && <p className="text-surface-400 text-xs mt-1">Sending…</p>}
+              {status === "success" && <p className="text-green-400 text-xs mt-1">You're subscribed! 🎉</p>}
+              {status === "error" && <p className="text-red-400 text-xs mt-1">Something went wrong. Try again.</p>}  
             </div>
             <p className="text-sm text-surface-500 dark:text-surface-400 text-center mt-2">
               By clicking "Subscribe", you agree to receive updates when new blogs are published.
