@@ -2,9 +2,22 @@ const vm = require("vm");
 const { EXECUTION_STATUS } = require("./errorCodes");
 const { MAX_TIMEOUT_MS, MAX_MEMORY_MB, MAX_OUTPUT_LENGTH } = require("./sandbox.config");
 
+const MEMORY_LIMIT_BYTES = MAX_MEMORY_MB * 1024 * 1024;
+
 async function executeCode(code) {
   const startTime = Date.now();
   const outputLines = [];
+
+  const memoryBefore = process.memoryUsage().heapUsed;
+  if (memoryBefore > MEMORY_LIMIT_BYTES) {
+    return {
+      status: EXECUTION_STATUS.MLE,
+      output: "",
+      error: `Server memory exceeded before execution. Try again later.`,
+      executionTime: 0,
+      memoryUsed: memoryBefore,
+    };
+  }
 
   try {
     const sandbox = {
@@ -27,11 +40,23 @@ async function executeCode(code) {
       ? rawOutput.slice(0, MAX_OUTPUT_LENGTH) + "\n… (output truncated)"
       : rawOutput;
 
+    const memoryUsed = process.memoryUsage().heapUsed - memoryBefore;
+
+    if (memoryUsed > MEMORY_LIMIT_BYTES) {
+      return {
+        status: EXECUTION_STATUS.MLE,
+        output: output,
+        error: `Your code used ${Math.round(memoryUsed / 1024 / 1024)} MB of memory, exceeding the ${MAX_MEMORY_MB} MB limit.`,
+        executionTime: Date.now() - startTime,
+        memoryUsed,
+      };
+    }
+
     return {
       status: EXECUTION_STATUS.SUCCESS,
       output,
       executionTime: Date.now() - startTime,
-      memoryUsed: process.memoryUsage().heapUsed,
+      memoryUsed,
     };
 
   } catch (err) {
@@ -44,6 +69,22 @@ async function executeCode(code) {
         error: `Your code exceeded the ${MAX_TIMEOUT_MS}ms time limit.`,
         executionTime: elapsed,
         memoryUsed: 0,
+      };
+    }
+
+    const memoryErr = (err.message && (
+      err.message.includes("memory") ||
+      err.message.includes("allocation") ||
+      err.message.includes("heap")
+    )) || err.code === "ERR_MEMORY_ALLOCATION_FAILED";
+
+    if (memoryErr) {
+      return {
+        status: EXECUTION_STATUS.MLE,
+        output: outputLines.join("\n"),
+        error: `Your code used too much memory (exceeded ${MAX_MEMORY_MB} MB).`,
+        executionTime: elapsed,
+        memoryUsed: process.memoryUsage().heapUsed - memoryBefore,
       };
     }
 
