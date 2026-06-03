@@ -1,7 +1,7 @@
-import Animation from "@/app/visualizer/linkedlist/operations/traversal/animation";
-import Content from "@/app/visualizer/linkedlist/operations/traversal/content";
-import Quiz from "@/app/visualizer/linkedlist/operations/traversal/quiz";
-import CodeBlock from "@/app/visualizer/linkedlist/operations/traversal/codeBlock";
+import Animation from "./animation";
+import Content from "./content";
+import Quiz from "./quiz";
+import CodeBlock from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,

@@ -1,7 +1,7 @@
-import DsuAnimation from "@/app/visualizer/tree/advanced/dsu/animation";
-import DsuContent from "@/app/visualizer/tree/advanced/dsu/content";
-import DsuCode from "@/app/visualizer/tree/advanced/dsu/codeBlock";
-import DsuQuiz from "@/app/visualizer/tree/advanced/dsu/quiz";
+import DsuAnimation from "./animation";
+import DsuContent from "./content";
+import DsuCode from "./codeBlock";
+import DsuQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

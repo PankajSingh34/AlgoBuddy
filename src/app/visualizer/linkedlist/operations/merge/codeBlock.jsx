@@ -1,11 +1,7 @@
 'use client';
 
 import CodeBlock from '@/app/components/ui/CodeBlock';
-<<<<<<<< HEAD:app/visualizer/linkedlist/mergedlists/codeBlock.jsx
-import CodeExamples from '@/app/visualizer/linkedlist/mergedlists/data/codeExamples.json';
-========
 import CodeExamples from '@/app/visualizer/linkedlist/operations/merge/data/codeExamples.json';
->>>>>>>> upstream/main:src/app/visualizer/linkedlist/operations/merge/codeBlock.jsx
 
 // ─── Code Examples ─────────────────────────────
 const codeExamples = CodeExamples;

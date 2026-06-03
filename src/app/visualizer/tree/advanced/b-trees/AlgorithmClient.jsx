@@ -1,7 +1,7 @@
-import BTreeAnimation from "@/app/visualizer/tree/advanced/b-trees/animation";
-import BTreeContent from "@/app/visualizer/tree/advanced/b-trees/content";
-import BTreeCode from "@/app/visualizer/tree/advanced/b-trees/codeBlock";
-import BTreeQuiz from "@/app/visualizer/tree/advanced/b-trees/quiz";
+import BTreeAnimation from "./animation";
+import BTreeContent from "./content";
+import BTreeCode from "./codeBlock";
+import BTreeQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

@@ -1,8 +1,8 @@
-import NQueensAnimation from "@/app/visualizer/recursion/n-queens/animation";
+import NQueensAnimation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/recursion/n-queens/codeBlock";
-import Quiz from "@/app/visualizer/recursion/n-queens/quiz";
-import Content from "@/app/visualizer/recursion/n-queens/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

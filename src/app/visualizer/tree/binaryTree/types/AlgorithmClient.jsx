@@ -1,5 +1,5 @@
-import Content from "@/app/visualizer/tree/binaryTree/types/content";
-import CodeBlock from "@/app/visualizer/tree/binaryTree/types/codeBlock";
+import Content from "./content";
+import CodeBlock from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,

@@ -1,8 +1,8 @@
-import SubsequencesAnimation from "@/app/visualizer/recursion/subsequences/animation";
+import SubsequencesAnimation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/recursion/subsequences/codeBlock";
-import Quiz from "@/app/visualizer/recursion/subsequences/quiz";
-import Content from "@/app/visualizer/recursion/subsequences/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

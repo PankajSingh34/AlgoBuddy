@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/stack/monotonic/largestrectangle/animation";
+import Animation from "./animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/stack/monotonic/largestrectangle/content";
-import Quiz from "@/app/visualizer/stack/monotonic/largestrectangle/quiz";
-import Code from "@/app/visualizer/stack/monotonic/largestrectangle/codeBlock";
+import Content from "./content";
+import Quiz from "./quiz";
+import Code from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

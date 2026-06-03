@@ -1,8 +1,8 @@
-import PrintNTo1Animation from "@/app/visualizer/recursion/print-n-to-1/animation";
+import PrintNTo1Animation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/recursion/print-n-to-1/codeBlock";
-import Quiz from "@/app/visualizer/recursion/print-n-to-1/quiz";
-import Content from "@/app/visualizer/recursion/print-n-to-1/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

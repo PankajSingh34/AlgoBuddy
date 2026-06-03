@@ -1,11 +1,7 @@
 'use client';
 
 import CodeBlock from '@/app/components/ui/CodeBlock';
-<<<<<<<< HEAD:app/visualizer/linkedlist/reverselinkedlist/codeBlock.jsx
-import CodeExamples from '@/app/visualizer/linkedlist/reverselinkedlist/data/codeExamples.json';
-========
 import CodeExamples from '@/app/visualizer/linkedlist/operations/reverse/data/codeExamples.json';
->>>>>>>> upstream/main:src/app/visualizer/linkedlist/operations/reverse/codeBlock.jsx
 
 // ─── Code Examples ─────────────────────────────
 const codeExamples = CodeExamples;

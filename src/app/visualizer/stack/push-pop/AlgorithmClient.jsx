@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/stack/pushpop/animation";
+import Animation from "./animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/stack/pushpop/content";
-import Quiz from "@/app/visualizer/stack/pushpop/quiz";
-import Code from "@/app/visualizer/stack/pushpop/codeBlock";
+import Content from "./content";
+import Quiz from "./quiz";
+import Code from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

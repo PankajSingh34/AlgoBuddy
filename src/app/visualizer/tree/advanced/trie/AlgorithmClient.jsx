@@ -1,7 +1,7 @@
-import TrieAnimation from "@/app/visualizer/tree/advanced/trie/animation";
-import TrieContent from "@/app/visualizer/tree/advanced/trie/content";
-import TrieCode from "@/app/visualizer/tree/advanced/trie/codeBlock";
-import TrieQuiz from "@/app/visualizer/tree/advanced/trie/quiz";
+import TrieAnimation from "./animation";
+import TrieContent from "./content";
+import TrieCode from "./codeBlock";
+import TrieQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

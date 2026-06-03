@@ -1,6 +1,6 @@
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/stack/implementation/usingLinkedList/content";
-import Code from "@/app/visualizer/stack/implementation/usingLinkedList/codeBlock";
+import Content from "./content";
+import Code from "./codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {

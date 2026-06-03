@@ -1,7 +1,7 @@
-import Animation from "@/app/visualizer/linkedlist/types/doubly/animation";
-import Content from "@/app/visualizer/linkedlist/types/doubly/content";
-import Quiz from "@/app/visualizer/linkedlist/types/doubly/quiz";
-import CodeBlock from "@/app/visualizer/linkedlist/types/doubly/codeBlock";
+import Animation from "./animation";
+import Content from "./content";
+import Quiz from "./quiz";
+import CodeBlock from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
