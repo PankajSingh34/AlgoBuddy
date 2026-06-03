@@ -1220,7 +1220,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT: Tree Workspace & Control cards */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
+          <div className="lg:col-span-8 flex flex-col gap-6 tour-step-animation-section">
             
             <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
               {/* Insert / Search / Delete input controls */}

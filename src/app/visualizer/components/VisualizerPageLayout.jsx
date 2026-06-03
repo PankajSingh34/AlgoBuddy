@@ -1,6 +1,7 @@
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+
 export function createVisualizerPaths(...segments) {
   return [
     { name: "Home", href: "/" },
@@ -70,19 +71,19 @@ export default function VisualizerPageLayout({
           <div className="mx-auto my-10 h-px max-w-4xl bg-gradient-to-r from-transparent via-[#d1d7dc] to-transparent dark:via-[#333]" />
         </section>
 
-        <VisualizerPageSection className={animationSectionClassName}>
+        <VisualizerPageSection className={`${animationSectionClassName} tour-step-animation-section`.trim()}>
           {animation}
         </VisualizerPageSection>
 
-        <VisualizerPageSection className={contentSectionClassName}>
+        <VisualizerPageSection className={`${contentSectionClassName} tour-step-content-section`.trim()}>
           {content}
         </VisualizerPageSection>
 
-        <VisualizerPageSection className={codeSectionClassName}>
+        <VisualizerPageSection className={`${codeSectionClassName} tour-step-code-section`.trim()}>
           {code}
         </VisualizerPageSection>
 
-        <VisualizerPageSection className={quizSectionClassName}>
+        <VisualizerPageSection className={`${quizSectionClassName} tour-step-quiz-section`.trim()}>
           {quiz}
         </VisualizerPageSection>
 
@@ -95,7 +96,7 @@ export default function VisualizerPageLayout({
           </VisualizerPageSection>
         ))}
 
-        <VisualizerPageSection className={moduleSectionClassName}>
+        <VisualizerPageSection className={`${moduleSectionClassName} tour-step-module-section`.trim()}>
           {moduleCard}
         </VisualizerPageSection>
 

@@ -75,7 +75,7 @@ export default function GraphTopicPage({ topic, Animation, startNode }) {
           </div>
         </section>
 
-        <section className="container-app">
+        <section className="container-app tour-step-animation-section">
           <Animation startNode={startNode} />
         </section>
 

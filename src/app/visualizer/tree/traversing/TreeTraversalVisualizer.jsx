@@ -1178,7 +1178,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT: Tree Workspace & Controls */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
+          <div className="lg:col-span-8 flex flex-col gap-6 tour-step-animation-section">
             
             {/* Control Bar Card */}
             <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
