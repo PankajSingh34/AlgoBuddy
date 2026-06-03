@@ -1,18 +1,31 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-// -------------------------------------------------------------------
-// Fix: Added missing FiChevronRight icon import.
-// This resolves ReferenceError when rendering the "View all help articles"
-// button in the Support Center tab.
-// -------------------------------------------------------------------
-import { FiX, FiMail, FiMessageSquare, FiSend, FiChevronRight } from "react-icons/fi"; // Added FiChevronRight import for Support Center icon
+import { FiX, FiMail, FiMessageSquare, FiSend, FiChevronRight } from "react-icons/fi";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
   { ssr: false },
 );
+
+// -------------------------------------------------------------------
+// Fix: Replaced all href="#" placeholder links with real routes.
+// - FAQ link → /faq
+// - Community forum link → /community
+// - Common question links → mapped to their dedicated support pages
+// - "View all help articles" button → navigates to /support
+// This ensures the Support Center tab is fully functional and users
+// are routed to the correct help pages instead of dead links.
+// -------------------------------------------------------------------
+
+const COMMON_QUESTIONS = [
+  { label: "How do I reset my password?", href: "/support/reset-password" },
+  { label: "Where can I find documentation?", href: "/support/documentation" },
+  { label: "What are your business hours?", href: "/support/business-hours" },
+  { label: "How do I cancel my subscription?", href: "/support/cancel-subscription" },
+];
 
 const ContactSupportPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -140,6 +153,30 @@ const ContactSupportPopup = () => {
                 </button>
               </div>
 
+              {/* Tab switcher */}
+              <div className="flex border-b border-udemy-border dark:border-udemy-dark-border">
+                <button
+                  onClick={() => setActiveTab("contact")}
+                  className={`flex-1 py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                    activeTab === "contact"
+                      ? "text-udemy-purple border-b-2 border-udemy-purple"
+                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  }`}
+                >
+                  <FiMail size={15} /> Contact Us
+                </button>
+                <button
+                  onClick={() => setActiveTab("support")}
+                  className={`flex-1 py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                    activeTab === "support"
+                      ? "text-udemy-purple border-b-2 border-udemy-purple"
+                      : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  }`}
+                >
+                  <FiMessageSquare size={15} /> Support Center
+                </button>
+              </div>
+
               {/* Content */}
               <div className="p-6">
                 {activeTab === "contact" ? (
@@ -247,7 +284,7 @@ const ContactSupportPopup = () => {
                             >
                               Message
                             </label>
-                          <textarea
+                            <textarea
                               id="message"
                               name="message"
                               rows="4"
@@ -262,11 +299,11 @@ const ContactSupportPopup = () => {
                         <div className="mt-4 flex justify-center">
                           <Turnstile
                             siteKey={
-                              process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("1x") || 
+                              process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("1x") ||
                               process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.startsWith("0x")
                                 ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
                                 : "1x00000000000000000000AA"
-                              }
+                            }
                             onSuccess={(token) => setCaptchaToken(token)}
                           />
                         </div>
@@ -310,47 +347,60 @@ const ContactSupportPopup = () => {
                   </form>
                 ) : (
                   <div className="space-y-6">
+                    {/* Immediate help banner — FAQ and community forum now link to real pages */}
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                       <h4 className="font-bold text-blue-800 dark:text-blue-200 mb-2">
                         Need immediate help?
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Check out our{" "}
-                        <a href="#" className="underline">
+                        <Link
+                          href="/faq"
+                          className="underline hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
                           FAQs
-                        </a>{" "}
+                        </Link>{" "}
                         or join our{" "}
-                        <a href="#" className="underline">
+                        <Link
+                          href="/community"
+                          className="underline hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
                           community forum
-                        </a>
+                        </Link>
                         .
                       </p>
                     </div>
+
+                    {/* Common questions — each links to its own support article page */}
                     <div>
                       <h4 className="font-bold text-zinc-800 dark:text-white mb-3">
                         Common Questions
                       </h4>
                       <div className="space-y-3">
-                        {[
-                          "How do I reset my password?",
-                          "Where can I find documentation?",
-                          "What are your business hours?",
-                          "How do I cancel my subscription?",
-                        ].map((question, index) => (
-                          <a
-                            key={index}
-                            href="#"
-                            className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
+                        {COMMON_QUESTIONS.map(({ label, href }) => (
+                          <Link
+                            key={href}
+                            href={href}
+                            onClick={() => setIsOpen(false)}
+                            className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors text-zinc-800 dark:text-zinc-100"
                           >
-                            {question}
-                          </a>
+                            {label}
+                          </Link>
                         ))}
                       </div>
                     </div>
+
+                    {/* "View all help articles" now navigates to /support */}
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <Link
+                        href="/support"
+                        onClick={() => setIsOpen(false)}
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 transition-colors"
+                      >
                         View all help articles <FiChevronRight />
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 )}
