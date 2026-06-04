@@ -1,0 +1,97 @@
+name: Auto Assign Issue to Creator
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Auto-assign issue to creator & block re-assignment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.issue.number;
+            const eventName = context.eventName;
+
+            // ──────────────────────────────────────────────
+            // CASE 1: New issue opened → assign to creator
+            // ──────────────────────────────────────────────
+            if (eventName === "issues") {
+              const creator = context.payload.issue.user.login;
+
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                assignees: [creator],
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `👋 Hey @${creator}! This issue has been **automatically assigned to you** as you created it.\n\n> 🔒 This issue is now locked for assignment. No other contributor can claim it.`,
+              });
+
+              console.log(`✅ Issue #${issueNumber} auto-assigned to @${creator}`);
+              return;
+            }
+
+            // ──────────────────────────────────────────────
+            // CASE 2: Someone comments trying to claim it
+            // ──────────────────────────────────────────────
+            if (eventName === "issue_comment") {
+              const comment = context.payload.comment.body.toLowerCase().trim();
+              const commenter = context.payload.comment.user.login;
+
+              const claimKeywords = ["assign me", "assign this to me", "i want to work", "can i take this", "please assign"];
+              const isClaiming = claimKeywords.some(kw => comment.includes(kw));
+
+              if (!isClaiming) return;
+
+              // Fetch current issue to check existing assignees
+              const { data: issue } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+              });
+
+              const assignees = issue.assignees.map(a => a.login);
+
+              if (assignees.length > 0) {
+                // Already assigned — block and notify
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `❌ Sorry @${commenter}, this issue is **already assigned** to @${assignees[0]} and cannot be reassigned.\n\nPlease look for other open issues to contribute to! 🚀`,
+                });
+
+                console.log(`🚫 Blocked @${commenter} — issue #${issueNumber} already assigned to @${assignees[0]}`);
+              } else {
+                // Not yet assigned — assign to the commenter
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  assignees: [commenter],
+                });
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `✅ @${commenter} This issue has been assigned to you! Good luck and happy coding! 🎉\n\n> 🔒 This issue is now locked — no further assignments allowed.`,
+                });
+
+                console.log(`✅ Issue #${issueNumber} assigned to commenter @${commenter}`);
+              }
+            }
