@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Animated Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=200&section=header&text=AlgoBuddy&fontSize=72&fontColor=ffffff&fontAlignY=38&desc=Visualize.%20Understand.%20Master.&descAlignY=58&descSize=20&animation=fadeIn" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=200&section=header&text=AlgoBuddy&fontSize=72&fontColor=ffffff&fontAlignY=35&desc=Visualize.%20Understand.%20Master.&descAlignY=55&descSize=20&animation=fadeIn" width="100%"/>
 
 <br/>
 
@@ -15,21 +15,25 @@
 
 <br/>
 
-<!-- Tagline -->
 > **🧠 An open-source, interactive DSA learning platform that brings algorithms to life through step-by-step animations, structured learning paths, and progress tracking.**
 >
->Built for students, developers, and interview candidates who want to <strong>see</strong> how algorithms work — not just read about them.
+> Built for students, developers, and interview candidates who want to **see** how algorithms work — not just read about them.
 
-
-<!-- Quick Links -->
 [**✨ Features**](#-features) · [**📷 Screenshots**](#-screenshots) · [**🛠 Tech Stack**](#-tech-stack) · [**🚀 Quick Start**](#-quick-start) · [**📁 Project Structure**](#-project-structure) · [**🤝 Contributing**](#-contributing) · [**📜 License**](#-license)
 
 <br/>
 
-<!-- Separator -->
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 </div>
+
+<br/>
+
+## 📌 About Project
+
+**AlgoBuddy** is a free, open-source DSA learning platform designed to make algorithms visual and interactive. Instead of reading static textbooks, users can watch algorithms execute step-by-step, interact with data structures, track their learning progress, and get AI-powered help — all in one place.
+
+Whether you are a student preparing for exams, a developer brushing up on DSA, or a candidate preparing for coding interviews at top companies — AlgoBuddy is built for you.
 
 <br/>
 
@@ -70,26 +74,11 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 
 <table>
 <tr>
-<td align="center" width="20%">
-
-**🔄 Sorting**
-</td>
-<td align="center" width="20%">
-
-**🔍 Searching**
-</td>
-<td align="center" width="20%">
-
-**📚 Stack**
-</td>
-<td align="center" width="20%">
-
-**🚶 Queue**
-</td>
-<td align="center" width="20%">
-
-**🔗 Linked List**
-</td>
+<td align="center" width="20%">**🔄 Sorting**</td>
+<td align="center" width="20%">**🔍 Searching**</td>
+<td align="center" width="20%">**📚 Stack**</td>
+<td align="center" width="20%">**🚶 Queue**</td>
+<td align="center" width="20%">**🔗 Linked List**</td>
 </tr>
 <tr>
 <td>
@@ -138,18 +127,9 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 
 <table>
 <tr>
-<td align="center" width="33%">
-
-**🌳 Trees**
-</td>
-<td align="center" width="33%">
-
-**#️⃣ HashMap**
-</td>
-<td align="center" width="34%">
-
-**📊 Complexity Graphs**
-</td>
+<td align="center" width="33%">**🌳 Trees**</td>
+<td align="center" width="33%">**#️⃣ HashMap**</td>
+<td align="center" width="34%">**📊 Complexity Graphs**</td>
 </tr>
 <tr>
 <td>
@@ -189,7 +169,6 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | 🤖 **AI Assistant** | Built-in chatbot powered by **Gemini** for concept help |
 
 <br/>
-<br/>
 
 ## 📝 Blog Platform
 
@@ -200,7 +179,6 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | ⏱ **Reading Time** | Estimated reading time on every article |
 | 📖 **Rich Content** | In-depth articles on core DSA concepts |
 
-<br/>
 <br/>
 
 ## 🎨 UX & Design
@@ -213,39 +191,32 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 | ✨ **Particle Effects** | Interactive background using tsParticles |
 
 <br/>
-<br/>
 
 ## 📸 Screenshots
 
 ### 🏠 Home Page
-
 ![Home Page](public/screenshots/Home-page.png)
 
 ---
 
 ### 🔐 Authentication Page
-
 ![Login Page](public/screenshots/login-page.png)
 
 ---
 
 ### 🧠 Visualizer Dashboard
-
 ![Visualizer](public/screenshots/visualizer-page.png)
 
 ---
 
 ### 🔄 Queue Visualization
-
 ![Queue Visualization](public/screenshots/queue-visualization-page.png)
 
 ---
 
 ### 📚 Queue Operations
-
 ![Queue Operations](public/screenshots/queue-operations-page.png)
 
-<br/>
 <br/>
 
 ## 🛠 Tech Stack
@@ -274,270 +245,3 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 ## 🏗 Architecture
 
 ```mermaid
-graph TB
-    subgraph Client["🖥 Client — Next.js 14 App Router"]
-        UI["UI Components<br/>(React + Tailwind)"]
-        VIS["Visualizer Engine<br/>(GSAP + Framer Motion)"]
-        CHARTS["Complexity Graphs<br/>(Recharts)"]
-        EDITOR["Code Editor<br/>(Monaco)"]
-        THEME["Theme System<br/>(Dark/Light)"]
-    end
-    subgraph API["⚡ API Layer"]
-        AUTH_API["Auth Routes"]
-        CONTACT["Contact API"]
-        REVIEW["Review API"]
-        CHATBOT["AI Assistant<br/>(Gemini API)"]
-    end
-    subgraph Services["☁️ External Services"]
-        SUPA["Supabase<br/>(DB + Auth)"]
-        CF["Cloudflare<br/>Turnstile"]
-        GA["Google<br/>Analytics"]
-        REDIS["Upstash<br/>Redis"]
-        MAIL["Gmail<br/>(Nodemailer)"]
-        GEMINI["Google<br/>Gemini API"]
-    end
-    UI --> VIS
-    UI --> CHARTS
-    UI --> EDITOR
-    UI --> THEME
-    UI --> API
-    UI --> SUPA
-    AUTH_API --> SUPA
-    AUTH_API --> CF
-    CONTACT --> MAIL
-    CONTACT --> CF
-    REVIEW --> MAIL
-    REVIEW --> CF
-    CHATBOT --> REDIS
-    CHATBOT --> GEMINI
-    UI --> GA
-    style Client fill:#1e1b4b,stroke:#818cf8,stroke-width:3px,color:#e0e7ff
-    style API fill:#1e3a5f,stroke:#38bdf8,stroke-width:3px,color:#e0f2fe
-    style Services fill:#064e3b,stroke:#34d399,stroke-width:3px,color:#d1fae5
-```
-
-<br/>
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-| Tool | Version |
-|---|---|
-| **Node.js** | `>= 20.x` |
-| **npm** | `>= 10.x` |
-| **Git** | Latest |
-
-### 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/PankajSingh34/AlgoBuddy.git
-cd AlgoBuddy
-```
-
-### 2️⃣ Install Dependencies
-
-```bash
-npm install
-```
-
-### 3️⃣ Configure Environment Variables
-
-Create a `.env.local` file in the project root:
-
-```env
-# ──────────── Email ────────────
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-google-app-password
-REVIEW_INBOX_EMAIL=optional-inbox@gmail.com
-
-# ──────────── Supabase ────────────
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_KEY=your-supabase-service-key
-
-# ──────────── Cloudflare Turnstile ────────────
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
-TURNSTILE_SECRET_KEY=your-turnstile-secret-key
-
-# ──────────── Google Analytics ────────────
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
-
-# ──────────── AI Chatbot ────────────
-GEMINI_API_KEY=your-gemini-api-key
-
-# ──────────── Rate Limiting (Production) ────────────
-UPSTASH_REDIS_REST_URL=your-upstash-url
-UPSTASH_REDIS_REST_TOKEN=your-upstash-token
-```
-
-> **💡 Tip:** See [`EnvExample.txt`](EnvExample.txt) for a complete reference of all environment variables.
-
-### 4️⃣ Start the Development Server
-
-```bash
-npm run dev
-```
-
-Open **[http://localhost:3000](http://localhost:3000)** and start visualizing! 🎉
-
-### 5️⃣ Other Commands
-
-```bash
-npm run build          # Production build
-npm run start          # Start production server
-npm run lint           # Run ESLint
-npm run test           # Run lint + security tests
-npm run test:security  # Run XSS security tests only
-```
-
-<br/>
-<br/>
-
-## 📁 Project Structure
-
-```
-AlgoBuddy/
-│
-├── 📂 app/                          # Next.js App Router
-│   ├── 📂 api/                      # API routes
-│   │   ├── auth/                    #   ├── Authentication endpoints
-│   │   ├── contact/                 #   ├── Contact form handler
-│   │   ├── chatbot/                 #   ├── AI chatbot endpoint
-│   │   └── send-review/             #   └── Review submission
-│   │
-│   ├── 📂 blogs/                    # Blog pages & content
-│   ├── 📂 dashboard/                # User dashboard
-│   ├── 📂 login/                    # Auth pages
-│   ├── 📂 visualizer/               # Algorithm visualizer pages
-│   │
-│   ├── 📂 components/               # Shared UI components
-│   │   ├── dashboard/               #   ├── Heatmap, streaks
-│   │   ├── models/                  #   ├── Data structure models
-│   │   └── ui/                      #   └── Reusable UI primitives
-│   │
-│   ├── layout.jsx                   # Root layout
-│   └── page.jsx                     # Landing page
-│
-├── 📂 lib/                          # Utility libraries
-│   ├── supabase.js                  #   ├── Supabase client config
-│   ├── activity.js                  #   ├── Activity tracking logic
-│   └── gtag.js                      #   └── Google Analytics helper
-│
-├── 📂 utils/                        # Helper functions
-├── 📂 public/                       # Static assets
-├── 📂 docs/                         # Documentation
-├── 📂 security-tests/               # Security test suite
-├── 📂 .github/                      # GitHub Actions workflows
-│
-├── middleware.js                     # Next.js middleware (auth, rate limiting)
-├── tailwind.config.js                # Tailwind configuration
-├── next.config.mjs                   # Next.js configuration
-├── eslint.config.mjs                 # ESLint configuration
-├── package.json                      # Dependencies & scripts
-└── next-sitemap.config.js            # SEO sitemap generation
-```
-
-<br/>
-
-## 🤝 Contributing
-
-We 💜 contributions! AlgoBuddy is built by the community, for the community.
-
-### Contribution Areas
-
-| Area | What you can do |
-|---|---|
-| 🐛 **Bug Fixes** | Squash bugs and resolve issues |
-| 🎨 **UI/UX** | Improve responsiveness, accessibility, design |
-| 🔮 **New Visualizers** | Add new DSA visualizers & animations |
-| 📖 **Documentation** | Improve guides, README, contributor docs |
-| ⚡ **Performance** | Optimize app performance & efficiency |
-| 🌗 **Themes** | Enhance dark/light mode experience |
-
-### Getting Started
-
-```bash
-# 1. Fork this repo and clone your fork
-git clone https://github.com/YOUR_USERNAME/AlgoBuddy.git
-
-# 2. Create a feature branch
-git checkout -b feature/your-feature-name
-
-# 3. Make your changes and commit
-git commit -m "feat: describe your change"
-
-# 4. Push and open a PR
-git push origin feature/your-feature-name
-```
-
-> 📖 For detailed guidelines, please read our [**Contributing Guide**](CONTRIBUTING.md) and [**Code of Conduct**](CODE_OF_CONDUCT.md).
-
-### Issue Assignment Process
-
-1. 🔍 Browse [**open issues**](https://github.com/PankajSingh34/AlgoBuddy/issues) or create a new one
-2. 💬 Comment asking to be assigned
-3. ⏳ Wait for maintainer assignment before starting
-4. 🔀 Submit a PR referencing the issue number
-
-<br/>
-
-## 💬 Community
-
-<div align="center">
-
-[![Discord](https://img.shields.io/badge/Join_our_Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/Gv2N4U3KAc)
-
-Ask questions, share ideas, show off your contributions, and connect with fellow learners!
-
-</div>
-
-<br/>
-
-## 🌟 Star History
-
-<div align="center">
-
-If AlgoBuddy helped you learn, please consider giving it a ⭐ — it means a lot!
-
-[![Star History Chart](https://api.star-history.com/svg?repos=PankajSingh34/AlgoBuddy&type=Date)](https://star-history.com/#PankajSingh34/AlgoBuddy&Date)
-
-</div>
-
-<br/>
-
-## 👥 Contributors
-
-<div align="center">
-
-<a href="https://github.com/PankajSingh34/AlgoBuddy/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=PankajSingh34/AlgoBuddy&max=100&columns=12" />
-</a>
-
-</div>
-
-<br/>
-
-## 📜 License
-
-<div align="center">
-
-This project is licensed under the **MIT License** — see the [**LICENSE**](LICENSE) file for details.
-
-</div>
-
-<br/>
-
----
-
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=120&section=footer" width="100%" />
-
-<strong>Built with 💜 by the AlgoBuddy community</strong>
-
-<br/>
-
-[🌐 Website](https://www.algobuddy.me/) · [📢 Discord](https://discord.gg/Gv2N4U3KAc) · [🐛 Issues](https://github.com/PankajSingh34/AlgoBuddy/issues) · [🔀 Pull Requests](https://github.com/PankajSingh34/AlgoBuddy/pulls)
-
-</div>
