@@ -17,12 +17,9 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
 import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
-=======
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 import { 
   bfsFrames, 
   dfsFrames, 
@@ -35,15 +32,8 @@ import {
   adjacencyMatrixFrames
 } from "../utils/algorithms";
 
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
-// Algorithms that require weighted edges
-const WEIGHTED_ALGORITHMS = ["dijkstra", "prim", "kruskal"];
-// Algorithms that require directed edges
-const DIRECTED_ALGORITHMS = ["dijkstra", "topological-sort"];
-=======
 const weightedAlgorithms = new Set(["dijkstra", "floyd-warshall", "prim", "kruskal"]);
 const directedAlgorithms = new Set(["dijkstra", "floyd-warshall", "topological-sort"]);
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 
 const defaultGraphs = {
   bfs: {
@@ -260,18 +250,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isEditing, setIsEditing] = useState(true);
 
-  // Derived flags
-  const isWeighted = WEIGHTED_ALGORITHMS.includes(algorithm);
-  const isDirected = DIRECTED_ALGORITHMS.includes(algorithm);
+  const isWeighted = weightedAlgorithms.has(algorithm);
+  const isDirected = directedAlgorithms.has(algorithm);
 
-  // Handle edge weight updates from GraphCanvas
   const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
     setEdges((prev) =>
       prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
     );
   }, []);
 
-  // When adding an edge, default weight = 1
   const handleAddEdge = useCallback((edge) => {
     setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
   }, [isDirected]);
@@ -280,15 +267,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
       if (isWeighted) {
         adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
         if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
-=======
-      if (weightedAlgorithms.has(algorithm)) {
-        adj[e.from].push({ node: e.to, weight: e.weight });
-        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight });
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
       } else {
         adj[e.from].push(e.to);
         if (!e.directed) adj[e.to].push(e.from);
@@ -323,7 +304,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const togglePlay = () => {
     if (currentFrame === frames.length - 1) setCurrentFrame(0);
     setIsPlaying(prev => !prev);
-    setIsEditing(false); // If they press play/pause, it shouldn't be in edit mode
+    setIsEditing(false);
   };
 
   const reset = () => {
@@ -356,8 +337,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const currentFrameData = frames[currentFrame] || {};
-  const isWeighted = weightedAlgorithms.has(algorithm);
-  const isDirected = directedAlgorithms.has(algorithm);
   const showFloydMatrix = algorithm === "floyd-warshall" && currentFrameData.matrix;
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
@@ -369,15 +348,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       counter += 1;
       nextId = `${counter}`;
     }
-
     setNodes((current) => [
       ...current,
-      {
-        id: nextId,
-        x,
-        y,
-        label: String.fromCharCode(65 + (counter % 26)),
-      },
+      { id: nextId, x, y, label: String.fromCharCode(65 + (counter % 26)) },
     ]);
     setCurrentFrame(0);
     setIsPlaying(false);
@@ -391,7 +364,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       window.alert("Please enter a valid numeric weight.");
       return;
     }
-
     setEdges((current) => [
       ...current,
       { from, to, weight, directed: isDirected },
@@ -399,15 +371,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     setCurrentFrame(0);
     setIsPlaying(false);
   };
+
   const moveNode = (id, x, y) => {
-  setNodes((current) =>
-    current.map((node) =>
-      node.id === id
-        ? { ...node, x, y }
-        : node
-    )
-  );
-};
+    setNodes((current) =>
+      current.map((node) => node.id === id ? { ...node, x, y } : node)
+    );
+  };
 
   const removeNode = (id) => {
     setNodes((current) => current.filter((node) => node.id !== id));
@@ -449,14 +418,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               {isEditing ? "Editing Mode" : "Visualization Mode"}
             </button>
 
-            {/* Weighted badge */}
             {isWeighted && (
               <span className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-xs font-semibold text-yellow-600 dark:text-yellow-400">
                 Weighted
               </span>
             )}
 
-            {/* Directed badge */}
             {isDirected && (
               <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
                 Directed
@@ -479,22 +446,21 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                     Stack: [{currentFrameData.stack.join(", ")}]
                   </div>
                 )}
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
                 {currentFrameData.distances && (
                   <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-1.5 text-xs font-bold text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
                     Distances: {Object.entries(currentFrameData.distances)
                       .map(([k, v]) => `${k}:${v === Infinity ? "∞" : v}`)
                       .join(", ")}
-=======
+                  </div>
+                )}
                 {currentFrameData.intermediate && (
                   <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                     k: {nodes.find((node) => node.id === currentFrameData.intermediate)?.label || currentFrameData.intermediate}
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
                   </div>
                 )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-bold text-success">
-                    Order: {currentFrameData.result.join(" ??? ")}
+                    Order: {currentFrameData.result.join(" → ")}
                   </div>
                 )}
               </div>
@@ -503,42 +469,24 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
 
         <GraphCanvas
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
           nodes={nodes}
           edges={edges}
-          onAddNode={(node) => setNodes((prev) => [...prev, { ...node, id: String(prev.length), label: String(prev.length) }])}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={(id) => {
-            setNodes((prev) => prev.filter((n) => n.id !== id));
-            setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
-          }}
-          onRemoveEdge={(idx) => setEdges((prev) => prev.filter((_, i) => i !== idx))}
-          onReverseEdge={(idx) => setEdges((prev) => prev.map((e, i) => i === idx ? { ...e, from: e.to, to: e.from } : e))}
+          onAddNode={addNode}
+          onAddEdge={addEdge}
+          onRemoveNode={removeNode}
+          onRemoveEdge={removeEdge}
+          onReverseEdge={reverseEdge}
+          onMoveNode={moveNode}
           onUpdateEdgeWeight={handleUpdateEdgeWeight}
           animationState={!isEditing ? currentFrameData : {}}
+          interactive={isEditing}
           isWeighted={isWeighted}
           isDirected={isDirected}
           visitedSet={currentFrameData.visitedNodes}
           currentNode={currentFrameData.currentNode}
+          className="w-full"
         />
-=======
-  nodes={nodes}
-  edges={edges}
-  onAddNode={addNode}
-  onAddEdge={addEdge}
-  onRemoveNode={removeNode}
-  onRemoveEdge={removeEdge}
-  onReverseEdge={reverseEdge}
-  onMoveNode={moveNode}
-  animationState={!isEditing ? currentFrameData : {}}
-  interactive={isEditing}
-  isWeighted={isWeighted}
-  isDirected={isDirected}
-  className="w-full"
-/>
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 
-        {/* Controls Bar */}
         <PlaybackControls
           isPaused={!isPlaying}
           onTogglePlayPause={togglePlay}
@@ -623,113 +571,53 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           </div>
         </div>
 
-        {/* Adjacency Panel — now uses the shared component */}
+        {/* Adjacency Panel */}
         <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
           <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Adjacency Representation</h3>
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
-          <AdjacencyPanel
-            nodes={nodes}
-            edges={edges}
-            isDirected={isDirected}
-            isWeighted={isWeighted}
-          />
-=======
-          <div className="space-y-4">
-            {showFloydMatrix && (
-              <div>
-                <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Floyd-Warshall Distance Matrix</h4>
-                <div className="overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                  <table className="w-full border-collapse text-center">
-                    <thead>
-                      <tr>
-                        <th className="p-1"></th>
-                        {currentFrameData.matrixNodes.map((nodeId) => (
-                          <th
-                            key={nodeId}
-                            className={`p-1 ${
-                              currentFrameData.intermediate === nodeId
-                                ? "text-amber-600 dark:text-amber-300"
-                                : "text-primary"
-                            }`}
-                          >
-                            {nodeLabelById[nodeId]}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentFrameData.matrixNodes.map((rowId) => (
-                        <tr key={rowId}>
-                          <td className="p-1 font-bold text-primary">{nodeLabelById[rowId]}</td>
-                          {currentFrameData.matrixNodes.map((colId) => {
-                            const isFocus = currentFrameData.row === rowId && currentFrameData.col === colId;
-                            const isUpdated =
-                              currentFrameData.updatedCell?.row === rowId &&
-                              currentFrameData.updatedCell?.col === colId;
-                            const value = currentFrameData.matrix[rowId][colId];
-                            return (
-                              <td
-                                key={colId}
-                                className={`border border-surface-200 p-1 dark:border-surface-800 ${
-                                  isUpdated
-                                    ? "bg-success/20 text-success"
-                                    : isFocus
-                                      ? "bg-primary/10 text-primary"
-                                      : ""
-                                }`}
-                              >
-                                {value === Infinity ? "INF" : value}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency List</h4>
-              <div className="max-h-64 overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                {nodes.map(node => {
-                  const neighbors = edges
-                    .filter(e => e.from === node.id || (!e.directed && e.to === node.id))
-                    .map(e => {
-                      const neighbor = e.from === node.id ? e.to : e.from;
-                      const label = nodeLabelById[neighbor] || neighbor;
-                      return isWeighted ? `${label}(${e.weight})` : label;
-                    });
-                  return (
-                    <div key={node.id} className="mb-1">
-                      <span className="text-primary font-bold">{node.label}</span>: [{neighbors.join(", ")}]
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency Matrix</h4>
+          {showFloydMatrix && (
+            <div className="mb-4">
+              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Floyd-Warshall Distance Matrix</h4>
               <div className="overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
                 <table className="w-full border-collapse text-center">
                   <thead>
                     <tr>
                       <th className="p-1"></th>
-                      {nodes.map(n => <th key={n.id} className="p-1 text-primary">{n.label}</th>)}
+                      {currentFrameData.matrixNodes.map((nodeId) => (
+                        <th
+                          key={nodeId}
+                          className={`p-1 ${
+                            currentFrameData.intermediate === nodeId
+                              ? "text-amber-600 dark:text-amber-300"
+                              : "text-primary"
+                          }`}
+                        >
+                          {nodeLabelById[nodeId]}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {nodes.map(row => (
-                      <tr key={row.id}>
-                        <td className="p-1 font-bold text-primary">{row.label}</td>
-                        {nodes.map(col => {
-                          const edge = edges.find(e => 
-                            (e.from === row.id && e.to === col.id) || 
-                            (!e.directed && ((e.from === row.id && e.to === col.id) || (e.from === col.id && e.to === row.id)))
-                          );
+                    {currentFrameData.matrixNodes.map((rowId) => (
+                      <tr key={rowId}>
+                        <td className="p-1 font-bold text-primary">{nodeLabelById[rowId]}</td>
+                        {currentFrameData.matrixNodes.map((colId) => {
+                          const isFocus = currentFrameData.row === rowId && currentFrameData.col === colId;
+                          const isUpdated =
+                            currentFrameData.updatedCell?.row === rowId &&
+                            currentFrameData.updatedCell?.col === colId;
+                          const value = currentFrameData.matrix[rowId][colId];
                           return (
-                            <td key={col.id} className="border border-surface-200 p-1 dark:border-surface-800">
-                              {edge ? (isWeighted ? edge.weight : 1) : 0}
+                            <td
+                              key={colId}
+                              className={`border border-surface-200 p-1 dark:border-surface-800 ${
+                                isUpdated
+                                  ? "bg-success/20 text-success"
+                                  : isFocus
+                                    ? "bg-primary/10 text-primary"
+                                    : ""
+                              }`}
+                            >
+                              {value === Infinity ? "INF" : value}
                             </td>
                           );
                         })}
@@ -739,8 +627,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 </table>
               </div>
             </div>
-          </div>
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
+          )}
+          <AdjacencyPanel
+            nodes={nodes}
+            edges={edges}
+            isDirected={isDirected}
+            isWeighted={isWeighted}
+          />
         </div>
       </div>
     </div>

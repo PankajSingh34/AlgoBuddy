@@ -231,14 +231,8 @@ const BinarySearch = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (
-        e.code === "Space" &&
-        isAnimatingRef.current &&
-        document.activeElement.tagName !== "INPUT" &&
-        document.activeElement.tagName !== "BUTTON"
-      ) {
-        e.preventDefault();
-        togglePlayPauseRef.current();
+      if (e.code === "Space" && isAnimatingRef.current && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "BUTTON") {
+        e.preventDefault(); togglePlayPauseRef.current();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -308,11 +302,7 @@ const BinarySearch = () => {
         </div>
         {isAnimating && (
           <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
-            <button
-              type="button"
-              onClick={togglePlayPause}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
+            <button type="button" onClick={togglePlayPause} className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center">
               {isPaused ? <Play size={20} /> : <Pause size={20} />}
               {isPaused ? "Play" : "Pause"}
             </button>
@@ -336,9 +326,8 @@ const BinarySearch = () => {
           </div>
         )}
       </form>
-
       {message && (
-        <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
+        <div className={`max-w-3xl mx-auto mb-4 p-4 rounded-lg ${messageClass}`}>
           <p className="text-center font-medium">{message}</p>
 
           {showAutoSort && (
@@ -355,7 +344,6 @@ const BinarySearch = () => {
           )}
         </div>
       )}
-
       {array.length > 0 && (
         <div className="max-w-4xl mx-auto space-y-6">
           {stepExplanation && (

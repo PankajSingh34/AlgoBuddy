@@ -1,4 +1,4 @@
-﻿// app/components/models/GraphCanvas.jsx
+// app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
 
@@ -69,11 +69,7 @@ export default function GraphCanvas({
   nodes,
   edges,
   isDirected,
-<<<<<<< HEAD:app/components/models/GraphCanvas.jsx
-  isWeighted,         // NEW prop
-=======
   isWeighted = false,
->>>>>>> upstream/main:src/app/components/models/GraphCanvas.jsx
   visitedSet,
   currentNode,
   animationState = {},
@@ -85,7 +81,7 @@ export default function GraphCanvas({
   onRemoveNode,
   onRemoveEdge,
   onReverseEdge,
-  onUpdateEdgeWeight, // NEW prop — (edgeIdx, newWeight) => void
+  onUpdateEdgeWeight,
 }) {
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
@@ -116,42 +112,35 @@ export default function GraphCanvas({
       } else if (edgeStart === id) {
         setEdgeStart(null);
       } else {
-        // When adding an edge in weighted mode, default weight = 1
         onAddEdge({ from: edgeStart, to: id, weight: 1 });
         setEdgeStart(null);
       }
     },
     [edgeStart, interactive, onAddEdge]
   );
+
   const handleNodeMouseDown = useCallback(
-  (e, id) => {
-    if (!interactive || !onMoveNode) return;
+    (e, id) => {
+      if (!interactive || !onMoveNode) return;
+      e.stopPropagation();
+      setDraggingNode(id);
+    },
+    [interactive, onMoveNode]
+  );
 
-    e.stopPropagation();
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!draggingNode || !onMoveNode || !svgRef.current) return;
+      const rect = svgRef.current.getBoundingClientRect();
+      onMoveNode(draggingNode, e.clientX - rect.left, e.clientY - rect.top);
+    },
+    [draggingNode, onMoveNode]
+  );
 
-    setDraggingNode(id);
-  },
-  [interactive, onMoveNode]
-);
+  const handleMouseUp = useCallback(() => {
+    setDraggingNode(null);
+  }, []);
 
-const handleMouseMove = useCallback(
-  (e) => {
-    if (!draggingNode || !onMoveNode || !svgRef.current) return;
-
-    const rect = svgRef.current.getBoundingClientRect();
-
-    onMoveNode(
-      draggingNode,
-      e.clientX - rect.left,
-      e.clientY - rect.top
-    );
-  },
-  [draggingNode, onMoveNode]
-);
-
-const handleMouseUp = useCallback(() => {
-  setDraggingNode(null);
-}, []);
   const handleNodeRightClick = useCallback(
     (e, id) => {
       if (!interactive || !onRemoveNode) return;
@@ -204,8 +193,8 @@ const handleMouseUp = useCallback(() => {
       style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
       onClick={handleCanvasClick}
       onMouseMove={handleMouseMove}
-onMouseUp={handleMouseUp}
-onMouseLeave={handleMouseUp}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
     >
       <defs>
         <marker
@@ -265,9 +254,6 @@ onMouseLeave={handleMouseUp}
           ? edgeEndpoint(src.x, src.y, tgt.x, tgt.y, NODE_RADIUS)
           : { x: tgt.x, y: tgt.y };
 
-        const labelX = (src.x + tgt.x) / 2;
-        const labelY = (src.y + tgt.y) / 2;
-
         return (
           <g key={idx}>
             <line
@@ -278,11 +264,9 @@ onMouseLeave={handleMouseUp}
               stroke={edgeColor}
               strokeWidth={isActive ? 2 : 1.5}
               markerEnd={markerEnd}
-<<<<<<< HEAD:app/components/models/GraphCanvas.jsx
-              style={{ cursor: "pointer" }}
+              style={{ cursor: interactive ? "pointer" : "default" }}
               onContextMenu={(e) => handleEdgeRightClick(e, idx)}
             />
-            {/* Weight label — only shown in weighted mode */}
             {isWeighted && (
               <EdgeWeightLabel
                 x1={src.x}
@@ -292,35 +276,6 @@ onMouseLeave={handleMouseUp}
                 weight={edge.weight ?? 1}
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
               />
-=======
-              style={{ cursor: interactive ? "pointer" : "default" }}
-              onContextMenu={(e) => handleEdgeRightClick(e, idx)}
-            />
-            {isWeighted && (
-              <g>
-                <rect
-                  x={labelX - 12}
-                  y={labelY - 10}
-                  width="24"
-                  height="18"
-                  rx="6"
-                  fill="#111827"
-                  stroke={isActive ? "#f97316" : "#4b5563"}
-                />
-                <text
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#f9fafb"
-                  fontSize={11}
-                  fontWeight={700}
-                  fontFamily="monospace"
-                >
-                  {edge.weight}
-                </text>
-              </g>
->>>>>>> upstream/main:src/app/components/models/GraphCanvas.jsx
             )}
           </g>
         );
