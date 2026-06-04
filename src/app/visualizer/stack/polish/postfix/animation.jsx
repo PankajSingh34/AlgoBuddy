@@ -6,6 +6,7 @@ import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { postfixGenerator } from "@/features/algorithms/stack/postfixLogic";
 
 /* ----------  tiny reusable animated bits  ---------- */
 const AnimatedStackItem = ({ char, isTop }) => (
@@ -51,9 +52,6 @@ const InfixToPostfixVisualizer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const { speed, setSpeed } = usePlayback(1);
 
-  const precedence = { "^": 4, "*": 3, "/": 3, "+": 2, "-": 2 };
-
-  /* ............  your existing logic  ............ */
   const reset = () => {
     setStack([]); setOutput([]); setPostfix(""); setCurrentStep(0); setSteps([]);
     setMessage("Enter an infix expression and click Convert"); setOperation(null); setIsPlaying(false);
@@ -62,36 +60,9 @@ const InfixToPostfixVisualizer = () => {
   const convertInfixToPostfix = () => {
     if (!infix.trim()) { setMessage("Please enter an infix expression"); return; }
     setIsProcessing(true); reset();
-    const conversionSteps = []; let tempStack = []; let tempOutput = [];
-    conversionSteps.push({ stack:[],output:[],char:"",action:"Initialize",description:"Starting conversion process" });
-    for (let i = 0; i < infix.length; i++) {
-      const char = infix[i];
-      if (/[a-zA-Z0-9]/.test(char)) {
-        tempOutput.push(char);
-        conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char,action:"Add operand",description:`Added operand "${char}" to output` });
-      } else if (char === "(") {
-        tempStack.push(char);
-        conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char,action:"Push to stack",description:`Pushed "(" to stack` });
-      } else if (char === ")") {
-        while (tempStack.length && tempStack[tempStack.length - 1] !== "(") {
-          const popped = tempStack.pop(); tempOutput.push(popped);
-          conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char:popped,action:"Pop from stack",description:`Popped operator "${popped}" from stack` });
-        }
-        tempStack.pop();
-        conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char:"(",action:"Remove from stack",description:'Removed "(" from stack' });
-      } else {
-        while (tempStack.length && tempStack[tempStack.length - 1] !== "(" && precedence[char] <= precedence[tempStack[tempStack.length - 1]]) {
-          const popped = tempStack.pop(); tempOutput.push(popped);
-          conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char:popped,action:"Pop higher precedence",description:`Popped higher precedence operator "${popped}"` });
-        }
-        tempStack.push(char);
-        conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char,action:"Push operator",description:`Pushed operator "${char}" to stack` });
-      }
-    }
-    while (tempStack.length) { const popped = tempStack.pop(); tempOutput.push(popped);
-      conversionSteps.push({ stack:[...tempStack],output:[...tempOutput],char:popped,action:"Pop remaining",description:`Popped remaining operator "${popped}"` });
-    }
-    setSteps(conversionSteps); setPostfix(tempOutput.join(" ")); setIsProcessing(false); setIsPlaying(true);
+    const conversionSteps = Array.from(postfixGenerator(infix));
+    const finalPostfix = conversionSteps.length > 0 ? conversionSteps[conversionSteps.length - 1].output.join(" ") : "";
+    setSteps(conversionSteps); setPostfix(finalPostfix); setIsProcessing(false); setIsPlaying(true);
   };
 
   const playNextStep = useCallback(() => {
