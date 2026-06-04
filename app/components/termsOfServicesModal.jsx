@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 
 const termsSections = [
@@ -59,32 +59,16 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
   const closeBtnRef = useRef(null);
   const scrollRef = useRef(null);
   const sectionRefs = useRef({});
-  const sectionRefCallbacks = useRef({});
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState(termsSections[0].id);
-  const [scrollContainer, setScrollContainer] = useState(null);
 
   const focusableSelector = useMemo(
     () =>
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     []
   );
-
-  const setScrollContainerRef = useCallback((node) => {
-    scrollRef.current = node;
-    setScrollContainer(node);
-  }, []);
-
-  const getSectionRef = useCallback((id) => {
-    if (!sectionRefCallbacks.current[id]) {
-      sectionRefCallbacks.current[id] = (node) => {
-        sectionRefs.current[id] = node;
-      };
-    }
-    return sectionRefCallbacks.current[id];
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,7 +93,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
   }, [shouldRender]);
 
   useEffect(() => {
-    if (!isOpen || !modalRef.current) return;
+    if (!shouldRender || !modalRef.current) return;
     const previouslyFocused = document.activeElement;
     closeBtnRef.current?.focus();
 
@@ -141,10 +125,10 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
         previouslyFocused.focus();
       }
     };
-  }, [isOpen, onClose, focusableSelector]);
+  }, [shouldRender, onClose, focusableSelector]);
 
   useEffect(() => {
-    if (!shouldRender || !scrollContainer) return;
+    if (!shouldRender || !scrollRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -155,7 +139,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
         }
       },
       {
-        root: scrollContainer,
+        root: scrollRef.current,
         rootMargin: "-25% 0px -55% 0px",
         threshold: [0.1, 0.25, 0.5, 0.75],
       }
@@ -165,7 +149,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
       if (section) observer.observe(section);
     });
     return () => observer.disconnect();
-  }, [shouldRender, scrollContainer]);
+  }, [shouldRender]);
 
   const handleScroll = () => {
     const node = scrollRef.current;
@@ -206,7 +190,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="terms-of-service-title"
-        className={`relative flex h-full w-full max-w-none flex-col overflow-hidden bg-white text-neutral-900 transition-all duration-200 dark:bg-neutral-900 dark:text-neutral-100 ${
+        className={`relative flex h-screen w-screen max-w-none flex-col overflow-hidden bg-white text-neutral-900 transition-all duration-200 dark:bg-neutral-900 dark:text-neutral-100 ${
           isVisible
             ? "translate-y-0 opacity-100 scale-100"
             : "translate-y-2 opacity-0 scale-[0.99]"
@@ -244,7 +228,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
 
         {/* Scrollable Body */}
         <div
-          ref={setScrollContainerRef}
+          ref={scrollRef}
           onScroll={handleScroll}
           className="min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-5 sm:px-7 sm:py-6 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-transparent dark:scrollbar-thumb-neutral-600"
           style={{ scrollPaddingTop: "6.5rem", scrollPaddingBottom: "5rem" }}
@@ -317,7 +301,9 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
                     <section
                       key={item.id}
                       id={item.id}
-                      ref={getSectionRef(item.id)}
+                      ref={(node) => {
+                        sectionRefs.current[item.id] = node;
+                      }}
                       className="scroll-mt-24 border-b border-neutral-200 pb-7 last:border-b-0 last:pb-0 dark:border-neutral-700"
                     >
                       <h3 className="text-lg font-semibold tracking-tight sm:text-xl">
