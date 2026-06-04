@@ -796,6 +796,10 @@ export async function claimSessionPresenter(sessionId, { sessionSecret, userId }
     return { error: "Session not found", status: 404 };
   }
 
+  if (!sessionSecret || session.sessionSecret !== sessionSecret) {
+    return { error: "Invalid session secret. Only the session creator can claim presenter.", status: 403 };
+  }
+
   if (!userId) {
     return { error: "Authentication required", status: 401 };
   }
