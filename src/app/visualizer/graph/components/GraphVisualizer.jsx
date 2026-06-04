@@ -17,12 +17,9 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
 import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
-=======
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 import { 
   bfsFrames, 
   dfsFrames, 
@@ -35,15 +32,8 @@ import {
   adjacencyMatrixFrames
 } from "../utils/algorithms";
 
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
-// Algorithms that require weighted edges
-const WEIGHTED_ALGORITHMS = ["dijkstra", "prim", "kruskal"];
-// Algorithms that require directed edges
-const DIRECTED_ALGORITHMS = ["dijkstra", "topological-sort"];
-=======
 const weightedAlgorithms = new Set(["dijkstra", "floyd-warshall", "prim", "kruskal"]);
 const directedAlgorithms = new Set(["dijkstra", "floyd-warshall", "topological-sort"]);
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 
 const defaultGraphs = {
   bfs: {
@@ -261,8 +251,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [isEditing, setIsEditing] = useState(true);
 
   // Derived flags
-  const isWeighted = WEIGHTED_ALGORITHMS.includes(algorithm);
-  const isDirected = DIRECTED_ALGORITHMS.includes(algorithm);
+  const isWeighted = weightedAlgorithms.has(algorithm);
+  const isDirected = directedAlgorithms.has(algorithm);
 
   // Handle edge weight updates from GraphCanvas
   const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
@@ -280,15 +270,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
       if (isWeighted) {
         adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
         if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
-=======
-      if (weightedAlgorithms.has(algorithm)) {
-        adj[e.from].push({ node: e.to, weight: e.weight });
-        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight });
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
       } else {
         adj[e.from].push(e.to);
         if (!e.directed) adj[e.to].push(e.from);
@@ -356,8 +340,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const currentFrameData = frames[currentFrame] || {};
-  const isWeighted = weightedAlgorithms.has(algorithm);
-  const isDirected = directedAlgorithms.has(algorithm);
   const showFloydMatrix = algorithm === "floyd-warshall" && currentFrameData.matrix;
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
@@ -479,17 +461,16 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                     Stack: [{currentFrameData.stack.join(", ")}]
                   </div>
                 )}
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
                 {currentFrameData.distances && (
                   <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-1.5 text-xs font-bold text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
                     Distances: {Object.entries(currentFrameData.distances)
                       .map(([k, v]) => `${k}:${v === Infinity ? "∞" : v}`)
                       .join(", ")}
-=======
+                  </div>
+                )}
                 {currentFrameData.intermediate && (
                   <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                     k: {nodes.find((node) => node.id === currentFrameData.intermediate)?.label || currentFrameData.intermediate}
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
                   </div>
                 )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
@@ -503,40 +484,23 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
 
         <GraphCanvas
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
           nodes={nodes}
           edges={edges}
-          onAddNode={(node) => setNodes((prev) => [...prev, { ...node, id: String(prev.length), label: String(prev.length) }])}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={(id) => {
-            setNodes((prev) => prev.filter((n) => n.id !== id));
-            setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
-          }}
-          onRemoveEdge={(idx) => setEdges((prev) => prev.filter((_, i) => i !== idx))}
-          onReverseEdge={(idx) => setEdges((prev) => prev.map((e, i) => i === idx ? { ...e, from: e.to, to: e.from } : e))}
+          onAddNode={addNode}
+          onAddEdge={addEdge}
+          onRemoveNode={removeNode}
+          onRemoveEdge={removeEdge}
+          onReverseEdge={reverseEdge}
+          onMoveNode={moveNode}
           onUpdateEdgeWeight={handleUpdateEdgeWeight}
           animationState={!isEditing ? currentFrameData : {}}
+          interactive={isEditing}
           isWeighted={isWeighted}
           isDirected={isDirected}
           visitedSet={currentFrameData.visitedNodes}
           currentNode={currentFrameData.currentNode}
+          className="w-full"
         />
-=======
-  nodes={nodes}
-  edges={edges}
-  onAddNode={addNode}
-  onAddEdge={addEdge}
-  onRemoveNode={removeNode}
-  onRemoveEdge={removeEdge}
-  onReverseEdge={reverseEdge}
-  onMoveNode={moveNode}
-  animationState={!isEditing ? currentFrameData : {}}
-  interactive={isEditing}
-  isWeighted={isWeighted}
-  isDirected={isDirected}
-  className="w-full"
-/>
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
 
         {/* Controls Bar */}
         <PlaybackControls
@@ -626,15 +590,19 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         {/* Adjacency Panel — now uses the shared component */}
         <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
           <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Adjacency Representation</h3>
-<<<<<<< HEAD:app/visualizer/graph/components/GraphVisualizer.jsx
           <AdjacencyPanel
             nodes={nodes}
             edges={edges}
             isDirected={isDirected}
             isWeighted={isWeighted}
           />
-=======
-          <div className="space-y-4">
+          <AdjacencyPanel
+            nodes={nodes}
+            edges={edges}
+            isDirected={isDirected}
+            isWeighted={isWeighted}
+          />
+          <div className="mt-4 space-y-4">
             {showFloydMatrix && (
               <div>
                 <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Floyd-Warshall Distance Matrix</h4>
@@ -740,7 +708,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </div>
             </div>
           </div>
->>>>>>> upstream/main:src/app/visualizer/graph/components/GraphVisualizer.jsx
         </div>
       </div>
     </div>
