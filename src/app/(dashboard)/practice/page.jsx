@@ -328,7 +328,7 @@ export default function PracticeHub() {
 
   const filteredTopics = useMemo(() => {
     if (!search.trim()) return practiceData;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     return practiceData.filter(
       (topic) =>
         topic.title.toLowerCase().includes(q) ||

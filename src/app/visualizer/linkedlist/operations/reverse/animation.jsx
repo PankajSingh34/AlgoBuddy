@@ -7,6 +7,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { reverseGenerator } from "@/features/algorithms/linkedlist/reverseLogic";
 
 const LinkedListReverse = () => {
   const [list, setList] = useState([]);
@@ -61,20 +62,12 @@ const LinkedListReverse = () => {
     setIsAnimating(true);
     animationTimeline.current.clear();
 
-    const nodes = list.map((node) => ({ ...node }));
-    let prevIndex = -1;
-    let currentIndex = 0;
-    let nextIndex =
-      nodes[currentIndex] && nodes[currentIndex].next === "NULL"
-        ? -1
-        : currentIndex + 1;
-
-    const updateNextField = (index, nextIdx) => {
-      nodes[index].next =
-        nextIdx === -1
-          ? "NULL"
-          : `0x${(1000 + nextIdx).toString(16).padStart(4, "0")}`;
-    };
+    const generator = reverseGenerator(list);
+    let step = generator.next();
+    if (step.done) {
+        setIsAnimating(false);
+        return;
+    }
 
     gsap.set(listRefs.current, {
       backgroundColor: "#10b981",
@@ -87,29 +80,13 @@ const LinkedListReverse = () => {
       listRefs.current.forEach((el, idx) => {
         if (!el) return;
         if (idx === currI) {
-          gsap.to(el, {
-            backgroundColor: "#2563eb",
-            scale: 1.1,
-            duration: 0.3,
-          });
+          gsap.to(el, { backgroundColor: "#2563eb", scale: 1.1, duration: 0.3 });
         } else if (idx === prevI) {
-          gsap.to(el, {
-            backgroundColor: "#f59e0b",
-            scale: 1.05,
-            duration: 0.3,
-          });
+          gsap.to(el, { backgroundColor: "#f59e0b", scale: 1.05, duration: 0.3 });
         } else if (idx === nextI) {
-          gsap.to(el, {
-            backgroundColor: "#6b7280",
-            scale: 1,
-            duration: 0.3,
-          });
+          gsap.to(el, { backgroundColor: "#6b7280", scale: 1, duration: 0.3 });
         } else {
-          gsap.to(el, {
-            backgroundColor: "#10b981",
-            scale: 1,
-            duration: 0.3,
-          });
+          gsap.to(el, { backgroundColor: "#10b981", scale: 1, duration: 0.3 });
         }
       });
     };
@@ -158,11 +135,7 @@ const LinkedListReverse = () => {
           return;
         }
         const rect = nodeEl.getBoundingClientRect();
-        const left =
-          rect.left -
-          containerRect.left +
-          rect.width / 2 -
-          label.offsetWidth / 2;
+        const left = rect.left - containerRect.left + rect.width / 2 - label.offsetWidth / 2;
         label.style.left = `${left}px`;
         label.style.top = `${offsetTop}px`;
         label.style.opacity = "1";
@@ -173,70 +146,56 @@ const LinkedListReverse = () => {
       setLabelPos(nextLabel, nextI);
     };
 
-    setCurrentPointer(currentIndex);
-    setPrevPointer(prevIndex);
-    setNextPointer(nextIndex);
-    highlightNodes(prevIndex, currentIndex, nextIndex);
-    positionPointers(prevIndex, currentIndex, nextIndex);
+    while (!step.done) {
+        const state = step.value;
+        
+        setCurrentPointer(state.currentIndex);
+        setPrevPointer(state.prevIndex);
+        setNextPointer(state.nextIndex);
+        highlightNodes(state.prevIndex, state.currentIndex, state.nextIndex);
+        positionPointers(state.prevIndex, state.currentIndex, state.nextIndex);
 
-    while (currentIndex !== -1) {
-      setCurrentPointer(currentIndex);
-      setPrevPointer(prevIndex);
-      setNextPointer(nextIndex);
-      highlightNodes(prevIndex, currentIndex, nextIndex);
-      positionPointers(prevIndex, currentIndex, nextIndex);
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      animationTimeline.current.clear();
-
-      const currentNodeEl = listRefs.current[currentIndex];
-      if (currentNodeEl) {
-        const nextFieldEl = currentNodeEl.querySelector(".text-xs");
-        if (nextFieldEl) {
-          await new Promise((resolve) => {
-            gsap.to(nextFieldEl, {
-              opacity: 0,
-              duration: 0.3,
-              onComplete: () => {
-                updateNextField(currentIndex, prevIndex);
-                setList([...nodes]);
-                resolve();
-              },
-            });
-          });
-          await new Promise((resolve) => {
-            gsap.to(nextFieldEl, {
-              opacity: 1,
-              duration: 0.3,
-              onComplete: resolve,
-            });
-          });
+        if (state.type === 'start') {
+            // Initial state set, no delay needed
+        } else if (state.type === 'step_pointers') {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+        } else if (state.type === 'step_update_link') {
+            animationTimeline.current.clear();
+            const currentNodeEl = listRefs.current[state.currentIndex];
+            if (currentNodeEl) {
+                const nextFieldEl = currentNodeEl.querySelector(".text-xs");
+                if (nextFieldEl) {
+                    await new Promise((resolve) => {
+                        gsap.to(nextFieldEl, {
+                            opacity: 0,
+                            duration: 0.3,
+                            onComplete: () => {
+                                setList(state.list);
+                                resolve();
+                            },
+                        });
+                    });
+                    await new Promise((resolve) => {
+                        gsap.to(nextFieldEl, { opacity: 1, duration: 0.3, onComplete: resolve });
+                    });
+                } else {
+                    setList(state.list);
+                }
+            } else {
+                setList(state.list);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 500));
+        } else if (state.type === 'complete') {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            if (pointerContainer.parentNode) {
+                pointerContainer.parentNode.removeChild(pointerContainer);
+            }
+            setIsAnimating(false);
+            return;
         }
-      }
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      prevIndex = currentIndex;
-      currentIndex = nextIndex;
-      nextIndex =
-        currentIndex !== -1 && nodes[currentIndex].next !== "NULL"
-          ? currentIndex + 1
-          : -1;
+        step = generator.next();
     }
-
-    highlightNodes(-1, -1, -1);
-    setCurrentPointer(-1);
-    setPrevPointer(-1);
-    setNextPointer(-1);
-    positionPointers(-1, -1, -1);
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    if (pointerContainer.parentNode) {
-      pointerContainer.parentNode.removeChild(pointerContainer);
-    }
-
-    setIsAnimating(false);
   };
 
   useEffect(() => {

@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import {
   getPublicCollaborationSession,
   joinCollaborationSession,
-  updateCollaborationSession,
   validateCsrfOrigin,
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -98,12 +97,6 @@ export async function POST(request, { params }) {
 
   if (result.error) {
     return Response.json({ error: result.error }, { status: result.status || 400 });
-  }
-
-  if (result.isNewParticipant) {
-    await updateCollaborationSession(result.session.id, {
-      participantCount: Math.max(0, (result.session?.participantCount || 0) + 1),
-    });
   }
 
   return Response.json(result);
