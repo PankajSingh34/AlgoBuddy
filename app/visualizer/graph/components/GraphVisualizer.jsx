@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Play, 
   Pause, 
@@ -22,6 +22,7 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
+import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import { 
   bfsFrames, 
   dfsFrames, 
@@ -32,6 +33,11 @@ import {
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
+
+// Algorithms that require weighted edges
+const WEIGHTED_ALGORITHMS = ["dijkstra", "prim", "kruskal"];
+// Algorithms that require directed edges
+const DIRECTED_ALGORITHMS = ["dijkstra", "topological-sort"];
 
 const defaultGraphs = {
   bfs: {
@@ -224,14 +230,29 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isEditing, setIsEditing] = useState(true);
 
+  // Derived flags
+  const isWeighted = WEIGHTED_ALGORITHMS.includes(algorithm);
+  const isDirected = DIRECTED_ALGORITHMS.includes(algorithm);
+
+  // Handle edge weight updates from GraphCanvas
+  const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
+    setEdges((prev) =>
+      prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
+    );
+  }, []);
+
+  // When adding an edge, default weight = 1
+  const handleAddEdge = useCallback((edge) => {
+    setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
+  }, [isDirected]);
+
   const frames = useMemo(() => {
-    // Convert edges to adjacency list
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
-      if (algorithm === "dijkstra" || algorithm === "prim") {
-        adj[e.from].push({ node: e.to, weight: e.weight });
-        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight });
+      if (isWeighted) {
+        adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
+        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
       } else {
         adj[e.from].push(e.to);
         if (!e.directed) adj[e.to].push(e.from);
@@ -248,7 +269,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
-  }, [nodes, edges, algorithm, initialStartNode]);
+  }, [nodes, edges, algorithm, initialStartNode, isWeighted]);
 
   useEffect(() => {
     let timer;
@@ -292,7 +313,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   return (
     <div className="mt-8 space-y-6">
-      {/* Main Visualizer Area */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-2">
@@ -307,6 +327,21 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               <Settings2 className="h-4 w-4" />
               {isEditing ? "Editing Mode" : "Visualization Mode"}
             </button>
+
+            {/* Weighted badge */}
+            {isWeighted && (
+              <span className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-xs font-semibold text-yellow-600 dark:text-yellow-400">
+                Weighted
+              </span>
+            )}
+
+            {/* Directed badge */}
+            {isDirected && (
+              <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                Directed
+              </span>
+            )}
+
             {!isEditing && (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 rounded-lg bg-surface-100 px-3 py-1.5 text-sm font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300">
@@ -323,6 +358,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                     Stack: [{currentFrameData.stack.join(", ")}]
                   </div>
                 )}
+                {currentFrameData.distances && (
+                  <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-1.5 text-xs font-bold text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    Distances: {Object.entries(currentFrameData.distances)
+                      .map(([k, v]) => `${k}:${v === Infinity ? "∞" : v}`)
+                      .join(", ")}
+                  </div>
+                )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-bold text-success">
                     Order: {currentFrameData.result.join(" → ")}
@@ -336,13 +378,20 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         <GraphCanvas
           nodes={nodes}
           edges={edges}
-          onUpdateNodes={setNodes}
-          onUpdateEdges={setEdges}
+          onAddNode={(node) => setNodes((prev) => [...prev, { ...node, id: String(prev.length), label: String(prev.length) }])}
+          onAddEdge={handleAddEdge}
+          onRemoveNode={(id) => {
+            setNodes((prev) => prev.filter((n) => n.id !== id));
+            setEdges((prev) => prev.filter((e) => e.from !== id && e.to !== id));
+          }}
+          onRemoveEdge={(idx) => setEdges((prev) => prev.filter((_, i) => i !== idx))}
+          onReverseEdge={(idx) => setEdges((prev) => prev.map((e, i) => i === idx ? { ...e, from: e.to, to: e.from } : e))}
+          onUpdateEdgeWeight={handleUpdateEdgeWeight}
           animationState={!isEditing ? currentFrameData : {}}
-          interactive={isEditing}
-          isWeighted={algorithm === "dijkstra" || algorithm === "prim" || algorithm === "kruskal"}
-          isDirected={algorithm === "dijkstra" || algorithm === "topological-sort"}
-          className="w-full"
+          isWeighted={isWeighted}
+          isDirected={isDirected}
+          visitedSet={currentFrameData.visitedNodes}
+          currentNode={currentFrameData.currentNode}
         />
 
         {/* Controls Bar */}
@@ -409,7 +458,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               <BarChart3 className="h-5 w-5" />
               <h3 className="font-bold">Complexity Analysis</h3>
             </div>
-            
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={complexityData[algorithm]} layout="vertical" margin={{ left: -20, right: 20 }}>
@@ -437,7 +485,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-surface-500">Worst Case Time</span>
@@ -473,57 +520,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           </div>
         </div>
 
-        {/* Adjacency Representations */}
+        {/* Adjacency Panel — now uses the shared component */}
         <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
           <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Adjacency Representation</h3>
-          <div className="space-y-4">
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency List</h4>
-              <div className="max-h-64 overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                {nodes.map(node => {
-                  const neighbors = edges
-                    .filter(e => e.from === node.id || (!e.directed && e.to === node.id))
-                    .map(e => e.from === node.id ? e.to : e.from);
-                  return (
-                    <div key={node.id} className="mb-1">
-                      <span className="text-primary font-bold">{node.label}</span>: [{neighbors.join(", ")}]
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency Matrix</h4>
-              <div className="overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                <table className="w-full border-collapse text-center">
-                  <thead>
-                    <tr>
-                      <th className="p-1"></th>
-                      {nodes.map(n => <th key={n.id} className="p-1 text-primary">{n.label}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nodes.map(row => (
-                      <tr key={row.id}>
-                        <td className="p-1 font-bold text-primary">{row.label}</td>
-                        {nodes.map(col => {
-                          const edge = edges.find(e => 
-                            (e.from === row.id && e.to === col.id) || 
-                            (!e.directed && ((e.from === row.id && e.to === col.id) || (e.from === col.id && e.to === row.id)))
-                          );
-                          return (
-                            <td key={col.id} className="border border-surface-200 p-1 dark:border-surface-800">
-                              {edge ? (algorithm === "dijkstra" || algorithm === "prim" || algorithm === "kruskal" ? edge.weight : 1) : 0}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <AdjacencyPanel
+            nodes={nodes}
+            edges={edges}
+            isDirected={isDirected}
+            isWeighted={isWeighted}
+          />
         </div>
       </div>
     </div>

@@ -38,6 +38,9 @@ const DIRECTED_ONLY = ["topological", "dijkstra"];
 // Algorithms that only make sense on undirected graphs
 const UNDIRECTED_ONLY = ["prim", "kruskal"];
 
+// Algorithms that require weighted edges
+const WEIGHTED_ONLY = ["dijkstra", "prim", "kruskal"];
+
 function getNode(id) {
   return nodes.find((node) => node.id === id);
 }
@@ -46,7 +49,6 @@ function edgeId(edge) {
   return `${edge.from}-${edge.to}`;
 }
 
-// Compute arrow endpoint so arrowhead sits on node boundary, not inside it
 function arrowEndpoint(x1, y1, x2, y2, r = 6) {
   const dx = x2 - x1;
   const dy = y2 - y1;
@@ -60,10 +62,15 @@ function arrowEndpoint(x1, y1, x2, y2, r = 6) {
 export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   const [step, setStep] = useState(0);
 
-  // Determine if directed toggle should be shown and its default
-  const canToggle = !DIRECTED_ONLY.includes(type) && !UNDIRECTED_ONLY.includes(type);
+  // Directed toggle
+  const canToggleDirected = !DIRECTED_ONLY.includes(type) && !UNDIRECTED_ONLY.includes(type);
   const forceDirected = DIRECTED_ONLY.includes(type);
   const [isDirected, setIsDirected] = useState(forceDirected);
+
+  // Weighted toggle — auto-lock ON for weight-dependent algorithms
+  const forceWeighted = WEIGHTED_ONLY.includes(type);
+  const canToggleWeighted = !WEIGHTED_ONLY.includes(type);
+  const [isWeighted, setIsWeighted] = useState(forceWeighted);
 
   const sequence = sequences[type] || sequences.bfs;
   const current = sequence[Math.min(step, sequence.length - 1)];
@@ -84,7 +91,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
       const next = active[i];
       const direct = `${prev}-${next}`;
       const reverse = `${next}-${prev}`;
-      // In directed mode only match forward direction
       const found = isDirected
         ? edges.find((edge) => edgeId(edge) === direct)
         : edges.find((edge) => edgeId(edge) === direct || edgeId(edge) === reverse);
@@ -96,8 +102,13 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   const advance = () => setStep((value) => (value + 1) % sequence.length);
   const reset = () => setStep(0);
 
-  const handleToggle = () => {
+  const handleToggleDirected = () => {
     setIsDirected((d) => !d);
+    reset();
+  };
+
+  const handleToggleWeighted = () => {
+    setIsWeighted((w) => !w);
     reset();
   };
 
@@ -118,7 +129,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
           {!UNDIRECTED_ONLY.includes(type) && (
             <button
               type="button"
-              onClick={canToggle ? handleToggle : undefined}
+              onClick={canToggleDirected ? handleToggleDirected : undefined}
               title={
                 forceDirected
                   ? "This algorithm requires a directed graph"
@@ -128,11 +139,29 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                 isDirected
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-surface-300 text-surface-600 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-300"
-              } ${!canToggle ? "cursor-default opacity-70" : ""}`}
+              } ${!canToggleDirected ? "cursor-default opacity-70" : ""}`}
             >
               {isDirected ? "Directed" : "Undirected"}
             </button>
           )}
+
+          {/* Weighted / Unweighted toggle — locked ON for dijkstra/prim/kruskal */}
+          <button
+            type="button"
+            onClick={canToggleWeighted ? handleToggleWeighted : undefined}
+            title={
+              forceWeighted
+                ? "This algorithm requires a weighted graph"
+                : "Toggle weighted / unweighted"
+            }
+            className={`btn-base border text-sm transition-colors ${
+              isWeighted
+                ? "border-yellow-500 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+                : "border-surface-300 text-surface-600 hover:border-yellow-500 hover:text-yellow-600 dark:border-surface-700 dark:text-surface-300"
+            } ${!canToggleWeighted ? "cursor-default opacity-70" : ""}`}
+          >
+            {isWeighted ? "Weighted" : "Unweighted"}
+          </button>
 
           <button
             type="button"
@@ -160,7 +189,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
           aria-label={`${title} graph animation`}
           className="min-h-[280px] w-full rounded-xl bg-surface-50 dark:bg-surface-950"
         >
-          {/* Arrowhead marker for directed mode */}
           <defs>
             <marker
               id="arrowhead"
@@ -205,7 +233,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             const end = getNode(edge.to);
             const active = activeEdges.has(edgeId(edge));
 
-            // For directed mode, offset the endpoint so arrowhead is visible
             const { x: ex, y: ey } = isDirected
               ? arrowEndpoint(start.x, start.y, end.x, end.y)
               : { x: end.x, y: end.y };
@@ -231,14 +258,18 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                       : undefined
                   }
                 />
-                <text
-                  x={(start.x + end.x) / 2}
-                  y={(start.y + end.y) / 2 - 1}
-                  textAnchor="middle"
-                  className="fill-surface-500 text-[4px] font-semibold"
-                >
-                  {edge.weight}
-                </text>
+                {/* Weight label — only shown in weighted mode */}
+                {isWeighted && (
+                  <text
+                    x={(start.x + end.x) / 2}
+                    y={(start.y + end.y) / 2 - 1}
+                    textAnchor="middle"
+                    className="fill-yellow-500 text-[4px] font-bold"
+                    fontSize="4"
+                  >
+                    {edge.weight}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -297,12 +328,19 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             ))}
           </div>
 
-          {/* Directed mode info badge */}
-          {isDirected && (
-            <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-              Directed mode — edges have one-way direction
-            </div>
-          )}
+          {/* Mode info badges */}
+          <div className="mt-4 flex flex-col gap-2">
+            {isDirected && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                Directed mode — edges have one-way direction
+              </div>
+            )}
+            {isWeighted && (
+              <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+                Weighted mode — edge costs are shown
+              </div>
+            )}
+          </div>
 
           <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">
             Current focus:{" "}

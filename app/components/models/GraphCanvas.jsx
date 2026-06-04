@@ -33,10 +33,43 @@ function SelfLoop({ cx, cy, color }) {
   );
 }
 
+// Renders an editable weight label at the midpoint of an edge
+function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange }) {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+
+  return (
+    <foreignObject x={mx - 16} y={my - 14} width={32} height={24}>
+      <input
+        xmlns="http://www.w3.org/1999/xhtml"
+        type="number"
+        value={weight}
+        min={1}
+        onChange={(e) => onWeightChange(Number(e.target.value) || 1)}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "#1f2937",
+          color: "#f9fafb",
+          border: "1px solid #4b5563",
+          borderRadius: 4,
+          textAlign: "center",
+          fontSize: 11,
+          fontFamily: "monospace",
+          padding: 0,
+          outline: "none",
+        }}
+      />
+    </foreignObject>
+  );
+}
+
 export default function GraphCanvas({
   nodes,
   edges,
   isDirected,
+  isWeighted,         // NEW prop
   visitedSet,
   currentNode,
   onAddNode,
@@ -44,6 +77,7 @@ export default function GraphCanvas({
   onRemoveNode,
   onRemoveEdge,
   onReverseEdge,
+  onUpdateEdgeWeight, // NEW prop — (edgeIdx, newWeight) => void
 }) {
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
@@ -72,7 +106,8 @@ export default function GraphCanvas({
       } else if (edgeStart === id) {
         setEdgeStart(null);
       } else {
-        onAddEdge({ from: edgeStart, to: id });
+        // When adding an edge in weighted mode, default weight = 1
+        onAddEdge({ from: edgeStart, to: id, weight: 1 });
         setEdgeStart(null);
       }
     },
@@ -171,18 +206,30 @@ export default function GraphCanvas({
           : { x: tgt.x, y: tgt.y };
 
         return (
-          <line
-            key={idx}
-            x1={src.x}
-            y1={src.y}
-            x2={ex}
-            y2={ey}
-            stroke={edgeColor}
-            strokeWidth={isActive ? 2 : 1.5}
-            markerEnd={markerEnd}
-            style={{ cursor: "pointer" }}
-            onContextMenu={(e) => handleEdgeRightClick(e, idx)}
-          />
+          <g key={idx}>
+            <line
+              x1={src.x}
+              y1={src.y}
+              x2={ex}
+              y2={ey}
+              stroke={edgeColor}
+              strokeWidth={isActive ? 2 : 1.5}
+              markerEnd={markerEnd}
+              style={{ cursor: "pointer" }}
+              onContextMenu={(e) => handleEdgeRightClick(e, idx)}
+            />
+            {/* Weight label — only shown in weighted mode */}
+            {isWeighted && (
+              <EdgeWeightLabel
+                x1={src.x}
+                y1={src.y}
+                x2={ex}
+                y2={ey}
+                weight={edge.weight ?? 1}
+                onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
+              />
+            )}
+          </g>
         );
       })}
 
