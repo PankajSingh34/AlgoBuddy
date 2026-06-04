@@ -490,7 +490,7 @@ const handleSearchChange = (e) => {
 };
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     return initialSections
       .map((sec) => {
         const titleHit = sec.title.toLowerCase().includes(q);
@@ -508,7 +508,7 @@ const handleSearchChange = (e) => {
 
   const flatResults = useMemo(() => {
     if (!search.trim()) return [];
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     const r = [];
     initialSections.forEach((sec) =>
       sec.subsections?.forEach((sub) =>

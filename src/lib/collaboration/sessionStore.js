@@ -21,6 +21,101 @@ const ATOMIC_WRITE_SCRIPT = `
   return 1
 `;
 
+const ATOMIC_JOIN_SCRIPT = `
+  local key = KEYS[1]
+  local indexKey = KEYS[2]
+  local userId = ARGV[1]
+  local tokenHash = ARGV[2]
+  local tokenStr = ARGV[3]
+  local expiresAt = ARGV[4]
+  local ttl = ARGV[5]
+  local score = ARGV[6]
+  local nowStr = ARGV[7]
+
+  local json = redis.call('GET', key)
+  if not json then return 'NOT_FOUND' end
+
+  local session = cjson.decode(json)
+
+  local participants = session.participantUserIds or {}
+  local isNew = true
+  for i, id in ipairs(participants) do
+    if id == userId then
+      isNew = false
+      break
+    end
+  end
+
+  if isNew then
+    table.insert(participants, userId)
+    session.participantUserIds = participants
+    session.participantCount = (session.participantCount or 0) + 1
+  end
+
+  local tokens = session.subscriptionTokens or {}
+  local activeTokens = {}
+  for i, entry in ipairs(tokens) do
+    if entry.expiresAt and entry.expiresAt > nowStr then
+      table.insert(activeTokens, entry)
+    end
+  end
+
+  table.insert(activeTokens, {
+    tokenHash = tokenHash,
+    userId = userId,
+    expiresAt = expiresAt
+  })
+  session.subscriptionTokens = activeTokens
+
+  redis.call('SET', key, cjson.encode(session), 'EX', ttl)
+  redis.call('ZADD', indexKey, score, key)
+
+  return cjson.encode(session)
+`;
+
+const ATOMIC_LEAVE_SCRIPT = `
+  local key = KEYS[1]
+  local indexKey = KEYS[2]
+  local userId = ARGV[1]
+  local ttl = ARGV[2]
+  local score = ARGV[3]
+
+  local json = redis.call('GET', key)
+  if not json then return 'NOT_FOUND' end
+
+  local session = cjson.decode(json)
+
+  local participants = session.participantUserIds or {}
+  local newParticipants = {}
+  local found = false
+  for i, id in ipairs(participants) do
+    if id == userId then
+      found = true
+    else
+      table.insert(newParticipants, id)
+    end
+  end
+
+  if not found then return cjson.encode({ found = false }) end
+
+  session.participantUserIds = newParticipants
+  session.participantCount = math.max(0, (session.participantCount or 1) - 1)
+
+  local tokens = session.subscriptionTokens or {}
+  local remainingTokens = {}
+  for i, entry in ipairs(tokens) do
+    if entry.userId ~= userId then
+      table.insert(remainingTokens, entry)
+    end
+  end
+  session.subscriptionTokens = remainingTokens
+
+  redis.call('SET', key, cjson.encode(session), 'EX', ttl)
+  redis.call('ZADD', indexKey, score, key)
+
+  return cjson.encode({ found = true, participantCount = session.participantCount })
+`;
+
 const ATOMIC_CONSUME_TOKEN_SCRIPT = `
   local key = KEYS[1]
   local indexKey = KEYS[2]
@@ -99,7 +194,7 @@ function validateCsrfOrigin(request) {
     process.env.NEXT_PUBLIC_APP_URL,
   ].filter(Boolean);
 
-  if (!origin && !referer) return true;
+  if (!origin && !referer) return false;
   const source = origin || referer;
   return allowedOrigins.some((allowed) => source.startsWith(allowed));
 }
@@ -285,42 +380,133 @@ function pruneActiveSubscriptionTokens(tokens, nowMs = Date.now()) {
   });
 }
 
-async function issueSubscriptionTokenForParticipant(session, userId) {
+async function issueSubscriptionTokenForParticipant(sessionId, userId) {
   const participantUserId = normalizeParticipantUserId(userId);
   if (!participantUserId) {
     return { error: "Authentication required", status: 401 };
   }
 
-  const participantUserIds = Array.isArray(session.participantUserIds)
-    ? [...session.participantUserIds]
-    : [];
-
-  const isNewParticipant = !participantUserIds.includes(participantUserId);
-  if (isNewParticipant) {
-    participantUserIds.push(participantUserId);
-  }
-
   const token = createSubscriptionToken();
   const tokenHash = hashSubscriptionToken(token);
   const nowMs = Date.now();
-  const nextTokens = pruneActiveSubscriptionTokens(session.subscriptionTokens, nowMs);
-  nextTokens.push({
-    tokenHash,
-    userId: participantUserId,
-    expiresAt: new Date(nowMs + SUBSCRIPTION_TOKEN_TTL_MS).toISOString(),
-  });
+  const expiresAt = new Date(nowMs + SUBSCRIPTION_TOKEN_TTL_MS).toISOString();
+  const nowStr = new Date(nowMs).toISOString();
+  const ttl = SESSION_TTL_SECONDS;
+  const score = nowMs;
 
-  const nextSession = await writeSession({
-    ...session,
-    participantUserIds,
-    subscriptionTokens: nextTokens,
-  });
+  if (redis) {
+    const result = await redis.eval(
+      ATOMIC_JOIN_SCRIPT,
+      [sessionKey(sessionId), SESSION_INDEX_KEY],
+      [participantUserId, tokenHash, token, expiresAt, ttl, score, nowStr],
+    );
 
-  return {
-    session: discoverableSessionView(nextSession, { includeJoinCode: false }),
-    subscriptionToken: token,
-    isNewParticipant,
-  };
+    if (result === 'NOT_FOUND') {
+      return { error: "Session not found", status: 404 };
+    }
+
+    const nextSession = typeof result === 'string' ? JSON.parse(result) : result;
+
+    const participantUserIds = Array.isArray(nextSession.participantUserIds)
+      ? nextSession.participantUserIds
+      : [];
+    const isNewParticipant = participantUserIds.includes(participantUserId);
+
+    return {
+      session: discoverableSessionView(nextSession, { includeJoinCode: false }),
+      subscriptionToken: token,
+      isNewParticipant,
+    };
+  }
+
+  return withMemoryLock(sessionId, async () => {
+    const session = await readSession(sessionId);
+    if (!session) {
+      return { error: "Session not found", status: 404 };
+    }
+
+    const participantUserIds = Array.isArray(session.participantUserIds)
+      ? [...session.participantUserIds]
+      : [];
+
+    const isNewParticipant = !participantUserIds.includes(participantUserId);
+    if (isNewParticipant) {
+      participantUserIds.push(participantUserId);
+    }
+
+    const nextTokens = pruneActiveSubscriptionTokens(session.subscriptionTokens, nowMs);
+    nextTokens.push({
+      tokenHash,
+      userId: participantUserId,
+      expiresAt,
+    });
+
+    const nextSession = await writeSession({
+      ...session,
+      participantUserIds,
+      participantCount: isNewParticipant
+        ? (session.participantCount || 0) + 1
+        : (session.participantCount || 0),
+      subscriptionTokens: nextTokens,
+    });
+
+    return {
+      session: discoverableSessionView(nextSession, { includeJoinCode: false }),
+      subscriptionToken: token,
+      isNewParticipant,
+    };
+  });
+}
+
+async function leaveCollaborationSession(sessionIdentifier, userId) {
+  const participantUserId = normalizeParticipantUserId(userId);
+  if (!participantUserId) {
+    return { error: "Authentication required", status: 401 };
+  }
+
+  if (redis) {
+    const result = await redis.eval(
+      ATOMIC_LEAVE_SCRIPT,
+      [sessionKey(sessionIdentifier), SESSION_INDEX_KEY],
+      [participantUserId, SESSION_TTL_SECONDS, Date.now()],
+    );
+
+    if (result === 'NOT_FOUND') {
+      return { error: "Session not found", status: 404 };
+    }
+
+    const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+    return { left: parsed.found, participantCount: parsed.participantCount };
+  }
+
+  return withMemoryLock(sessionIdentifier, async () => {
+    const session = await readSession(sessionIdentifier);
+    if (!session) {
+      return { error: "Session not found", status: 404 };
+    }
+
+    const participantUserIds = Array.isArray(session.participantUserIds)
+      ? session.participantUserIds
+      : [];
+
+    if (!participantUserIds.includes(participantUserId)) {
+      return { left: false, participantCount: session.participantCount || 0 };
+    }
+
+    const nextUserIds = participantUserIds.filter((id) => id !== participantUserId);
+    const nextTokens = Array.isArray(session.subscriptionTokens)
+      ? session.subscriptionTokens.filter((entry) => entry.userId !== participantUserId)
+      : [];
+
+    await writeSession({
+      ...session,
+      participantUserIds: nextUserIds,
+      participantCount: Math.max(0, (session.participantCount || 1) - 1),
+      subscriptionTokens: nextTokens,
+    });
+
+    return { left: true, participantCount: Math.max(0, (session.participantCount || 1) - 1) };
+  });
 }
 
 /**
@@ -601,13 +787,17 @@ export async function joinCollaborationSession(sessionIdentifier, { password, us
     }
   }
 
-  return issueSubscriptionTokenForParticipant(session, userId);
+  return issueSubscriptionTokenForParticipant(session.id, userId);
 }
 
 export async function claimSessionPresenter(sessionId, { sessionSecret, userId } = {}) {
   const session = await readSession(sessionId);
   if (!session) {
     return { error: "Session not found", status: 404 };
+  }
+
+  if (!sessionSecret || session.sessionSecret !== sessionSecret) {
+    return { error: "Invalid session secret. Only the session creator can claim presenter.", status: 403 };
   }
 
   if (!userId) {
@@ -755,3 +945,5 @@ export async function updateCollaborationSession(sessionId, patch = {}) {
 
   return discoverableSessionView(next);
 }
+
+export { leaveCollaborationSession };

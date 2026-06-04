@@ -1,5 +1,6 @@
-import React from "react";
-import { IoMdInformationCircle } from "react-icons/io";
+import Link from 'next/link'
+import React from 'react'
+import { IoMdInformationCircle } from 'react-icons/io'
 
 const AboutSection = () => {
   return (
@@ -12,7 +13,7 @@ const AboutSection = () => {
             About The Platform
           </span>
           <h2 className="text-4xl md:text-5xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-6">
-            Revolutionizing{" "}
+            Revolutionizing{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-udemy-purple to-udemy-purple-dark dark:from-udemy-purple-light dark:to-udemy-purple">
               DSA Learning
             </span>
@@ -44,11 +45,19 @@ const AboutSection = () => {
             </div>
           </div>
         </div>
+      <div className="mt-20 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-udemy-dark-border hover:border-primary hover:text-primary transition"
+        >
+          ← Back to Home
+        </Link>
+      </div>
         {/* Divider */}
         <div className="mt-20 mx-auto h-[1px] max-w-4xl bg-gradient-to-r rounded-sm from-transparent via-udemy-purple/20 dark:via-udemy-purple/30 to-transparent"></div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default AboutSection;
+export default AboutSection

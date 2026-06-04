@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   FiChevronDown,
   FiChevronUp,
@@ -40,7 +41,7 @@ const FAQSection = () => {
 
   return (
     <section className="relative py-6 bg-udemy-surface dark:bg-udemy-dark-bg overflow-hidden">
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto  px-6 relative z-10">
         {/* Section Header */}
         <div className="max-w-4xl mx-auto text-center mb-16">
           <span className="inline-flex items-center justify-center gap-2 text-udemy-purple dark:text-udemy-purple-light text-sm font-bold tracking-wider uppercase mb-4">
@@ -111,7 +112,12 @@ const FAQSection = () => {
             <Support />
           </div>
         </div>
-
+             <Link
+          href="/"
+          className=" mt-16 mx-auto flex w-fit items-center gap-2 px-6 py-3 rounded-2xl border border-udemy-dark-border hover:border-primary hover:text-primary transition"
+        >
+          ← Back to Home
+        </Link>
         {/* Divider */}
         <div className="mt-20 mx-auto h-[1px] max-w-4xl bg-gradient-to-r rounded-sm from-transparent via-udemy-purple/20 dark:via-udemy-purple/30 to-transparent"></div>
       </div>

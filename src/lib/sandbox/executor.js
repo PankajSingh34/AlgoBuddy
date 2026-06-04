@@ -20,16 +20,21 @@ async function executeCode(code) {
   }
 
   try {
-    const sandbox = {
-      console: {
-        log:   (...a) => outputLines.push(a.map(String).join(" ")),
-        warn:  (...a) => outputLines.push("[warn] " + a.map(String).join(" ")),
-        error: (...a) => outputLines.push("[error] " + a.map(String).join(" ")),
-        info:  (...a) => outputLines.push("[info] " + a.map(String).join(" ")),
-      },
+    const sandbox = Object.create(null);
+    sandbox.console = {
+      log:   (...a) => outputLines.push(a.map(String).join(" ")),
+      warn:  (...a) => outputLines.push("[warn] " + a.map(String).join(" ")),
+      error: (...a) => outputLines.push("[error] " + a.map(String).join(" ")),
+      info:  (...a) => outputLines.push("[info] " + a.map(String).join(" ")),
     };
 
     const context = vm.createContext(sandbox);
+
+    vm.runInContext(`
+      Object.freeze(Object.prototype);
+      Object.freeze(Array.prototype);
+      Object.freeze(Function.prototype);
+    `, context);
 
     const script = new vm.Script(code, { filename: "user-code.js" });
 

@@ -12,6 +12,8 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are **AlgoBot** 🤖 — the official AI assistant embedded inside **AlgoBuddy** (https://www.algobuddy.me), a free, open-source, interactive platform built to help students and developers master Data Structures & Algorithms (DSA) through visualizations, practice, and progress tracking.
@@ -211,6 +213,19 @@ function toGeminiContents(messages) {
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(request) {
+  const ip = getClientIp(request.headers);
+  const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);
+  if (!allowed) {
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json",
+        "Retry-After": retryAfter.toString(),
+      },
+    });
+  }
+
   let body;
   try {
     body = await request.json();

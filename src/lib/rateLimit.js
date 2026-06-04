@@ -15,17 +15,15 @@ function checkMemory(key) {
   const now = Date.now();
   const bucket = memoryBuckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
-    memoryBuckets.set(key, {
-      count: 1,
-      resetAt: now + WINDOW_SECONDS * 1_000,
-    });
-    return { allowed: true, remaining: MAX_REQUESTS - 1 };
+    const resetAt = now + WINDOW_SECONDS * 1_000;
+    memoryBuckets.set(key, { count: 1, resetAt });
+    return { allowed: true, remaining: MAX_REQUESTS - 1, resetAt };
   }
   if (bucket.count >= MAX_REQUESTS) {
-    return { allowed: false, remaining: 0 };
+    return { allowed: false, remaining: 0, resetAt: bucket.resetAt };
   }
   bucket.count += 1;
-  return { allowed: true, remaining: MAX_REQUESTS - bucket.count };
+  return { allowed: true, remaining: MAX_REQUESTS - bucket.count, resetAt: bucket.resetAt };
 }
 
 // ---------------------------------------------------------------------------
