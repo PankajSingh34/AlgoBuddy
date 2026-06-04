@@ -1,37 +1,43 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
-
+import {
+  PROGRESS_UNAVAILABLE_MESSAGE,
+  getModuleProgress,
+  saveModuleProgress,
+} from "@/lib/userProgress";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser();
   const [isDone, setIsDone] = useState(initialDone);
-  
+
   useEffect(() => {
-  const fetchUserProgress = async () => {
-    if (!user) return;
+    const fetchUserProgress = async () => {
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("is_done")
-      .eq("user_id", user.id)
-      .eq("module_id", moduleId)
-      .maybeSingle();
+      const { data, error, unavailable } = await getModuleProgress(
+        user.id,
+        moduleId
+      );
 
-    if (error) {
-      console.error("Error fetching user progress:", error);
-      return;
-    }
+      if (unavailable) {
+        setIsDone(false);
+        return;
+      }
 
-    setIsDone(data?.is_done ?? false);
-  };
+      if (error) {
+        console.error("Error fetching user progress:", error);
+        return;
+      }
 
-  fetchUserProgress();
-}, [user, moduleId]);
+      setIsDone(data?.is_done ?? false);
+    };
+
+    fetchUserProgress();
+  }, [user, moduleId]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -66,25 +72,25 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            module_id: moduleId,
-            is_done: !isDone,
-            updated_at: new Date(),
-          },
-          { onConflict: ["user_id", "module_id"] }
-        );
+      const nextDone = !isDone;
+      const { error, unavailable } = await saveModuleProgress({
+        userId: user.id,
+        moduleId,
+        isDone: nextDone,
+      });
 
-      if (error) {
-        console.error("Error updating progress:", error.message, error.details);
-        toast.error(`Failed to update progress: ${error.message}`);
+      if (unavailable) {
+        toast.error(PROGRESS_UNAVAILABLE_MESSAGE);
         return;
       }
 
-      setIsDone(!isDone);
+      if (error) {
+        console.error("Error updating progress:", error.message, error.details);
+        toast.error("Failed to update progress. Please try again.");
+        return;
+      }
+
+      setIsDone(nextDone);
       toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
     } catch (err) {
       console.error("Unexpected error during progress update:", err);

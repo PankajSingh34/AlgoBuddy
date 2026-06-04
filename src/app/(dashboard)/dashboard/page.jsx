@@ -9,6 +9,7 @@ import ActivityDashboard from "@/app/components/dashboard/ActivityDashboard";
 import PracticeStats from "@/app/components/dashboard/PracticeStats";
 import Footer from "@/app/components/footer";
 import { trackActivity } from "@/lib/activity";
+import { listUserProgress } from "@/lib/userProgress";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 import { practiceData } from "@/lib/practiceData";
 import { FiBookmark } from "react-icons/fi";
@@ -67,13 +68,20 @@ export default function Dashboard() {
       return;
     }
 
-    const { data: progressData, error: progressError } = await supabase
-      .from("user_progress")
-      .select("*")
-      .eq("user_id", user.id);
+    const {
+      data: progressData,
+      error: progressError,
+      unavailable: progressUnavailable,
+    } = await listUserProgress(user.id);
 
     if (progressError) {
       console.error("Progress fetch error:", progressError.message || progressError);
+      return;
+    }
+
+    if (progressUnavailable) {
+      setModules(modulesData);
+      setProgress({});
       return;
     }
 
@@ -286,4 +294,3 @@ export default function Dashboard() {
     </section>
   );
 }
-

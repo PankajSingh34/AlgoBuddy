@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabase";
 import StreakCounter from "@/app/components/dashboard/StreakCounter";
 import ActivityHeatmap from "@/app/components/dashboard/ActivityHeatmap";
 import MotivationalReminders from "@/app/components/dashboard/MotivationalReminders";
-import {ChartNoAxesCombined} from "lucide-react";
+import { ChartNoAxesCombined } from "lucide-react";
+import { listUserProgress } from "@/lib/userProgress";
 
 function ActivityDashboard({ userId }) {
   const [activityDates, setActivityDates] = useState([]);
@@ -33,14 +34,17 @@ function ActivityDashboard({ userId }) {
 
     async function fetchProgressAndModules() {
       try {
-        const { data: modulesData } = await supabase.from("modules").select("id");
-        const { data: progressData } = await supabase
-          .from("user_progress")
-          .select("module_id, is_done")
-          .eq("user_id", userId);
+        const { data: modulesData } = await supabase
+          .from("modules")
+          .select("id");
+        const { data: progressData, unavailable } =
+          await listUserProgress(userId);
 
         const total = Array.isArray(modulesData) ? modulesData.length : 0;
-        const completed = Array.isArray(progressData) ? progressData.filter((p) => p.is_done).length : 0;
+        const completed =
+          unavailable || !Array.isArray(progressData)
+            ? 0
+            : progressData.filter((p) => p.is_done).length;
         setModulesCount(total);
         setCompletedModulesCount(completed);
       } catch (err) {
