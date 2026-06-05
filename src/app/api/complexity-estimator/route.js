@@ -84,6 +84,11 @@ export async function POST(req) {
 
     // 3. Authentication Check
     const { user, configured } = await getAuthenticatedUser();
+    
+    if (process.env.NODE_ENV === "production" && !configured) {
+      return Response.json({ error: "Server misconfigured: Authentication environment variables are missing." }, { status: 500 });
+    }
+    
     if (configured && !user) {
       return Response.json({ error: "Authentication required." }, { status: 401 });
     }

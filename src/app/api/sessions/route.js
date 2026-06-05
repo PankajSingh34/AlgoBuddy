@@ -80,6 +80,11 @@ export async function POST(request) {
       return Response.json({ error: "CSRF validation failed" }, { status: 403 });
     }
     const { user, configured } = await getAuthenticatedUser();
+    
+    if (process.env.NODE_ENV === "production" && !configured) {
+      return Response.json({ error: "Server misconfigured: Authentication environment variables are missing." }, { status: 500 });
+    }
+
     if (configured && !user) {
       return Response.json(
         { error: "Authentication required" },
@@ -98,7 +103,8 @@ export async function POST(request) {
 
     const body = await request.json().catch(() => null);
     const { title, visibility, password, module } = body || {};
-    const createdBy = configured ? user?.id || "" : body?.createdBy || "";
+    // Ensure createdBy is strictly inferred from the authenticated user token (preventing spoofing)
+    const createdBy = user?.id || "";
 
     if (visibility === "private" && !password) {
       return Response.json(

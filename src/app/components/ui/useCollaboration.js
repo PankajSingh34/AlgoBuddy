@@ -61,7 +61,6 @@ export function useCollaboration({
   const [error, setError] = useState(null);
 
   const channelRef = useRef(null);
-  const broadcastRef = useRef(null);
   const sessionRef = useRef(null);
   const sequenceRef = useRef(0);
   const seenSequencesRef = useRef(new Map());
@@ -91,11 +90,6 @@ export function useCollaboration({
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
-    }
-
-    if (broadcastRef.current) {
-      broadcastRef.current.close();
-      broadcastRef.current = null;
     }
   }, []);
 
@@ -230,10 +224,6 @@ export function useCollaboration({
       payload: envelope,
     });
 
-    if (broadcastRef.current) {
-      broadcastRef.current.postMessage(envelope);
-    }
-
     return envelope;
   }, [clientId, processEnvelope]);
 
@@ -276,12 +266,6 @@ export function useCollaboration({
     }
 
     channelRef.current = channel;
-
-    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      const broadcastChannel = new BroadcastChannel(sessionChannelName);
-      broadcastChannel.onmessage = (event) => processEnvelope(event.data);
-      broadcastRef.current = broadcastChannel;
-    }
 
     return nextSession;
   }, [cleanupTransport, processEnvelope, sendEnvelope]);

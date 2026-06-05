@@ -255,7 +255,7 @@ export default function RedBlackAnimation() {
   const timerRef = useRef(null);
   useVisualizerReset(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setAnimating(false);
+    setIsAnimating(false);
     setMessage("...");
     setSteps([]);
     setCurrentStepIdx(-1);

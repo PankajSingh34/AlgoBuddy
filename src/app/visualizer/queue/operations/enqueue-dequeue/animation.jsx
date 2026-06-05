@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { enqueueGenerator, dequeueGenerator } from "@/features/algorithms/queue/enqueueDequeueLogic";
 
 const QueueVisualizer = () => {
   const [queue, setQueue] = useState([]);
@@ -20,35 +21,54 @@ const QueueVisualizer = () => {
   const { speed, setSpeed } = usePlayback(1);
 
   const enqueue = () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+    const generator = enqueueGenerator(queue, inputValue);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    setOperation(`Enqueuing "${inputValue}" to rear...`);
-    setTimeout(() => {
-      setQueue((prev) => [...prev, inputValue]);
-      setOperation(null);
-      setMessage(`"${inputValue}" added to rear`);
-      setInputValue("");
-      setIsAnimating(false);
-    }, 1000 / speed);
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setQueue(step.value.queue);
+          setOperation(null);
+          setMessage(step.value.message);
+          setInputValue("");
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
+    }
   };
 
   const dequeue = () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty!");
+    const generator = dequeueGenerator(queue);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const dequeuedValue = queue[0];
-    setOperation(`Dequeuing "${dequeuedValue}" from front...`);
-    setTimeout(() => {
-      setQueue((prev) => prev.slice(1));
-      setOperation(null);
-      setMessage(`"${dequeuedValue}" removed from front`);
-      setIsAnimating(false);
-    }, 1000 / speed);
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setQueue(step.value.queue);
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
+    }
   };
 
   const reset = () => {

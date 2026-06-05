@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src --max-warnings=0",
     "test": "npm run lint && npm run test:security",
-    "test:security": "node --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs security-tests/collaboration-rate-limit-client-ip.test.cjs",
+    "test:security": "node --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs security-tests/collaboration-rate-limit-client-ip.test.cjs security-tests/collaboration-session-lookup-rate-limit.test.cjs",
     "postbuild": "next-sitemap"
   },
   "dependencies": {

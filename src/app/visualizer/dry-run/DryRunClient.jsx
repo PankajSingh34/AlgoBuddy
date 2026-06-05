@@ -371,11 +371,12 @@ export default function DryRunClient() {
   const [sessionNotice, setSessionNotice] = useState("");
   const [importNotice, setImportNotice] = useState("");
 
-  const suppressBroadcastRef = useRef(false);
+  const skipBroadcastGenerationRef = useRef(0);
   const sendStateRef = useRef(null);
   const fileInputRef = useRef(null);
   const collaborationRef = useRef(null);
   const followPresenterRef = useRef(followPresenter);
+  const lastReceivedHashRef = useRef("");
 
   useEffect(() => {
     followPresenterRef.current = followPresenter;
@@ -383,6 +384,10 @@ export default function DryRunClient() {
 
   const displayName =
     user?.user_metadata?.name || user?.email?.split("@")[0] || "Anonymous";
+
+  function computeStateHash(state) {
+    return `${state.source}|${state.language}|${state.step}|${state.playing}|${state.speed}`;
+  }
 
   function handleRemoteStateDelta(delta) {
     const collab = collaborationRef.current || collaboration;
@@ -395,7 +400,19 @@ export default function DryRunClient() {
       return;
     }
 
-    suppressBroadcastRef.current = true;
+    const currentHash = computeStateHash({
+      source: typeof delta.source === "string" ? delta.source : source,
+      language: typeof delta.language === "string" ? delta.language : language,
+      step: typeof delta.step === "number" ? delta.step : step,
+      playing: typeof delta.playing === "boolean" ? delta.playing : playing,
+      speed: typeof delta.speed === "number" ? delta.speed : speed,
+    });
+    if (currentHash === lastReceivedHashRef.current) {
+      return;
+    }
+    lastReceivedHashRef.current = currentHash;
+
+    skipBroadcastGenerationRef.current += 1;
 
     if (typeof delta.source === "string") {
       setSource(delta.source);
@@ -412,10 +429,6 @@ export default function DryRunClient() {
     if (typeof delta.speed === "number") {
       setSpeed(delta.speed);
     }
-
-    window.setTimeout(() => {
-      suppressBroadcastRef.current = false;
-    }, 0);
   }
 
   const collaboration = useCollaboration({
@@ -480,8 +493,10 @@ export default function DryRunClient() {
 
   useEffect(() => {
     if (!collabSession) return;
-    if (suppressBroadcastRef.current) {
-      suppressBroadcastRef.current = false;
+
+    const currentGeneration = skipBroadcastGenerationRef.current;
+    if (currentGeneration > 0) {
+      skipBroadcastGenerationRef.current = 0;
       return;
     }
 

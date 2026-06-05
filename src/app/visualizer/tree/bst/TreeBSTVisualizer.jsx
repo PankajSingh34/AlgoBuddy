@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Footer from "@/app/components/footer";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import {
   Info,
   Layers,
@@ -1177,26 +1179,29 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const isTraversalMode = traversalModes.includes(mode);
 
   return (
-    <div className="min-h-screen bg-udemy-dark-bg text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-white dark:bg-[#1c1d1f] text-slate-900 dark:text-slate-100 font-sans flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
+        <div className="w-full">
+          <Breadcrumbs paths={createVisualizerPaths("Tree", "Binary Search Tree", mode.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "))} />
+        </div>
         
         {/* Title Block */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-900/50">
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-100 dark:border-indigo-900/50">
               <Layers className="w-3.5 h-3.5" /> BST Interactive Operations
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-indigo-400 capitalize">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-600 to-indigo-400 dark:from-white dark:via-indigo-200 dark:to-indigo-400 capitalize">
               {mode.replace("-", " ")}
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xl">
               Visualize binary search trees, node path traversals, element insertions, and structural node deletions.
             </p>
           </div>
 
           {/* Mode Selector Tabs */}
-          <div className="flex flex-wrap gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+          <div className="flex flex-wrap gap-1.5 bg-gray-100 dark:bg-slate-900/90 p-1.5 rounded-xl border border-gray-300 dark:border-slate-800">
             {["searching", "insertion", "deletion", "in-order", "pre-order", "post-order"].map(tab => (
               <button
                 key={tab}
@@ -1207,7 +1212,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
                   mode === tab
                     ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-950"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-800/50"
                 }`}
               >
                 {tab.replace("-", " ")}
@@ -1222,13 +1227,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
           {/* LEFT: Tree Workspace & Control cards */}
           <div className="lg:col-span-8 flex flex-col gap-6 tour-step-animation-section">
             
-            <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
+            <div className="bg-white dark:bg-[#111] backdrop-blur-xl border border-gray-200 dark:border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
               {/* Insert / Search / Delete input controls */}
               <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
                 <button
                   onClick={generateRandomTree}
                   disabled={isAnimating}
-                  className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
+                  className="px-4 py-2 text-xs font-bold bg-gray-900 hover:bg-slate-800 dark:bg-[#1a1a1a] dark:hover:bg-[#2a2a2a] text-white rounded-xl transition-all border border-gray-200 dark:border-[#333] disabled:opacity-40"
                 >
                   🎲 Random BST
                 </button>
@@ -1238,7 +1243,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={isTraversalMode ? "Traversal uses the current tree" : mode === "searching" ? "Find key (1-99)" : mode === "deletion" ? "Delete key" : "Insert key (1-99)"}
-                    className="w-full sm:w-28 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full sm:w-28 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     disabled={isAnimating}
                     onKeyDown={(e) => e.key === "Enter" && (isTraversalMode ? startVisualizer() : mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
                   />
@@ -1270,57 +1275,56 @@ export default function TreeBSTVisualizer({ initialMode }) {
             </div>
 
             {/* Explanation Area */}
-            <div className="bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-col gap-2">
+            <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl p-4 flex flex-col gap-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+                <span className="text-slate-600 dark:text-slate-400 font-semibold flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
                 </span>
-                <span className="text-slate-400 font-bold bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-[#333]">
+                <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-[#333]">
                   Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
                 </span>
               </div>
               <div
-                className="text-[14px] leading-relaxed min-h-[24px] text-center"
-                style={{ color: "var(--color-muted)" }}
+                className="text-[14px] leading-relaxed min-h-[24px] text-center text-slate-600 dark:text-slate-400"
               >
                 {message}
               </div>
             </div>
 
             {/* Trees SVG Render Canvas */}
-            <div className="bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+            <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
               
               {/* Dynamic Legend Labels */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2 text-xs">
-                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950"></span>
-                  <span className="text-slate-400">Comparing (visiting)</span>
+                <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950/20"></span>
+                  <span className="text-slate-600 dark:text-slate-400">Comparing (visiting)</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-md shadow-purple-950"></span>
-                  <span className="text-slate-400">Path Traversed</span>
+                <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-md shadow-purple-950/20"></span>
+                  <span className="text-slate-600 dark:text-slate-400">Path Traversed</span>
                 </div>
                 {mode === "searching" && (
-                  <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-950"></span>
-                    <span className="text-slate-400">Node Found!</span>
+                  <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-950/20"></span>
+                    <span className="text-slate-600 dark:text-slate-400">Node Found!</span>
                   </div>
                 )}
                 {mode === "insertion" && (
-                  <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950 animate-pulse"></span>
-                    <span className="text-slate-400">Newly Placed Leaf</span>
+                  <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-950/20 animate-pulse"></span>
+                    <span className="text-slate-600 dark:text-slate-400">Newly Placed Leaf</span>
                   </div>
                 )}
                 {mode === "deletion" && (
                   <>
-                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-950"></span>
-                      <span className="text-slate-400">Deleted (removal)</span>
+                    <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-950/20"></span>
+                      <span className="text-slate-600 dark:text-slate-400">Deleted (removal)</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] px-2.5 py-1 rounded-lg">
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950"></span>
-                      <span className="text-slate-400">Inorder Successor</span>
+                    <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1 rounded-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-md shadow-purple-950/20"></span>
+                      <span className="text-slate-600 dark:text-slate-400">Inorder Successor</span>
                     </div>
                   </>
                 )}
@@ -1456,32 +1460,32 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
             {/* Time / Space Complexity Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+              <div className="bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-emerald-400" />
-                    <h3 className="text-sm font-semibold text-slate-200">Time Complexity</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Time Complexity</h3>
                   </div>
                   <span className="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/40 text-emerald-400 border border-emerald-900/50">
                     {activeComplexity.time}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
                   {activeComplexity.timeDesc}
                 </p>
               </div>
 
-              <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+              <div className="bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-purple-400" />
-                    <h3 className="text-sm font-semibold text-slate-200">Space Complexity</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Space Complexity</h3>
                   </div>
                   <span className="px-2 py-0.5 text-xs font-bold rounded bg-purple-950/40 text-purple-400 border border-purple-900/50">
                     {activeComplexity.space}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
                   {activeComplexity.spaceDesc}
                 </p>
               </div>
@@ -1493,12 +1497,12 @@ export default function TreeBSTVisualizer({ initialMode }) {
           <div className="lg:col-span-4 flex flex-col gap-6 w-full">
             
             {/* Pseudocode Highlighter Card */}
-            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 flex flex-col shadow-lg shadow-black/20">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-4">
+            <div className="bg-gray-50 dark:bg-slate-900/70 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col shadow-lg shadow-black/20">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
                 <BookOpen className="w-4 h-4 text-indigo-400" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Pseudocode</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Pseudocode</h2>
               </div>
-              <div className="flex flex-col gap-1 font-mono text-xs text-slate-400 bg-[#1a1a1a] p-4 rounded-xl border border-[#333] overflow-x-auto leading-relaxed">
+              <div className="flex flex-col gap-1 font-mono text-xs text-slate-700 dark:text-slate-400 bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-200 dark:border-[#333] overflow-x-auto leading-relaxed">
                 {pseudocode[mode].map((line, idx) => {
                   const isHighlighted = idx === currentHighlightLine;
                   return (
@@ -1510,7 +1514,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                           : ""
                       }`}
                     >
-                      <span className="text-[10px] text-slate-700 select-none w-4 text-right">{idx + 1}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-600 select-none w-4 text-right">{idx + 1}</span>
                       <pre className="flex-1 whitespace-pre">{line}</pre>
                     </div>
                   );
@@ -1519,14 +1523,14 @@ export default function TreeBSTVisualizer({ initialMode }) {
             </div>
 
             {/* Quiz Challenge Card */}
-            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4 shadow-lg shadow-black/20">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <div className="bg-gray-50 dark:bg-slate-900/70 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col gap-4 shadow-lg shadow-black/20">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
                 <Award className="w-4.5 h-4.5 text-amber-400 animate-pulse" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Quiz Challenge</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Quiz Challenge</h2>
               </div>
               
               <div className="flex flex-col gap-3.5">
-                <div className="text-xs font-semibold text-slate-300 leading-normal bg-[#111] p-3 rounded-xl border border-[#222]">
+                <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-normal bg-white dark:bg-[#111] p-3 rounded-xl border border-gray-200 dark:border-[#222]">
                   {activeQuestion.question}
                 </div>
 
@@ -1536,15 +1540,15 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     const isSelected = selectedOption === oIdx;
                     const isCorrect = oIdx === activeQuestion.answer;
                     
-                    let btnColor = "bg-[#1a1a1a] hover:bg-[#222] border-[#333] text-slate-400";
+                    let btnColor = "bg-white hover:bg-gray-50 border-gray-200 text-slate-700 dark:bg-[#1a1a1a] dark:hover:bg-[#222] dark:border-[#333] dark:text-slate-400";
                     if (isSelected) {
-                      btnColor = "bg-indigo-950/40 border-indigo-500 text-indigo-300";
+                      btnColor = "bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-500 dark:text-indigo-300";
                     }
                     if (quizSubmitted) {
                       if (isCorrect) {
-                        btnColor = "bg-emerald-950/40 border-emerald-500 text-emerald-300";
+                        btnColor = "bg-emerald-50 border-emerald-500 text-emerald-600 dark:bg-emerald-950/40 dark:border-emerald-500 dark:text-emerald-300";
                       } else if (isSelected) {
-                        btnColor = "bg-rose-950/40 border-rose-500 text-rose-300";
+                        btnColor = "bg-rose-50 border-rose-500 text-rose-600 dark:bg-rose-950/40 dark:border-rose-500 dark:text-rose-300";
                       }
                     }
 
@@ -1576,7 +1580,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                   ) : (
                     <button
                       onClick={nextQuizQuestion}
-                      className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all border border-slate-700"
+                      className="px-4 py-2 text-xs font-bold bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all border border-gray-300 dark:border-slate-700"
                     >
                       Next Question
                     </button>
@@ -1585,9 +1589,9 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
                 {/* Quiz feedback explanation */}
                 {quizSubmitted && (
-                  <div className="bg-[#1a1a1a] border border-[#333] p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
+                  <div className="bg-gray-100 dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#333] p-3.5 rounded-xl flex gap-2.5 items-start mt-1">
                     <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                    <div className="text-[11px] text-slate-400 leading-normal">
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-normal">
                       <span className="font-semibold text-indigo-300 block mb-0.5">
                         {selectedOption === activeQuestion.answer ? "🎉 Correct Answer!" : "❌ Incorrect Answer"}
                       </span>
