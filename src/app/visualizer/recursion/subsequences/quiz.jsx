@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const SubsequencesQuiz = () => {
   const questions = [
@@ -61,7 +62,13 @@ const SubsequencesQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Subsequences Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.recursionSubsequences}
+      title="Subsequences Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
 export default SubsequencesQuiz;

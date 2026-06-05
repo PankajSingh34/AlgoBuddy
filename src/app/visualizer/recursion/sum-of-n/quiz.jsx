@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const SumQuiz = () => {
   const questions = [
@@ -61,7 +62,13 @@ const SumQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Sum of N Recursion Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.recursionSumOfN}
+      title="Sum of N Recursion Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
 export default SumQuiz;

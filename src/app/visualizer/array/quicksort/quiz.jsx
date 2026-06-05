@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const QuickSortQuiz = () => {
   const questions = [
@@ -116,7 +117,13 @@ const QuickSortQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Quick Sort Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.quickSort}
+      title="Quick Sort Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default QuickSortQuiz;

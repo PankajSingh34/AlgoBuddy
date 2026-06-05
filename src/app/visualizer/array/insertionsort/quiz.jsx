@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const InsertionSortQuiz = () => {
   const questions = [
@@ -83,7 +84,13 @@ const InsertionSortQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Insertion Sort Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.insertionSort}
+      title="Insertion Sort Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default InsertionSortQuiz;

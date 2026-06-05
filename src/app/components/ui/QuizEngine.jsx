@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FaCheck, FaTimes, FaArrowRight, FaArrowLeft, FaInfoCircle, FaRedo, FaTrophy, FaStar, FaAward } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function QuizEngine({ title, questions }) {
+export default function QuizEngine({ title, questions, onQuizComplete }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [score, setScore] = useState(0);
@@ -35,6 +35,10 @@ export default function QuizEngine({ title, questions }) {
         setShowSuccessAnimation(false);
         setQuizCompleted(true);
         setShowResult(true);
+        // Call the callback when quiz is completed
+        if (onQuizComplete) {
+          onQuizComplete(score, questions.length, answers);
+        }
       }, 2000);
     }
   };

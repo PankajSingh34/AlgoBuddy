@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const PrintNQuiz = () => {
   const questions = [
@@ -61,7 +62,13 @@ const PrintNQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Print N to 1 Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.recursionPrintNTo1}
+      title="Print N to 1 Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
 export default PrintNQuiz;

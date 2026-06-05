@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const BubbleSortQuiz = () => {
   const questions = [
@@ -78,7 +79,13 @@ const BubbleSortQuiz = () => {
     },
   ];
 
-  return <QuizEngine title="Bubble Sort Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.bubbleSort}
+      title="Bubble Sort Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default BubbleSortQuiz;

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const Quiz = () => {
   const questions = [
@@ -160,7 +161,13 @@ const Quiz = () => {
   }
 ];
 
-  return <QuizEngine title="Deletion Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.stackLinkedList}
+      title="Deletion Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default Quiz;

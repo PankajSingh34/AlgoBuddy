@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
-const handleNext = () => {
+const HeapSortQuiz = () => {
   const questions = [
   {
     "question": "What is the time complexity of Heap Sort in the worst case?",
@@ -39,7 +40,13 @@ const handleNext = () => {
   }
 ];
 
-  return <QuizEngine title="Heap Sort Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.heapSort}
+      title="Heap Sort Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
-export default handleNext;
+export default HeapSortQuiz;
