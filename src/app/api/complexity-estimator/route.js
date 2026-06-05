@@ -67,6 +67,9 @@ export async function POST(req) {
     if (!code || typeof code !== "string" || !code.trim()) {
       return Response.json({ error: "Missing or invalid 'code' string." }, { status: 400 });
     }
+    if (code.length > 50000) {
+      return Response.json({ error: "Code exceeds maximum allowed length (50,000 characters)." }, { status: 400 });
+    }
     if (!language || typeof language !== "string") {
       return Response.json({ error: "Missing or invalid 'language' string." }, { status: 400 });
     }
