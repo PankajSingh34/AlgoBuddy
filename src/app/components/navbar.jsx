@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, LayoutDashboard } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -167,7 +167,7 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = ((l.href === "/arena" || l.href === "/dashboard") && !user) ? "/login" : l.href;
 
               return (
                 <Link
@@ -226,6 +226,17 @@ export default function Navbar() {
                         {user.email}
                       </p>
                     </div>
+
+                    <Link
+                      href="/dashboard"
+                      onClick={() =>
+                        setUserMenuOpen(false)
+                      }
+                      className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-surface-500" />
+                      My Dashboard
+                    </Link>
 
                     <Link
                       href="/arena"
@@ -307,7 +318,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = ((l.href === "/arena" || l.href === "/dashboard") && !user) ? "/login" : l.href;
 
               return (
                 <Link
@@ -368,6 +379,16 @@ export default function Navbar() {
                 <p className="text-[13px] text-surface-500 dark:text-[#737373] truncate pb-1">
                   {user.email}
                 </p>
+
+                <Link
+                  href="/dashboard"
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
+                  className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
+                >
+                  My Dashboard
+                </Link>
 
                 <Link
                   href="/arena"
