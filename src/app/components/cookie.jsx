@@ -77,110 +77,110 @@ const CookiePolicyModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop with fade-in animation */}
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm transition-opacity duration-300 dark:bg-neutral-900/60"
         onClick={onClose}
       />
 
-      {/* Modal container with slide-up animation */}
-      <div className="relative bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text max-w-3xl w-full rounded-xl shadow-2xl overflow-hidden transform transition-all duration-300 max-h-[90vh] flex flex-col border border-udemy-border dark:border-udemy-dark-border">
-        {/* Header with close button */}
-        <div className="sticky top-0 bg-white dark:bg-udemy-dark-surface border-b border-udemy-border dark:border-udemy-dark-border p-4 flex justify-between items-center z-10">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+      {/* Modal container */}
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cookie-modal-title"
+        className="relative bg-white dark:bg-[#0a0a0a] text-neutral-800 dark:text-neutral-200 max-w-3xl w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 max-h-[90vh] flex flex-col border border-neutral-200 dark:border-neutral-800"
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-b border-neutral-100 dark:border-neutral-800 px-6 py-5 flex justify-between items-center z-10">
+          <h2 id="cookie-modal-title" className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
             Cookie Policy
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md border border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
+            className="p-2 rounded-full text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-200 dark:focus:ring-neutral-700"
             aria-label="Close"
           >
-            <FiX className="w-6 h-6" />
+            <FiX className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto p-6 scrollbar-thin">
-          <p className="mb-6 text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
-            This Cookie Policy explains how we use cookies and similar
-            technologies on our website. It describes the types of cookies we
-            use, their purposes, and how you can manage your cookie preferences.
-          </p>
+        <div className="overflow-y-auto px-6 py-8 scroll-smooth scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-800">
+          <div className="max-w-2xl mx-auto space-y-10">
+            <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-[15px]">
+              This Cookie Policy explains how we use cookies and similar
+              technologies on our website. It describes the types of cookies we
+              use, their purposes, and how you can manage your cookie preferences.
+            </p>
 
-          {/* Cookie policy sections */}
-          <div className="space-y-6">
-            <ul>
-              {cookieSections.map((item, index) => (
-                <li key={index} className="mb-4">
-                  <div className="bg-neutral-50 dark:bg-neutral-800/40 p-5 rounded-xl border border-neutral-200 dark:border-neutral-700 transition-all duration-300">
-                    <div className="flex items-start">
-                      <span className="w-6 h-6 flex-shrink-0 font-semibold bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-300 mr-3 mt-0.5">
-                        {item.id}
-                      </span>
-                      <h3 className="text-xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-2">
-                        {item.title}
-                      </h3>
-                    </div>
-                    {item.points && (
-                      <ul className="space-y-2 text-udemy-muted dark:text-udemy-dark-muted pl-9 mb-2">
-                        {item.points.map((subitem, subindex) => (
-                          <li
-                            key={subindex}
-                            className="list-disc text-neutral-500 pl-1"
-                          >
-                            <span className="text-udemy-muted dark:text-udemy-dark-muted">
-                              {subitem}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {item.data && (
-                      <p className="text-udemy-muted dark:text-udemy-dark-muted pl-9 leading-relaxed">
-                        {item.data}
-                      </p>
-                    )}
-                    {item.contact && (
-                      <div className="pl-9 mt-2">
-                        <a
-                          href={`mailto:${item.contact}`}
-                          className="font-medium text-neutral-900 dark:text-neutral-100 hover:underline"
+            <div className="space-y-10">
+              {cookieSections.map((item) => (
+                <section key={item.id} className="scroll-mt-20">
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-4 tracking-tight flex items-baseline gap-2">
+                    <span className="text-neutral-400 dark:text-neutral-500 font-medium text-sm">{item.id}.</span>
+                    {item.title}
+                  </h3>
+                  
+                  {item.points && (
+                    <ul className="space-y-3 mb-4">
+                      {item.points.map((subitem, subindex) => (
+                        <li
+                          key={subindex}
+                          className="flex items-start text-neutral-600 dark:text-neutral-400 leading-relaxed text-[15px]"
                         >
-                          {item.contact}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </li>
+                          <span className="mr-3 text-neutral-300 dark:text-neutral-600 mt-1.5 text-xs">
+                            •
+                          </span>
+                          <span>{subitem}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {item.data && (
+                    <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-[15px] mb-4">
+                      {item.data}
+                    </p>
+                  )}
+                  {item.contact && (
+                    <div>
+                      <a
+                        href={`mailto:${item.contact}`}
+                        className="text-primary hover:text-primary/80 dark:text-primary dark:hover:text-primary/80 font-medium transition-colors focus:outline-none focus:underline"
+                      >
+                        {item.contact}
+                      </a>
+                    </div>
+                  )}
+                </section>
               ))}
-            </ul>
-          </div>
+            </div>
 
-          {/* Additional cookie information */}
-          <div className="mt-6 p-4 bg-neutral-50 dark:bg-neutral-800/40 rounded-lg border border-neutral-200 dark:border-neutral-700">
-            <h4 className="font-bold text-udemy-text dark:text-udemy-dark-text mb-2">
-              🍪 Cookie Duration
-            </h4>
-            <p className="text-sm text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
-              Session cookies are temporary and expire when you close your
-              browser. Persistent cookies remain on your device for a set period
-              or until you delete them.
-            </p>
-          </div>
+            {/* Additional Info */}
+            <section className="pt-8 border-t border-neutral-100 dark:border-neutral-800/60">
+              <h4 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center gap-2">
+                <span role="img" aria-label="cookie">🍪</span> Cookie Duration
+              </h4>
+              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-[15px]">
+                Session cookies are temporary and expire when you close your
+                browser. Persistent cookies remain on your device for a set period
+                or until you delete them.
+              </p>
+            </section>
 
-          <div className="mt-8 pt-4 border-t border-udemy-border dark:border-udemy-dark-border">
-            <p className="text-xs text-udemy-muted dark:text-udemy-dark-muted">
-              Last updated: May 17, 2025
-            </p>
+            <div className="pt-2">
+              <p className="text-sm text-neutral-400 dark:text-neutral-500">
+                Last updated: May 17, 2025
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Footer with close button */}
-        <div className="sticky bottom-0 bg-white dark:bg-udemy-dark-surface border-t border-udemy-border dark:border-udemy-dark-border p-4 flex justify-end">
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-neutral-50/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-t border-neutral-100 dark:border-neutral-800 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+            className="px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-lg transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 dark:focus:ring-white dark:focus:ring-offset-neutral-900 text-sm shadow-sm"
           >
             Accept & Close
           </button>
