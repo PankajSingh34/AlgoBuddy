@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
-const handleNext = () => {
+const LCAQuiz = () => {
   const questions = [
   {
     "question": "Which node is the Lowest Common Ancestor of nodes p and q?",
@@ -28,7 +29,13 @@ const handleNext = () => {
   }
 ];
 
-  return <QuizEngine title="LCA Quick Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.lca}
+      title="LCA Quick Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
-export default handleNext;
+export default LCAQuiz;

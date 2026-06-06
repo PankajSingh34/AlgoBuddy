@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const AlphaBetaQuiz = () => {
   const questions = [
@@ -51,7 +52,13 @@ const AlphaBetaQuiz = () => {
     },
   ];
 
-  return <QuizEngine title="Alpha-Beta Pruning Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.alphaBetaPruning}
+      title="Alpha-Beta Pruning Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default AlphaBetaQuiz;

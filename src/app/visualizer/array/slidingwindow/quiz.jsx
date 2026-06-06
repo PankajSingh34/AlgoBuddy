@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const slidingWindowQuestions = [
   {
@@ -61,7 +62,13 @@ const slidingWindowQuestions = [
 ];
 
 const Quiz = () => {
-  return <QuizEngine title="Sliding Window Technique Quiz" questions={slidingWindowQuestions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.slidingWindow}
+      title="Sliding Window Technique Quiz" 
+      questions={slidingWindowQuestions} 
+    />
+  );
 };
 
 export default Quiz;

@@ -8,6 +8,8 @@ import { Award, Zap, BookOpen, Layers } from "lucide-react";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import { practiceData } from "@/lib/practiceData";
+import PracticeStats from "@/app/components/dashboard/PracticeStats";
+import QuizStats from "@/app/components/dashboard/QuizStats";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
@@ -446,6 +448,16 @@ export default function PracticeHub() {
             )}
           </div>
         </div>
+      </section>
+
+      {/* Quiz Progress Section */}
+      <section className="px-5 max-w-[1100px] mx-auto">
+        <QuizStats />
+      </section>
+
+      {/* Practice Stats Section */}
+      <section className="px-5 max-w-[1100px] mx-auto">
+        <PracticeStats />
       </section>
 
       {/* Topics Roadmap Container Grid */}

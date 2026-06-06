@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const PalindromeQuiz = () => {
   const questions = [
@@ -61,7 +62,13 @@ const PalindromeQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Palindrome Check Quiz" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.recursionPalindrome}
+      title="Palindrome Check Quiz" 
+      questions={questions} 
+    />
+  );
 };
 
 export default PalindromeQuiz;

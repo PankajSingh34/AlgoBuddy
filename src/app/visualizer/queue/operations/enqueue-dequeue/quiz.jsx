@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const QueueQuiz = () => {
   const questions = [
@@ -56,7 +57,13 @@ const QueueQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Queue Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.enqueueDequeue}
+      title="Queue Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default QueueQuiz;

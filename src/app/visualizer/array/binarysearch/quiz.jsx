@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const BinarySearchQuiz = () => {
   const questions = [
@@ -61,7 +62,13 @@ const BinarySearchQuiz = () => {
     }
   ];
 
-  return <QuizEngine title="Binary Search Quiz Challenge" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.binarySearch}
+      title="Binary Search Quiz Challenge" 
+      questions={questions} 
+    />
+  );
 };
 
 export default BinarySearchQuiz;

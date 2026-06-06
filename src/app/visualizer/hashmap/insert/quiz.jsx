@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import QuizEngine from "@/app/components/ui/QuizEngine";
+import Quiz from "@/app/components/ui/Quiz";
+import { MODULE_MAPS } from "@/lib/modulesMap";
 
 const Quiz = () => {
   const questions = [
@@ -50,7 +51,13 @@ const Quiz = () => {
   }
 ];
 
-  return <QuizEngine title="Quiz — HashMap Insert" questions={questions} />;
+  return (
+    <Quiz 
+      moduleId={MODULE_MAPS.hashmapInsert}
+      title="Quiz — HashMap Insert" 
+      questions={questions} 
+    />
+  );
 };
 
 export default Quiz;
