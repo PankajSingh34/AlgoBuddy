@@ -10,13 +10,14 @@ import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
+import { useProgress } from "@/app/hooks/useProgress";
 
 export default function TopicPracticeSheet() {
   const router = useRouter();
   const params = useParams();
   const topicSlug = params?.topic;
 
-  const [progress, setProgress] = useState({});
+  const { progress, updateProgress } = useProgress();
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -82,17 +83,8 @@ export default function TopicPracticeSheet() {
     };
   }, [topic, progress]);
 
-  // Load progress from localStorage on mount
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem("algobuddy_practice_progress");
-      if (saved) {
-        setProgress(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error("Failed to load practice progress:", e);
-    }
   }, []);
 
   if (!topic) {
@@ -110,27 +102,14 @@ export default function TopicPracticeSheet() {
     );
   }
 
-  // Handle progress status change
-  const handleStatusChange = (problemId, newStatus) => {
-    const updated = { ...progress, [problemId]: newStatus };
-    setProgress(updated);
-    try {
-      localStorage.setItem("algobuddy_practice_progress", JSON.stringify(updated));
-
-      if (newStatus === "Completed") {
-        toast.success("Problem marked as Completed! 🔥", {
-          style: {
-            background: "#22c55e",
-            color: "#fff",
-            fontWeight: "bold",
-          },
-        });
-      } else {
-        toast.success(`Status updated to ${newStatus}`);
-      }
-    } catch (e) {
-      console.error("Failed to save progress:", e);
-      toast.error("Failed to save progress.");
+  const handleStatusChange = async (problemId, newStatus) => {
+    await updateProgress(problemId, newStatus);
+    if (newStatus === "Completed") {
+      toast.success("Problem marked as Completed! 🔥", {
+        style: { background: "#22c55e", color: "#fff", fontWeight: "bold" },
+      });
+    } else {
+      toast.success(`Status updated to ${newStatus}`);
     }
   };
 

@@ -8,6 +8,7 @@ import { Award, Zap, BookOpen, Layers } from "lucide-react";
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import { practiceData } from "@/lib/practiceData";
+import { useProgress } from "@/app/hooks/useProgress";
 
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
@@ -244,19 +245,10 @@ const MINI_VIZ = {
 
 export default function PracticeHub() {
   const [search, setSearch] = useState("");
-  const [progress, setProgress] = useState({});
+  const { progress } = useProgress();
   const [mounted, setMounted] = useState(false);
-  // Load progress from localStorage on mount
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem("algobuddy_practice_progress");
-      if (saved) {
-        setProgress(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error("Failed to load practice progress:", e);
-    }
   }, []);
 
   // Compute overall stats

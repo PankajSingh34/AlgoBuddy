@@ -1,24 +1,17 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Award, CheckCircle2, Star, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { practiceData } from "@/lib/practiceData";
+import { useProgress } from "@/app/hooks/useProgress";
 
 export default function PracticeStats() {
-  const [progress, setProgress] = useState({});
-  const [mounted, setMounted] = useState(false);
+  const { progress } = useProgress();
+  const [mounted, setMounted] = React.useState(false);
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem("algobuddy_practice_progress");
-      if (saved) {
-        setProgress(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error("Failed to load practice progress for stats:", e);
-    }
   }, []);
 
   // Compute stats metrics
