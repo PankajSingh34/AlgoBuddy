@@ -158,6 +158,7 @@ const sections = [
         title: "Interview Patterns",
         items: [
           { name: "Sliding Window", path: "/visualizer/array/slidingwindow" },
+          { name: "Kadane's Algorithm", path: "/visualizer/array/kadanesAlgorithm" },
         ],
       },
     ],

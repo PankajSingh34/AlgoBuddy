@@ -32,6 +32,8 @@ const Animation = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [pendingStart, setPendingStart] = useState(false);
+  const [stepCount, setStepCount] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
 
   const {
     isPaused,
@@ -50,7 +52,7 @@ const Animation = () => {
   const currentStateIdxRef = useRef(0);
   const elementRefs = useRef([]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     clearTimeout(animationRef.current);
     setDataArray([]);
     setActiveIndex(-1);
@@ -64,6 +66,8 @@ const Animation = () => {
     setMessage("");
     setMessageType("");
     setPendingStart(false);
+    setStepCount(0);
+    setTotalSteps(0);
     isPausedRef.current = false;
     wasPausedRef.current = false;
     stateQueueRef.current = [];
@@ -72,15 +76,17 @@ const Animation = () => {
 
     elementRefs.current.forEach((ref) => {
       if (ref) {
-        gsap.to(ref, {
+        gsap.killTweensOf(ref);
+        gsap.set(ref, {
           backgroundColor: "#E5E7EB",
           borderColor: "#D1D5DB",
           color: "#1F2937",
-          duration: 0,
+          scale: 1,
+          x: 0,
         });
       }
     });
-  };
+  }, [isPausedRef, setSpeed]);
 
   useVisualizerReset(handleReset);
 
@@ -102,10 +108,13 @@ const Animation = () => {
     setMaxSoFar(state.maxSoFar);
     setPhaseLabel(state.phaseLabel ?? "");
     setStepExplanation(state.explanation);
+    setStepCount(currentStateIdxRef.current + 1);
 
     // GSAP highlighting
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
+
+      gsap.killTweensOf(ref);
 
       const inCurrent =
         state.currentWindow.length === 2 &&
@@ -120,59 +129,77 @@ const Animation = () => {
       const isActive = index === state.activeIndex;
 
       if (isActive && state.newMax) {
-        // New max found: bright green
-        gsap.to(ref, {
-          backgroundColor: "#DCFCE7",
-          borderColor: "#22C55E",
-          color: "#166534",
-          duration: 0.3,
-        });
+        // New max: bounce + bright green
+        gsap.timeline()
+          .to(ref, {
+            scale: 1.25,
+            backgroundColor: "#DCFCE7",
+            borderColor: "#22C55E",
+            color: "#166534",
+            duration: 0.2,
+            ease: "back.out(1.7)",
+          })
+          .to(ref, { scale: 1.0, duration: 0.2, ease: "power2.out" });
       } else if (isActive && state.reset) {
-        // Reset: red/orange
-        gsap.to(ref, {
-          backgroundColor: "#FEF3C7",
-          borderColor: "#F59E0B",
-          color: "#92400E",
-          duration: 0.3,
-        });
+        // Reset point: horizontal shake + amber
+        gsap.timeline()
+          .to(ref, {
+            backgroundColor: "#FEF3C7",
+            borderColor: "#F59E0B",
+            color: "#92400E",
+            duration: 0.15,
+          })
+          .to(ref, { x: -5, duration: 0.05 })
+          .to(ref, { x: 5, duration: 0.05 })
+          .to(ref, { x: -4, duration: 0.05 })
+          .to(ref, { x: 4, duration: 0.05 })
+          .to(ref, { x: 0, duration: 0.05 });
       } else if (isActive) {
-        // Currently processing: purple
-        gsap.to(ref, {
-          backgroundColor: "#F3E8FF",
-          borderColor: "#A855F7",
-          color: "#6B21A8",
-          duration: 0.3,
-        });
-      } else if (inBest && !inCurrent) {
-        // Best window only: green
-        gsap.to(ref, {
-          backgroundColor: "#DCFCE7",
-          borderColor: "#22C55E",
-          color: "#166534",
-          duration: 0.3,
-        });
+        // Currently processing: pulse + purple
+        gsap.timeline()
+          .to(ref, {
+            scale: 1.15,
+            backgroundColor: "#F3E8FF",
+            borderColor: "#A855F7",
+            color: "#6B21A8",
+            duration: 0.2,
+            ease: "back.out(1.7)",
+          })
+          .to(ref, { scale: 1.0, duration: 0.15, ease: "power2.out" });
       } else if (inCurrent && inBest) {
-        // Both current and best: teal
         gsap.to(ref, {
           backgroundColor: "#CCFBF1",
           borderColor: "#14B8A6",
           color: "#0F766E",
+          scale: 1,
+          x: 0,
+          duration: 0.3,
+        });
+      } else if (inBest) {
+        gsap.to(ref, {
+          backgroundColor: "#DCFCE7",
+          borderColor: "#22C55E",
+          color: "#166534",
+          scale: 1,
+          x: 0,
           duration: 0.3,
         });
       } else if (inCurrent) {
-        // Current window: indigo
         gsap.to(ref, {
           backgroundColor: "#E0E7FF",
           borderColor: "#6366F1",
           color: "#3730A3",
+          scale: 1,
+          x: 0,
           duration: 0.3,
         });
       } else {
-        // Default
         gsap.to(ref, {
           backgroundColor: "#E5E7EB",
           borderColor: "#D1D5DB",
           color: "#4B5563",
+          scale: 1,
+          x: 0,
           duration: 0.3,
         });
       }
@@ -219,6 +246,7 @@ const Animation = () => {
 
     stateQueueRef.current = states;
     currentStateIdxRef.current = 0;
+    setTotalSteps(states.length);
     setIsAnimating(true);
     setPendingStart(true);
   };
@@ -230,12 +258,13 @@ const Animation = () => {
     }
   }, [pendingStart, dataArray, animateStep]);
 
+  // FIX: clear timeout on pause; resume on unpause
   useEffect(() => {
     if (isPaused) {
+      clearTimeout(animationRef.current); // stop pending timeout immediately
       wasPausedRef.current = true;
     } else if (wasPausedRef.current && isAnimating) {
       wasPausedRef.current = false;
-      clearTimeout(animationRef.current);
       animateStep();
     }
   }, [isPaused, isAnimating, animateStep]);
@@ -258,6 +287,9 @@ const Animation = () => {
     [PROBLEMS.MAX_SUBARRAY]: "-2, 1, -3, 4, -1, 2, 1, -5, 4",
     [PROBLEMS.CIRCULAR]: "5, -3, 5",
   };
+
+  const progressPercent =
+    totalSteps > 0 ? Math.round((stepCount / totalSteps) * 100) : 0;
 
   return (
     <main className="container mx-auto">
@@ -334,6 +366,22 @@ const Animation = () => {
 
       {dataArray.length > 0 && (
         <div className="max-w-5xl mx-auto space-y-6">
+          {/* Progress bar */}
+          {totalSteps > 0 && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-gray-400 font-mono">
+                <span>Step {stepCount} / {totalSteps}</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div
+                  className="bg-[#a435f0] h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Phase label for circular */}
           {phaseLabel && (
             <div className="text-center">
@@ -362,7 +410,7 @@ const Animation = () => {
                 <h4 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
                   Max Ending Here
                 </h4>
-                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono transition-all duration-300">
                   {maxEndingHere !== null ? maxEndingHere : "-"}
                 </div>
               </div>
@@ -370,7 +418,7 @@ const Animation = () => {
                 <h4 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
                   Max So Far
                 </h4>
-                <div className="text-2xl font-bold text-[#a435f0] dark:text-[#c56eff] font-mono">
+                <div className="text-2xl font-bold text-[#a435f0] dark:text-[#c56eff] font-mono transition-all duration-300">
                   {maxSoFar !== null ? maxSoFar : "-"}
                 </div>
               </div>
@@ -388,8 +436,12 @@ const Animation = () => {
                 <div key={index} className="flex flex-col items-center">
                   <div
                     ref={(el) => (elementRefs.current[index] = el)}
-                    className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg border-2 transition-colors duration-200 ${getFontSize(element)} shadow-sm`}
-                    style={{ backgroundColor: "#E5E7EB", borderColor: "#D1D5DB" }}
+                    className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg border-2 ${getFontSize(element)} shadow-sm`}
+                    style={{
+                      backgroundColor: "#E5E7EB",
+                      borderColor: "#D1D5DB",
+                      willChange: "transform, background-color, border-color",
+                    }}
                   >
                     {element}
                   </div>
