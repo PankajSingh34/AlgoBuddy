@@ -1,9 +1,8 @@
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
-import { useBookmark } from "@/app/hooks/useBookmark";
+import { FiChevronRight } from "react-icons/fi";
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
   Array: {
@@ -448,78 +447,6 @@ function DSCard({ section, theme, delay }) {
    Main Client Component — Grid only
    ═══════════════════════════════════════ */
 export default function VisualizerClient({ initialSections }) {
-  const [search, setSearch] = useState("");
-  const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
-const searchRef = useRef(null);
-const [searchHistory, setSearchHistory] = useState(() => {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
-  } catch { return []; }
-});
-const [showHistory, setShowHistory] = useState(false);
-
-// Keyboard shortcut Ctrl+K or /
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey && e.key === "k") || e.key === "/") {
-      e.preventDefault();
-      searchRef.current?.focus();
-      setShowHistory(true);
-    }
-    if (e.key === "Escape") {
-      searchRef.current?.blur();
-      setShowHistory(false);
-    }
-  };
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, []);
-
-// Save search history
-const handleSearchChange = (e) => {
-  const val = e.target.value;
-  setSearch(val);
-  if (val.trim().length > 2) {
-    setSearchHistory((prev) => {
-      const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
-      localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
-      return updated;
-    });
-  }
-};
-  const filtered = useMemo(() => {
-    if (!search.trim()) return initialSections;
-    const q = search.trim().toLowerCase();
-    return initialSections
-      .map((sec) => {
-        const titleHit = sec.title.toLowerCase().includes(q);
-        const subs = sec.subsections
-          ?.map((sub) => {
-            const subHit = sub.title.toLowerCase().includes(q);
-            const items = sub.items.filter((i) => i.name.toLowerCase().includes(q));
-            return { ...sub, items: subHit ? sub.items : items };
-          })
-          .filter((sub) => sub.items.length > 0);
-        return { ...sec, subsections: subs, _hit: titleHit || (subs && subs.length > 0) };
-      })
-      .filter((s) => s._hit);
-  }, [search, initialSections]);
-
-  const flatResults = useMemo(() => {
-    if (!search.trim()) return [];
-    const q = search.trim().toLowerCase();
-    const r = [];
-    initialSections.forEach((sec) =>
-      sec.subsections?.forEach((sub) =>
-        sub.items.forEach((item) => {
-          if (item.name.toLowerCase().includes(q)) r.push({ ...item, ds: sec.title });
-        }),
-      ),
-    );
-    return r;
-  }, [search, initialSections]);
-
   return (
     <div>
       <style>{`
@@ -554,103 +481,38 @@ const handleSearchChange = (e) => {
         .dark .mini-viz-line { stroke: #4b5563 !important; }
       `}</style>
 
-      <section className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300">
-        <div className="max-w-[1100px] mx-auto">
-          
+      {/* Hero Section */}
+      <section className="relative px-5 pt-8 pb-4 bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] border-b border-surface-100 dark:border-neutral-800">
+        {/* Decorative background glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/10 dark:bg-primary/5 blur-3xl rounded-full pointer-events-none" />
 
-          <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
-            <input
-              type="text"
-              ref={searchRef}
-value={search}
-onChange={handleSearchChange}
-onFocus={() => setShowHistory(true)}
-onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-placeholder="Search algorithms... (Press / or Ctrl+K)"
-              className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
-              >
-                x
-              </button>
-            )}
+        <div className="max-w-[1100px] mx-auto relative">
+          <div className="text-center mb-0">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight mb-3">
+              Algorithm <span className="text-primary">Visualizer</span>
+            </h1>
+            <p className="text-md sm:text-lg text-surface-600 dark:text-surface-400 max-w-2xl mx-auto leading-relaxed">
+              Step-by-step interactive visual representations of core data structures and algorithms. Write custom code, inspect complexity, and master how code behaves.
+            </p>
           </div>
+        </div>
+      </section>
 
-          {search.trim() ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
-              {flatResults.length > 0 ? (
-                <div className="max-w-3xl mx-auto">
-                  <p className="text-[13px] font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-5">
-                    {flatResults.length} result{flatResults.length !== 1 ? "s" : ""}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {flatResults.map((item, i) => {
-                      const t = getTheme(item.ds);
-                      return (
-                        <Link
-                          key={i}
-                          href={item.path}
-                          className="group/r flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#2d2f31] border dark:border-[#4b5563] hover:shadow-md transition-all duration-200"
-                          style={{ borderColor: t.border }}
-                        >
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center p-1.5 flex-shrink-0"
-                            style={{ background: t.bg }}
-                            data-theme-header={item.ds}
-                          >
-                            {t.icon(t.color)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[14px] font-semibold text-surface-900 dark:text-white group-hover/r:text-primary transition-colors">{item.name}</span>
-                            <span className="block text-[11px] text-surface-500 dark:text-surface-400">{item.ds}</span>
-                          </div>
-                          <button
-  onClick={(e) => {
-    e.preventDefault();
-    isBookmarked(item.path)
-      ? removeBookmark(item.path)
-      : addBookmark({ name: item.name, path: item.path, category: item.ds });
-  }}
-  className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
->
-  <FiBookmark
-    className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
-  />
-</button>
-                          <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                    <FiSearch className="h-6 w-6 text-surface-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">No results found</h3>
-                  <p className="text-surface-500 dark:text-surface-400 text-[15px]">Try a different search term</p>
-                </div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-                {filtered.map((section, i) => (
-                  <DSCard
-                    key={section.title}
-                    section={section}
-                    theme={getTheme(section.title)}
-                    delay={i * 0.07}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
+      {/* Topics Roadmap Container Grid */}
+      <section className="px-5 pt-2 pb-12 max-w-[1100px] mx-auto">
+        <div className="max-w-[1100px] mx-auto">
+          <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+              {initialSections.map((section, i) => (
+                <DSCard
+                  key={section.title}
+                  section={section}
+                  theme={getTheme(section.title)}
+                  delay={i * 0.07}
+                />
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>

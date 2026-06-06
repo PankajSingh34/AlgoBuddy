@@ -70,7 +70,7 @@ export default function AuthForm({ isLogin = true }) {
         // The API route set the session as cookies.
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user || null);
-        router.push("/arena");
+        router.push("/practice");
       } else {
         const res = await fetch("/api/auth", {
           method: "POST",
@@ -132,7 +132,7 @@ export default function AuthForm({ isLogin = true }) {
             </h1>
             <p className="text-purple-200 text-sm mt-1">
               {isLogin
-                ? "Sign in to access Arena"
+                ? "Sign in to AlgoBuddy"
                 : "Join us to get started"}
             </p>
           </div>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/features/user/UserContext";
-import UpcomingTournament from "@/app/components/dashboard/UpcomingTournament";
+import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
