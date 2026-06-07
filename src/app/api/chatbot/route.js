@@ -14,6 +14,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
+import { jsonResponse } from "@/lib/serverApi";
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are **AlgoBot** 🤖 — the official AI assistant embedded inside **AlgoBuddy** (https://www.algobuddy.me), a free, open-source, interactive platform built to help students and developers master Data Structures & Algorithms (DSA) through visualizations, practice, and progress tracking.
@@ -228,12 +229,8 @@ export async function POST(request) {
   const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);
   if (!allowed) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-    return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-      status: 429,
-      headers: {
-        "Content-Type": "application/json",
-        "Retry-After": retryAfter.toString(),
-      },
+    return jsonResponse({ error: "Too many requests. Please try again later." }, 429, {
+      "Retry-After": retryAfter.toString(),
     });
   }
 
@@ -241,20 +238,14 @@ export async function POST(request) {
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body." }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
   const { messages } = body;
   const { valid, error } = validateMessages(messages);
 
   if (!valid) {
-    return new Response(JSON.stringify({ error }), {
-      status: 422,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error }, 422);
   }
 
   // Clamp to last 20 turns to manage token budget

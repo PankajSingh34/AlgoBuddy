@@ -1,23 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-
-const STORAGE_KEY = "algobuddy_bookmarks";
+import { persistence } from "@/lib/persistence";
 
 export function useBookmark() {
   const [bookmarks, setBookmarks] = useState([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setBookmarks(JSON.parse(stored));
-    } catch {}
+    persistence.get('BOOKMARKS').then((stored) => {
+      if (stored) setBookmarks(stored);
+    });
   }, []);
 
   const addBookmark = (item) => {
     setBookmarks((prev) => {
       if (prev.find((i) => i.path === item.path)) return prev;
       const updated = [...prev, item];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set('BOOKMARKS', updated);
       return updated;
     });
   };
@@ -25,7 +23,7 @@ export function useBookmark() {
   const removeBookmark = (path) => {
     setBookmarks((prev) => {
       const updated = prev.filter((i) => i.path !== path);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set('BOOKMARKS', updated);
       return updated;
     });
   };
@@ -34,7 +32,7 @@ export function useBookmark() {
     bookmarks.some((i) => i.path === path);
 
   const clearBookmarks = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    persistence.remove('BOOKMARKS');
     setBookmarks([]);
   };
 

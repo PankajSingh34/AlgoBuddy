@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
+import { persistence } from "@/lib/persistence";
 
 const STORAGE_KEY = "algobuddy_problem_bookmarks";
 
@@ -11,24 +12,22 @@ export function useProblemBookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load initial bookmarks
+  // Load initial bookmarks with three-way merge
   useEffect(() => {
     const loadBookmarks = async () => {
       setLoading(true);
       
-      // 1. First, always load from localStorage to populate immediately or as guest fallback
       let localBookmarks = [];
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = await persistence.get('PROBLEM_BOOKMARKS');
         if (stored) {
-          localBookmarks = JSON.parse(stored);
+          localBookmarks = stored;
           setBookmarks(localBookmarks);
         }
       } catch (e) {
         console.error("Failed to parse local bookmarks:", e);
       }
 
-      // 2. If user is logged in, fetch from Supabase and sync
       if (user) {
         try {
           const { data, error } = await supabase
@@ -39,16 +38,21 @@ export function useProblemBookmarks() {
           if (error) {
             console.error("Error fetching bookmarks from Supabase:", error);
           } else if (data) {
-            // Map db records to match bookmark format
             const dbBookmarks = data.map((row) => ({
               id: row.problem_id,
               topicSlug: row.topic_slug,
               createdAt: row.created_at,
             }));
             
-            setBookmarks(dbBookmarks);
-            // Sync local storage with db
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dbBookmarks));
+            // Three-way merge: keep all unique bookmarks from both sources
+            const merged = persistence.mergeBookmarks(localBookmarks, dbBookmarks, 'id');
+            setBookmarks(merged);
+            persistence.set('PROBLEM_BOOKMARKS', merged);
+          } else {
+            // Server has no bookmarks, persist local ones
+            if (localBookmarks.length > 0) {
+              await persistBookmarksToServer(user.id, localBookmarks);
+            }
           }
         } catch (e) {
           console.error("Supabase bookmark fetch failed:", e);
@@ -60,16 +64,32 @@ export function useProblemBookmarks() {
     loadBookmarks();
   }, [user]);
 
+  const persistBookmarksToServer = async (userId, bookmarksList) => {
+    const entries = bookmarksList.map((b) => ({
+      user_id: userId,
+      problem_id: b.id,
+      topic_slug: b.topicSlug,
+      created_at: b.createdAt || new Date().toISOString(),
+    }));
+    if (entries.length > 0) {
+      const { error } = await supabase
+        .from("problem_bookmarks")
+        .upsert(entries, { onConflict: ["user_id", "problem_id"] });
+      if (error) {
+        console.error("Failed to persist bookmarks to server:", error);
+      }
+    }
+  };
+
   const toggleBookmark = async (problemId, topicSlug) => {
     if (!problemId || !topicSlug) return;
 
     const isBookmarkedCurrently = bookmarks.some((b) => b.id === problemId);
 
     if (isBookmarkedCurrently) {
-      // Remove bookmark
       const updated = bookmarks.filter((b) => b.id !== problemId);
       setBookmarks(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set('PROBLEM_BOOKMARKS', updated);
 
       if (user) {
         try {
@@ -99,7 +119,7 @@ export function useProblemBookmarks() {
       };
       const updated = [...bookmarks, newBookmark];
       setBookmarks(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set('PROBLEM_BOOKMARKS', updated);
 
       if (user) {
         try {

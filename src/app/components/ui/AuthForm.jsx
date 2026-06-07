@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -54,17 +55,10 @@ export default function AuthForm({ isLogin = true }) {
       if (!captchaToken) throw new Error("Please complete captcha");
 
       if (isLogin) {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "login",
-          }),
+          body: { email, password, captchaToken, action: "login" },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Login failed");
 
         // The API route set the session as cookies.
@@ -72,18 +66,10 @@ export default function AuthForm({ isLogin = true }) {
         setUser(user || null);
         router.push("/arena");
       } else {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "signup",
-            name,
-          }),
+          body: { email, password, captchaToken, action: "signup", name },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Signup failed");
         toast.success(data.message || "Account created! Please sign in.");
         router.push("/login");
