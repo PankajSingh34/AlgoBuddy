@@ -75,6 +75,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
       <div
         className="fixed inset-0 bg-neutral-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal container */}
