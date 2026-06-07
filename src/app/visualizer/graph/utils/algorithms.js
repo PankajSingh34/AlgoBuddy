@@ -344,6 +344,83 @@ export const floydWarshallFrames = (nodes, edges) => {
   return frames;
 };
 
+// === BELLMAN-FORD ADDED BELOW ===
+
+export const bellmanFordFrames = (nodes, edges, startNode) => {
+  const frames = [];
+  if (!startNode || nodes.length === 0) return frames;
+
+  const nodeIds = nodes.map((n) => n.id);
+  const distances = {};
+  nodeIds.forEach((id) => { distances[id] = id === startNode ? 0 : Infinity; });
+
+  const fmt = (v) => (v === Infinity ? "221e" : v);
+
+  frames.push({
+    visitedNodes: new Set(),
+    visitingNodes: new Set([startNode]),
+    activeEdge: null,
+    distances: { ...distances },
+    updatedNode: null,
+    phase: "relaxing",
+    negativeCycle: false,
+    description: `Initialize: distance to ${startNode} = 0, all others = 221e`,
+  });
+
+  const V = nodeIds.length;
+
+  for (let pass = 1; pass <= V - 1; pass++) {
+    let anyUpdate = false;
+    for (const edge of edges) {
+      const { from, to, weight } = edge;
+      const w = Number(weight) || 0;
+      frames.push({
+        visitedNodes: new Set(),
+        visitingNodes: new Set([from, to]),
+        activeEdge: { from, to },
+        distances: { ...distances },
+        updatedNode: null,
+        phase: "relaxing",
+        negativeCycle: false,
+        description: `Pass ${pass}: checking edge ${from} 2192 ${to} (weight: ${w})`,
+      });
+      if (distances[from] !== Infinity 00260026 distances[from] + w < distances[to]) {
+        distances[to] = distances[from] + w;
+        anyUpdate = true;
+        frames.push({
+          visitedNodes: new Set(),
+          visitingNodes: new Set([from, to]),
+          activeEdge: { from, to },
+          distances: { ...distances },
+          updatedNode: to,
+          phase: "relaxing",
+          negativeCycle: false,
+          description: `Relaxed! dist[${to}] updated to ${distances[to]} via ${from}`,
+        });
+      }
+    }
+    if (!anyUpdate) {
+      frames.push({ visitedNodes: new Set(nodeIds), visitingNodes: new Set(), activeEdge: null, distances: { ...distances }, updatedNode: null, phase: "done", negativeCycle: false, description: `Early termination after pass ${pass} 2014 shortest paths found.` });
+      return frames;
+    }
+  }
+
+  let negativeCycle = false;
+  for (const edge of edges) {
+    const { from, to, weight } = edge;
+    const w = Number(weight) || 0;
+    frames.push({ visitedNodes: new Set(), visitingNodes: new Set([from, to]), activeEdge: { from, to }, distances: { ...distances }, updatedNode: null, phase: "detecting", negativeCycle: false, description: `Negative cycle check: edge ${from} 2192 ${to}` });
+    if (distances[from] !== Infinity 00260026 distances[from] + w < distances[to]) {
+      negativeCycle = true;
+      frames.push({ visitedNodes: new Set(), visitingNodes: new Set([from, to]), activeEdge: { from, to }, distances: { ...distances }, updatedNode: to, phase: "detecting", negativeCycle: true, description: `26a0Fe0f Negative cycle detected! Edge ${from} 2192 ${to} still improves distance.` });
+      break;
+    }
+  }
+
+  frames.push({ visitedNodes: new Set(nodeIds), visitingNodes: new Set(), activeEdge: null, distances: { ...distances }, updatedNode: null, phase: "done", negativeCycle, description: negativeCycle ? "26a0Fe0f Bellman-Ford complete 2014 Negative cycle detected!" : "2705 Bellman-Ford complete 2014 Shortest paths found." });
+  return frames;
+};
+
 const formatDistance = (value) => (value === Infinity ? "Infinity" : value);
 
 /**

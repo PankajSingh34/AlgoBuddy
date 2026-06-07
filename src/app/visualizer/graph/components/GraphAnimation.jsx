@@ -1,5 +1,7 @@
 "use client";
+"use client";
 
+import { bellmanFordFrames } from "@/app/visualizer/graph/utils/algorithms";
 import { useMemo, useRef, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
@@ -32,16 +34,17 @@ const sequences = {
   prim: ["A", "B", "C", "E", "D"],
   kruskal: ["A-B", "B-C", "D-E", "B-E"],
   topological: ["A", "B", "D", "C", "E"],
+  "bellman-ford": ["A", "B", "C", "E", "D"],
 };
 
 // Algorithms that only make sense on directed graphs
-const DIRECTED_ONLY = ["topological", "dijkstra"];
+const DIRECTED_ONLY = ["topological", "dijkstra", "bellman-ford"];
 
 // Algorithms that only make sense on undirected graphs
 const UNDIRECTED_ONLY = ["prim", "kruskal"];
 
 // Algorithms that require weighted edges
-const WEIGHTED_ONLY = ["dijkstra", "prim", "kruskal"];
+const WEIGHTED_ONLY = ["dijkstra", "prim", "kruskal", "bellman-ford"];
 
 function getNode(id) {
   return nodes.find((node) => node.id === id);
@@ -105,7 +108,19 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
     return selected;
   }, [sequence, step, type, isDirected]);
 
-  const advance = () => setStep((value) => (value + 1) % sequence.length);
+
+  // Bellman-Ford: compute frames when type === "bellman-ford"
+  const bellmanFrames = useMemo(() => {
+    if (type !== "bellman-ford") return [];
+    return bellmanFordFrames(nodes, edges, "A");
+  }, [type]);
+
+  const bellmanFrame = type === "bellman-ford"
+    ? bellmanFrames[Math.min(step, bellmanFrames.length - 1)]
+    : null;
+
+  const totalSteps = type === "bellman-ford" ? bellmanFrames.length : sequence.length;
+  const advance = () => setStep((value) => (value + 1) % totalSteps);
   const reset = () => setStep(0);
 
   const handleToggleDirected = () => {
@@ -258,9 +273,11 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                   x2={ex}
                   y2={ey}
                   stroke={
-                    active
-                      ? "var(--color-primary)"
-                      : "var(--color-neutral-300)"
+                    type === "bellman-ford" && bellmanFrame?.activeEdge?.from === edge.from && bellmanFrame?.activeEdge?.to === edge.to
+                      ? "orange"
+                      : active
+                        ? "var(--color-primary)"
+                        : "var(--color-neutral-300)"
                   }
                   strokeWidth={active ? "1.8" : "1"}
                   markerEnd={
@@ -320,9 +337,11 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                   r="6"
                   fill={active ? "var(--color-primary)" : "white"}
                   stroke={
-                    active
-                      ? "var(--color-primary)"
-                      : "var(--color-neutral-300)"
+                    type === "bellman-ford" && bellmanFrame?.activeEdge?.from === edge.from && bellmanFrame?.activeEdge?.to === edge.to
+                      ? "orange"
+                      : active
+                        ? "var(--color-primary)"
+                        : "var(--color-neutral-300)"
                   }
                   strokeWidth="1.5"
                 />
@@ -347,7 +366,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
 
         <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
           <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
-            Step {step + 1} of {sequence.length}
+            Step {step + 1} of {totalSteps}
           </p>
           <div className="space-y-2">
             {sequence.map((item, index) => (
@@ -379,6 +398,54 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
               </div>
             )}
           </div>
+
+
+          {/* Bellman-Ford: Distance Table */}
+          {type === "bellman-ford" && bellmanFrame && (
+            <div className="mt-4">
+              {/* Negative Cycle Banner */}
+              {bellmanFrame.negativeCycle && (
+                <div className="mb-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                  ⚠️ Negative Cycle Detected!
+                </div>
+              )}
+              <p className="mb-2 text-sm font-semibold text-surface-700 dark:text-surface-300">
+                Distance Table
+              </p>
+              <div className="overflow-hidden rounded-lg border border-surface-200 dark:border-surface-800">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-surface-100 dark:bg-surface-800">
+                      <th className="px-3 py-2 text-left font-semibold text-surface-700 dark:text-surface-300">Node</th>
+                      <th className="px-3 py-2 text-left font-semibold text-surface-700 dark:text-surface-300">Distance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(bellmanFrame.distances).map(([node, dist]) => (
+                      <tr
+                        key={node}
+                        className={`border-t border-surface-200 dark:border-surface-800 ${
+                          bellmanFrame.updatedNode === node
+                            ? "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                            : bellmanFrame.visitingNodes?.has(node)
+                              ? "bg-primary/10 text-primary"
+                              : ""
+                        }`}
+                      >
+                        <td className="px-3 py-1.5 font-medium">{node}</td>
+                        <td className="px-3 py-1.5">
+                          {dist === Infinity ? "∞" : dist}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-surface-500 dark:text-surface-400 italic">
+                {bellmanFrame.description}
+              </p>
+            </div>
+          )}
 
           <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">
             Current focus:{" "}

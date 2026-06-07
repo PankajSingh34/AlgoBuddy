@@ -246,6 +246,32 @@ export const graphTopics = {
       { label: "Requires", value: "DAG" },
     ],
   },
+
+  "bellman-ford": {
+    key: "bellman-ford",
+    title: "Bellman-Ford Algorithm",
+    category: "Graph Algorithm",
+    description:
+      "Find shortest paths from a source vertex to all others, handling negative weight edges and detecting negative weight cycles.",
+    animationType: "bellman-ford",
+    summary: [
+      "Bellman-Ford relaxes all edges V-1 times, where V is the number of vertices.",
+      "Unlike Dijkstra, it correctly handles negative weight edges.",
+      "A final extra pass over all edges detects negative weight cycles.",
+      "If any distance still improves in the final pass, a negative cycle exists.",
+    ],
+    steps: [
+      "Set distance to source as 0 and all other distances to infinity.",
+      "Repeat V-1 times: for every edge (u, v, w), if dist[u] + w < dist[v], update dist[v].",
+      "Run one more pass over all edges.",
+      "If any distance improves, a negative cycle is present in the graph.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V × E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Negative weight edges / cycle detection" },
+    ],
+  },
 };
 
 export function getGraphRelatedLinks(currentKey) {
