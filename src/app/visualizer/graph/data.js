@@ -24,6 +24,11 @@ const baseRelatedLinks = [
     text: "Topological Sort",
     url: "/visualizer/graph/topological-sort",
   },
+  {
+    key: "a-star",
+    text: "A* Search",
+    url: "/visualizer/graph/a-star",
+  },
 ];
 
 export const graphTopics = {
@@ -244,6 +249,51 @@ export const graphTopics = {
       { label: "Time", value: "O(V + E)" },
       { label: "Space", value: "O(V)" },
       { label: "Requires", value: "DAG" },
+    ],
+  },
+  "a-star": {
+    key: "a-star",
+    title: "A* Search",
+    category: "Pathfinding",
+    description:
+      "Find the shortest path between two nodes using a heuristic function to guide the search — faster than Dijkstra on most practical graphs.",
+    animationType: "a-star",
+    summary: [
+      "A* combines actual cost from start (g) and estimated cost to goal (h) into f = g + h.",
+      "It always expands the node with the lowest f score, making it goal-directed.",
+      "With an admissible heuristic (never overestimates), A* guarantees the optimal path.",
+      "Time complexity is O(E log V); space is O(V) for the open and closed sets.",
+    ],
+    steps: [
+      "Initialize g(start) = 0, f(start) = h(start, goal), and add start to the open set.",
+      "Pick the node with the lowest f score from the open set.",
+      "If it is the goal, reconstruct and return the path.",
+      "For each neighbor, compute tentative g = g(current) + edge weight.",
+      "If tentative g is better, update g, f, and add the neighbor to the open set.",
+      "If the open set empties without reaching the goal, no path exists.",
+    ],
+    pseudoCode: [
+      "openSet = { start }",
+      "gScore[start] = 0",
+      "fScore[start] = h(start, goal)",
+      "while openSet not empty:",
+      "  current = node in openSet with lowest fScore",
+      "  if current == goal: return reconstructPath()",
+      "  move current to closedSet",
+      "  for each neighbor of current:",
+      "    tentativeG = gScore[current] + weight(current, neighbor)",
+      "    if tentativeG < gScore[neighbor]:",
+      "      cameFrom[neighbor] = current",
+      "      gScore[neighbor] = tentativeG",
+      "      fScore[neighbor] = tentativeG + h(neighbor, goal)",
+      "      add neighbor to openSet",
+      "return 'no path'",
+    ],
+    complexity: [
+      { label: "Time", value: "O(E log V)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Heuristic", value: "Euclidean distance" },
+      { label: "Requirement", value: "Weighted directed graph" },
     ],
   },
 };
