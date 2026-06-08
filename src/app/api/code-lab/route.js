@@ -7,6 +7,37 @@ import { jsonResponse, errorResponse } from "@/lib/serverApi";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const SUSPICIOUS_PATTERNS = [
+  /require\s*\(/i,
+  /import\s*\(/i,
+  /process\./i,
+  /globalThis\./i,
+  /eval\s*\(/i,
+  /Function\s*\(/i,
+  /setTimeout\s*\(/i,
+  /setInterval\s*\(/i,
+  /fetch\s*\(/i,
+  /XMLHttpRequest/i,
+  /WebSocket/i,
+  /child_process/i,
+  /spawn/i,
+  /exec\s*\(/i,
+  /\.env/i,
+  /__dirname/i,
+  /__filename/i,
+  /require\.resolve/i,
+  /module\.exports/i,
+];
+
+function containsSuspiciousPatterns(code) {
+  for (const pattern of SUSPICIOUS_PATTERNS) {
+    if (pattern.test(code)) {
+      return pattern;
+    }
+  }
+  return null;
+}
+
 export async function POST(request) {
   try {
     const authResult = await getAuthenticatedUser();
@@ -40,6 +71,11 @@ export async function POST(request) {
 
     if (code.length > 50_000) {
       return jsonResponse({ error: "Code exceeds maximum allowed length (50 000 characters)" }, 400);
+    }
+
+    const matched = containsSuspiciousPatterns(code);
+    if (matched) {
+      return jsonResponse({ error: "Code contains disallowed patterns" }, 400);
     }
 
     let result;

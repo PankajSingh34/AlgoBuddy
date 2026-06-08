@@ -6,11 +6,14 @@ const SANDBOX_CONFIG = {
   // Hard kill after this many milliseconds (maps to isolated-vm timeout)
   MAX_TIMEOUT_MS: 1000,
 
-  // V8 isolate heap ceiling in megabytes
-  MAX_MEMORY_MB: 32,
+  // V8 isolate heap ceiling in megabytes (isolated-vm enforces this per-isolate)
+  MAX_MEMORY_MB: 16,
 
   // Truncate stdout/stderr to this many characters before returning
   MAX_OUTPUT_LENGTH: 8000,
+
+  // Maximum length of user-submitted code in characters
+  MAX_CODE_LENGTH: 50000,
 
   // Maximum number of code-run requests per window per identity
   RATE_LIMIT_MAX_REQUESTS: 10,
