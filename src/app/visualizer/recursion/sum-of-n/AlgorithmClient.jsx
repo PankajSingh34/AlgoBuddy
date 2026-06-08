@@ -1,8 +1,8 @@
-import SumAnimation from "@/app/visualizer/recursion/sum-of-n/animation";
+import SumAnimation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/recursion/sum-of-n/codeBlock";
-import Quiz from "@/app/visualizer/recursion/sum-of-n/quiz";
-import Content from "@/app/visualizer/recursion/sum-of-n/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -36,10 +36,11 @@ export default function Page() {
           links={[
             { text: "Factorial Recursion", url: "/visualizer/recursion/factorial" },
             { text: "Fibonacci (Tree Recursion)", url: "/visualizer/recursion/fibonacci" },
-            { text: "Stack operations", url: "/visualizer/stack/push-pop" }
+            { text: "Stack operations", url: "/visualizer/stack/pushpop" }
           ]}
         />
       }
     />
   );
 }
+

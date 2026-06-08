@@ -4,9 +4,41 @@
 
 export const practiceData = [
   {
-    title: "Array",
-    slug: "array",
-    desc: "Contiguous collections of memory. Master array traversals, pointer techniques, searching, and sorting.",
+    title: "Arrays",
+    slug: "arrays",
+    desc: "Contiguous collections of memory. Master array traversals, pointer techniques, and window patterns.",
+    subsections: [
+      {
+        title: "Beginner",
+        items: [
+          {
+            id: "sliding-window",
+            name: "Sliding Window",
+            difficulty: "Medium",
+            companies: ["google", "amazon", "microsoft", "meta", "adobe", "uber", "airbnb"],
+            practiceUrl: "https://leetcode.com/problems/sliding-window-maximum/",
+            visualizerUrl: "/visualizer/arrays/slidingwindow",
+            theory: {
+              summary: "A computational technique used to reduce the needed time complexity of an algorithm by using a window over a portion of the data.",
+              steps: [
+                "Maintain a window [left, right].",
+                "Expand the window by moving the right pointer.",
+                "Shrink the window by moving the left pointer if a condition is met.",
+                "Process the current window state."
+              ],
+              complexity: { time: "O(N)", space: "O(1) or O(K)" },
+              pitfalls: "Off-by-one errors with window boundaries.",
+              tip: "Use Sliding Window for problems involving contiguous subarrays or substrings."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    title: "Searching",
+    slug: "searching",
+    desc: "Efficient algorithms to find elements in data structures.",
     subsections: [
       {
         title: "Beginner",
@@ -56,7 +88,14 @@ export const practiceData = [
             }
           }
         ]
-      },
+      }
+    ]
+  },
+  {
+    title: "Sorting",
+    slug: "sorting",
+    desc: "Reorganize data into specific orders using optimized comparison and counting techniques.",
+    subsections: [
       {
         title: "Intermediate",
         items: [
@@ -133,7 +172,7 @@ export const practiceData = [
   },
   {
     title: "Linked List",
-    slug: "linked-list",
+    slug: "linkedlist",
     desc: "Sequential node allocations chained via address pointer link references.",
     subsections: [
       {
@@ -145,7 +184,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "google", "adobe", "tcs", "accenture"],
             practiceUrl: "https://leetcode.com/problems/reverse-linked-list/",
-            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            visualizerUrl: "/visualizer/linkedlist/traversal",
             theory: {
               summary: "Traverse a singly linked list sequentially from the head node to the tail node to inspect or print values.",
               steps: [
@@ -169,7 +208,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "google", "adobe", "apple", "meta", "uber", "swiggy", "zomato"],
             practiceUrl: "https://leetcode.com/problems/reverse-linked-list/",
-            visualizerUrl: "/visualizer/linkedlist/operations/reverse",
+            visualizerUrl: "/visualizer/linkedlist/reverselinkedlist",
             theory: {
               summary: "Reverse the link directions in a singly linked list in-place so that the head becomes the tail.",
               steps: [
@@ -191,7 +230,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "google", "meta", "adobe", "flipkart", "swiggy"],
             practiceUrl: "https://leetcode.com/problems/merge-two-sorted-lists/",
-            visualizerUrl: "/visualizer/linkedlist/operations/merge",
+            visualizerUrl: "/visualizer/linkedlist/mergedlists",
             theory: {
               summary: "Combine two pre-sorted linked lists into a single sorted list by splicing their nodes.",
               steps: [
@@ -219,7 +258,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "google", "meta", "apple", "atlassian", "swiggy", "zomato"],
             practiceUrl: "https://leetcode.com/problems/linked-list-cycle/",
-            visualizerUrl: "/visualizer/linkedlist/operations/search",
+            visualizerUrl: "/visualizer/linkedlist/search",
             theory: {
               summary: "Detect if a linked list contains a loop or cycle using Floyd's Tortoise and Hare pointer algorithm.",
               steps: [
@@ -253,7 +292,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "google", "razorpay", "phonepe"],
             practiceUrl: "https://leetcode.com/problems/min-stack/",
-            visualizerUrl: "/visualizer/stack/push-pop",
+            visualizerUrl: "/visualizer/stack/pushpop",
             theory: {
               summary: "Fundamental LIFO stack operations: Push inserts elements at the top, and Pop retrieves/removes the top element.",
               steps: [
@@ -271,7 +310,7 @@ export const practiceData = [
             difficulty: "Easy",
             companies: ["amazon", "microsoft", "infosys", "wipro"],
             practiceUrl: "https://leetcode.com/problems/implement-queue-using-stacks/",
-            visualizerUrl: "/visualizer/queue/operations/enqueue-dequeue",
+            visualizerUrl: "/visualizer/queue/enqueue-dequeue",
             theory: {
               summary: "Fundamental FIFO queue operations: Enqueue inserts at the rear, and Dequeue removes from the front.",
               steps: [
@@ -321,7 +360,7 @@ export const practiceData = [
             difficulty: "Medium",
             companies: ["amazon", "microsoft", "google", "meta", "apple", "adobe", "uber", "airbnb", "phonepe", "razorpay"],
             practiceUrl: "https://leetcode.com/problems/min-stack/",
-            visualizerUrl: "/visualizer/stack/push-pop",
+            visualizerUrl: "/visualizer/stack/pushpop",
             theory: {
               summary: "Design a stack that supports push, pop, top, and retrieving the minimum element in constant O(1) time.",
               steps: [

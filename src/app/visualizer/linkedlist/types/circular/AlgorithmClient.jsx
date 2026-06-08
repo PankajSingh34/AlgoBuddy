@@ -1,7 +1,7 @@
-import Animation from "@/app/visualizer/linkedlist/types/circular/animation";
-import Content from "@/app/visualizer/linkedlist/types/circular/content";
-import Quiz from "@/app/visualizer/linkedlist/types/circular/quiz";
-import CodeBlock from "@/app/visualizer/linkedlist/types/circular/codeBlock";
+import Animation from "./animation";
+import Content from "./content";
+import Quiz from "./quiz";
+import CodeBlock from "./codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,

@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/stack/isfull/animation";
+import Animation from "./animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/stack/isfull/content";
-import Quiz from "@/app/visualizer/stack/isfull/quiz";
-import Code from "@/app/visualizer/stack/isfull/codeBlock";
+import Content from "./content";
+import Quiz from "./quiz";
+import Code from "./codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -35,10 +35,11 @@ export default function Page() {
           links={[
             { text: "Peek", url: "/visualizer/stack/peek" },
             { text: "Is Empty", url: "/visualizer/stack/isempty" },
-            { text: "Push Pop", url: "/visualizer/stack/push-pop" },
+            { text: "Push Pop", url: "/visualizer/stack/pushpop" },
           ]}
         />
       }
     />
   );
 }
+

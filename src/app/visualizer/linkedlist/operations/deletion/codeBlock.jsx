@@ -8,11 +8,11 @@ const codeExamples = CodeExamples;
 
 // ─── Filenames ─────────────────────────────
 const fileNames = {
-    javascript:'linkedListDeletion.js',
-    python:'linked_list_deletion.py',
-    java:'LinkedListDeletion.java',
-    c:'linked_list_deletion.c',
-    cpp:'linked_list_deletion.cpp'
+    javascript: 'linkedListDeletion.js',
+    python: 'linked_list_deletion.py',
+    java: 'LinkedListDeletion.java',
+    c: 'linked_list_deletion.c',
+    cpp: 'linked_list_deletion.cpp'
 };
 
 // ─── Component ─────────────────────────────

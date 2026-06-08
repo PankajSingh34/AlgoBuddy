@@ -1,8 +1,8 @@
-import FibonacciAnimation from "@/app/visualizer/recursion/fibonacci/animation";
+import FibonacciAnimation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/recursion/fibonacci/codeBlock";
-import Quiz from "@/app/visualizer/recursion/fibonacci/quiz";
-import Content from "@/app/visualizer/recursion/fibonacci/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -36,10 +36,11 @@ export default function Page() {
           links={[
             { text: "Factorial (Linear Recursion)", url: "/visualizer/recursion/factorial" },
             { text: "Sum of First N Numbers", url: "/visualizer/recursion/sum-of-n" },
-            { text: "Stack operations", url: "/visualizer/stack/push-pop" }
+            { text: "Stack operations", url: "/visualizer/stack/pushpop" }
           ]}
         />
       }
     />
   );
 }
+

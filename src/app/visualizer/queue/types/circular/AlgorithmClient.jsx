@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/queue/types/circular/animation";
+import Animation from "./animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/queue/types/circular/content";
-import Quiz from "@/app/visualizer/queue/types/circular/quiz";
-import Code from "@/app/visualizer/queue/types/circular/codeBlock";
+import Content from "./content";
+import Quiz from "./quiz";
+import Code from "./codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {

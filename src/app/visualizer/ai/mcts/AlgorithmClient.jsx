@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/ai/mcts/animation";
+import Animation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import Code from "@/app/visualizer/ai/mcts/codeBlock";
-import Quiz from "@/app/visualizer/ai/mcts/quiz";
-import Content from "@/app/visualizer/ai/mcts/content";
+import Code from "./codeBlock";
+import Quiz from "./quiz";
+import Content from "./content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import { MODULE_MAPS } from "@/lib/modulesMap";

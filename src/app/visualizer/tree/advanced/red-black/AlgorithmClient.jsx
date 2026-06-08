@@ -1,7 +1,7 @@
-import RedBlackAnimation from "@/app/visualizer/tree/advanced/red-black/animation";
-import RedBlackContent from "@/app/visualizer/tree/advanced/red-black/content";
-import RedBlackCode from "@/app/visualizer/tree/advanced/red-black/codeBlock";
-import RedBlackQuiz from "@/app/visualizer/tree/advanced/red-black/quiz";
+import RedBlackAnimation from "./animation";
+import RedBlackContent from "./content";
+import RedBlackCode from "./codeBlock";
+import RedBlackQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

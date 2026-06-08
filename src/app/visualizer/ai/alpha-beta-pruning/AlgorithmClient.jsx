@@ -1,4 +1,4 @@
-import Animation from "@/app/visualizer/ai/alpha-beta-pruning/animation";
+import Animation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/ai/alpha-beta-pruning/codeBlock";
 import Quiz from "@/app/visualizer/ai/alpha-beta-pruning/quiz";

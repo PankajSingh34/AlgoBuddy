@@ -1,7 +1,7 @@
-import SegmentAnimation from "@/app/visualizer/tree/advanced/segment/animation";
-import SegmentContent from "@/app/visualizer/tree/advanced/segment/content";
-import SegmentCode from "@/app/visualizer/tree/advanced/segment/codeBlock";
-import SegmentQuiz from "@/app/visualizer/tree/advanced/segment/quiz";
+import SegmentAnimation from "./animation";
+import SegmentContent from "./content";
+import SegmentCode from "./codeBlock";
+import SegmentQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

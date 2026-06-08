@@ -23,34 +23,48 @@ export const sections = [
     ],
   },
   {
-    title: "Array",
-    slug: "array",
-    desc: "Searching & sorting algorithms on contiguous memory",
+    title: "Arrays",
+    slug: "arrays",
+    desc: "Contiguous collections of memory. Master array traversals, pointer techniques, and window patterns.",
     subsections: [
-      {
-        title: "Searching",
-        items: [
-          { name: "Linear Search", path: "/visualizer/array/linearsearch" },
-          { name: "Binary Search", path: "/visualizer/array/binarysearch" },
-        ],
-      },
-      {
-        title: "Sorting",
-        items: [
-          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
-          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
-          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
-          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
-          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
-          { name: "Heap Sort", path: "/visualizer/array/heapsort" },
-          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
-          { name: "Comparison Mode", path: "/visualizer/array/comparison" },
-        ],
-      },
       {
         title: "Interview Patterns",
         items: [
-          { name: "Sliding Window", path: "/visualizer/array/slidingwindow" },
+          { name: "Sliding Window", path: "/visualizer/arrays/slidingwindow" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Searching",
+    slug: "searching",
+    desc: "Efficient algorithms to find elements in data structures.",
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          { name: "Linear Search", path: "/visualizer/searching/linearsearch" },
+          { name: "Binary Search", path: "/visualizer/searching/binarysearch" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Sorting",
+    slug: "sorting",
+    desc: "Reorganize data into specific orders using optimized comparison and counting techniques.",
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          { name: "Bubble Sort", path: "/visualizer/sorting/bubblesort" },
+          { name: "Selection Sort", path: "/visualizer/sorting/selectionsort" },
+          { name: "Insertion Sort", path: "/visualizer/sorting/insertionsort" },
+          { name: "Merge Sort", path: "/visualizer/sorting/mergesort" },
+          { name: "Quick Sort", path: "/visualizer/sorting/quicksort" },
+          { name: "Heap Sort", path: "/visualizer/sorting/heapsort" },
+          { name: "Counting Sort", path: "/visualizer/sorting/countingsort" },
+          { name: "Comparison Mode", path: "/visualizer/sorting/comparison" },
         ],
       },
     ],
@@ -84,7 +98,7 @@ export const sections = [
       {
         title: "Operations",
         items: [
-          { name: "Push & Pop", path: "/visualizer/stack/push-pop" },
+          { name: "Push & Pop", path: "/visualizer/stack/pushpop" },
           { name: "Peek", path: "/visualizer/stack/peek" },
           { name: "Is Empty", path: "/visualizer/stack/isempty" },
           { name: "Is Full", path: "/visualizer/stack/isfull" },
@@ -120,10 +134,10 @@ export const sections = [
       {
         title: "Operations",
         items: [
-          { name: "Enqueue & Dequeue", path: "/visualizer/queue/operations/enqueue-dequeue" },
-          { name: "Peek Front", path: "/visualizer/queue/operations/peek-front" },
-          { name: "Is Empty", path: "/visualizer/queue/operations/isempty" },
-          { name: "Is Full", path: "/visualizer/queue/operations/isfull" },
+          { name: "Enqueue & Dequeue", path: "/visualizer/queue/enqueue-dequeue" },
+          { name: "Peek Front", path: "/visualizer/queue/peek-front" },
+          { name: "Is Empty", path: "/visualizer/queue/isempty" },
+          { name: "Is Full", path: "/visualizer/queue/isfull" },
         ],
       },
       {
@@ -146,27 +160,27 @@ export const sections = [
   },
   {
     title: "Linked List",
-    slug: "linked-list",
+    slug: "linkedlist",
     desc: "Singly, doubly, circular — traversal to merge",
     subsections: [
       {
         title: "Types",
         items: [
-          { name: "Singly Linked List", path: "/visualizer/linkedlist/types/singly" },
-          { name: "Doubly Linked List", path: "/visualizer/linkedlist/types/doubly" },
-          { name: "Circular Linked List", path: "/visualizer/linkedlist/types/circular" },
+          { name: "Singly Linked List", path: "/visualizer/linkedlist/singly" },
+          { name: "Doubly Linked List", path: "/visualizer/linkedlist/doubly" },
+          { name: "Circular Linked List", path: "/visualizer/linkedlist/circular" },
         ],
       },
       {
         title: "Operations",
         items: [
-          { name: "Traversal", path: "/visualizer/linkedlist/operations/traversal" },
-          { name: "Insertion", path: "/visualizer/linkedlist/operations/insertion" },
-          { name: "Deletion", path: "/visualizer/linkedlist/operations/deletion" },
-          { name: "Searching", path: "/visualizer/linkedlist/operations/search" },
-          { name: "Reverse", path: "/visualizer/linkedlist/operations/reverse" },
-          { name: "Merge", path: "/visualizer/linkedlist/operations/merge" },
-          { name: "Comparison", path: "/visualizer/linkedlist/operations/comparison" },
+          { name: "Traversal", path: "/visualizer/linkedlist/traversal" },
+          { name: "Insertion", path: "/visualizer/linkedlist/insertion" },
+          { name: "Deletion", path: "/visualizer/linkedlist/deletion" },
+          { name: "Searching", path: "/visualizer/linkedlist/search" },
+          { name: "Reverse", path: "/visualizer/linkedlist/reverselinkedlist" },
+          { name: "Merge", path: "/visualizer/linkedlist/mergedlists" },
+          { name: "Comparison", path: "/visualizer/linkedlist/comparison" },
         ],
       },
     ],

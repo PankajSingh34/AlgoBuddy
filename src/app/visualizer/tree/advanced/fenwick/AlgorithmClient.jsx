@@ -1,7 +1,7 @@
-import FenwickAnimation from "@/app/visualizer/tree/advanced/fenwick/animation";
-import FenwickContent from "@/app/visualizer/tree/advanced/fenwick/content";
-import FenwickCode from "@/app/visualizer/tree/advanced/fenwick/codeBlock";
-import FenwickQuiz from "@/app/visualizer/tree/advanced/fenwick/quiz";
+import FenwickAnimation from "./animation";
+import FenwickContent from "./content";
+import FenwickCode from "./codeBlock";
+import FenwickQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {

@@ -2,7 +2,18 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "checkJs": false,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out"
+  ]
 }

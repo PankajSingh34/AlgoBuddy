@@ -1,8 +1,8 @@
-import Animation from "@/app/visualizer/stack/polish/prefix/animation";
+import Animation from "./animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/stack/polish/prefix/content";
-import Quiz from "@/app/visualizer/stack/polish/postfix/quiz";
-import Code from "@/app/visualizer/stack/polish/prefix/codeBlock";
+import Content from "./content";
+import Quiz from "./quiz";
+import Code from "./codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {

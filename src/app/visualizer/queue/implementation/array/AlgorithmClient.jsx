@@ -1,6 +1,6 @@
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import Content from "@/app/visualizer/queue/implementation/array/content";
-import Code from "@/app/visualizer/queue/implementation/array/codeblock";
+import Content from "./content";
+import Code from "./codeblock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
