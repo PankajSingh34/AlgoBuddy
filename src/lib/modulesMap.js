@@ -7,6 +7,7 @@ export const MODULE_MAPS = {
     mergeSort : "d6704302-d35c-4c32-a259-9518dec15920",
     quickSort : "19ad8f43-b858-4e80-998c-49c5e0f69f8c",
     countingSort : "a3b0cb48-1234-4cde-8f6b-9f12a3b4c5d6",
+    radixSort : "b4c1dc59-2345-4def-9g7c-0g23b4c5d6e7",
     pushPop : "48138388-914b-4f84-8468-683175ce1a1e",
     peek : "fd95f8af-fb22-413f-9080-ebb558b53e70",
     isEmpty : "05ecbddd-e3d4-4fa1-aa45-71accac97d79",
