@@ -1,6 +1,15 @@
 "use client";
 import ComplexityGraph from "@/app/components/ui/graph";
 import { useEffect, useState, useCallback } from "react";
+import AIHintPanel from "@/app/components/ui/AIHintPanel";
+
+// Pass your visualizer's live state as props:
+<AIHintPanel
+  algorithm="Bubble Sort"
+  currentStep={currentStepDescription}  // your existing step state
+  code={bubbleSortCode}
+  isDark={isDarkMode}
+/>
 
 const Content = () => {
   const [theme, setTheme] = useState("light");
@@ -78,7 +87,8 @@ const Content = () => {
   ];
 
   return (
-    <main className="max-w-4xl mx-auto">
+    <main className="max-w-4xl mx-auto">
+
       <article className="max-w-4xl bg-white dark:bg-[#111] rounded-2xl border border-[#e5e7eb] dark:border-[#222] overflow-hidden mb-8">
         {/* What is Bubble Sort */}
         <section className="p-6 border-b border-[#f3f4f6] dark:border-[#1e1e1e]">
