@@ -1,31 +1,29 @@
 "use client";
 import { useState, useEffect } from "react";
+import { persistence } from "@/lib/persistence";
 
 const MAX_RECENT = 6;
-const STORAGE_KEY = "algobuddy_recently_viewed";
 
 export function useRecentlyViewed() {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setRecentlyViewed(JSON.parse(stored));
-    } catch {}
+    persistence.get('RECENTLY_VIEWED').then((stored) => {
+      if (stored) setRecentlyViewed(stored);
+    });
   }, []);
 
   const addRecentlyViewed = (item) => {
-    // item = { name, path, category }
     setRecentlyViewed((prev) => {
       const filtered = prev.filter((i) => i.path !== item.path);
       const updated = [item, ...filtered].slice(0, MAX_RECENT);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set('RECENTLY_VIEWED', updated);
       return updated;
     });
   };
 
   const clearRecentlyViewed = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    persistence.remove('RECENTLY_VIEWED');
     setRecentlyViewed([]);
   };
 

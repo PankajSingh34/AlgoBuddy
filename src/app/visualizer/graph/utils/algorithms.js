@@ -344,7 +344,250 @@ export const floydWarshallFrames = (nodes, edges) => {
   return frames;
 };
 
+// === BELLMAN-FORD ADDED BELOW ===
+
+export const bellmanFordFrames = (nodes, edges, startNode) => {
+  const frames = [];
+  if (!startNode || nodes.length === 0) return frames;
+
+  const nodeIds = nodes.map((n) => n.id);
+  const distances = {};
+  nodeIds.forEach((id) => { distances[id] = id === startNode ? 0 : Infinity; });
+
+  const fmt = (v) => (v === Infinity ? "221e" : v);
+
+  frames.push({
+    visitedNodes: new Set(),
+    visitingNodes: new Set([startNode]),
+    activeEdge: null,
+    distances: { ...distances },
+    updatedNode: null,
+    phase: "relaxing",
+    negativeCycle: false,
+    description: `Initialize: distance to ${startNode} = 0, all others = 221e`,
+  });
+
+  const V = nodeIds.length;
+
+  for (let pass = 1; pass <= V - 1; pass++) {
+    let anyUpdate = false;
+    for (const edge of edges) {
+      const { from, to, weight } = edge;
+      const w = Number(weight) || 0;
+      frames.push({
+        visitedNodes: new Set(),
+        visitingNodes: new Set([from, to]),
+        activeEdge: { from, to },
+        distances: { ...distances },
+        updatedNode: null,
+        phase: "relaxing",
+        negativeCycle: false,
+        description: `Pass ${pass}: checking edge ${from} 2192 ${to} (weight: ${w})`,
+      });
+      if (distances[from] !== Infinity && distances[from] + w < distances[to]) {
+        distances[to] = distances[from] + w;
+        anyUpdate = true;
+        frames.push({
+          visitedNodes: new Set(),
+          visitingNodes: new Set([from, to]),
+          activeEdge: { from, to },
+          distances: { ...distances },
+          updatedNode: to,
+          phase: "relaxing",
+          negativeCycle: false,
+          description: `Relaxed! dist[${to}] updated to ${distances[to]} via ${from}`,
+        });
+      }
+    }
+    if (!anyUpdate) {
+      frames.push({ visitedNodes: new Set(nodeIds), visitingNodes: new Set(), activeEdge: null, distances: { ...distances }, updatedNode: null, phase: "done", negativeCycle: false, description: `Early termination after pass ${pass} 2014 shortest paths found.` });
+      return frames;
+    }
+  }
+
+  let negativeCycle = false;
+  for (const edge of edges) {
+    const { from, to, weight } = edge;
+    const w = Number(weight) || 0;
+    frames.push({ visitedNodes: new Set(), visitingNodes: new Set([from, to]), activeEdge: { from, to }, distances: { ...distances }, updatedNode: null, phase: "detecting", negativeCycle: false, description: `Negative cycle check: edge ${from} 2192 ${to}` });
+    if (distances[from] !== Infinity && distances[from] + w < distances[to]) {
+      negativeCycle = true;
+      frames.push({ visitedNodes: new Set(), visitingNodes: new Set([from, to]), activeEdge: { from, to }, distances: { ...distances }, updatedNode: to, phase: "detecting", negativeCycle: true, description: `26a0Fe0f Negative cycle detected! Edge ${from} 2192 ${to} still improves distance.` });
+      break;
+    }
+  }
+
+  frames.push({ visitedNodes: new Set(nodeIds), visitingNodes: new Set(), activeEdge: null, distances: { ...distances }, updatedNode: null, phase: "done", negativeCycle, description: negativeCycle ? "26a0Fe0f Bellman-Ford complete 2014 Negative cycle detected!" : "2705 Bellman-Ford complete 2014 Shortest paths found." });
+  return frames;
+};
+
 const formatDistance = (value) => (value === Infinity ? "Infinity" : value);
+
+/**
+ * A* Search Frame Generator
+ * @param {Array} nodeList   - Array of { id, x, y } node objects
+ * @param {Array} edgeList   - Array of { from, to, weight } edge objects
+ * @param {string} startNode - Starting node ID
+ * @param {string} goalNode  - Goal node ID
+ */
+export const aStarFrames = (nodeList, edgeList, startNode, goalNode) => {
+  const frames = [];
+  if (!startNode || !goalNode || startNode === goalNode) return frames;
+
+  // Build position map and weighted adjacency list (directed)
+  const pos = {};
+  nodeList.forEach((n) => { pos[n.id] = { x: n.x, y: n.y }; });
+
+  const adj = {};
+  nodeList.forEach((n) => { adj[n.id] = []; });
+  edgeList.forEach((e) => {
+    adj[e.from] = adj[e.from] || [];
+    adj[e.from].push({ node: e.to, weight: Number(e.weight) || 1 });
+  });
+
+  const heuristic = (a, b) => {
+    const pa = pos[a];
+    const pb = pos[b];
+    if (!pa || !pb) return 0;
+    return Math.sqrt(Math.pow(pa.x - pb.x, 2) + Math.pow(pa.y - pb.y, 2));
+  };
+
+  const gScore = {};
+  const fScore = {};
+  const cameFrom = {};
+  nodeList.forEach((n) => {
+    gScore[n.id] = Infinity;
+    fScore[n.id] = Infinity;
+  });
+  gScore[startNode] = 0;
+  fScore[startNode] = heuristic(startNode, goalNode);
+
+  const openSet = new Set([startNode]);
+  const closedSet = new Set();
+
+  const reconstructPath = (current) => {
+    const path = [current];
+    let c = current;
+    while (cameFrom[c]) {
+      c = cameFrom[c];
+      path.unshift(c);
+    }
+    return path;
+  };
+
+  const cloneScores = () => ({
+    gScore: { ...gScore },
+    fScore: { ...fScore },
+  });
+
+  frames.push({
+    visited: new Set(closedSet),
+    openSet: new Set(openSet),
+    current: startNode,
+    path: [],
+    ...cloneScores(),
+    activeEdge: null,
+    phase: "searching",
+    goalNode,
+    description: `A* initialized. Start: ${startNode}, Goal: ${goalNode}. g(${startNode})=0, f(${startNode})=${fScore[startNode].toFixed(1)}`,
+  });
+
+  while (openSet.size > 0) {
+    // Pick node with lowest fScore in open set
+    let current = null;
+    let lowestF = Infinity;
+    for (const n of openSet) {
+      if (fScore[n] < lowestF) {
+        lowestF = fScore[n];
+        current = n;
+      }
+    }
+
+    if (current === goalNode) {
+      const finalPath = reconstructPath(current);
+      frames.push({
+        visited: new Set(closedSet),
+        openSet: new Set(openSet),
+        current,
+        path: finalPath,
+        ...cloneScores(),
+        activeEdge: null,
+        phase: "found",
+        goalNode,
+        description: `Goal ${goalNode} reached! Path: ${finalPath.join(" → ")} (cost: ${gScore[goalNode].toFixed(1)})`,
+      });
+      return frames;
+    }
+
+    openSet.delete(current);
+    closedSet.add(current);
+
+    frames.push({
+      visited: new Set(closedSet),
+      openSet: new Set(openSet),
+      current,
+      path: reconstructPath(current),
+      ...cloneScores(),
+      activeEdge: null,
+      phase: "searching",
+      goalNode,
+      description: `Expanding node ${current} (f=${fScore[current].toFixed(1)})`,
+    });
+
+    const neighbors = adj[current] || [];
+    for (const { node: neighbor, weight } of neighbors) {
+      if (closedSet.has(neighbor)) continue;
+
+      const tentativeG = gScore[current] + weight;
+
+      frames.push({
+        visited: new Set(closedSet),
+        openSet: new Set(openSet),
+        current,
+        path: reconstructPath(current),
+        ...cloneScores(),
+        activeEdge: { from: current, to: neighbor },
+        phase: "searching",
+        goalNode,
+        description: `Checking edge ${current} → ${neighbor} (weight: ${weight}, tentative g: ${tentativeG.toFixed(1)})`,
+      });
+
+      if (tentativeG < gScore[neighbor]) {
+        cameFrom[neighbor] = current;
+        gScore[neighbor] = tentativeG;
+        fScore[neighbor] = tentativeG + heuristic(neighbor, goalNode);
+        openSet.add(neighbor);
+
+        frames.push({
+          visited: new Set(closedSet),
+          openSet: new Set(openSet),
+          current,
+          path: reconstructPath(current),
+          ...cloneScores(),
+          activeEdge: { from: current, to: neighbor },
+          phase: "searching",
+          goalNode,
+          description: `Updated ${neighbor}: g=${gScore[neighbor].toFixed(1)}, h=${heuristic(neighbor, goalNode).toFixed(1)}, f=${fScore[neighbor].toFixed(1)}`,
+        });
+      }
+    }
+  }
+
+  // No path found
+  frames.push({
+    visited: new Set(closedSet),
+    openSet: new Set(),
+    current: null,
+    path: [],
+    ...cloneScores(),
+    activeEdge: null,
+    phase: "no_path",
+    goalNode,
+    description: `No path exists from ${startNode} to ${goalNode}.`,
+  });
+
+  return frames;
+};
 
 /**
  * Prim's Frame Generator

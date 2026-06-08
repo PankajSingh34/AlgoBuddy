@@ -9,7 +9,7 @@ import { useEffect } from "react";
  * Cleans up the listener automatically on unmount.
  *
  * Shortcut map (matches the controls in BubbleSortVisualizer and siblings):
- *   Space   → Play / Pause  (calls onStart or onReset depending on state)
+ *   Space   → Play / Pause  (calls onTogglePlayPause when sorting, onStart when idle)
  *   R / r   → Reset All
  *   +  / =  → Speed up   (increase speed by 0.5, max 5)
  *   -       → Slow down  (decrease speed by 0.5, min 0.5)
@@ -47,10 +47,13 @@ export default function useVisualizerKeyboard({
       switch (e.key) {
         case " ":
           e.preventDefault(); // prevent page scroll
-          if (togglePlayHandler && sorting) {
-            togglePlayHandler();
+
+            if (togglePlayHandler && sorting) {
+              togglePlayHandler();
           } else if (sorting) {
             onReset?.();
+
+
           } else if (!sorted) {
             // Space while idle → Start
             if (onStart) {

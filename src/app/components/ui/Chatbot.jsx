@@ -358,6 +358,20 @@ function MessageBubble({ message }) {
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
               {message.content}
             </ReactMarkdown>
+
+            {message.role === "assistant" && !message.isStreaming && (
+  <div className="mt-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+    <h4 className="font-semibold text-sm mb-2">
+      🎯 Recommended Practice
+    </h4>
+    <ul className="text-xs space-y-1">
+      <li>Binary Search Problems</li>
+      <li>Sliding Window Challenges</li>
+      <li>Graph Traversal Exercises</li>
+    </ul>
+  </div>
+)}
+
             {message.isStreaming && (
               <span className="inline-block w-1.5 h-4 ml-0.5 bg-primary dark:bg-purple-400 rounded-full animate-pulse align-middle" />
             )}

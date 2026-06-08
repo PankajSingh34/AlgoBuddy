@@ -49,12 +49,14 @@ async function resolveSessionIdentifier(identifier) {
 export function useCollaboration({
   displayName = "Anonymous",
   onRemoteStateDelta,
+  userId,
 } = {}) {
   const clientId = useMemo(() => createClientId(), []);
   const [session, setSession] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("idle");
   const [participants, setParticipants] = useState([]);
   const [annotations, setAnnotations] = useState([]);
+  const [cursors, setCursors] = useState({});
   const [presenterId, setPresenterId] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordedEvents, setRecordedEvents] = useState([]);
@@ -69,6 +71,7 @@ export function useCollaboration({
   const currentDisplayNameRef = useRef(displayName);
   const recordingRef = useRef(recording);
   const presenterIdRef = useRef(presenterId);
+  const userIdRef = useRef(userId);
 
   useEffect(() => {
     callbacksRef.current.onRemoteStateDelta = onRemoteStateDelta;
@@ -85,6 +88,10 @@ export function useCollaboration({
   useEffect(() => {
     presenterIdRef.current = presenterId;
   }, [presenterId]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const cleanupTransport = useCallback(() => {
     if (channelRef.current) {
@@ -206,10 +213,12 @@ export function useCollaboration({
       throw new Error("Join or create a session first.");
     }
 
+    const isPrivileged = type === "control:grant" || type === "state:update";
+    const effectiveSenderId = isPrivileged ? (userIdRef.current || clientId) : clientId;
     const envelope = createSessionEvent({
       type,
       payload,
-      senderId: clientId,
+      senderId: effectiveSenderId,
       senderName: currentDisplayNameRef.current,
       sequence: ++sequenceRef.current,
     });
@@ -248,6 +257,20 @@ export function useCollaboration({
 
     channel.on("broadcast", { event: "session:event" }, ({ payload }) => {
       processEnvelope(payload);
+    });
+
+    channel.on("broadcast", { event: "cursor:move" }, ({ payload }) => {
+      if (payload && payload.senderId) {
+        setCursors((prev) => ({
+          ...prev,
+          [payload.senderId]: {
+            x: payload.x,
+            y: payload.y,
+            name: payload.name,
+            timestamp: Date.now(),
+          },
+        }));
+      }
     });
 
     const subscribed = await new Promise((resolve) => {
@@ -339,6 +362,7 @@ export function useCollaboration({
     setConnectionStatus("idle");
     setParticipants([]);
     setAnnotations([]);
+    setCursors({});
     setPresenterId(null);
     presenterIdRef.current = null;
     seenSequencesRef.current = new Map();
@@ -371,6 +395,23 @@ export function useCollaboration({
   const updateState = useCallback((delta) => {
     return sendEnvelope("state:update", { delta });
   }, [sendEnvelope]);
+
+  const sendCursor = useCallback(
+    (x, y) => {
+      if (!channelRef.current || !sessionRef.current) return;
+      channelRef.current.send({
+        type: "broadcast",
+        event: "cursor:move",
+        payload: {
+          senderId: clientId,
+          name: currentDisplayNameRef.current,
+          x,
+          y,
+        },
+      });
+    },
+    [clientId]
+  );
 
   const startRecording = useCallback(() => {
     setRecordedEvents([]);
@@ -409,6 +450,7 @@ export function useCollaboration({
       connectionStatus,
       participants,
       annotations,
+      cursors,
       presenterId,
       recording,
       recordedEvents,
@@ -418,6 +460,7 @@ export function useCollaboration({
       joinSession,
       leaveSession,
       sendEnvelope: updateState,
+      sendCursor,
       requestControl,
       grantControl,
       addAnnotation,
@@ -435,6 +478,7 @@ export function useCollaboration({
       clearRecording,
       clientId,
       connectionStatus,
+      cursors,
       createSession,
       error,
       exportRecording,
@@ -450,6 +494,7 @@ export function useCollaboration({
       session,
       stopRecording,
       startRecording,
+      sendCursor,
       updateState,
     ],
   );

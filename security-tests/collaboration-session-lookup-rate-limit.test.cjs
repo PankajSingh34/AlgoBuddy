@@ -48,9 +48,8 @@ test("session lookup GET applies rate limiting before resolving session details"
     "GET handler must use an IP-based collab:lookup rate-limit key",
   );
 
-  assert.match(
-    getHandler,
-    /status:\s*429/,
+  assert.ok(
+    /status:\s*429/.test(getHandler) || /jsonResponse\s*\([^)]*,\s*429\s*\)/.test(getHandler),
     "GET handler must return 429 when the lookup rate limit is exceeded",
   );
 

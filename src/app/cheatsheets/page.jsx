@@ -1,11 +1,21 @@
-import Cheatsheets from "@/app/components/cheatsheets";
+import CheatsheetsIndex from "@/app/components/cheatsheets/index";
+import Footer from "@/app/components/footer";
 
 export const metadata = {
-  title: "Complexity Cheatsheet | AlgoBuddy",
+  title: "DSA Cheatsheets | AlgoBuddy",
   description:
-    "Find time and space complexities of common data structure operations and sorting algorithms. Learn essential coding interview patterns on AlgoBuddy.",
+    "Comprehensive DSA cheatsheets covering sorting, searching, trees, graphs, linked lists, stacks, queues, hashmaps, recursion, and more. Includes time/space complexity, code snippets, and algorithm steps.",
 };
 
 export default function CheatsheetsPage() {
-  return <Cheatsheets />;
+  return (
+    <div className="min-h-screen bg-[#0a0a0f]">
+      <main className="container-app section-app">
+        <div className="mx-auto max-w-6xl">
+          <CheatsheetsIndex />
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
 }

@@ -7,6 +7,7 @@ import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
+import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 import {
   Home,
@@ -586,6 +587,20 @@ export default function ArenaPage() {
                 <span>Longest Streak</span>
                 <span className="font-bold text-slate-800 dark:text-neutral-200">43 Days</span>
               </div>
+              <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+  <div className="flex items-center justify-between">
+    <span className="text-xs font-semibold text-slate-700 dark:text-neutral-200">
+      📊 Consistency Score
+    </span>
+    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+      85%
+    </span>
+  </div>
+
+  <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-1">
+    Active on 26 of the last 30 days.
+  </p>
+</div>
             </div>
 
             {/* Detailed Stats */}
@@ -664,6 +679,7 @@ export default function ArenaPage() {
       </div>
 
       <Footer />
+       <BackToTop />
 
       {/* ─── Interactive Modals ────────────────────────────────────────────── */}
       <MatchmakingModal

@@ -17,6 +17,7 @@ import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
 import CookiePolicyModal from '@/app/components/cookie'
 import CodeOfConductModel from '@/app/components/CodeOfConductModel'
 
+
 const Footer = () => {
   const [showPolicyModal, setShowPolicyModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
@@ -24,6 +25,10 @@ const Footer = () => {
   const [ShowShowOfConduct, setShowCodeOfConductModal] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const validateEmail = (value) => {
     if (!value) {
@@ -39,15 +44,43 @@ const Footer = () => {
     return true;
   };
 
-  const handleNewsletterSubscribe = (e) => {
+  const handleNewsletterSubscribe = async (e) => {
     e.preventDefault();
+
     if (!validateEmail(newsletterEmail)) {
+      setSuccessMessage("");
       return;
     }
-    // TODO: Implement newsletter subscription API call here
-    // For now, just clear the form on successful validation
-    setNewsletterEmail("");
-  };
+
+    try {
+      setLoading(true);
+      setSuccessMessage("");
+      setErrorMessage("");
+
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: newsletterEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage(data.message);
+        setNewsletterEmail("");
+      } else {
+        setErrorMessage(data.message);
+      }
+    } catch (error) {
+      setErrorMessage("Subscription failed");
+    } finally {
+      setLoading(false);
+    }
+  };      
 
   const footerHeading =
     'text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600'
@@ -111,6 +144,16 @@ const Footer = () => {
                 >
                   <FaInstagram className="w-4 h-4" />
                 </a>
+
+                <a
+                  href="https://discord.gg/PqnazRxPc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialIcon}
+                  aria-label="Join AlgoBuddy Discord Community"
+                >
+                  <FaDiscord className="w-4 h-4" />
+                </a>
               </div>
 
               {/* Newsletter */}
@@ -120,16 +163,46 @@ const Footer = () => {
                   Subscribe to get the latest updates, features, and tutorials.
                 </p>
 
-                <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm">
+                <form
+                onSubmit={handleNewsletterSubscribe}
+                className="flex overflow-hidden rounded-xl border border-white/10 bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm"
+                >
                   <input
                     type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => {
+                      setNewsletterEmail(e.target.value);
+
+                      setSuccessMessage("");
+                      setErrorMessage("");
+
+                      validateEmail(e.target.value);
+                    }}
                     placeholder="Enter your email"
-                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
+                    className="flex-1 bg-transparent px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
                   />
-                  <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
-                    Subscribe
-                  </button>
-                </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Subscribing..." : "Subscribe"}
+                    </button>  
+                </form>
+                {newsletterEmailError && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {newsletterEmailError}
+                  </p>
+                )}
+                {successMessage && (
+                  <p className="text-green-500 text-sm mt-2">
+                    {successMessage}
+                  </p>
+                )}
+                {errorMessage && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {errorMessage}
+                  </p>
+                )}<div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm"></div>
               </div>
             </div>
 
