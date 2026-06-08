@@ -244,6 +244,12 @@ export async function POST(request) {
     });
   }
 
+  // ─── Configuration Validation ─────────────────────────────────────────────
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[AlgoBot] Missing GEMINI_API_KEY environment variable");
+    return jsonResponse({ error: "AI service is not configured. Please set GEMINI_API_KEY." }, 500);
+  }
+
   let body;
   try {
     body = await request.json();
@@ -268,42 +274,55 @@ export async function POST(request) {
   }
   const encoder = new TextEncoder();
 
+  const abortController = new AbortController();
+  const STREAM_TIMEOUT_MS = 30000;
+
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (data) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, STREAM_TIMEOUT_MS);
+
       try {
-        // Build Gemini model configuration with direct system instruction context mapping
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
           generationConfig: { maxOutputTokens: MAX_TOKENS },
         });
 
-        // Pass the fully structured content array to generateContentStream
-        // This avoids history-alternation validation errors with the Welcome message format
         const structuredContents = toGeminiContents(clampedMessages);
         const result = await model.generateContentStream({
           contents: structuredContents,
         });
 
         for await (const chunk of result.stream) {
+          if (abortController.signal.aborted) throw new Error("Stream timeout");
           const text = chunk.text();
           if (text) {
             enqueue({ type: "delta", content: text });
           }
         }
 
+        if (abortController.signal.aborted) throw new Error("Stream timeout");
+
         enqueue({ type: "done" });
       } catch (err) {
-        console.error("[AlgoBot API Error]", err?.message ?? err);
-        enqueue({
-          type: "error",
-          message: "AI service connection error. Please verify your local configuration and try again.",
-        });
+        const message = err?.message ?? String(err);
+        console.error("[AlgoBot API Error]", message);
+        if (err?.stack) console.error("[AlgoBot API Error Stack]", err.stack);
+        try {
+          enqueue({
+            type: "error",
+            message: "AI service connection error. Please verify your local configuration and try again.",
+          });
+        } catch (_) {}
+        controller.error(err);
       } finally {
-        controller.close();
+        clearTimeout(timeoutId);
+        try { controller.close(); } catch (_) {}
       }
     },
   });
