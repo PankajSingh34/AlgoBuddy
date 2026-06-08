@@ -305,23 +305,28 @@ async function readSession(sessionId) {
   ensureRedisConnection();
   if (!sessionId) return null;
 
-  let session;
-  if (redis) {
-    const value = await redis.get(sessionKey(sessionId));
-    session = value ? value : null;
-  } else {
-    session = memorySessions.get(sessionId) || null;
-  }
-
-  if (session && Array.isArray(session.subscriptionTokens) && session.subscriptionTokens.length > 0) {
-    const pruned = pruneActiveSubscriptionTokens(session.subscriptionTokens);
-    if (pruned.length < session.subscriptionTokens.length) {
-      session.subscriptionTokens = pruned;
-      await writeSession(session);
+  const doRead = async () => {
+    let session;
+    if (redis) {
+      const value = await redis.get(sessionKey(sessionId));
+      session = value ? value : null;
+    } else {
+      session = memorySessions.get(sessionId) || null;
     }
-  }
 
-  return session;
+    if (session && Array.isArray(session.subscriptionTokens) && session.subscriptionTokens.length > 0) {
+      const pruned = pruneActiveSubscriptionTokens(session.subscriptionTokens);
+      if (pruned.length < session.subscriptionTokens.length) {
+        session.subscriptionTokens = pruned;
+        await writeSession(session);
+      }
+    }
+
+    return session;
+  };
+
+  if (redis) return doRead();
+  return withMemoryLock(`read:${sessionId}`, doRead);
 }
 
 async function findSessionByJoinCode(joinCode) {
@@ -340,9 +345,11 @@ async function findSessionByJoinCode(joinCode) {
     return session;
   }
 
-  return [...memorySessions.values()].find(
-    (session) => normalizeJoinCode(session.joinCode) === normalizedJoinCode,
-  ) || null;
+  return withMemoryLock("findByJoinCode", async () => {
+    return [...memorySessions.values()].find(
+      (session) => normalizeJoinCode(session.joinCode) === normalizedJoinCode,
+    ) || null;
+  });
 }
 
 async function readSessionByIdentifier(identifier) {
@@ -358,17 +365,21 @@ async function writeSession(session) {
     updatedAt: new Date().toISOString(),
   };
 
-  if (redis) {
-    await redis.set(sessionKey(nextSession.id), nextSession, {
-      ex: SESSION_TTL_SECONDS,
-    });
-  } else {
-    startMemorySweeper();
-    memorySessions.set(nextSession.id, nextSession);
-    touchMemorySession(nextSession.id);
-  }
+  const doWrite = async () => {
+    if (redis) {
+      await redis.set(sessionKey(nextSession.id), nextSession, {
+        ex: SESSION_TTL_SECONDS,
+      });
+    } else {
+      startMemorySweeper();
+      memorySessions.set(nextSession.id, nextSession);
+      touchMemorySession(nextSession.id);
+    }
+    return nextSession;
+  };
 
-  return nextSession;
+  if (redis) return doWrite();
+  return withMemoryLock(`write:${nextSession.id}`, doWrite);
 }
 
 function pruneActiveSubscriptionTokens(tokens, nowMs = Date.now()) {
@@ -659,6 +670,13 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
   const maxScore = parsed.score;
 
   if (redis) {
+    // Active garbage collection (5% chance): drops expired session IDs 
+    // from the index to prevent unbounded memory leaks for unlisted/private sessions.
+    if (Math.random() < 0.05) {
+      const cutoffMs = Date.now() - SESSION_TTL_MS;
+      await redis.zremrangebyscore(SESSION_INDEX_KEY, "-inf", cutoffMs);
+    }
+
     const sessions = [];
     const expiredIds = [];
     let offset = 0;

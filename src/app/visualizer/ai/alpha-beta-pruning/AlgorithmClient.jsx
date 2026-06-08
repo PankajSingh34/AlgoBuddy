@@ -3,6 +3,7 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/ai/alpha-beta-pruning/codeBlock";
 import Quiz from "@/app/visualizer/ai/alpha-beta-pruning/quiz";
 import Content from "@/app/visualizer/ai/alpha-beta-pruning/content";
+import TrackVisit from "@/app/components/ui/TrackVisit";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
@@ -13,6 +14,12 @@ import { MODULE_MAPS } from "@/lib/modulesMap";
 
 export default function Page() {
   return (
+    <>
+    <TrackVisit
+        name="Alpha Beta Pruning"
+        path="/visualizer/ai/alphabeta"
+        category="AI Algorithms"
+      />
     <VisualizerPageLayout
       paths={createVisualizerPaths("AI Algorithms", "Alpha Beta Pruning")}
       title="Alpha Beta Pruning"
@@ -23,7 +30,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.alphaBeta}
-          description="Mark alpha beta pruning as done and view it on your dashboard"
+          description="Mark alpha beta pruning as done and track your progress"
           initialDone={false}
         />
       }
@@ -34,5 +41,6 @@ export default function Page() {
         />
       }
     />
+    </>
   );
 }

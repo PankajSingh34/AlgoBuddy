@@ -23,7 +23,7 @@ export default function DiameterAlgorithmPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.diameter}
-          description="Mark Tree Diameter as done and view it on your dashboard"
+          description="Mark Tree Diameter as done and track your progress"
           initialDone={false}
         />
       }

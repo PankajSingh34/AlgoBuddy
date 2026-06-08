@@ -249,6 +249,22 @@ const QuickSortVisualizer = () => {
     sorted,
   });
 
+  const handleExplainStep = () => {
+    const prompt = `I am currently looking at the Quick Sort algorithm, at step ${currentStep} of ${totalSteps}.
+Phase: ${currentPhase}
+Explanation on screen: ${stepExplanation}
+Current Array State: [${array.join(", ")}]
+Currently comparing: left = ${currentIndices.left}, right = ${currentIndices.right}
+Pivot index: ${currentIndices.pivot}
+Partition index: ${currentIndices.partitionIndex}
+
+Please explain exactly what is happening in this step in detail.`;
+    
+    window.dispatchEvent(
+      new CustomEvent("chatbot-explain", { detail: { prompt } })
+    );
+  };
+
   // Function to render partition visualization
   const renderPartitions = () => {
     if (currentIndices.partitions.length === 0) return null;
@@ -368,6 +384,7 @@ const QuickSortVisualizer = () => {
               onTogglePlayPause={togglePlayPause}
               speed={speed}
               onSpeedChange={setSpeed}
+              onExplainStep={handleExplainStep}
             />
           )}
 

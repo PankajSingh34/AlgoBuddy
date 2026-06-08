@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionHanoi}
-          description="Mark Tower of Hanoi as done and view it on your dashboard"
+          description="Mark Tower of Hanoi as done and track your progress"
           initialDone={false}
         />
       }

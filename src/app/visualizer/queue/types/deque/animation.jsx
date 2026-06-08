@@ -3,7 +3,12 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-
+import {
+  enqueueFrontGenerator,
+  enqueueRearGenerator,
+  dequeueFrontGenerator,
+  dequeueRearGenerator
+} from "@/features/algorithms/queue/dequeLogic";
 const DequeVisualizer = () => {
   const [deque, setDeque] = useState([]);
   const [inputValue, setInputValue] = useState("");
@@ -28,59 +33,101 @@ const DequeVisualizer = () => {
   };
 
   /* ---------- enqueue front ---------- */
-  const enqueueFront = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+  const enqueueFront = () => {
+    if (isAnimating) return;
+    const generator = enqueueFrontGenerator(deque, inputValue);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    await showOp(`Enqueuing "${inputValue}" at front …`);
-    setDeque((d) => [inputValue, ...d]);
-    setMessage(`"${inputValue}" added to front`);
-    setInputValue("");
-    setIsAnimating(false);
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setDeque(step.value.deque);
+          setMessage(step.value.message);
+          setInputValue("");
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- enqueue rear ---------- */
-  const enqueueRear = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+  const enqueueRear = () => {
+    if (isAnimating) return;
+    const generator = enqueueRearGenerator(deque, inputValue);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    await showOp(`Enqueuing "${inputValue}" at rear …`);
-    setDeque((d) => [...d, inputValue]);
-    setMessage(`"${inputValue}" added to rear`);
-    setInputValue("");
-    setIsAnimating(false);
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setDeque(step.value.deque);
+          setMessage(step.value.message);
+          setInputValue("");
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- dequeue front ---------- */
-  const dequeueFront = async () => {
-    if (deque.length === 0) {
-      setMessage("Deque is empty!");
+  const dequeueFront = () => {
+    if (isAnimating) return;
+    const generator = dequeueFrontGenerator(deque);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const front = deque[0];
-    await showOp(`Dequeuing "${front}" from front …`);
-    setDeque((d) => d.slice(1));
-    setMessage(`"${front}" removed from front`);
-    setIsAnimating(false);
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setDeque(step.value.deque);
+          setMessage(step.value.message);
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- dequeue rear ---------- */
-  const dequeueRear = async () => {
-    if (deque.length === 0) {
-      setMessage("Deque is empty!");
+  const dequeueRear = () => {
+    if (isAnimating) return;
+    const generator = dequeueRearGenerator(deque);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const rear = deque[deque.length - 1];
-    await showOp(`Dequeuing "${rear}" from rear …`);
-    setDeque((d) => d.slice(0, -1));
-    setMessage(`"${rear}" removed from rear`);
-    setIsAnimating(false);
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setDeque(step.value.deque);
+          setMessage(step.value.message);
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- peek front ---------- */

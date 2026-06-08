@@ -224,6 +224,22 @@ const MergeSortVisualizer = () => {
   const isInCurrentRange = (index) => index >= currentIndices.left && index <= currentIndices.right;
   const isBeingMerged = (index) => index >= currentIndices.mergeStart && index <= currentIndices.mergeEnd;
 
+  const handleExplainStep = () => {
+    const prompt = `I am currently looking at the Merge Sort algorithm, at step ${currentStep} of ${totalSteps}.
+Phase: ${currentPhase}
+Explanation on screen: ${stepExplanation}
+Current Array State: [${array.join(", ")}]
+Left index: ${currentIndices.left}, Right index: ${currentIndices.right}, Mid: ${currentIndices.mid}
+Currently comparing indices: [${currentIndices.comparing.join(", ")}]
+Currently merging indices: ${currentIndices.mergeStart} to ${currentIndices.mergeEnd}
+
+Please explain exactly what is happening in this step in detail.`;
+    
+    window.dispatchEvent(
+      new CustomEvent("chatbot-explain", { detail: { prompt } })
+    );
+  };
+
   return (
     <main className="container mx-auto px-6 pt-2 pb-6">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
@@ -328,6 +344,7 @@ const MergeSortVisualizer = () => {
               onTogglePlayPause={togglePlayPause}
               speed={speed}
               onSpeedChange={setSpeed}
+              onExplainStep={handleExplainStep}
             />
           )}
 

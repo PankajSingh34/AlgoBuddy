@@ -1,18 +1,16 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react"; // ← added useCallback
+import React, { useState, useMemo, useCallback } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
-import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/storage";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
   createOptions,
   useSortingChallenge,
 } from "@/app/visualizer/array/components/ChallengeMode";
 import { bubbleSortGenerator } from "@/features/algorithms/array/bubbleSortLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -28,7 +26,6 @@ const createBubbleSwapQuestion = (arr, j) => {
     j + 2 < arr.length ? `${arr[j + 1]} and ${arr[j + 2]} (indices ${j + 1} and ${j + 2})` : null,
     "No swap will happen",
   ]);
-
   return {
     prompt: "Which two elements will swap next?",
     options,
@@ -37,49 +34,114 @@ const createBubbleSwapQuestion = (arr, j) => {
   };
 };
 
+const precomputeSteps = (inputArray) => {
+  const steps = [];
+  const generator = bubbleSortGenerator(inputArray);
+  for (const frame of generator) {
+    const { type, payload } = frame;
+    if (type === 'init') {
+      steps.push({
+        array: inputArray,
+        comparisons: 0, swaps: 0, currentStep: 0,
+        currentIndices: { i: -1, j: -1 },
+        currentPhase: "", stepExplanation: "Starting Bubble Sort...",
+        sorted: false, totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'phase_start') {
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: payload.j, j: payload.jNext },
+        currentPhase: `Pass ${payload.pass} of ${payload.totalPasses}`,
+        stepExplanation: `Starting pass ${payload.pass}, comparing adjacent elements.`,
+        sorted: false,
+        totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'comparing') {
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: payload.j, j: payload.jNext },
+        currentPhase: payload.currentPhase || steps[steps.length - 1]?.currentPhase || "",
+        stepExplanation: `Comparing ${payload.arr[payload.j]} and ${payload.arr[payload.jNext]} at indices ${payload.j} and ${payload.jNext}.`,
+        sorted: false,
+        totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'swap_needed') {
+      const prev = steps[steps.length - 1] || {};
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: payload.j, j: payload.jNext },
+        currentPhase: prev.currentPhase || "",
+        stepExplanation: `Since ${payload.arr[payload.j]} > ${payload.arr[payload.jNext]}, swapping elements at indices ${payload.j} and ${payload.jNext}.`,
+        sorted: false,
+        totalSteps: payload.totalSteps,
+        isSwap: true, swapJ: payload.j,
+      });
+    } else if (type === 'swapped') {
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: -1, j: -1 },
+        currentPhase: steps[steps.length - 1]?.currentPhase || "",
+        stepExplanation: `Swapped. Array state: [${payload.arr.join(', ')}]`,
+        sorted: false,
+        totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'no_swap') {
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: -1, j: -1 },
+        currentPhase: steps[steps.length - 1]?.currentPhase || "",
+        stepExplanation: `No swap needed between ${payload.arr[payload.j]} and ${payload.arr[payload.jNext]}.`,
+        sorted: false,
+        totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'early_completion') {
+      steps.push({
+        array: payload.arr,
+        comparisons: payload.comparisons,
+        swaps: payload.swaps,
+        currentStep: payload.step,
+        currentIndices: { i: -1, j: -1 },
+        currentPhase: "Completion Check",
+        stepExplanation: "No swaps occurred; the array is already sorted.",
+        sorted: false,
+        totalSteps: payload.totalSteps,
+      });
+    } else if (type === 'completed') {
+      const last = steps[steps.length - 1] || {};
+      steps.push({
+        array: payload.arr || last.array || [],
+        comparisons: payload.comparisons || last.comparisons,
+        swaps: payload.swaps || last.swaps,
+        currentStep: payload.step || last.currentStep || 0,
+        currentIndices: { i: -1, j: -1 },
+        currentPhase: "Completed",
+        stepExplanation: "Array is fully sorted.",
+        sorted: true,
+        totalSteps: payload.totalSteps || last.totalSteps,
+      });
+    }
+  }
+  return steps;
+};
+
 const BubbleSortVisualizer = () => {
-  const [sorting, setSorting] = useState(false);
-  const [sorted, setSorted] = useState(false);
   const [array, setArray] = useState([]);
   const [challengeEnabled, setChallengeEnabled] = useState(false);
-  const {
-    isPaused,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-    checkPause,
-  } = usePlayback(loadFromStorage("bubble-speed", 1));
-  const [currentStep, setCurrentStep] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
-
-  
-  useEffect(() => { saveToStorage("bubble-speed", speed); }, [speed]);
-
-  const [comparisons, setComparisons] = useState(0);
-  const [swaps, setSwaps] = useState(0);
-  const [currentIndices, setCurrentIndices] = useState({ i: -1, j: -1 });
-  const [currentPhase, setCurrentPhase] = useState("");
-  const [stepExplanation, setStepExplanation] = useState("");
-  const animationRef = useRef(null);
-  const isSortingRef = useRef(false);
-  const resolveRef = useRef(null);
-  useVisualizerReset(() => {
-    isSortingRef.current = false;
-    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
-    if (animationRef.current) clearTimeout(animationRef.current);
-    setArray([]);
-    setSorting(false);
-    setSorted(false);
-    setComparisons(0);
-    setSwaps(0);
-    setCurrentStep(0);
-    setTotalSteps(0);
-    setCurrentIndices({ i: -1, j: -1 });
-    setChallengeEnabled(false);
-  });
   const {
     activeQuestion,
     askChallenge,
@@ -88,138 +150,81 @@ const BubbleSortVisualizer = () => {
     submitAnswer,
   } = useSortingChallenge(challengeEnabled);
 
-  const handleArrayGenerated = (newArray) => {
-    setArray(newArray);
-    setSorted(false);
-    resetStats();
-  };
+  const [visualState, setVisualState] = useState({
+    comparisons: 0, swaps: 0, currentIndices: { i: -1, j: -1 },
+    currentPhase: "", stepExplanation: "", sorted: false, totalSteps: 0,
+  });
 
-  const resetStats = () => {
-    setComparisons(0);
-    setSwaps(0);
-    setCurrentStep(0);
-    setTotalSteps(0);
-    setCurrentIndices({ i: -1, j: -1 });
-    setCurrentPhase("");
-    setStepExplanation("");
-    resetChallengeStats();
-    if (animationRef.current) clearTimeout(animationRef.current);
-  };
+  const steps = useMemo(() => {
+    if (array.length === 0) return [];
+    return precomputeSteps(array);
+  }, [array]);
 
-  const cancellableDelay = async () => {
-    await new Promise((resolve) => {
-      resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, 1000 / speedRef.current);
+  const onStep = useCallback((step) => {
+    setVisualState({
+      comparisons: step.comparisons,
+      swaps: step.swaps,
+      currentIndices: step.currentIndices,
+      currentPhase: step.currentPhase,
+      stepExplanation: step.stepExplanation,
+      sorted: step.sorted,
+      totalSteps: step.totalSteps,
     });
-    await checkPause();
-  };
-
-  const bubbleSort = async () => {
-    if (sorted || sorting || array.length === 0) return;
-
-    isSortingRef.current = true;
-    setSorting(true);
-    
-    const generator = bubbleSortGenerator(array);
-
-    for (const frame of generator) {
-      if (!isSortingRef.current) return;
-
-      const { type, payload } = frame;
-
-      if (type === 'init') {
-        setTotalSteps(payload.totalSteps);
-        setCurrentStep(0);
-      } 
-      else if (type === 'phase_start') {
-        setCurrentPhase(`Pass ${payload.pass} of ${payload.totalPasses}`);
-        setStepExplanation(`Starting pass ${payload.pass}, comparing adjacent elements.`);
-      }
-      else if (type === 'comparing') {
-        setCurrentIndices({ i: payload.j, j: payload.jNext });
-        setComparisons(payload.comparisons);
-        setCurrentStep(payload.step);
-        setStepExplanation(`Comparing ${payload.arr[payload.j]} and ${payload.arr[payload.jNext]} at indices ${payload.j} and ${payload.jNext}.`);
-        await cancellableDelay();
-      }
-      else if (type === 'swap_needed') {
-        setStepExplanation(`Since ${payload.arr[payload.j]} > ${payload.arr[payload.jNext]}, swapping elements at indices ${payload.j} and ${payload.jNext}.`);
-        
-        await askChallenge(createBubbleSwapQuestion(payload.arr, payload.j));
-        if (!isSortingRef.current) return;
-
-        const bars = document.querySelectorAll(".bar");
-        const bar1 = bars[payload.j];
-        const bar2 = bars[payload.jNext];
-        if (bar1 && bar2) {
-          await gsap.to(bar1, { x: "+=40", duration: 0.3, yoyo: true });
-          await gsap.to(bar2, { x: "-=40", duration: 0.3, yoyo: true });
-          await gsap.to([bar1, bar2], { x: "0", duration: 0 });
-        }
-      }
-      else if (type === 'swapped') {
-        setSwaps(payload.swaps);
-        setArray(payload.arr);
-        setStepExplanation(`Swapped ${payload.arr[payload.jNext]} and ${payload.arr[payload.j]} to continue sorting this pass.`);
-        await cancellableDelay();
-      }
-      else if (type === 'no_swap') {
-        setStepExplanation(`Since ${payload.arr[payload.j]} <= ${payload.arr[payload.jNext]}, no swap is needed.`);
-        await cancellableDelay();
-      }
-      else if (type === 'early_completion') {
-        setStepExplanation(`No swaps occurred; the array is already sorted.`);
-        setCurrentPhase("Completion Check");
-        await cancellableDelay();
-      }
-      else if (type === 'completed') {
-        isSortingRef.current = false;
-        setSorting(false);
-        setSorted(true);
-        setCurrentPhase("Completed");
-        setStepExplanation("Array is fully sorted.");
+    if (step.isSwap && step.swapJ !== undefined) {
+      const bars = document.querySelectorAll(".bar");
+      const bar1 = bars[step.swapJ];
+      const bar2 = bars[step.swapJ + 1];
+      if (bar1 && bar2) {
+        gsap.to(bar1, { x: "+=40", duration: 0.2, yoyo: true });
+        gsap.to(bar2, { x: "-=40", duration: 0.2, yoyo: true });
       }
     }
-  };
-
-  const reset = () => {
-    isSortingRef.current = false;
-    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
-    if (animationRef.current) clearTimeout(animationRef.current);
-    setArray([]);
-    setSorting(false);
-    setSorted(false);
-    resetStats();
-  };
-
-  // ── Stable callbacks for the keyboard hook ──────────────────────────────
-  // useCallback keeps the function reference stable so the hook's useEffect
-  // doesn't re-subscribe on every render.
-  const handleStart = useCallback(() => {
-    bubbleSort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sorting, sorted, array, speed]);
-
-  const handleReset = useCallback(() => {
-    reset();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSpeedChange = useCallback((nextSpeed) => {
-    setSpeed(nextSpeed);
-  }, [setSpeed]);
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 500 });
 
+  const currentStepData = steps[engine.currentStep];
 
-  // keyboard shortcuts
+  const handleStart = useCallback(() => {
+    if (currentStepData?.sorted) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else {
+      engine.play();
+    }
+  }, [engine, currentStepData]);
+
+  const handleReset = useCallback(() => {
+    setVisualState({
+      comparisons: 0, swaps: 0, currentIndices: { i: -1, j: -1 },
+      currentPhase: "", stepExplanation: "", sorted: false, totalSteps: 0,
+    });
+    engine.reset();
+  }, [engine]);
+
   useVisualizerKeyboard({
-    onStart:       handleStart,
-    onReset:       handleReset,
-    onSpeedChange: handleSpeedChange,
-    onTogglePlayPause: togglePlayPause,
-    speed,
-    sorting,
-    sorted,
+    onStart: handleStart,
+    onReset: handleReset,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onTogglePlayPause: engine.isPlaying ? engine.pause : handleStart,
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: currentStepData?.sorted || false,
   });
+
+  const handleExplainStep = () => {
+    const prompt = `I am currently looking at the Bubble Sort algorithm, at step ${engine.currentStep} of ${steps.length}.
+Phase: ${visualState.currentPhase}
+Explanation on screen: ${visualState.stepExplanation}
+Current Array State: [${currentStepData?.array?.join(", ") || array.join(", ")}]
+Currently comparing indices: i = ${visualState.currentIndices.i}, j = ${visualState.currentIndices.j}
+
+Please explain exactly what is happening in this step in detail.`;
+
+    window.dispatchEvent(
+      new CustomEvent("chatbot-explain", { detail: { prompt } })
+    );
+  };
 
   return (
     <main className="container mx-auto px-6 pb-4">
@@ -229,33 +234,31 @@ const BubbleSortVisualizer = () => {
       </p>
 
       <div className="max-w-4xl mx-auto">
-        {/* Controls */}
         <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md mb-6 md:mb-8 border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             <div className="flex flex-col gap-1">
-              <ArrayGenerator onGenerate={handleArrayGenerated} disabled={sorting} isPrimary={array.length === 0} />
+              <ArrayGenerator onGenerate={setArray} disabled={engine.isPlaying} isPrimary={array.length === 0} />
               <CustomArrayInput
                 onUseCustomArray={(arr) => {
                   setArray(arr);
-                  setSorted(false);
-                  resetStats();
+                  handleReset();
                 }}
-                disabled={sorting}
+                disabled={engine.isPlaying}
                 currentArray={array}
                 className="w-full"
               />
             </div>
             <div className="flex flex-col gap-2 justify-between">
               <button
-                onClick={bubbleSort}
-                disabled={!array.length || sorting || sorted}
+                onClick={handleStart}
+                disabled={!array.length}
                 className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white"
               >
-                {sorting ? "Sorting..." : "Start Bubble Sort"}
+                {engine.isPlaying ? "Playing..." : currentStepData?.sorted ? "Restart" : "Start Bubble Sort"}
               </button>
               <button
-                onClick={reset}
-                disabled={sorting}
+                onClick={handleReset}
+                disabled={engine.isPlaying}
                 className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base"
               >
                 Reset All
@@ -263,17 +266,21 @@ const BubbleSortVisualizer = () => {
             </div>
           </div>
 
-          {/* Playback & Speed controls */}
-          {sorting && (
+          {engine.isPlaying && (
             <PlaybackControls
-              isPaused={isPaused}
-              onTogglePlayPause={togglePlayPause}
-              speed={speed}
-              onSpeedChange={setSpeed}
+              isPlaying={engine.isPlaying}
+              onPlayPause={engine.isPlaying ? engine.pause : handleStart}
+              speed={engine.speed / 500}
+              onSpeedChange={(s) => engine.setSpeed(s * 500)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={engine.reset}
+              onExplainStep={handleExplainStep}
+              disabled={steps.length === 0}
             />
           )}
 
-          {!sorting && (
+          {!engine.isPlaying && (
             <div className="flex items-center gap-4 mb-4">
               <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
               <input
@@ -281,18 +288,17 @@ const BubbleSortVisualizer = () => {
                 min="0.5"
                 max="5"
                 step="0.5"
-                value={speed}
-                onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                value={engine.speed / 500}
+                onChange={(e) => engine.setSpeed(parseFloat(e.target.value) * 500)}
                 className="w-24 sm:w-32"
-                disabled={sorting}
               />
-              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{engine.speed / 500}x</span>
             </div>
           )}
 
           <ChallengeModePanel
             activeQuestion={activeQuestion}
-            disabled={sorting}
+            disabled={engine.isPlaying}
             enabled={challengeEnabled}
             onEnabledChange={setChallengeEnabled}
             onResetStats={resetChallengeStats}
@@ -300,26 +306,25 @@ const BubbleSortVisualizer = () => {
             stats={challengeStats}
           />
 
-          {/* Stats */}
           <div className="grid grid-cols-2 gap-4 text-sm sm:text-base">
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Comparisons:</div>
-              <div className="text-xl sm:text-2xl">{comparisons}</div>
+              <div className="text-xl sm:text-2xl">{visualState.comparisons}</div>
             </div>
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Swaps:</div>
-              <div className="text-xl sm:text-2xl">{swaps}</div>
+              <div className="text-xl sm:text-2xl">{visualState.swaps}</div>
             </div>
           </div>
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Step:</div>
             <div className="text-xl font-bold">
-              {totalSteps > 0 ? `${currentStep} / ${totalSteps}` : "—"}
+              {visualState.totalSteps > 0 ? `${engine.currentStep + 1} / ${steps.length}` : "—"}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {currentStep > 0 && !sorted
-                ? `Comparing index ${currentIndices.i} and ${currentIndices.j}`
-                : sorted
+              {engine.currentStep > 0 && !visualState.sorted
+                ? `Comparing index ${visualState.currentIndices.i} and ${visualState.currentIndices.j}`
+                : visualState.sorted
                 ? "Sorting complete!"
                 : "Start sorting to see steps"}
             </div>
@@ -327,23 +332,22 @@ const BubbleSortVisualizer = () => {
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Phase:</div>
             <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
-              {currentPhase || (sorted ? "Completed" : "Ready to start")}
+              {visualState.currentPhase || (visualState.sorted ? "Completed" : "Ready to start")}
             </div>
             <div className="font-medium mt-2">Explanation:</div>
             <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-              {stepExplanation || (sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
+              {visualState.stepExplanation || (visualState.sorted ? "Array is fully sorted." : "Run the algorithm to see educational hints.")}
             </div>
           </div>
         </div>
 
-        {/* Visualization */}
         <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg sm:text-xl font-semibold mb-4">Array Visualization</h2>
-          {array.length > 0 ? (
+          {(currentStepData?.array || array).length > 0 ? (
             <div className="flex flex-wrap gap-2 sm:gap-4 justify-center">
-              {array.map((value, index) => {
-                const isComparing = index === currentIndices.i || index === currentIndices.j;
-                const isSorted = sorted;
+              {((currentStepData?.array) || array).map((value, index) => {
+                const isComparing = index === visualState.currentIndices.i || index === visualState.currentIndices.j;
+                const isSorted = visualState.sorted;
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div
@@ -358,8 +362,8 @@ const BubbleSortVisualizer = () => {
                       {value}
                     </div>
                     <div className="mt-1 text-xs text-gray-700 dark:text-[#c27cf7] font-semibold">
-                      {index === currentIndices.i && "i"}
-                      {index === currentIndices.j && "j"}
+                      {index === visualState.currentIndices.i && "i"}
+                      {index === visualState.currentIndices.j && "j"}
                     </div>
                   </div>
                 );
@@ -367,7 +371,7 @@ const BubbleSortVisualizer = () => {
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
-              {sorting ? "Sorting..." : "Generate or enter an array to begin"}
+              {engine.isPlaying ? "Sorting..." : "Generate or enter an array to begin"}
             </div>
           )}
         </div>

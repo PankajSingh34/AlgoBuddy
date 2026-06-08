@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.peekFront}
-          description="Mark queue : Peek Front as done and view it on your dashboard"
+          description="Mark queue : Peek Front as done and track your progress"
           initialDone={false}
         />
       }

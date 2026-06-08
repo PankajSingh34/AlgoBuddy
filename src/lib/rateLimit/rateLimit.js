@@ -112,6 +112,18 @@ async function checkRateLimit(
   recent.push(now);
   requestLog.set(key, recent);
 
+  // --- Memory Leak Fix: Probabilistic In-Memory Garbage Collection ---
+  // Run GC on ~5% of requests to prune abandoned keys from the Map.
+  // We delete keys where the newest request is older than the window.
+  if (Math.random() < 0.05) {
+    const gcWindowMs = RATE_LIMIT_WINDOW_SEC * 1000;
+    for (const [k, tsArray] of requestLog.entries()) {
+      if (tsArray.length === 0 || (now - tsArray[tsArray.length - 1]) > gcWindowMs) {
+        requestLog.delete(k);
+      }
+    }
+  }
+
   return {
     allowed: true,
     remaining: maxReq - recent.length,

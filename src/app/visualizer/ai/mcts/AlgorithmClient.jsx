@@ -21,7 +21,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.mcts}
-          description="Mark MCTS as done and view it on your dashboard"
+          description="Mark MCTS as done and track your progress"
           initialDone={false}
         />
       }

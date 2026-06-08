@@ -23,7 +23,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.minMax}
-          description="Mark min max algorithm as done and view it on your dashboard"
+          description="Mark min max algorithm as done and track your progress"
           initialDone={false}
         />
       }

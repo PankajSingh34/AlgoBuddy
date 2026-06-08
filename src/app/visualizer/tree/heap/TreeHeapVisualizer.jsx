@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Footer from "@/app/components/footer";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import { heapIndexToTreeCoords, insertHeap, extractRoot, buildHeap } from "./heapUtils";
 import { Info, Layers, AlertCircle } from "lucide-react";
 
@@ -214,17 +216,20 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   const showAmberBanner = currentStep && (currentStep.stepType.includes("imbalance") || currentStep.stepType.includes("rotation"));
 
   return (
-    <div className="min-h-screen bg-[#080b16] text-white">
+    <div className="min-h-screen bg-white dark:bg-[#1c1d1f] text-slate-900 dark:text-slate-100 flex flex-col">
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="w-full">
+          <Breadcrumbs paths={createVisualizerPaths("Tree", "Heap", isMinHeap ? "Min-Heap" : "Max-Heap")} />
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-900/50">
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit border border-indigo-100 dark:text-indigo-400 dark:bg-indigo-950/40 dark:border-indigo-900/50">
               <Layers className="w-3.5 h-3.5" /> Heap Interactive Operations
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white">
               {activeTypeLabel}
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xl">
               Insert, extract, and build the heap while watching the tree and array stay in sync.
             </p>
           </div>
@@ -233,7 +238,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
               type="button"
               onClick={() => resetHeap(true)}
               aria-pressed={isMinHeap}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${isMinHeap ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-900 text-slate-300 border-slate-700"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${isMinHeap ? "bg-indigo-600 text-white border-indigo-500" : "bg-gray-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 border-gray-300 dark:border-slate-600"}`}
             >
               Min-Heap
             </button>
@@ -241,14 +246,14 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
               type="button"
               onClick={() => resetHeap(false)}
               aria-pressed={!isMinHeap}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${!isMinHeap ? "bg-indigo-600 text-white border-indigo-500" : "bg-slate-900 text-slate-300 border-slate-700"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${!isMinHeap ? "bg-indigo-600 text-white border-indigo-500" : "bg-gray-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 border-gray-300 dark:border-slate-600"}`}
             >
               Max-Heap
             </button>
           </div>
         </div>
 
-        <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col gap-5 shadow-lg shadow-black/20">
+        <div className="bg-white dark:bg-[#111] backdrop-blur-xl border border-gray-200 dark:border-[#222] p-5 rounded-2xl flex flex-col gap-5 shadow-lg shadow-black/20">
           <div className="flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
             <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
               <input
@@ -257,7 +262,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Insert value"
                 disabled={isAnimating}
-                className="w-full sm:w-36 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full sm:w-36 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 onKeyDown={(e) => e.key === "Enter" && handleInsert()}
               />
               <button
@@ -272,7 +277,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                 type="button"
                 onClick={handleExtract}
                 disabled={isAnimating || heapArray.length <= 1}
-                className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-xs font-bold bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] text-slate-900 dark:text-slate-200 rounded-xl transition-all border border-gray-200 dark:border-[#333] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Extract Root
               </button>
@@ -285,13 +290,13 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                 onChange={(e) => setBuildInput(e.target.value)}
                 placeholder="e.g. 5, 3, 8, 1, 4"
                 disabled={isAnimating}
-                className="w-full sm:w-72 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full sm:w-72 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={handleBuild}
                 disabled={isAnimating}
-                className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
+                className="px-4 py-2 text-xs font-bold bg-gray-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl transition-all border border-gray-800 dark:border-slate-600 disabled:opacity-40"
               >
                 Build Heap
               </button>
@@ -314,12 +319,12 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
           />
         </div>
 
-        <div className={`bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-col gap-2 ${showAmberBanner ? "text-amber-100" : ""}`}>
+          <div className={`bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl p-4 flex flex-col gap-2 ${showAmberBanner ? "text-amber-100" : ""}`}>
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+            <span className="text-slate-600 dark:text-slate-400 font-semibold flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
             </span>
-            <span className="text-slate-400 font-bold bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-[#333]">
+            <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-slate-700">
               Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
             </span>
           </div>
@@ -329,7 +334,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-5">
-          <div className="w-full lg:w-1/2 bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden min-h-[440px]">
+          <div className="w-full lg:w-1/2 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden min-h-[440px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
                 <Layers className="w-3.5 h-3.5" /> Tree View
@@ -339,7 +344,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
 
             {!treeNodes.length ? (
               <div className="flex flex-col items-center gap-2.5 text-slate-500 py-12">
-                <AlertCircle className="w-10 h-10 text-slate-700" />
+                <AlertCircle className="w-10 h-10 text-slate-400" />
                 <span className="text-sm font-semibold">Workspace Empty</span>
                 <span className="text-xs max-w-xs text-center text-slate-600">Build the heap or insert values to see the tree.</span>
               </div>
@@ -411,7 +416,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
             )}
           </div>
 
-          <div className="w-full lg:w-1/2 bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden min-h-[440px]">
+          <div className="w-full lg:w-1/2 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden min-h-[440px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
                 <Layers className="w-3.5 h-3.5" /> Array View

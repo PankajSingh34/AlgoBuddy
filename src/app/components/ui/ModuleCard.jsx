@@ -23,9 +23,14 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       .maybeSingle();
 
     if (error) {
-      console.error("Error fetching user progress:", error);
-      return;
-    }
+  console.error("Error fetching user progress:", error);
+
+  if (error.code === "PGRST205") {
+    toast.error("Progress tracking database is not configured.");
+  }
+
+  return;
+}
 
     setIsDone(data?.is_done ?? false);
   };
@@ -79,10 +84,20 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
         );
 
       if (error) {
-        console.error("Error updating progress:", error.message, error.details);
-        toast.error(`Failed to update progress: ${error.message}`);
-        return;
-      }
+  console.error(
+    "Error updating progress:",
+    error.message,
+    error.details
+  );
+
+  if (error.code === "PGRST205") {
+    toast.error("Progress tracking database table is missing.");
+  } else {
+    toast.error(`Failed to update progress: ${error.message}`);
+  }
+
+  return;
+}
 
       setIsDone(!isDone);
       toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");

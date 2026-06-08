@@ -81,7 +81,7 @@ export default function GraphCanvas({
   onRemoveNode,
   onRemoveEdge,
   onReverseEdge,
-  onUpdateEdgeWeight,
+  onUpdateEdgeWeight, // NEW prop — (edgeIdx, newWeight) => void
 }) {
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
@@ -112,6 +112,7 @@ export default function GraphCanvas({
       } else if (edgeStart === id) {
         setEdgeStart(null);
       } else {
+        // When adding an edge in weighted mode, default weight = 1
         onAddEdge({ from: edgeStart, to: id, weight: 1 });
         setEdgeStart(null);
       }

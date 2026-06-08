@@ -233,6 +233,21 @@ const SelectionSortVisualizer = () => {
       sorted,
     });
   
+    const handleExplainStep = () => {
+      const prompt = `I am currently looking at the Selection Sort algorithm, at step ${currentStep} of ${totalSteps}.
+Phase: ${currentPhase}
+Explanation on screen: ${stepExplanation}
+Current Array State: [${array.join(", ")}]
+Currently at: outer index i = ${currentIndices.i}, inner index j = ${currentIndices.j}
+Current minimum index: ${currentIndices.min}
+
+Please explain exactly what is happening in this step in detail.`;
+      
+      window.dispatchEvent(
+        new CustomEvent("chatbot-explain", { detail: { prompt } })
+      );
+    };
+
     return (
       <main className="container mx-auto px-6 py-6">
         <p className="text-lg max-w-4xl mx-auto text-center text-gray-600 dark:text-gray-400 mb-8">
@@ -284,6 +299,7 @@ const SelectionSortVisualizer = () => {
                   onTogglePlayPause={togglePlayPause}
                   speed={speed}
                   onSpeedChange={setSpeed}
+                  onExplainStep={handleExplainStep}
                 />
               )}
 

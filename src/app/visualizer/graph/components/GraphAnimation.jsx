@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { VisualizerCanvas } from "@/app/visualizer/components/VisualizerCanvas";
 
 const nodes = [
   { id: "A", x: 18, y: 32 },
@@ -62,6 +63,7 @@ function arrowEndpoint(x1, y1, x2, y2, r = 6) {
 
 export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   const [step, setStep] = useState(0);
+  const svgRef = useRef(null);
 
   // Directed toggle
   const canToggleDirected = !DIRECTED_ONLY.includes(type) && !UNDIRECTED_ONLY.includes(type);
@@ -170,28 +172,35 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
           <button
             type="button"
             onClick={advance}
-            className="btn-base bg-primary text-white hover:bg-primary-dark"
+            className="btn-base bg-primary text-white hover:bg-primary-dark touch-manipulation min-h-[44px] min-w-[44px]"
           >
-            <Play className="h-4 w-4" />
+            <Play className="h-4 w-4" aria-hidden="true" />
             Next step
           </button>
           <button
             type="button"
             onClick={reset}
-            className="btn-base border border-surface-300 text-surface-800 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200"
+            className="btn-base border border-surface-300 text-surface-800 hover:border-primary hover:text-primary dark:border-surface-700 dark:text-surface-200 touch-manipulation min-h-[44px] min-w-[44px]"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Reset
           </button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+        <VisualizerCanvas
+          onSwipeLeft={advance}
+          onSwipeRight={() => setStep((s) => Math.max(0, s - 1))}
+          watchKey={step}
+        >
         <svg
+          ref={svgRef}
           viewBox="0 0 100 90"
           role="img"
           aria-label={`${title} graph animation`}
           className="min-h-[280px] w-full rounded-xl bg-surface-50 dark:bg-surface-950"
+          style={{ touchAction: "manipulation" }}
         >
           <defs>
             <marker
@@ -280,8 +289,31 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
 
           {nodes.map((node) => {
             const active = activeNodes.has(node.id);
+            // Advance to the step where this node is first visited on tap/click
+            const nodeStep = sequence.indexOf(node.id);
+            const isReachable = nodeStep !== -1;
+            const handleNodeActivate = isReachable
+              ? () => setStep(nodeStep)
+              : undefined;
+
             return (
-              <g key={node.id}>
+              <g
+                key={node.id}
+                onClick={handleNodeActivate}
+                onKeyDown={isReachable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleNodeActivate(); } } : undefined}
+                role={isReachable ? "button" : undefined}
+                tabIndex={isReachable ? 0 : undefined}
+                aria-label={isReachable ? `Jump to node ${node.id}` : undefined}
+                style={{ cursor: isReachable ? "pointer" : "default" }}
+              >
+                {/* Enlarged invisible hit area for easy touch targeting (44x44 CSS px equivalent) */}
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r="10"
+                  fill="transparent"
+                  stroke="none"
+                />
                 <circle
                   cx={node.x}
                   cy={node.y}
@@ -303,6 +335,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                       ? "fill-white text-[5px] font-bold"
                       : "fill-surface-800 text-[5px] font-bold"
                   }
+                  style={{ pointerEvents: "none" }}
                 >
                   {node.id}
                 </text>
@@ -310,6 +343,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             );
           })}
         </svg>
+        </VisualizerCanvas>
 
         <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
           <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">

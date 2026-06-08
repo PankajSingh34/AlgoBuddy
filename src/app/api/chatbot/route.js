@@ -205,10 +205,21 @@ function validateMessages(messages) {
 
 // ─── Convert message history to Gemini contents schema ────────────────────────
 function toGeminiContents(messages) {
-  return messages.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
+  const contents = [];
+  for (const msg of messages) {
+    const role = msg.role === "assistant" ? "model" : "user";
+    // Gemini API strictly requires alternating user/model roles. 
+    // If we encounter consecutive messages from the same role, we merge them.
+    if (contents.length > 0 && contents[contents.length - 1].role === role) {
+      contents[contents.length - 1].parts[0].text += "\n\n" + msg.content;
+    } else {
+      contents.push({
+        role,
+        parts: [{ text: msg.content }],
+      });
+    }
+  }
+  return contents;
 }
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
@@ -248,6 +259,12 @@ export async function POST(request) {
 
   // Clamp to last 20 turns to manage token budget
   const clampedMessages = messages.slice(-20);
+
+  // Gemini API strictly requires conversation history to begin with a 'user' message.
+  // If slicing the array left an 'assistant' message at index 0, we must drop it.
+  if (clampedMessages.length > 0 && clampedMessages[0].role === "assistant") {
+    clampedMessages.shift();
+  }
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

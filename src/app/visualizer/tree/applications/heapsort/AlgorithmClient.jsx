@@ -23,7 +23,7 @@ export default function HeapSortPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.heapSort}
-          description="Mark Heap Sort as done and view it on your dashboard"
+          description="Mark Heap Sort as done and track your progress"
           initialDone={false}
         />
       }

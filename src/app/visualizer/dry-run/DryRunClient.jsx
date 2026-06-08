@@ -371,11 +371,15 @@ export default function DryRunClient() {
   const [sessionNotice, setSessionNotice] = useState("");
   const [importNotice, setImportNotice] = useState("");
 
-  const suppressBroadcastRef = useRef(false);
+  const skipBroadcastGenerationRef = useRef(0);
   const sendStateRef = useRef(null);
   const fileInputRef = useRef(null);
   const collaborationRef = useRef(null);
   const followPresenterRef = useRef(followPresenter);
+  const lastReceivedHashRef = useRef("");
+  const editorRef = useRef(null);
+  const monacoRef = useRef(null);
+  const decorationsRef = useRef([]);
 
   useEffect(() => {
     followPresenterRef.current = followPresenter;
@@ -383,6 +387,10 @@ export default function DryRunClient() {
 
   const displayName =
     user?.user_metadata?.name || user?.email?.split("@")[0] || "Anonymous";
+
+  function computeStateHash(state) {
+    return `${state.source}|${state.language}|${state.step}|${state.playing}|${state.speed}`;
+  }
 
   function handleRemoteStateDelta(delta) {
     const collab = collaborationRef.current || collaboration;
@@ -395,7 +403,19 @@ export default function DryRunClient() {
       return;
     }
 
-    suppressBroadcastRef.current = true;
+    const currentHash = computeStateHash({
+      source: typeof delta.source === "string" ? delta.source : source,
+      language: typeof delta.language === "string" ? delta.language : language,
+      step: typeof delta.step === "number" ? delta.step : step,
+      playing: typeof delta.playing === "boolean" ? delta.playing : playing,
+      speed: typeof delta.speed === "number" ? delta.speed : speed,
+    });
+    if (currentHash === lastReceivedHashRef.current) {
+      return;
+    }
+    lastReceivedHashRef.current = currentHash;
+
+    skipBroadcastGenerationRef.current += 1;
 
     if (typeof delta.source === "string") {
       setSource(delta.source);
@@ -412,10 +432,6 @@ export default function DryRunClient() {
     if (typeof delta.speed === "number") {
       setSpeed(delta.speed);
     }
-
-    window.setTimeout(() => {
-      suppressBroadcastRef.current = false;
-    }, 0);
   }
 
   const collaboration = useCollaboration({
@@ -439,7 +455,74 @@ export default function DryRunClient() {
   useEffect(() => {
     setStep(0);
     setPlaying(false);
+    // Clear editor decorations when source or language changes
+    if (editorRef.current) {
+      decorationsRef.current = editorRef.current.deltaDecorations(
+        decorationsRef.current,
+        []
+      );
+    }
   }, [source, language]);
+
+  // Inject CSS styles for the active line highlight in Monaco Editor
+  useEffect(() => {
+    const styleId = "dry-run-active-line-styles";
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+      .active-line-highlight {
+        background: rgba(139, 92, 246, 0.18) !important;
+        border-left: 3px solid #8b5cf6 !important;
+        transition: background 0.3s ease;
+      }
+      .dark .active-line-highlight,
+      [data-theme="dark"] .active-line-highlight {
+        background: rgba(139, 92, 246, 0.25) !important;
+      }
+      .active-line-glyph {
+        background: #8b5cf6;
+        border-radius: 50%;
+        margin-left: 4px;
+        width: 8px !important;
+        height: 8px !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      const existing = document.getElementById(styleId);
+      if (existing) existing.remove();
+    };
+  }, []);
+
+  // Sync Monaco Editor decorations with the current execution step
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    if (!editor || !monacoInstance || !current.lineNumber) return;
+
+    decorationsRef.current = editor.deltaDecorations(
+      decorationsRef.current,
+      [
+        {
+          range: new monacoInstance.Range(
+            current.lineNumber,
+            1,
+            current.lineNumber,
+            1
+          ),
+          options: {
+            isWholeLine: true,
+            className: "active-line-highlight",
+            glyphMarginClassName: "active-line-glyph",
+          },
+        },
+      ]
+    );
+
+    // Scroll the editor to reveal the active line
+    editor.revealLineInCenter(current.lineNumber);
+  }, [current.lineNumber]);
 
   const isAtEnd = step >= trace.length - 1;
 
@@ -480,8 +563,10 @@ export default function DryRunClient() {
 
   useEffect(() => {
     if (!collabSession) return;
-    if (suppressBroadcastRef.current) {
-      suppressBroadcastRef.current = false;
+
+    const currentGeneration = skipBroadcastGenerationRef.current;
+    if (currentGeneration > 0) {
+      skipBroadcastGenerationRef.current = 0;
       return;
     }
 
@@ -680,6 +765,10 @@ export default function DryRunClient() {
               theme={isDarkMode ? "vs-dark" : "light"}
               value={source}
               onChange={(value) => setSource(value || "")}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                monacoRef.current = monaco;
+              }}
               loading={
                 <div className="flex h-[420px] items-center justify-center bg-slate-950 font-mono text-sm text-slate-400">
                   Loading Editor...
@@ -695,6 +784,7 @@ export default function DryRunClient() {
                 automaticLayout: true,
                 cursorBlinking: "smooth",
                 renderLineHighlight: "all",
+                glyphMargin: true,
               }}
             />
           </div>

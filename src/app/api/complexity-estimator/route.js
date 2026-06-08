@@ -1,7 +1,6 @@
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 const SYSTEM_PROMPT = `You are an expert computer science assistant specialized in algorithmic analysis and DSA. Your task is to analyze the given code snippet for Time Complexity (Best, Average, and Worst cases using Big-O, Big-Theta, or Big-Omega notation) and Space Complexity. Additionally, if the code is sub-optimal (e.g., O(n^2) nested loops that can be optimized to O(n) using a hash map or sorting), provide a refactored version of the code in the same language along with a brief explanation of the optimization.
 
@@ -13,44 +12,6 @@ Guidelines:
 5. "explanation": Provide a step-by-step breakdown explaining the math and logic behind these complexity estimates. Use clean Markdown formatting, bullet points, and short, beginner-friendly explanations.
 6. "optimizedCode": If the code is sub-optimal and can be optimized, provide the fully functional optimized code. If the code is already optimal or cannot be improved, leave this field as an empty string ("").
 7. "optimizationJustification": Explain why the optimized code is better, or leave it empty if the code is already optimal.`;
-
-function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-  try {
-    const parsed = new URL(supabaseUrl);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  } catch {
-    return null;
-  }
-  return { supabaseUrl, supabaseAnonKey };
-}
-
-async function getAuthenticatedUser() {
-  const config = getSupabaseConfig();
-  if (!config) {
-    // Supabase not configured (local dev without env vars) — allow through
-    return { user: null, configured: false };
-  }
-
-  const cookieStore = await cookies();
-  const client = createServerClient(config.supabaseUrl, config.supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const { data } = await client.auth.getUser();
-  return { user: data?.user ?? null, configured: true };
-}
 
 export async function POST(req) {
   try {
@@ -66,6 +27,9 @@ export async function POST(req) {
 
     if (!code || typeof code !== "string" || !code.trim()) {
       return Response.json({ error: "Missing or invalid 'code' string." }, { status: 400 });
+    }
+    if (code.length > 50000) {
+      return Response.json({ error: "Code exceeds maximum allowed length (50,000 characters)." }, { status: 400 });
     }
     if (!language || typeof language !== "string") {
       return Response.json({ error: "Missing or invalid 'language' string." }, { status: 400 });
@@ -83,9 +47,19 @@ export async function POST(req) {
     }
 
     // 3. Authentication Check
-    const { user, configured } = await getAuthenticatedUser();
-    if (configured && !user) {
-      return Response.json({ error: "Authentication required." }, { status: 401 });
+    const authResult = await getAuthenticatedUser();
+    
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return Response.json(
+          { error: "Authentication service unavailable" },
+          { status: 500 }
+        );
+      }
+      return Response.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
     // 4. Gemini API Integration

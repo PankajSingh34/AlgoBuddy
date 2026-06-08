@@ -26,13 +26,11 @@ import {
   MessageCircle,
   X,
   Send,
-  Bot,
   User,
   Copy,
   Check,
   AlertCircle,
   Loader2,
-  Sparkles,
   ChevronDown,
   RotateCcw,
   ExternalLink,
@@ -40,101 +38,83 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// ─── Suggestion Chips ─────────────────────────────────────────────────────────
+// ─── Custom Robot Icon matching AlgoBuddy Theme ──────────────────────────────
 
-const CHIP_CATEGORIES = [
-  {
-    label: "About AlgoBuddy",
-    color: "purple",
-    chips: [
-      {
-        id: "c1",
-        emoji: "💡",
-        label: "What is AlgoBuddy?",
-        query:
-          "What is AlgoBuddy? Explain it in simple terms so even a non-technical person understands.",
-      },
-      {
-        id: "c2",
-        emoji: "🚀",
-        label: "How can this help me?",
-        query:
-          "How can AlgoBuddy help me as a student? What features should I start with?",
-      },
-    ],
-  },
-  {
-    label: "Platform Features",
-    color: "indigo",
-    chips: [
-      {
-        id: "c3",
-        emoji: "🎨",
-        label: "What can I visualize?",
-        query:
-          "What algorithms and data structures can I visualize on AlgoBuddy? Give me the complete list.",
-      },
-      {
-        id: "c4",
-        emoji: "🏋️",
-        label: "Tell me about Practice Arena",
-        query:
-          "Explain the Practice Arena feature on AlgoBuddy. How does it help me improve my coding?",
-      },
-    ],
-  },
-  {
-    label: "Learn DSA",
-    color: "teal",
-    chips: [
-      {
-        id: "c5",
-        emoji: "💻",
-        label: "Binary Search with analogy",
-        query:
-          "Explain Binary Search with a real-world analogy, a step-by-step code walkthrough in Python, a worked example, and time/space complexity.",
-      },
-      {
-        id: "c6",
-        emoji: "🗺️",
-        label: "DSA Roadmap for beginners",
-        query:
-          "I'm a complete beginner. Give me a step-by-step DSA learning roadmap and tell me how AlgoBuddy can help at each stage.",
-      },
-    ],
-  },
-];
-
-const ALL_CHIPS = CHIP_CATEGORIES.flatMap((cat) => cat.chips);
+function AlgoBotIcon({ className = "w-5 h-5", ...props }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      {/* Antennas / Signal */}
+      <circle cx="12" cy="3" r="1" fill="currentColor" />
+      <path d="M12 4v3M9 6h6" strokeWidth="1.5" />
+      {/* Head */}
+      <rect x="4" y="8" width="16" height="12" rx="3" fill="currentColor" fillOpacity="0.1" />
+      {/* Eyes */}
+      <circle cx="8.5" cy="13" r="1.2" fill="currentColor" />
+      <circle cx="15.5" cy="13" r="1.2" fill="currentColor" />
+      {/* Mouth */}
+      <path d="M10 16.5h4" strokeWidth="1.8" />
+      {/* Side Bolts / Programming Brackets */}
+      <path d="M2.5 12a1.5 1.5 0 0 1 1.5-1.5M21.5 12a1.5 1.5 0 0 0-1.5-1.5" />
+    </svg>
+  );
+}
 
 // ─── Welcome Message ──────────────────────────────────────────────────────────
 
 const WELCOME_MESSAGE = {
   role: "assistant",
   id: "welcome",
-  content: `## Hey there! 👋 I'm **AlgoBot**
+  content: `Greetings! I'm **AlgoBot**
 
-Your personal guide to **AlgoBuddy** and all things **DSA**.
+I can help you:
+- Explore **AlgoBuddy** features
+- Learn **DSA** concepts & roadmaps
+- Get clear **code walkthroughs**
 
-Here's what I can do for you:
-
-- 🧭 **Explore AlgoBuddy** — understand every feature in plain English
-- 🧠 **Learn any DSA topic** — from Arrays to Advanced Graph algorithms
-- 💻 **Get code walkthroughs** — with examples, analogies & Big-O complexity
-- 🗺️ **Plan your learning path** — personalized DSA roadmaps
-
-Pick a quick-start below or type your own question!`,
+Choose a question below or start typing!`,
 };
 
-// ─── Color helpers ────────────────────────────────────────────────────────────
-
-const chipColors = {
-  purple:
-    "border-purple-500/40 bg-purple-900/20 text-purple-300 hover:bg-purple-800/40 hover:border-purple-400/60 hover:text-white",
-  indigo:
-    "border-indigo-500/40 bg-indigo-900/20 text-indigo-300 hover:bg-indigo-800/40 hover:border-indigo-400/60 hover:text-white",
-  teal: "border-teal-500/40 bg-teal-900/20 text-teal-300 hover:bg-teal-800/40 hover:border-teal-400/60 hover:text-white",
-};
+const SUGGESTION_QUESTIONS = [
+  {
+    id: "q1",
+    label: "What is AlgoBuddy?",
+    query: "What is AlgoBuddy? Explain it in simple terms so even a non-technical person understands.",
+  },
+  {
+    id: "q2",
+    label: "How can this help me?",
+    query: "How can AlgoBuddy help me as a student? What features should I start with?",
+  },
+  {
+    id: "q3",
+    label: "What can I visualize?",
+    query: "What algorithms and data structures can I visualize on AlgoBuddy? Give me the complete list.",
+  },
+  {
+    id: "q4",
+    label: "Tell me about Practice Arena",
+    query: "Explain the Practice Arena feature on AlgoBuddy. How does it help me improve my coding?",
+  },
+  {
+    id: "q5",
+    label: "Binary Search explanation",
+    query: "Explain Binary Search with a real-world analogy, a step-by-step code walkthrough in Python, a worked example, and time/space complexity.",
+  },
+  {
+    id: "q6",
+    label: "DSA learning roadmap",
+    query: "I'm a complete beginner. Give me a step-by-step DSA learning roadmap and tell me how AlgoBuddy can help at each stage.",
+  },
+];
 
 // ─── Code Block with Copy ─────────────────────────────────────────────────────
 
@@ -148,31 +128,31 @@ function CodeBlock({ children, className }) {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
+    } catch { }
   };
 
   return (
-    <div className="my-3 rounded-xl overflow-hidden border border-slate-600/50 bg-slate-950 shadow-lg">
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-800/90 border-b border-slate-700/50">
+    <div className="my-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-[#0f0f16] dark:bg-slate-950 shadow-lg">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800/50">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
           </div>
-          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase ml-1">
+          <span className="text-xs font-mono text-slate-500 dark:text-slate-400 tracking-widest uppercase ml-1">
             {language}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 transition-colors duration-150 px-2 py-1 rounded-md hover:bg-slate-700/50"
+          className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-emerald-400 transition-colors duration-150 px-2 py-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800/50"
           aria-label="Copy code"
         >
           {copied ? (
             <>
-              <Check size={12} className="text-emerald-400" />
-              <span className="text-emerald-400 font-medium">Copied!</span>
+              <Check size={12} className="text-emerald-500 dark:text-emerald-400" />
+              <span className="text-emerald-500 dark:text-emerald-400 font-medium">Copied!</span>
             </>
           ) : (
             <>
@@ -182,7 +162,7 @@ function CodeBlock({ children, className }) {
           )}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed">
+      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed scrollbar-thin [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-800/80 [&::-webkit-scrollbar-thumb]:rounded-full">
         <code className="font-mono text-slate-200 whitespace-pre">{code}</code>
       </pre>
     </div>
@@ -196,7 +176,7 @@ const mdComponents = {
     if (inline) {
       return (
         <code
-          className="px-1.5 py-0.5 rounded bg-slate-700/80 text-purple-300 font-mono text-[0.8em]"
+          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-primary dark:text-purple-300 font-mono text-[0.85em]"
           {...props}
         >
           {children}
@@ -206,51 +186,51 @@ const mdComponents = {
     return <CodeBlock className={className}>{children}</CodeBlock>;
   },
   h2: ({ children }) => (
-    <h2 className="text-[15px] font-bold text-white mt-4 mb-2 flex items-center gap-2 border-b border-purple-500/20 pb-1.5">
+    <h2 className="text-[14px] font-bold text-slate-800 dark:text-white mt-4 mb-2 flex items-center gap-2 border-b border-purple-500/20 pb-1.5">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-[13px] font-semibold text-purple-300 mt-3 mb-1">{children}</h3>
+    <h3 className="text-[13px] font-semibold text-primary dark:text-purple-300 mt-3 mb-1">{children}</h3>
   ),
   p: ({ children }) => (
-    <p className="text-[13px] text-slate-300 leading-relaxed mb-2 last:mb-0">{children}</p>
+    <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed mb-2 last:mb-0">{children}</p>
   ),
   ul: ({ children }) => <ul className="my-2 space-y-1 pl-1">{children}</ul>,
   ol: ({ children }) => (
-    <ol className="my-2 space-y-1 pl-4 list-decimal list-outside">{children}</ol>
+    <ol className="my-2 space-y-1 pl-4 list-decimal list-outside text-[13px] text-slate-600 dark:text-slate-300">{children}</ol>
   ),
   li: ({ children }) => (
-    <li className="flex gap-2 text-[13px] text-slate-300 leading-relaxed">
-      <span className="text-purple-400 mt-0.5 shrink-0">›</span>
+    <li className="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
+      <span className="text-primary dark:text-purple-400 mt-0.5 shrink-0">›</span>
       <span>{children}</span>
     </li>
   ),
   strong: ({ children }) => (
-    <strong className="font-semibold text-white">{children}</strong>
+    <strong className="font-semibold text-slate-850 dark:text-white">{children}</strong>
   ),
   table: ({ children }) => (
-    <div className="overflow-x-auto my-3">
-      <table className="w-full text-[12px] border-collapse rounded-lg overflow-hidden">
+    <div className="overflow-x-auto my-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+      <table className="w-full text-[12px] border-collapse overflow-hidden">
         {children}
       </table>
     </div>
   ),
   thead: ({ children }) => (
-    <thead className="bg-purple-900/40 text-purple-200">{children}</thead>
+    <thead className="bg-slate-100 dark:bg-purple-950/40 text-slate-700 dark:text-purple-200">{children}</thead>
   ),
   tbody: ({ children }) => (
-    <tbody className="divide-y divide-slate-700/50">{children}</tbody>
+    <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">{children}</tbody>
   ),
-  tr: ({ children }) => <tr className="hover:bg-slate-800/40 transition-colors">{children}</tr>,
+  tr: ({ children }) => <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">{children}</tr>,
   th: ({ children }) => (
-    <th className="px-3 py-2 text-left font-semibold border border-slate-700/50">{children}</th>
+    <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 dark:border-slate-700/50">{children}</th>
   ),
   td: ({ children }) => (
-    <td className="px-3 py-2 text-slate-300 border border-slate-700/30">{children}</td>
+    <td className="px-3 py-2 text-slate-600 dark:text-slate-300 border-r last:border-0 border-slate-200 dark:border-slate-700/30">{children}</td>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-purple-500/50 pl-3 my-2 text-slate-400 italic text-[13px]">
+    <blockquote className="border-l-2 border-primary/50 dark:border-purple-500/50 pl-3 my-2 text-slate-500 dark:text-slate-400 italic text-[13px]">
       {children}
     </blockquote>
   ),
@@ -259,7 +239,7 @@ const mdComponents = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-purple-400 hover:text-purple-300 underline underline-offset-2 inline-flex items-center gap-0.5"
+      className="text-primary dark:text-purple-400 hover:text-primary-dark dark:hover:text-purple-300 underline underline-offset-2 inline-flex items-center gap-0.5"
     >
       {children}
       <ExternalLink size={10} />
@@ -273,6 +253,63 @@ function MessageBubble({ message }) {
   const isUser = message.role === "user";
   const isError = message.isError;
 
+  if (message.id === "welcome") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="flex gap-2.5"
+      >
+        {/* Avatar */}
+        <div className="shrink-0 w-7 h-7 rounded-xl bg-primary flex items-center justify-center mt-0.5 shadow-sm">
+          <AlgoBotIcon className="w-3.5 h-3.5 text-white" />
+        </div>
+
+        {/* Welcome Card content */}
+        <div className="max-w-[84%] rounded-2xl px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/60 rounded-tl-sm shadow-sm backdrop-blur-sm">
+          <h3 className="text-[14px] font-bold text-slate-800 dark:text-white flex items-center gap-1.5 mb-2">
+            Greetings! I'm <span className="text-primary dark:text-purple-400">AlgoBot</span>
+          </h3>
+          <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-3.5 leading-relaxed">
+            I can help you:
+          </p>
+
+          <div className="space-y-3 mb-4">
+            <div className="flex gap-2.5 items-start text-[13px] text-slate-600 dark:text-slate-350">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-50/50 dark:bg-purple-950/30 text-primary dark:text-purple-400 shrink-0 text-[11px] font-bold mt-0.5">
+                ⮕
+              </span>
+              <div className="leading-normal">
+                Explore <strong className="font-semibold text-slate-800 dark:text-white">AlgoBuddy</strong> features
+              </div>
+            </div>
+            <div className="flex gap-2.5 items-start text-[13px] text-slate-600 dark:text-slate-350">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-50/50 dark:bg-purple-950/30 text-primary dark:text-purple-400 shrink-0 text-[11px] font-bold mt-0.5">
+                ⮕
+              </span>
+              <div className="leading-normal">
+                Learn <strong className="font-semibold text-slate-800 dark:text-white">DSA</strong> concepts &amp; roadmaps
+              </div>
+            </div>
+            <div className="flex gap-2.5 items-start text-[13px] text-slate-600 dark:text-slate-350">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-50/50 dark:bg-purple-950/30 text-primary dark:text-purple-400 shrink-0 text-[11px] font-bold mt-0.5">
+                ⮕
+              </span>
+              <div className="leading-normal">
+                Get clear <strong className="font-semibold text-slate-800 dark:text-white">code walkthroughs</strong>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 pt-3">
+            Choose a question below or start typing!
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -282,49 +319,47 @@ function MessageBubble({ message }) {
     >
       {/* Avatar */}
       <div
-        className={`shrink-0 w-7 h-7 rounded-xl flex items-center justify-center mt-0.5 shadow-md
-          ${
-            isUser
-              ? "bg-gradient-to-br from-purple-500 to-indigo-600"
-              : isError
-              ? "bg-red-900/50 border border-red-500/40"
-              : "bg-gradient-to-br from-purple-600 to-violet-700"
+        className={`shrink-0 w-7 h-7 rounded-xl flex items-center justify-center mt-0.5 shadow-sm transition-all duration-200
+          ${isUser
+            ? "bg-primary"
+            : isError
+              ? "bg-red-500/10 border border-red-500/20"
+              : "bg-primary"
           }`}
       >
         {isUser ? (
           <User size={13} className="text-white" />
         ) : isError ? (
-          <AlertCircle size={13} className="text-red-400" />
+          <AlertCircle size={13} className="text-red-500 dark:text-red-400" />
         ) : (
-          <Bot size={13} className="text-white" />
+          <AlgoBotIcon className="w-3.5 h-3.5 text-white" />
         )}
       </div>
 
       {/* Bubble content */}
       <div
-        className={`max-w-[84%] rounded-2xl px-4 py-3 shadow-md
-          ${
-            isUser
-              ? "bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-tr-sm"
-              : isError
-              ? "bg-red-900/25 border border-red-500/30 rounded-tl-sm"
-              : "bg-slate-800/90 border border-slate-700/40 rounded-tl-sm"
+        className={`max-w-[84%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-200
+          ${isUser
+            ? "bg-primary text-white rounded-tr-sm shadow-md"
+            : isError
+              ? "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/30 rounded-tl-sm"
+              : "bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/60 rounded-tl-sm shadow-sm backdrop-blur-sm text-slate-800 dark:text-slate-200"
           }`}
       >
         {isError ? (
           <div className="flex items-start gap-2">
-            <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
-            <p className="text-[13px] text-red-300 leading-relaxed">{message.content}</p>
+            <AlertCircle size={14} className="text-red-500 dark:text-red-400 shrink-0 mt-0.5" />
+            <p className="text-[13px] text-red-700 dark:text-red-300 leading-relaxed">{message.content}</p>
           </div>
         ) : isUser ? (
-          <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-white">{message.content}</p>
         ) : (
           <div className="prose-invert max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
               {message.content}
             </ReactMarkdown>
             {message.isStreaming && (
-              <span className="inline-block w-1.5 h-4 ml-0.5 bg-purple-400 rounded-full animate-pulse align-middle" />
+              <span className="inline-block w-1.5 h-4 ml-0.5 bg-primary dark:bg-purple-400 rounded-full animate-pulse align-middle" />
             )}
           </div>
         )}
@@ -338,16 +373,16 @@ function MessageBubble({ message }) {
 function TypingIndicator() {
   return (
     <div className="flex gap-2.5">
-      <div className="shrink-0 w-7 h-7 rounded-xl bg-gradient-to-br from-purple-600 to-violet-700 flex items-center justify-center shadow-md">
-        <Bot size={13} className="text-white" />
+      <div className="shrink-0 w-7 h-7 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+        <AlgoBotIcon className="w-3.5 h-3.5 text-white" />
       </div>
-      <div className="bg-slate-800/90 border border-slate-700/40 rounded-2xl rounded-tl-sm px-4 py-3">
-        <div className="flex gap-1 items-center h-4">
+      <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/60 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm flex items-center gap-2.5 backdrop-blur-sm">
+        <div className="flex gap-1 items-center h-2">
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-purple-400"
-              animate={{ y: [0, -4, 0] }}
+              className="w-1.5 h-1.5 rounded-full bg-primary/70 dark:bg-purple-400"
+              animate={{ y: [0, -3, 0] }}
               transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
             />
           ))}
@@ -364,7 +399,6 @@ export default function Chatbot() {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [showChips, setShowChips] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -417,7 +451,6 @@ export default function Chatbot() {
       if (!text || isStreaming) return;
 
       if (!hasInteracted) {
-        setShowChips(false);
         setHasInteracted(true);
       }
 
@@ -507,7 +540,7 @@ export default function Chatbot() {
             .filter((m) => m.id !== assistantId)
             .concat({
               role: "assistant",
-              content: `⚠️ **Connection error:** ${err.message}.\n\nPlease check your internet connection and try again.`,
+              content: `**Connection error:** ${err.message}.\n\nPlease check your internet connection and try again.`,
               id: `err-${Date.now()}`,
               isError: true,
             })
@@ -529,7 +562,6 @@ export default function Chatbot() {
   const handleClearChat = () => {
     abortControllerRef.current?.abort();
     setMessages([WELCOME_MESSAGE]);
-    setShowChips(true);
     setHasInteracted(false);
     setIsStreaming(false);
   };
@@ -540,10 +572,25 @@ export default function Chatbot() {
     e.target.style.height = Math.min(e.target.scrollHeight, 108) + "px";
   };
 
+  // ─── Listen for custom explain events ─────────────────────────────────────────
+  useEffect(() => {
+    const handleExplain = (e) => {
+      const { prompt } = e.detail;
+      setIsOpen(true);
+      // Slight delay to ensure Chatbot is fully open and focused before sending
+      setTimeout(() => {
+        sendMessage(prompt);
+      }, 50);
+    };
+
+    window.addEventListener("chatbot-explain", handleExplain);
+    return () => window.removeEventListener("chatbot-explain", handleExplain);
+  }, [sendMessage]);
+
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans">
+    <div className="font-sans">
       {/* ── Chat Panel ─────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
@@ -554,59 +601,48 @@ export default function Chatbot() {
             exit={{ opacity: 0, scale: 0.88, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 30 }}
             style={{ transformOrigin: "bottom right" }}
-            className="w-[380px] sm:w-[420px] h-[620px] flex flex-col rounded-2xl overflow-hidden
-              bg-[#0f0f1a] border border-purple-900/40 shadow-2xl shadow-purple-950/60"
+            className="fixed bottom-[80px] sm:bottom-[92px] right-4 sm:right-6 z-[10000] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-120px)] flex flex-col rounded-2xl overflow-hidden
+              bg-white/95 dark:bg-[#1c1d1f]/95 border border-purple-100 dark:border-purple-900/30 shadow-2xl backdrop-blur-xl transition-all duration-300"
           >
             {/* Header */}
-            <div
-              className="flex items-center gap-3 px-4 py-3 shrink-0
-                bg-gradient-to-r from-purple-950/80 via-slate-900 to-slate-900
-                border-b border-purple-800/30"
-            >
-              {/* Avatar */}
-              <div className="relative">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-purple-900/50">
-                  <Bot size={20} className="text-white" />
+            <div className="flex items-center justify-between px-4 py-3 shrink-0 bg-primary border-b border-primary-dark/20 shadow-sm transition-all duration-300">
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-white text-primary flex items-center justify-center border border-white/20 shadow-sm transition-all duration-300">
+                  <AlgoBotIcon className="w-5 h-5" />
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[#0f0f1a]" />
-              </div>
-
-              {/* Title */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-bold text-white">AlgoBot</p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-800/60 text-purple-300 border border-purple-700/50 font-medium">
-                    AI
-                  </span>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-[14px] font-semibold text-white leading-none">AlgoBot</h3>
+                  </div>
+                  <p className="text-[11px] text-white/85 mt-1.5 leading-none font-medium">
+                    {isStreaming ? (
+                      <span className="text-white/95 flex items-center gap-1">
+                        <Loader2 size={10} className="animate-spin" /> Thinking…
+                      </span>
+                    ) : (
+                      "Your DSA Mentor"
+                    )}
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
-                  {isStreaming ? (
-                    <span className="text-purple-400 flex items-center gap-1">
-                      <Loader2 size={10} className="animate-spin" /> Thinking…
-                    </span>
-                  ) : (
-                    "AlgoBuddy Guide · DSA Expert"
-                  )}
-                </p>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-1">
                 <button
                   onClick={handleClearChat}
-                  title="New conversation"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500
-                    hover:text-slate-300 hover:bg-slate-800/70 transition-colors"
+                  title="Reset conversation"
+                  className="w-7.5 h-7.5 rounded-lg flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                 >
                   <RotateCcw size={14} />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500
-                    hover:text-white hover:bg-slate-800/70 transition-colors"
+                  title="Close chat"
+                  className="w-7.5 h-7.5 rounded-lg flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                   aria-label="Close chat"
                 >
-                  <X size={16} />
+                  <X size={15} />
                 </button>
               </div>
             </div>
@@ -615,12 +651,14 @@ export default function Chatbot() {
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50"
+              className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-purple-300 dark:hover:[&::-webkit-scrollbar-thumb]:bg-purple-900/50 transition-colors"
               style={{ scrollbarWidth: "thin" }}
             >
-              {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
-              ))}
+              {messages
+                .filter((msg) => !(msg.role === "assistant" && msg.content === "" && msg.isStreaming))
+                .map((msg) => (
+                  <MessageBubble key={msg.id} message={msg} />
+                ))}
               {isStreaming &&
                 messages[messages.length - 1]?.content === "" && <TypingIndicator />}
               <div ref={messagesEndRef} />
@@ -634,54 +672,39 @@ export default function Chatbot() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   onClick={() => scrollToBottom()}
-                  className="absolute bottom-[140px] right-6 w-8 h-8 rounded-full bg-slate-700 border border-slate-600 
-                    flex items-center justify-center text-slate-300 hover:bg-slate-600 transition-colors shadow-lg"
+                  className="absolute bottom-[92px] right-6 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 
+                    flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-lg"
                 >
                   <ChevronDown size={16} />
                 </motion.button>
               )}
             </AnimatePresence>
 
-            {/* Suggestion chips */}
-            <AnimatePresence>
-              {showChips && !isStreaming && (
-                <motion.div
-                  key="chips"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden shrink-0"
-                >
-                  <div className="px-4 pt-3 pb-2 border-t border-slate-800/60 space-y-2.5">
-                    {CHIP_CATEGORIES.map((cat) => (
-                      <div key={cat.label}>
-                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-                          {cat.label}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {cat.chips.map((chip) => (
-                            <button
-                              key={chip.id}
-                              onClick={() => sendMessage(chip.query)}
-                              className={`text-[11px] px-2.5 py-1 rounded-full border transition-all duration-150 font-medium
-                                ${chipColors[cat.color]}`}
-                            >
-                              {chip.emoji} {chip.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Suggestion Chips */}
+            {messages.length === 1 && !isStreaming && (
+              <div className="px-4 pt-3 pb-2.5 border-t border-slate-100 dark:border-slate-800/60 shrink-0 bg-white/50 dark:bg-[#1c1d1f]/50">
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-550 uppercase tracking-widest mb-2 px-1">
+                  Suggested Questions
+                </p>
+                <div className="w-full flex flex-row items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-purple-300 dark:hover:[&::-webkit-scrollbar-thumb]:bg-purple-900/50">
+                  {SUGGESTION_QUESTIONS.map((q) => (
+                    <button
+                      key={q.id}
+                      onClick={() => sendMessage(q.query)}
+                      className="shrink-0 border border-purple-100 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 dark:hover:bg-purple-950/30 hover:border-purple-300 dark:hover:border-purple-700/60 transition-all duration-150 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap"
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Input area */}
-            <div className="px-3 py-3 border-t border-slate-800/60 bg-[#0f0f1a] shrink-0">
+            <div className="px-3 py-3 border-t border-slate-100 dark:border-slate-800/60 bg-white/50 dark:bg-[#1c1d1f]/50 shrink-0">
               <div
-                className="flex items-end gap-2 bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2
-                  focus-within:border-purple-500/50 focus-within:bg-slate-800/80 transition-all duration-200"
+                className="flex items-end gap-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-xl px-3 py-2
+                  focus-within:border-primary/50 dark:focus-within:border-purple-500/50 focus-within:bg-white dark:focus-within:bg-slate-900/80 transition-all duration-200"
               >
                 <textarea
                   ref={(el) => {
@@ -694,7 +717,7 @@ export default function Chatbot() {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask about AlgoBuddy or any DSA topic…"
                   disabled={isStreaming}
-                  className="flex-1 bg-transparent text-[13px] text-slate-200 placeholder-slate-500
+                  className="flex-1 bg-transparent text-[13px] text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500
                     resize-none outline-none leading-relaxed min-h-[24px] max-h-[108px]
                     disabled:opacity-50 scrollbar-none"
                   style={{ scrollbarWidth: "none" }}
@@ -702,10 +725,9 @@ export default function Chatbot() {
                 <button
                   onClick={() => sendMessage()}
                   disabled={!inputValue.trim() || isStreaming}
-                  className="shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600
-                    flex items-center justify-center text-white shadow-md
-                    hover:from-purple-400 hover:to-violet-500 active:scale-95 transition-all duration-150
-                    disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-purple-500 disabled:hover:to-violet-600"
+                  className="shrink-0 w-8 h-8 rounded-lg bg-primary hover:bg-primary-dark
+                    flex items-center justify-center text-white shadow-md active:scale-95 transition-all duration-150
+                    disabled:opacity-45 disabled:cursor-not-allowed"
                   aria-label="Send"
                 >
                   {isStreaming ? (
@@ -716,14 +738,14 @@ export default function Chatbot() {
                 </button>
               </div>
               <div className="flex items-center justify-between mt-1.5 px-1">
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[10px] text-slate-400 dark:text-slate-600">
                   ↵ Send &nbsp;·&nbsp; Shift+↵ New line
                 </p>
                 <a
                   href="https://www.algobuddy.me"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] text-purple-600 hover:text-purple-400 transition-colors flex items-center gap-0.5"
+                  className="text-[10px] text-primary dark:text-purple-400 hover:opacity-85 transition-opacity flex items-center gap-0.5"
                 >
                   algobuddy.me <ExternalLink size={8} />
                 </a>
@@ -734,72 +756,55 @@ export default function Chatbot() {
       </AnimatePresence>
 
       {/* ── Floating Trigger Button ─────────────────────────────────────────────── */}
-      <motion.button
-        onClick={() => setIsOpen((v) => !v)}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.93 }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-700
-          flex items-center justify-center shadow-xl shadow-purple-950/60
-          hover:shadow-2xl hover:shadow-purple-900/70 transition-shadow"
-        aria-label={isOpen ? "Close AlgoBot" : "Open AlgoBot"}
-      >
-        {/* Glow ring */}
-        <motion.div
-          className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-400 to-violet-600 opacity-0"
-          whileHover={{ opacity: 0.2 }}
-          transition={{ duration: 0.2 }}
-        />
-
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <X size={22} className="text-white" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="open"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <MessageCircle size={22} className="text-white" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Sparkle badge */}
-        <motion.div
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500
-            border-2 border-[#0f0f1a] flex items-center justify-center shadow-sm"
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+      <div className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
+        <motion.button
+          onClick={() => setIsOpen((v) => !v)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className="relative w-14 h-14 rounded-2xl bg-primary hover:bg-primary-dark flex items-center justify-center shadow-lg transition-colors"
+          aria-label={isOpen ? "Close AlgoBot" : "Open AlgoBot"}
         >
-          <Sparkles size={9} className="text-white" />
-        </motion.div>
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <X size={22} className="text-white" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="open"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <AlgoBotIcon className="w-6 h-6 text-white" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Unread badge */}
-        <AnimatePresence>
-          {!isOpen && unreadCount > 0 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-red-500
-                border-2 border-[#0f0f1a] flex items-center justify-center text-[9px] font-bold text-white shadow"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+          {/* Unread badge */}
+          <AnimatePresence>
+            {!isOpen && unreadCount > 0 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-red-500
+                  border-2 border-white dark:border-[#1c1d1f] flex items-center justify-center text-[9px] font-bold text-white shadow"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      </div>
     </div>
   );
 }

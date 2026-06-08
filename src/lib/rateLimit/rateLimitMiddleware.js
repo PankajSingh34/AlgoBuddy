@@ -20,7 +20,7 @@
 //    forwarding headers.
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { jwtVerify } from "jose";
 import { checkRateLimit } from "./rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 
@@ -38,21 +38,17 @@ async function resolveIdentityKey(request) {
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
     if (token) {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY // service key for server-side validation
-      );
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser(token);
+      // Decode and securely verify JWT locally (zero network overhead).
+      // Eliminates the massive latency bottleneck of calling supabase.auth.getUser() on every request.
+      const secret = new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET);
+      const { payload } = await jwtVerify(token, secret);
 
-      if (!error && user?.id) {
-        return `user:${user.id}`;
+      if (payload && payload.sub) {
+        return `user:${payload.sub}`;
       }
     }
   } catch {
-    // If Supabase is unavailable, fall through to IP-based limiting
+    // If JWT is invalid, missing, or secret is not set, fall through to IP-based limiting
   }
 
   // ── Fall back to verified IP ──────────────────────────────────────

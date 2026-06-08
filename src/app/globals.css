@@ -212,10 +212,26 @@ html {
 .animate-swing { animation: swing 4s ease-in-out infinite; }
 
 @keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.animate-live-pulse {
+  animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes zap-pulse {
   0%, 100% { opacity: 0; transform: translateX(-50%) scale(1); }
   50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
 }
-.animate-pulse { animation: pulse 3s ease-in-out infinite; }
+.animate-zap-pulse {
+  animation: zap-pulse 3s ease-in-out infinite;
+}
 
 /* Page load animation */
 .page-loaded .page-loaded\:opacity-100 { opacity: 1; }

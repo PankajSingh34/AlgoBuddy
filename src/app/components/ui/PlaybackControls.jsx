@@ -1,5 +1,5 @@
 import React from "react";
-import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Bot } from "lucide-react";
 
 export default function PlaybackControls({
   isPlaying,
@@ -16,6 +16,7 @@ export default function PlaybackControls({
   onClear,
   clearLabel = "Clear",
   progressText,
+  onExplainStep,
 }) {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-3 md:p-4 rounded-2xl shadow-lg shadow-black/20 gap-4">
@@ -79,6 +80,18 @@ export default function PlaybackControls({
           className="px-3.5 py-2 text-xs font-bold text-rose-500 bg-rose-950/20 hover:bg-rose-950/40 rounded-xl transition-all border border-rose-900/30 flex items-center gap-1.5 w-full sm:w-auto justify-center"
         >
           <RotateCcw size={14} /> {clearLabel}
+        </button>
+      )}
+
+      {/* Explain Step Button */}
+      {onExplainStep && (
+        <button
+          type="button"
+          onClick={onExplainStep}
+          disabled={disabled}
+          className="px-3.5 py-2 text-xs font-bold text-[#c084fc] bg-[#3b0764]/40 hover:bg-[#3b0764]/70 rounded-xl transition-all border border-[#c084fc]/30 flex items-center gap-1.5 w-full sm:w-auto justify-center shadow-md shadow-[#a435f0]/10"
+        >
+          <Bot size={14} /> Explain this step
         </button>
       )}
 

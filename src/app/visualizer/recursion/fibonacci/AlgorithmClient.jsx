@@ -26,7 +26,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionFibonacci}
-          description="Mark Fibonacci Recursion as done and view it on your dashboard"
+          description="Mark Fibonacci Recursion as done and track your progress"
           initialDone={false}
         />
       }
