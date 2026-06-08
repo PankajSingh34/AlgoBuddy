@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/apiClient";
 import {
   Mail,
   Phone,
@@ -62,25 +63,17 @@ const ContactUs = () => {
     setSubmitted(false);
 
     try {
-      const res = await fetch("/api/contact", {
+      const data = await api.request("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           name: formData.name,
           email: formData.email,
           subject: formData.subject,
           category: formData.category,
           message: formData.message,
           captchaToken: "",
-        }),
+        },
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data?.message || "Failed to send message. Please try again.");
-        return;
-      }
 
       setSubmitted(true);
       setFormData({

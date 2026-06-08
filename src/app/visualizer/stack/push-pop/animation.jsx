@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import PushPop from "@/app/components/ui/PushPop";
-import usePlayback from "@/app/hooks/usePlayback";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
 const StackVisualizer = () => {
   const [stack, setStack] = useState([]);
@@ -11,14 +9,7 @@ const StackVisualizer = () => {
   const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Please set a valid stack capacity first.");
   const [isAnimating, setIsAnimating] = useState(false);
-  useVisualizerReset(() => {
-    setStack([]);
-    setCapacity(null);
-    setOperation(null);
-    setMessage("Please set a valid stack capacity first.");
-    setIsAnimating(false);
-  });
-  const { speed, setSpeed } = usePlayback(1);
+  const [speed, setSpeed] = useState(1);
   const stackRefs = useRef([]);
 
   useEffect(() => {
@@ -49,17 +40,12 @@ const StackVisualizer = () => {
     }
   }, [stack, operation, isAnimating, speed]);
 
-  // Construct physical slots from index capacity - 1 down to 0
   const slots = [];
   if (capacity !== null) {
     for (let i = capacity - 1; i >= 0; i--) {
       const isFilled = i < stack.length;
       const itemValue = isFilled ? stack[stack.length - 1 - i] : null;
-      slots.push({
-        index: i,
-        isFilled,
-        value: itemValue,
-      });
+      slots.push({ index: i, isFilled, value: itemValue });
     }
   }
 
@@ -85,7 +71,6 @@ const StackVisualizer = () => {
           setCapacity={setCapacity}
         />
 
-        {/* Stack Visualization */}
         <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold mb-4 text-center">Stack Visualization</h2>
 
@@ -97,7 +82,6 @@ const StackVisualizer = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center min-h-[300px]">
-              {/* Stack status and pointers details */}
               <div className="mb-6 text-center text-sm font-semibold text-slate-500">
                 Stack Status:{" "}
                 <span className={stack.length >= capacity ? "text-rose-500 font-bold" : "text-[#a435f0] font-bold"}>
@@ -106,18 +90,15 @@ const StackVisualizer = () => {
                 {" | "}Capacity: <span className="text-slate-300 font-bold">{stack.length}</span>/<span className="text-slate-400 font-bold">{capacity}</span>
               </div>
 
-              {/* Stack physical slots visualizer */}
               <div className="w-full max-w-md space-y-1.5">
                 {slots.map((slot) => {
                   const isTop = slot.index === stack.length - 1;
                   return (
                     <div key={slot.index} className="flex items-center gap-4 justify-center">
-                      {/* Index display */}
                       <div className="w-16 text-right text-xs font-bold text-slate-400 dark:text-slate-500">
                         Index [{slot.index}]
                       </div>
 
-                      {/* Slot element box */}
                       <div className="w-48 relative">
                         {slot.isFilled ? (
                           <div
@@ -140,7 +121,6 @@ const StackVisualizer = () => {
                         )}
                       </div>
 
-                      {/* Top indicator arrow */}
                       <div className="w-20 text-left">
                         {isTop ? (
                           <span className="text-xs font-extrabold text-[#a435f0] flex items-center gap-1 animate-pulse">
@@ -154,7 +134,6 @@ const StackVisualizer = () => {
                   );
                 })}
 
-                {/* Empty pointer display */}
                 {stack.length === 0 && (
                   <div className="flex items-center gap-4 justify-center pt-2">
                     <div className="w-16"></div>

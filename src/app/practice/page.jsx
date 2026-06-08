@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Home, 
@@ -135,6 +136,7 @@ const DS_THEME = {
 
 export default function PracticePage() {
   const { user } = useUser();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [progress, setProgress] = useState({});
   const [mounted, setMounted] = useState(false);
@@ -146,6 +148,12 @@ export default function PracticePage() {
   const [themeMounted, setThemeMounted] = useState(false);
 
   const carouselRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/login");
+    }
+  }, [user, router]);
 
   // Initialize theme and progress
   useEffect(() => {

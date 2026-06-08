@@ -1,11 +1,18 @@
 "use client";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-import { useEffect } from "react";
 
+async function apiFetch(url, options = {}) {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...options.headers },
+    ...options,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser();
@@ -45,6 +52,14 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       setIsFetchingProgress(false);
     };
 
+      if (!user) return;
+      try {
+        const data = await apiFetch(`/api/progress?moduleId=${encodeURIComponent(moduleId)}`);
+        setIsDone(data?.is_done ?? false);
+      } catch (e) {
+        console.error("Error fetching user progress:", e);
+      }
+    };
     fetchUserProgress();
   }, [user, moduleId]);
 
@@ -129,6 +144,15 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       setIsDone(!nextState);
       console.error("Unexpected error during progress update:", err);
       toast.error("Unexpected error. Please try again.");
+      await apiFetch("/api/progress", {
+        method: "POST",
+        body: JSON.stringify({ moduleId, isDone: !isDone }),
+      });
+      setIsDone(!isDone);
+      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
+    } catch (err) {
+      console.error("Error updating progress:", err);
+      toast.error("Failed to update progress. Please try again.");
     }
   }
 

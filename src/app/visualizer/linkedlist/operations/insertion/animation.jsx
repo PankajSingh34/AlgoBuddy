@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import {
@@ -7,7 +6,6 @@ import {
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
 import { createLinkedListTempNode } from "@/app/visualizer/linkedlist/utils/createTempNode";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { insertionGenerator } from "@/features/algorithms/linkedlist/insertionLogic";
 
 const LinkedListVisualizer = () => {
@@ -16,14 +14,7 @@ const LinkedListVisualizer = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const nodeRefs = useRef([]);
   const containerRef = useRef(null);
-  useVisualizerReset(() => {
-    setInputValue("");
-    setList([]);
-    setIsAnimating(false);
-  });
   const animationTimeline = useRef(gsap.timeline());
-
-
 
   const addNode = () => {
     if (isAnimating) return;
@@ -53,17 +44,13 @@ const LinkedListVisualizer = () => {
 
       animationTimeline.current.clear();
       animationTimeline.current
-        .to(tempNode, {
-          opacity: 1,
-          y: 50,
-          duration: 0.5,
-        })
+        .to(tempNode, { opacity: 1, y: 50, duration: 0.5 })
         .to(tempNode, {
           x: finalX,
           xPercent: 0,
           duration: 1,
           onComplete: () => {
-            step = generator.next(); // Get the complete state
+            step = generator.next();
             if (step.value?.type === 'complete') {
               setList(step.value.list);
             }
@@ -160,10 +147,7 @@ const LinkedListVisualizer = () => {
             <div className="flex items-center space-x-4 sm:space-x-8">
               {list.map((node, index) => (
                 <div key={node.id} className="flex items-center">
-                  <div
-                    ref={(el) => (nodeRefs.current[index] = el)}
-                    className="node flex"
-                  >
+                  <div ref={(el) => (nodeRefs.current[index] = el)} className="node flex">
                     <div className="data-part w-16 rounded-l-lg bg-primary p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg">
                       {node.value}
                     </div>
