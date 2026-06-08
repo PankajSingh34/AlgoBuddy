@@ -84,7 +84,7 @@ const NotFoundPage = () => {
 
         {/* Footer note */}
         <p className="pt-12 text-sm text-surface-500 dark:text-surface-400">
-          Still stuck? <a href="/contact" className="text-primary dark:text-primary-light hover:underline">Contact support</a>
+          Still stuck? <a href="/contactus" className="text-primary dark:text-primary-light hover:underline">Contact support</a>
         </p>
       </div>
     </div>
