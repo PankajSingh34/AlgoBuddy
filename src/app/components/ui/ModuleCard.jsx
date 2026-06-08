@@ -10,33 +10,43 @@ import { useEffect } from "react";
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser();
   const [isDone, setIsDone] = useState(initialDone);
-  
+  const [isProgressTrackingEnabled, setIsProgressTrackingEnabled] = useState(true);
+  const [isFetchingProgress, setIsFetchingProgress] = useState(true);
+
   useEffect(() => {
-  const fetchUserProgress = async () => {
-    if (!user) return;
+    const fetchUserProgress = async () => {
+      if (!user) {
+        setIsFetchingProgress(false);
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("is_done")
-      .eq("user_id", user.id)
-      .eq("module_id", moduleId)
-      .maybeSingle();
+      const { data, error } = await supabase
+        .from("user_progress")
+        .select("is_done")
+        .eq("user_id", user.id)
+        .eq("module_id", moduleId)
+        .maybeSingle();
 
-    if (error) {
-  console.error("Error fetching user progress:", error);
+      if (error) {
+        console.error("Error fetching user progress:", error);
 
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database is not configured.");
-  }
+        if (error.code === "PGRST205") {
+          toast.error("Progress tracking database is not configured.");
+          setIsProgressTrackingEnabled(false);
+        } else {
+          toast.error("Failed to load progress. Please try again.");
+        }
 
-  return;
-}
+        setIsFetchingProgress(false);
+        return;
+      }
 
-    setIsDone(data?.is_done ?? false);
-  };
+      setIsDone(data?.is_done ?? false);
+      setIsFetchingProgress(false);
+    };
 
-  fetchUserProgress();
-}, [user, moduleId]);
+    fetchUserProgress();
+  }, [user, moduleId]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -70,6 +80,21 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       return;
     }
 
+    if (!isProgressTrackingEnabled) {
+      toast.error(
+        "Progress tracking is unavailable. Please configure the Supabase user_progress table."
+      );
+      return;
+    }
+
+    if (isFetchingProgress) {
+      toast.error("Please wait while progress state loads.");
+      return;
+    }
+
+    const nextState = !isDone;
+    setIsDone(nextState);
+
     try {
       const { error } = await supabase
         .from("user_progress")
@@ -77,31 +102,31 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
           {
             user_id: user.id,
             module_id: moduleId,
-            is_done: !isDone,
+            is_done: nextState,
             updated_at: new Date(),
           },
           { onConflict: ["user_id", "module_id"] }
         );
 
       if (error) {
-  console.error(
-    "Error updating progress:",
-    error.message,
-    error.details
-  );
+        setIsDone(!nextState);
+        console.error("Error updating progress:", error.message, error.details);
 
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database table is missing.");
-  } else {
-    toast.error(`Failed to update progress: ${error.message}`);
-  }
+        if (error.code === "PGRST205") {
+          setIsProgressTrackingEnabled(false);
+          toast.error("Progress tracking database table is missing.");
+        } else {
+          toast.error(`Failed to update progress: ${error.message}`);
+        }
 
-  return;
-}
+        return;
+      }
 
-      setIsDone(!isDone);
-      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
+      toast.success(
+        nextState ? "Module marked as completed!" : "Module marked as incomplete."
+      );
     } catch (err) {
+      setIsDone(!nextState);
       console.error("Unexpected error during progress update:", err);
       toast.error("Unexpected error. Please try again.");
     }
@@ -119,14 +144,21 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
             Done With the Learning
           </h1>
           <p className="text-sm text-surface-500 dark:text-surface-400">{description}</p>
+          {!isProgressTrackingEnabled && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              Progress tracking is unavailable. Please configure the Supabase
+              `user_progress` table to enable this feature.
+            </p>
+          )}
         </div>
         <input
           type="checkbox"
           checked={isDone}
           onChange={toggleCompletion}
-          className={`w-6 h-6 rounded cursor-pointer transition duration-300 ${
-            isDone ? "accent-green-500 ring-2 ring-green-500" : "accent-[#a435f0]"
-          }`}
+          disabled={!isProgressTrackingEnabled}
+          className={`w-6 h-6 rounded transition duration-300 ${
+            isProgressTrackingEnabled ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+          } ${isDone ? "accent-green-500 ring-2 ring-green-500" : "accent-[#a435f0]"}`}
         />
       </div>
     </div>

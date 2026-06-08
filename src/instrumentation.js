@@ -28,9 +28,9 @@ export function register() {
     if (!isValidKey(supabaseServiceKey)) missing.push("SUPABASE_SERVICE_ROLE_KEY");
 
     if (missing.length > 0) {
-      const errorMsg = `[Startup Error] Missing or invalid required authentication environment variables: ${missing.join(", ")}`;
-      console.error(`\n==================================================\n${errorMsg}\n==================================================\n`);
-      throw new Error(errorMsg);
+      const warningMsg = `[Startup Warning] Missing or invalid authentication environment variables: ${missing.join(", ")}. Instrumentation will be disabled.`;
+      console.warn(`\n==================================================\n${warningMsg}\n==================================================\n`);
+      return;
     }
   }
 }
