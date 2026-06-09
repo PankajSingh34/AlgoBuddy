@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -147,7 +147,7 @@ export default function PracticePage() {
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
 
-  const carouselRef = useRef(null);
+
 
   useEffect(() => {
     if (!user) {
@@ -321,13 +321,6 @@ export default function PracticePage() {
     }
   };
 
-  const handleScrollCarousel = (direction) => {
-    if (carouselRef.current) {
-      const offset = direction === "left" ? -240 : 240;
-      carouselRef.current.scrollBy({ left: offset, behavior: "smooth" });
-    }
-  };
-
   const scrollToAccordion = (slug) => {
     setExpandedTopics((prev) => ({ ...prev, [slug]: true }));
     setTimeout(() => {
@@ -453,64 +446,6 @@ export default function PracticePage() {
             </div>
           </div>
         </div>
-
-        {/* Explore by Topic Section */}
-        <section className="mb-10 relative">
-          <div className="flex justify-between items-center mb-5">
-            <h2 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-wider">
-              Explore by Topic
-            </h2>
-          </div>
-
-          <div className="relative group/carousel">
-            <div 
-              ref={carouselRef}
-              className="flex gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {practiceData.map((topic) => {
-                const t = DS_THEME[topic.slug] || DS_THEME.array;
-                const progressInfo = topicStats[topic.slug] || { total: 0, solved: 0, pct: 0 };
-                return (
-                  <div
-                    key={topic.slug}
-                    onClick={() => scrollToAccordion(topic.slug)}
-                    className="flex-shrink-0 w-[180px] p-5 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition select-none snap-start"
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center p-2 mb-3.5 ${t.bg}`}>
-                      {t.icon(t.color)}
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-850 dark:text-white truncate">
-                      {topic.title}
-                    </h3>
-                    <p className="text-xs text-slate-400 dark:text-neutral-500 font-bold mt-1.5">
-                      {progressInfo.total} Problems
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-neutral-600 font-semibold mt-0.5">
-                      {progressInfo.solved} Solved
-                    </p>
-                    <div className="w-full h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden mt-3.5">
-                      <div className="h-full rounded-full" style={{ width: `${progressInfo.pct}%`, backgroundColor: t.color }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Slider arrows */}
-            <button
-              onClick={() => handleScrollCarousel("left")}
-              className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 shadow border border-slate-100 dark:border-neutral-700 flex items-center justify-center cursor-pointer hover:bg-slate-50 opacity-0 group-hover/carousel:opacity-100 transition duration-200 z-10"
-            >
-              <ChevronRight className="w-4 h-4 rotate-180 text-slate-600 dark:text-neutral-300" />
-            </button>
-            <button
-              onClick={() => handleScrollCarousel("right")}
-              className="absolute right-[-16px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 shadow border border-slate-100 dark:border-neutral-700 flex items-center justify-center cursor-pointer hover:bg-slate-50 opacity-0 group-hover/carousel:opacity-100 transition duration-200 z-10"
-            >
-              <ChevronRight className="w-4 h-4 text-slate-600 dark:text-neutral-300" />
-            </button>
-          </div>
-        </section>
 
         {/* DSA Roadmap Accordions */}
         <section className="space-y-5">
