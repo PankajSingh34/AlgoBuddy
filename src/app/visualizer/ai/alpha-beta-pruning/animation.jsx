@@ -3,7 +3,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
-import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { generateAlphaBetaSteps } from "@/features/algorithms/ai/alphaBetaLogic";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const AlphaBetaPruning = () => {
   const [arrayElements, setArrayElements] = useState("3, 5, 2, 9, 12, 5, 23, 23");
@@ -35,110 +38,6 @@ const AlphaBetaPruning = () => {
     setTreeNodes([]);
   };
 
-  const delay = (ms) => {
-    return new Promise((resolve) => {
-      const checkPause = () => {
-        if (!isPausedRef.current) {
-          setTimeout(resolve, ms / speedRef.current);
-        } else {
-          setTimeout(checkPause, 100);
-        }
-      };
-      checkPause();
-    });
-  };
-
-  const runAlphaBeta = async (nodes) => {
-    setMessage("Running Alpha-Beta Pruning...");
-    let newClasses = { ...currentNodeClass };
-    let newPruned = { ...prunedNodes };
-
-    const evaluate = async (nodeIndex, depth, alpha, beta, isMax) => {
-      if (depth === 3) {
-        newClasses[nodeIndex] = "bg-green-500 text-white border-green-700";
-        setCurrentNodeClass({ ...newClasses });
-        setStepExplanation(`Evaluating leaf node: ${nodes[nodeIndex].val}`);
-        await delay(1000);
-        return nodes[nodeIndex].val;
-      }
-
-      newClasses[nodeIndex] = "bg-yellow-300 text-black border-yellow-500 scale-110";
-      nodes[nodeIndex].alpha = alpha;
-      nodes[nodeIndex].beta = beta;
-      setTreeNodes([...nodes]);
-      setCurrentNodeClass({ ...newClasses });
-      setStepExplanation(`Visiting ${isMax ? "Max" : "Min"} node. α=${alpha === -Infinity ? "-∞" : alpha}, β=${beta === Infinity ? "∞" : beta}`);
-      await delay(1000);
-
-      const leftChild = 2 * nodeIndex + 1;
-      const rightChild = 2 * nodeIndex + 2;
-
-      let bestVal = isMax ? -Infinity : Infinity;
-
-      // Left Child
-      const leftVal = await evaluate(leftChild, depth + 1, alpha, beta, !isMax);
-      if (isMax) {
-        bestVal = Math.max(bestVal, leftVal);
-        alpha = Math.max(alpha, bestVal);
-      } else {
-        bestVal = Math.min(bestVal, leftVal);
-        beta = Math.min(beta, bestVal);
-      }
-      
-      nodes[nodeIndex].val = bestVal;
-      nodes[nodeIndex].alpha = alpha;
-      nodes[nodeIndex].beta = beta;
-      setTreeNodes([...nodes]);
-      setStepExplanation(`Back at ${isMax ? "Max" : "Min"} node. Updated ${isMax ? "α" : "β"} to ${isMax ? alpha : beta}. Check α=${alpha === -Infinity ? "-∞" : alpha} ≥ β=${beta === Infinity ? "∞" : beta}?`);
-      await delay(1000);
-
-      // Pruning check
-      if (beta <= alpha) {
-        setStepExplanation(`PRUNED! Since ${isMax ? "β (" + beta + ") <= α (" + alpha + ")" : "α (" + alpha + ") >= β (" + beta + ")"}. Ignoring right child.`);
-        newPruned[rightChild] = true;
-        setPrunedNodes({ ...newPruned });
-        
-        // Mark pruned sub-tree as grayed out
-        const markPruned = (idx) => {
-            if (idx > 14) return;
-            newPruned[idx] = true;
-            markPruned(2 * idx + 1);
-            markPruned(2 * idx + 2);
-        };
-        markPruned(rightChild);
-        setPrunedNodes({ ...newPruned });
-        
-        await delay(1500);
-      } else {
-        // Right Child
-        const rightVal = await evaluate(rightChild, depth + 1, alpha, beta, !isMax);
-        if (isMax) {
-          bestVal = Math.max(bestVal, rightVal);
-          alpha = Math.max(alpha, bestVal);
-        } else {
-          bestVal = Math.min(bestVal, rightVal);
-          beta = Math.min(beta, bestVal);
-        }
-        nodes[nodeIndex].val = bestVal;
-        nodes[nodeIndex].alpha = alpha;
-        nodes[nodeIndex].beta = beta;
-        setTreeNodes([...nodes]);
-      }
-
-      newClasses[nodeIndex] = "bg-blue-500 text-white border-blue-700 scale-100";
-      setCurrentNodeClass({ ...newClasses });
-      setStepExplanation(`Node ${nodeIndex} completed. Value: ${bestVal}`);
-      await delay(1000);
-
-      return bestVal;
-    };
-
-    const rootVal = await evaluate(0, 0, -Infinity, Infinity, true);
-    setStepExplanation(`Algorithm finished. Optimal value: ${rootVal}`);
-    setMessage(`Finished! Optimal value: ${rootVal}`);
-    setIsAnimating(false);
-  };
-
   const handleStart = () => {
     const nums = arrayElements.split(",").map((num) => parseInt(num.trim()));
     if (nums.length !== 8 || nums.some(isNaN)) {
@@ -146,21 +45,27 @@ const AlphaBetaPruning = () => {
       return;
     }
 
-    const initNodes = Array(15)
-      .fill(null)
-      .map((_, i) => ({
-        id: i,
-        val: i >= 7 ? nums[i - 7] : "?",
-        alpha: -Infinity,
-        beta: Infinity,
-      }));
-
-    setTreeNodes(initNodes);
-    setIsAnimating(true);
-    setCurrentNodeClass({});
-    setPrunedNodes({});
-    runAlphaBeta(initNodes);
+    engine.reset();
+    const generatedSteps = generateAlphaBetaSteps(nums);
+    setSteps(generatedSteps);
+    setTimeout(() => { engine.play(); }, 50);
   };
+
+  useVisualizerKeyboard({
+    onStart: engine.isPlaying ? engine.pause : engine.play,
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: 1000 / engine.speed,
+    onSpeedChange: (s) => engine.setSpeed(1000 / s),
+    enabled: steps.length > 0,
+  });
+
+  const currentStep = steps[engine.currentStep] || null;
+  const treeNodes = currentStep ? currentStep.nodes : [];
+  const currentNodeClass = currentStep ? currentStep.classes : {};
+  const prunedNodes = currentStep ? currentStep.pruned : {};
+  const stepExplanation = currentStep ? currentStep.explanation : "";
 
   const renderTree = () => {
     if (treeNodes.length === 0) return null;
@@ -223,20 +128,14 @@ const AlphaBetaPruning = () => {
             className="px-5 py-3 border rounded-xl bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm md:w-[350px]"
             value={arrayElements}
             onChange={(e) => setArrayElements(e.target.value)}
-            disabled={isAnimating}
+            disabled={engine.isPlaying}
             placeholder="e.g. 3, 5, 2, 9, 12, 5, 23, 23"
             />
         </div>
         
         <div className="flex items-center gap-4">
-          <ResetButton onClick={handleReset} />
-          <GoButton onClick={handleStart} disabled={isAnimating} />
-          <button
-            onClick={togglePlayPause}
-            className="p-3.5 rounded-xl bg-white dark:bg-slate-800 shadow-md hover:shadow-lg transition-all border border-gray-100 dark:border-slate-700 active:scale-95"
-          >
-            {isPaused ? <Play size={22} className="text-green-600 fill-current" /> : <Pause size={22} className="text-orange-600 fill-current" />}
-          </button>
+          <ResetButton onReset={handleReset} />
+          <GoButton onClick={handleStart} disabled={engine.isPlaying} />
         </div>
       </div>
 
