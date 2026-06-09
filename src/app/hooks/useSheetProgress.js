@@ -60,7 +60,7 @@ async function getAuthHeader() {
   return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 }
 
-const useSpringBoot = () =>
+const isUsingSpringBoot = () =>
   typeof window !== "undefined" && process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
 
 function springBootBase() {
@@ -69,7 +69,7 @@ function springBootBase() {
 
 /** Fetch all progress for current user */
 async function fetchProgressFromServer() {
-  if (useSpringBoot()) {
+  if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return null;
     const res = await fetch(`${springBootBase()}/api/v1/practice/progress`, { headers });
@@ -85,7 +85,7 @@ async function fetchProgressFromServer() {
 
 /** Update a single problem's status */
 async function postProgressToServer(problemId, status) {
-  if (useSpringBoot()) {
+  if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
     await fetch(`${springBootBase()}/api/v1/practice/progress`, {
@@ -108,7 +108,7 @@ async function postProgressToServer(problemId, status) {
 async function bulkSyncToServer(items) {
   if (!items || items.length === 0) return null;
 
-  if (useSpringBoot()) {
+  if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return null;
     const res = await fetch(`${springBootBase()}/api/v1/practice/progress/bulk`, {
@@ -256,7 +256,7 @@ export function useSheetProgress() {
 
         // 5. Update streak state
         if (!cancelled) {
-          if (useSpringBoot() && serverData.currentStreak !== undefined) {
+          if (isUsingSpringBoot() && serverData.currentStreak !== undefined) {
             // Spring Boot streak is authoritative
             setStreakData({
               current: serverData.currentStreak || 0,
@@ -310,7 +310,7 @@ export function useSheetProgress() {
         try {
           await postProgressToServer(problemId, newStatus);
           // After Spring Boot update, re-fetch fresh streak data
-          if (useSpringBoot() && newStatus === "Completed") {
+          if (isUsingSpringBoot() && newStatus === "Completed") {
             const fresh = await fetchProgressFromServer();
             if (fresh) {
               setStreakData({
@@ -327,7 +327,7 @@ export function useSheetProgress() {
         }
       }
     },
-    [progress, user, streakData.current]
+    [progress, user, streakData]
   );
 
   // ── Convenience getter ───────────────────────────────────────────────────
