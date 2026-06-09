@@ -10,6 +10,7 @@ import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
 import BookmarkSection from "@/app/components/ui/BookmarkSection";
+import QuizMode from "@/app/visualizer/components/QuizMode";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -715,7 +716,7 @@ const Visualizer = () => {
      plain <svg> elements. */
   const clientSections = sections.map(({ info, ...rest }) => ({
     ...rest,
-    slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-")
+    slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-"),
   }));
 
   return (
@@ -725,8 +726,21 @@ const Visualizer = () => {
     >
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
+
+      {/* ── Quiz Section ───────────────────────────────────────────── */}
+      <div className="w-full max-w-4xl mx-auto px-4 py-10">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+          Test your understanding
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Answer questions about the algorithms you just explored. Quiz
+          completions count toward your daily streak.
+        </p>
+        <QuizMode />
+      </div>
+      {/* ─────────────────────────────────────────────────────────── */}
+
       <div className="w-full relative">
-        
         <BookmarkSection />
         <BackToTop />
         <Footer />
@@ -736,4 +750,3 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
-
