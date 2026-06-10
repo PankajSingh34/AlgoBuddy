@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { trackActivity } from "@/lib/activity";
 
 const UserContext = createContext();
 
@@ -9,7 +10,6 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Hydrate user state from the current session on initial mount.
     const getSessionAndUser = async () => {
       const {
         data: { user: currentUser },
@@ -20,10 +20,6 @@ export const UserProvider = ({ children }) => {
 
     getSessionAndUser();
 
-    // Keep user state in sync with auth events — SIGNED_IN, SIGNED_OUT,
-    // TOKEN_REFRESHED, and PASSWORD_RECOVERY all flow through here. This is
-    // especially important for cookie-based sessions set server-side (login
-    // route) and for Google OAuth redirects.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -33,6 +29,13 @@ export const UserProvider = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Track daily activity when user is authenticated
+  useEffect(() => {
+    if (user) {
+      trackActivity(user.id);
+    }
+  }, [user]);
 
   return (
     <UserContext.Provider value={{ user, setUser, loading }}>

@@ -256,7 +256,10 @@ export default function ConceptsSection() {
             {/* Text */}
             <div className="flex-1 flex flex-col gap-5 items-start">
               <h2
-                className="text-[2.6rem] sm:text-[3.2rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-surface-50 whitespace-pre-line"
+                className="text-[2.6rem] sm:text-[3.2rem] font-bold leading-[1.08] tracking-tight text-surface-900 dark:text-surface-50 whitespace-pre-line"
+                  style={{
+                    fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif',
+                  }}
               >
                 {c.heading}
               </h2>
@@ -282,7 +285,10 @@ export default function ConceptsSection() {
           {/* Text side */}
           <div className="flex-1 flex flex-col gap-5 items-start">
             <h2
-              className="text-[2.6rem] sm:text-[3.2rem] font-black leading-[1.08] tracking-tighter text-surface-900 dark:text-surface-50"
+              className="text-[2.6rem] sm:text-[3.2rem] font-bold leading-[1.08] tracking-tight text-surface-900 dark:text-surface-50"
+              style={{
+                fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif',
+              }}
             >
               More effective,{" "}
               <br />

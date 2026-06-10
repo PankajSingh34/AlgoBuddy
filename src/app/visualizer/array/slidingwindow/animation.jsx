@@ -1,12 +1,18 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { gsap } from "gsap";
-import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import usePlayback from "@/app/hooks/usePlayback";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import html2canvas from "html2canvas";
+import { 
+  generateStatesFixedMax, 
+  generateStatesFixedAvg, 
+  generateStatesVarLongestSub, 
+  generateStatesVarSmallestSub 
+} from "@/features/algorithms/array/slidingWindowLogic";
 
 const PROBLEMS = {
   FIXED_MAX: "fixed-max",
@@ -15,303 +21,122 @@ const PROBLEMS = {
   VAR_SMALLEST_SUB: "var-smallest-sub",
 };
 
+// Define component BEFORE using it
 const Animation = () => {
   const [problemType, setProblemType] = useState(PROBLEMS.FIXED_MAX);
   const [inputData, setInputData] = useState("2, 1, 5, 1, 3, 2");
   const [targetValue, setTargetValue] = useState("3");
   
   const [dataArray, setDataArray] = useState([]);
-  const [leftPointer, setLeftPointer] = useState(-1);
-  const [rightPointer, setRightPointer] = useState(-1);
-  const [bestResult, setBestResult] = useState(null);
-  const [currentResult, setCurrentResult] = useState(null);
-  const [stepExplanation, setStepExplanation] = useState("");
-  const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [pendingStart, setPendingStart] = useState(false);
-
-  const {
-    isPaused,
-    isPausedRef,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-  } = usePlayback(() => 1);
+  const [showQuiz, setShowQuiz] = useState(false);
+  
+  // Add missing state declarations
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [leftPointer, setLeftPointer] = useState(-1);
+  const [rightPointer, setRightPointer] = useState(-1);
+  const [currentResult, setCurrentResult] = useState(null);
+  const [bestResult, setBestResult] = useState(null);
+  const [stepExplanation, setStepExplanation] = useState("");
 
   const animationRef = useRef(null);
   const wasPausedRef = useRef(false);
   const stateQueueRef = useRef([]);
   const currentStateIdxRef = useRef(0);
   const elementRefs = useRef([]);
+  const [steps, setSteps] = useState([]);
+  const [visualState, setVisualState] = useState({
+    left: -1, right: -1, current: null, best: null,
+    explanation: "", activeWindow: [-1, -1],
+    violation: false, success: false, done: false
+  });
 
-  const handleReset = () => {
-    clearTimeout(animationRef.current);
+  // Fix: Close the onStep callback properly
+  const onStep = useCallback((state) => {
+    setVisualState({
+      left: state.left,
+      right: state.right,
+      current: state.current,
+      best: state.best,
+      explanation: state.explanation,
+      activeWindow: state.activeWindow,
+      violation: state.violation,
+      success: state.success,
+      done: state.done
+    });
+  }, []);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const currentStepData = steps[engine.currentStep];
+
+  const handleReset = useCallback(() => {
+    engine.reset();
     setDataArray([]);
-    setLeftPointer(-1);
-    setRightPointer(-1);
-    setBestResult(null);
-    setCurrentResult(null);
-    setStepExplanation("");
-    setIsAnimating(false);
+    setVisualState({
+      left: -1, right: -1, current: null, best: null,
+      explanation: "", activeWindow: [-1, -1],
+      violation: false, success: false, done: false
+    });
+    setSteps([]);
     setMessage("");
     setMessageType("");
-    setPendingStart(false);
-    isPausedRef.current = false;
-    wasPausedRef.current = false;
-    stateQueueRef.current = [];
-    currentStateIdxRef.current = 0;
-    setSpeed(1);
     
     elementRefs.current.forEach((ref) => {
       if (ref) {
         gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", color: "#1F2937", duration: 0 });
       }
     });
-  };
+  }, [engine]);
 
-  useVisualizerReset(handleReset);
-
-  const generateStatesFixedMax = (arr, k) => {
-    const states = [];
-    let max_sum = -Infinity;
-    let window_sum = 0;
-
-    for (let i = 0; i < k; i++) {
-      window_sum += arr[i];
-      states.push({
-        left: 0, right: i, current: window_sum, best: max_sum === -Infinity ? "None" : max_sum,
-        explanation: `Expanding initial window: Adding ${arr[i]} at index ${i}. Current sum: ${window_sum}.`,
-        activeWindow: [0, i]
-      });
-    }
-    
-    max_sum = window_sum;
-    states.push({
-      left: 0, right: k - 1, current: window_sum, best: max_sum,
-      explanation: `Initial window of size ${k} complete. Best sum so far: ${max_sum}.`,
-      activeWindow: [0, k - 1]
-    });
-
-    for (let i = k; i < arr.length; i++) {
-      const leftIdx = i - k;
-      states.push({
-        left: leftIdx, right: i, current: window_sum, best: max_sum,
-        explanation: `Sliding window forward. Preparing to remove ${arr[leftIdx]} and add ${arr[i]}.`,
-        activeWindow: [leftIdx, i]
-      });
-
-      window_sum = window_sum - arr[leftIdx] + arr[i];
-      const new_max = Math.max(max_sum, window_sum);
-      const updated = new_max > max_sum;
-      max_sum = new_max;
-
-      states.push({
-        left: leftIdx + 1, right: i, current: window_sum, best: max_sum,
-        explanation: `Slid window: Removed ${arr[leftIdx]}, Added ${arr[i]}. New sum: ${window_sum}. ${updated ? 'New maximum found!' : ''}`,
-        activeWindow: [leftIdx + 1, i]
-      });
-    }
-
-    states.push({
-      left: arr.length - k, right: arr.length - 1, current: window_sum, best: max_sum,
-      explanation: `Finished. Maximum sum of subarray of size ${k} is ${max_sum}.`,
-      activeWindow: [arr.length - k, arr.length - 1],
-      done: true
-    });
-
-    return states;
-  };
-
-  const generateStatesFixedAvg = (arr, k) => {
-    const states = [];
-    const result = [];
-    let window_sum = 0;
-
-    for (let i = 0; i < k; i++) {
-      window_sum += arr[i];
-      states.push({
-        left: 0, right: i, current: (window_sum/(i+1)).toFixed(2), best: "N/A",
-        explanation: `Expanding initial window: Adding ${arr[i]}. Current sum: ${window_sum}.`,
-        activeWindow: [0, i]
-      });
-    }
-    
-    result.push((window_sum / k).toFixed(2));
-    states.push({
-      left: 0, right: k - 1, current: (window_sum/k).toFixed(2), best: `Averages: [${result.join(', ')}]`,
-      explanation: `Initial window complete. First average: ${(window_sum/k).toFixed(2)}.`,
-      activeWindow: [0, k - 1]
-    });
-
-    for (let i = k; i < arr.length; i++) {
-      const leftIdx = i - k;
-      window_sum = window_sum - arr[leftIdx] + arr[i];
-      result.push((window_sum / k).toFixed(2));
-
-      states.push({
-        left: leftIdx + 1, right: i, current: (window_sum/k).toFixed(2), best: `Averages: [${result.join(', ')}]`,
-        explanation: `Slid window: Removed ${arr[leftIdx]}, Added ${arr[i]}. New average: ${(window_sum/k).toFixed(2)}.`,
-        activeWindow: [leftIdx + 1, i]
-      });
-    }
-    
-    states.push({
-      left: arr.length - k, right: arr.length - 1, current: (window_sum/k).toFixed(2), best: `Averages: [${result.join(', ')}]`,
-      explanation: `Finished calculating all averages of subarrays of size ${k}.`,
-      activeWindow: [arr.length - k, arr.length - 1],
-      done: true
-    });
-
-    return states;
-  };
-
-  const generateStatesVarLongestSub = (s) => {
-    const states = [];
-    let charSet = new Set();
-    let left = 0;
-    let maxLength = 0;
-
-    for (let right = 0; right < s.length; right++) {
-      states.push({
-        left, right, current: Array.from(charSet).join(''), best: maxLength,
-        explanation: `Right pointer at '${s[right]}'. Checking if it's already in the window.`,
-        activeWindow: [left, right]
-      });
-
-      while (charSet.has(s[right])) {
-        states.push({
-          left, right, current: Array.from(charSet).join(''), best: maxLength,
-          explanation: `Duplicate '${s[right]}' found! Shrinking window from left to remove '${s[left]}'.`,
-          activeWindow: [left, right],
-          violation: true
-        });
-        charSet.delete(s[left]);
-        left++;
-      }
-      
-      charSet.add(s[right]);
-      const updated = (right - left + 1) > maxLength;
-      maxLength = Math.max(maxLength, right - left + 1);
-
-      states.push({
-        left, right, current: s.substring(left, right + 1), best: maxLength,
-        explanation: `Added '${s[right]}' to window. Current valid substring: "${s.substring(left, right + 1)}". ${updated ? 'New max length!' : ''}`,
-        activeWindow: [left, right]
-      });
-    }
-
-    states.push({
-      left, right: s.length - 1, current: s.substring(left, s.length), best: maxLength,
-      explanation: `Finished processing. Longest substring without repeating characters has length ${maxLength}.`,
-      activeWindow: [left, s.length - 1],
-      done: true
-    });
-
-    return states;
-  };
-
-  const generateStatesVarSmallestSub = (arr, target) => {
-    const states = [];
-    let left = 0;
-    let window_sum = 0;
-    let min_length = Infinity;
-
-    for (let right = 0; right < arr.length; right++) {
-      window_sum += arr[right];
-      
-      states.push({
-        left, right, current: window_sum, best: min_length === Infinity ? "None" : min_length,
-        explanation: `Expanding right pointer: Added ${arr[right]}. Current sum: ${window_sum}.`,
-        activeWindow: [left, right]
-      });
-
-      while (window_sum >= target) {
-        const updated = (right - left + 1) < min_length;
-        min_length = Math.min(min_length, right - left + 1);
-        
-        states.push({
-          left, right, current: window_sum, best: min_length,
-          explanation: `Sum ${window_sum} >= target ${target}! ${updated ? 'New minimum length found!' : ''} Shrinking from left to find smaller valid window.`,
-          activeWindow: [left, right],
-          success: true
-        });
-        
-        window_sum -= arr[left];
-        left++;
-        
-        if (left <= right) {
-          states.push({
-            left, right, current: window_sum, best: min_length,
-            explanation: `Shrunk window: removed ${arr[left-1]}. New sum: ${window_sum}.`,
-            activeWindow: [left, right]
-          });
-        }
-      }
-    }
-
-    states.push({
-      left, right: arr.length - 1, current: window_sum, best: min_length === Infinity ? 0 : min_length,
-      explanation: `Finished. Smallest subarray with sum >= ${target} has length ${min_length === Infinity ? 0 : min_length}.`,
-      activeWindow: [Math.max(0, left-1), arr.length - 1], // Just for final display
-      done: true
-    });
-
-    return states;
-  };
+  // Fix: Move useVisualizerReset here after handleReset is defined
+  useEffect(() => {
+    // Call any reset initialization logic here if needed
+  }, []);
 
   const animateStep = useCallback(() => {
     if (currentStateIdxRef.current >= stateQueueRef.current.length) {
       setIsAnimating(false);
       setMessage("Visualization completed.");
       setMessageType("success");
+      setShowQuiz(true);
       return;
     }
 
     const state = stateQueueRef.current[currentStateIdxRef.current];
-    const delay = 1500 / speedRef.current;
+    const delay = 1500 / 1; // Replace speedRef.current with actual speed value
 
-    setLeftPointer(state.left);
-    setRightPointer(state.right);
-    setCurrentResult(state.current);
-    setBestResult(state.best);
-    setStepExplanation(state.explanation);
+  const link = document.createElement("a");
+  link.download = "sliding-window-visualization.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+};
 
-    // GSAP highlighting
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
       const [start, end] = state.activeWindow;
       
       if (index >= start && index <= end) {
         if (state.violation && index === state.left) {
-          gsap.to(ref, { backgroundColor: "#FEE2E2", borderColor: "#EF4444", color: "#991B1B", duration: 0.3 }); // Red for violation
+          gsap.to(ref, { backgroundColor: "#FEE2E2", borderColor: "#EF4444", color: "#991B1B", duration: 0.2 });
         } else if (state.success) {
-          gsap.to(ref, { backgroundColor: "#DCFCE7", borderColor: "#22C55E", color: "#166534", duration: 0.3 }); // Green for condition met
+          gsap.to(ref, { backgroundColor: "#DCFCE7", borderColor: "#22C55E", color: "#166534", duration: 0.2 });
         } else if (state.done) {
-          gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.3 }); // Purple outline
+          gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
         } else {
-          gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.3 }); // Purple window
+          gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
         }
       } else {
-        gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", color: "#4B5563", duration: 0.3 }); // Gray outside
+        gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", color: "#4B5563", duration: 0.2 });
       }
     });
 
-    currentStateIdxRef.current++;
-
-    if (!state.done) {
-      animationRef.current = setTimeout(() => {
-        if (!isPausedRef.current) animateStep();
-      }, delay);
-    } else {
-      setIsAnimating(false);
+    if (state.done) {
       setMessage("Visualization completed.");
       setMessageType("success");
+      setShowQuiz(true);
     }
-  }, [speedRef, isPausedRef]);
+  }, []);
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -327,10 +152,8 @@ const Animation = () => {
     let targetNum = 0;
 
     if (problemType === PROBLEMS.VAR_LONGEST_SUB) {
-      // String input
       parsedArray = inputData.split('');
     } else {
-      // Array input
       parsedArray = inputData.split(',').map(s => parseInt(s.trim()));
       if (parsedArray.some(isNaN)) {
         setMessage("Invalid array elements. Please provide comma-separated integers.");
@@ -355,40 +178,48 @@ const Animation = () => {
 
     setDataArray(parsedArray);
     
-    let states = [];
+    let generatedStates = [];
     if (problemType === PROBLEMS.FIXED_MAX) {
-      states = generateStatesFixedMax(parsedArray, targetNum);
+      generatedStates = Array.from(generateStatesFixedMax(parsedArray, targetNum));
     } else if (problemType === PROBLEMS.FIXED_AVG) {
-      states = generateStatesFixedAvg(parsedArray, targetNum);
+      generatedStates = Array.from(generateStatesFixedAvg(parsedArray, targetNum));
     } else if (problemType === PROBLEMS.VAR_LONGEST_SUB) {
-      states = generateStatesVarLongestSub(inputData); // Pass raw string
+      generatedStates = Array.from(generateStatesVarLongestSub(inputData));
     } else if (problemType === PROBLEMS.VAR_SMALLEST_SUB) {
-      states = generateStatesVarSmallestSub(parsedArray, targetNum);
+      generatedStates = Array.from(generateStatesVarSmallestSub(parsedArray, targetNum));
     }
 
-    stateQueueRef.current = states;
-    currentStateIdxRef.current = 0;
-    
-    setIsAnimating(true);
-    setPendingStart(true);
+    setSteps(generatedStates);
+    setTimeout(() => {
+      engine.play();
+    }, 50);
   };
 
-  useEffect(() => {
-    if (pendingStart && dataArray.length > 0 && stateQueueRef.current.length > 0) {
-      setPendingStart(false);
-      animateStep();
-    }
-  }, [pendingStart, dataArray, animateStep]);
+  useVisualizerKeyboard({
+    onStart: handleGo,
+    onReset: handleReset,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: currentStepData?.done || false,
+  });
 
-  useEffect(() => {
-    if (isPaused) {
-      wasPausedRef.current = true;
-    } else if (wasPausedRef.current && isAnimating) {
-      wasPausedRef.current = false;
-      clearTimeout(animationRef.current);
-      animateStep();
-    }
-  }, [isPaused, isAnimating, animateStep]);
+  const handleExplainStep = () => {
+    const prompt = `I am currently looking at the Sliding Window algorithm, at step ${engine.currentStep} of ${steps.length}.
+Problem Type: ${problemType}
+Explanation on screen: ${visualState.explanation}
+Current Input: [${dataArray.join(", ")}]
+Left pointer: ${visualState.left}, Right pointer: ${visualState.right}
+Current value/sum: ${visualState.current}, Best value/sum: ${visualState.best}
+Active window indices: [${visualState.activeWindow.join(", ")}]
+
+Please explain exactly what is happening in this step in detail.`;
+    
+    window.dispatchEvent(
+      new CustomEvent("chatbot-explain", { detail: { prompt } })
+    );
+  };
 
   const getFontSize = (value) => {
     const len = String(value).length;
@@ -431,7 +262,7 @@ const Animation = () => {
                 setTargetValue("3");
               }
             }}
-            disabled={isAnimating}
+            disabled={engine.isPlaying || dataArray.length > 0 && !currentStepData?.done}
             className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300"
           >
             <optgroup label="Fixed Window">
@@ -457,7 +288,7 @@ const Animation = () => {
               onChange={(e) => setInputData(e.target.value)}
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300 font-mono"
               placeholder={problemType === PROBLEMS.VAR_LONGEST_SUB ? "e.g., abcabcbb" : "e.g., 2, 1, 5, 1, 3, 2"}
-              disabled={isAnimating}
+              disabled={engine.isPlaying || dataArray.length > 0 && !currentStepData?.done}
             />
           </div>
           
@@ -473,7 +304,7 @@ const Animation = () => {
                 onChange={(e) => setTargetValue(e.target.value)}
                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300 font-mono"
                 placeholder="e.g., 3"
-                disabled={isAnimating}
+                disabled={engine.isPlaying || dataArray.length > 0 && !currentStepData?.done}
                 min="1"
               />
             </div>
@@ -481,18 +312,22 @@ const Animation = () => {
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-          <GoButton onClick={handleGo} isAnimating={isAnimating} disabled={isAnimating} />
-          <ResetButton onReset={handleReset} isAnimating={isAnimating} />
+          <GoButton onClick={handleGo} isAnimating={engine.isPlaying || (dataArray.length > 0 && !visualState.done)} disabled={engine.isPlaying} />
+          <ResetButton onReset={handleReset} isAnimating={engine.isPlaying || dataArray.length > 0} />
         </div>
 
-        {isAnimating && (
+        {(engine.isPlaying || dataArray.length > 0) && (
           <div className="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
             <PlaybackControls
-              isPaused={isPaused}
-              speed={speed}
-              togglePlayPause={togglePlayPause}
-              decreaseSpeed={decreaseSpeed}
-              increaseSpeed={increaseSpeed}
+              isPlaying={engine.isPlaying}
+              onPlayPause={engine.isPlaying ? engine.pause : engine.play}
+              speed={engine.speed / 500}
+              onSpeedChange={(s) => engine.setSpeed(s * 500)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={handleReset}
+              onExplainStep={handleExplainStep}
+              disabled={steps.length === 0}
             />
           </div>
         )}
@@ -504,7 +339,20 @@ const Animation = () => {
         </div>
       )}
 
+      {showQuiz && (
+        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 p-5 rounded-xl border">
+          <h3 className="text-lg font-bold mb-3">🧠 Quick Challenge</h3>
+          <p className="mb-3">What is the time complexity of Sliding Window?</p>
+          <div className="flex gap-3 flex-wrap">
+            <button className="px-4 py-2 rounded-lg bg-gray-200">O(n²)</button>
+            <button className="px-4 py-2 rounded-lg bg-green-500 text-white">O(n)</button>
+            <button className="px-4 py-2 rounded-lg bg-gray-200">O(log n)</button>
+          </div>
+        </div>
+      )}
+
       {dataArray.length > 0 && (
+         <div ref={visualizerRef}>
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
@@ -514,22 +362,26 @@ const Animation = () => {
                   Current Step
                 </span>
               </div>
-              <p className="text-gray-700 dark:text-gray-200 text-base leading-relaxed font-mono min-h-[3rem]">
-                {stepExplanation || "Ready to begin..."}
-              </p>
+              </div>
+              <p
+  aria-live="polite"
+  className="text-gray-700 dark:text-gray-200 text-base leading-relaxed font-mono min-h-[3rem]"
+>
+  {visualState.explanation || "Ready to begin..."}
+</p>
             </div>
             
             <div className="bg-white dark:bg-gray-800 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm grid grid-cols-2 gap-4 text-center">
               <div>
                 <h4 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">Current Window Value</h4>
                 <div className="text-2xl font-bold text-gray-800 dark:text-gray-100 font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                  {currentResult !== null ? currentResult : "-"}
+                  {visualState.current !== null ? visualState.current : "-"}
                 </div>
               </div>
               <div>
                 <h4 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">Best Result</h4>
                 <div className="text-2xl font-bold text-[#a435f0] dark:text-[#c56eff] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                  {bestResult !== null ? bestResult : "-"}
+                  {visualState.best !== null ? visualState.best : "-"}
                 </div>
               </div>
             </div>
@@ -541,15 +393,15 @@ const Animation = () => {
             </h2>
             <div className="flex gap-2 justify-center min-w-max pb-8 px-4">
               {dataArray.map((element, index) => {
-                const isLeft = index === leftPointer;
-                const isRight = index === rightPointer;
+                const isLeft = index === visualState.left;
+                const isRight = index === visualState.right;
                 
                 return (
                   <div key={index} className="flex flex-col items-center relative">
                     <div
                       ref={(el) => (elementRefs.current[index] = el)}
                       className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg border-2 transition-colors duration-200 ${getFontSize(element)} shadow-sm`}
-                      style={{ backgroundColor: "#E5E7EB", borderColor: "#D1D5DB" }} // Default initial state
+                      style={{ backgroundColor: "#E5E7EB", borderColor: "#D1D5DB" }}
                     >
                       {element}
                     </div>
@@ -558,7 +410,6 @@ const Animation = () => {
                       {index}
                     </div>
 
-                    {/* Pointers Container */}
                     <div className="absolute -bottom-10 flex flex-col items-center gap-1 w-full h-8">
                       {isLeft && (
                         <div className="text-[#a435f0] font-bold text-xs bg-[#a435f0]/10 px-2 py-0.5 rounded shadow-sm border border-[#a435f0]/30 animate-bounce">
@@ -593,4 +444,5 @@ const Animation = () => {
   );
 };
 
+// Export the component
 export default Animation;

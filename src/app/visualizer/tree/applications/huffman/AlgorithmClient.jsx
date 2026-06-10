@@ -23,7 +23,7 @@ export default function HuffmanCodingPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.huffmanCoding}
-          description="Mark Huffman Coding as done and view it on your dashboard"
+          description="Mark Huffman Coding as done and track your progress"
           initialDone={false}
         />
       }

@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.enqueueDequeue}
-          description="Mark queue : enqueue & dequeue as done and view it on your dashboard"
+          description="Mark queue : enqueue & dequeue as done and track your progress"
           initialDone={false}
         />
       }

@@ -390,6 +390,25 @@ export const practiceData = [
               pitfalls: "Failing to pass or return the results of sub-calls recursively back up to the caller.",
               tip: "Recursive binary search is elegant, but iterative binary search is more space-efficient (O(1) auxiliary space)."
             }
+          },
+          {
+            id: "tower-of-hanoi",
+            name: "Tower of Hanoi",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft", "google", "adobe", "oracle"],
+            practiceUrl: "https://www.geeksforgeeks.org/problems/tower-of-hanoi-1587115621/1",
+            visualizerUrl: "/visualizer/recursion/tower-of-hanoi",
+            theory: {
+              summary: "A classic mathematical puzzle where you must move N disks from a source peg to a destination peg using an auxiliary peg, following rules that no larger disk can be placed on top of a smaller one.",
+              steps: [
+                "Move top N-1 disks from Source to Auxiliary peg recursively.",
+                "Move the remaining largest N-th disk from Source to Destination peg directly.",
+                "Move the N-1 disks from Auxiliary to Destination peg recursively."
+              ],
+              complexity: { time: "O(2^N)", space: "O(N) stack frames" },
+              pitfalls: "Forgetting that the number of moves grows exponentially as 2^N - 1, which causes time limit exceeded for larger N.",
+              tip: "The recurrence relation is T(N) = 2T(N-1) + 1. Drawing the recursion tree helps visualize how the total moves double with each added disk."
+            }
           }
         ]
       },

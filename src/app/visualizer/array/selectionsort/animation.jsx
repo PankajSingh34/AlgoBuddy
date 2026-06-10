@@ -11,6 +11,7 @@ import ChallengeModePanel, {
   createOptions,
   useSortingChallenge,
 } from "@/app/visualizer/array/components/ChallengeMode";
+import { selectionSortGenerator } from "@/features/algorithms/array/selectionSortLogic";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -118,49 +119,45 @@ const SelectionSortVisualizer = () => {
       
       isSortingRef.current = true;
       setSorting(true);
-      let arr = [...array];
-      let n = arr.length;
-      let tempSwaps = 0;
-      let tempComparisons = 0;
-      setTotalSteps(Math.floor((n * (n - 1)) / 2));
-      setCurrentStep(0);
-      
-      for (let i = 0; i < n - 1; i++) {
-        let minIndex = i;
-        setCurrentPhase(`Pass ${i + 1} of ${n - 1}`);
-        setStepExplanation(`Selecting minimum element from the remaining array starting at index ${i}.`);
-        setCurrentIndices({ i, j: i + 1, min: minIndex });
-        
-        for (let j = i + 1; j < n; j++) {
-          setCurrentIndices(prev => ({ ...prev, j, min: minIndex }));
-          tempComparisons++;
-          setComparisons(tempComparisons);
-          setCurrentStep((prev) => prev + 1);
-          setStepExplanation(`Comparing ${arr[j]} at index ${j} with current minimum ${arr[minIndex]} at index ${minIndex}.`);
 
-          await cancellableDelay();
-          if (!isSortingRef.current) return;
+      const generator = selectionSortGenerator(array);
 
-          if (arr[j] < arr[minIndex]) {
-            minIndex = j;
-            setCurrentIndices(prev => ({ ...prev, min: minIndex }));
-            setStepExplanation(`Found new minimum ${arr[j]} at index ${j}.`);
-            await cancellableDelay();
-            if (!isSortingRef.current) return;
-          }
+      for (const frame of generator) {
+        if (!isSortingRef.current) return;
+        const { type, payload } = frame;
+
+        if (type === 'init') {
+          setTotalSteps(payload.totalSteps);
+          setCurrentStep(0);
         }
-
-        if (minIndex !== i) {
-          setStepExplanation(`Swapping minimum ${arr[minIndex]} into position ${i}.`);
+        else if (type === 'phase_start') {
+          setCurrentPhase(`Pass ${payload.pass} of ${payload.totalPasses}`);
+          setStepExplanation(`Selecting minimum element from the remaining array starting at index ${payload.i}.`);
+          setCurrentIndices({ i: payload.i, j: payload.i + 1, min: payload.minIndex });
+        }
+        else if (type === 'comparing') {
+          setCurrentIndices(prev => ({ ...prev, j: payload.j, min: payload.minIndex }));
+          setComparisons(payload.comparisons);
+          setCurrentStep(payload.step);
+          setStepExplanation(`Comparing ${payload.arr[payload.j]} at index ${payload.j} with current minimum ${payload.arr[payload.minIndex]} at index ${payload.minIndex}.`);
+          await cancellableDelay();
+        }
+        else if (type === 'new_min') {
+          setCurrentIndices(prev => ({ ...prev, min: payload.minIndex }));
+          setStepExplanation(`Found new minimum ${payload.arr[payload.j]} at index ${payload.j}.`);
+          await cancellableDelay();
+        }
+        else if (type === 'swap_needed') {
+          setStepExplanation(`Swapping minimum ${payload.arr[payload.minIndex]} into position ${payload.i}.`);
           await cancellableDelay();
           if (!isSortingRef.current) return;
-          [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
-          tempSwaps++;
-          setSwaps(tempSwaps);
-          setArray([...arr]);
-          
-          const barI = document.querySelectorAll(".array-bar")[i];
-          const barMin = document.querySelectorAll(".array-bar")[minIndex];
+        }
+        else if (type === 'swapped') {
+          setSwaps(payload.swaps);
+          setArray(payload.arr);
+
+          const barI = document.querySelectorAll(".array-bar")[payload.i];
+          const barMin = document.querySelectorAll(".array-bar")[payload.minIndex];
           if (barI && barMin) {
             gsap.to([barI, barMin], {
               opacity: 0,
@@ -175,39 +172,21 @@ const SelectionSortVisualizer = () => {
               }
             });
           }
-          
           await cancellableDelay();
-          if (!isSortingRef.current) return;
-        } else {
-          setStepExplanation(`Index ${i} already contains the minimum element ${arr[minIndex]}. No swap needed.`);
+        }
+        else if (type === 'no_swap') {
+          setStepExplanation(`Index ${payload.i} already contains the minimum element ${payload.arr[payload.minIndex]}. No swap needed.`);
+        }
+        else if (type === 'completed') {
+          setArray(payload.arr);
+          isSortingRef.current = false;
+          setSorting(false);
+          setSorted(true);
+          setCurrentPhase("Completed");
+          setStepExplanation("Array is fully sorted.");
+          setCurrentIndices({ i: -1, j: -1, min: -1 });
         }
       }
-      
-      setArray([...arr]);
-      
-      const barI = document.querySelectorAll(".array-bar")[currentIndices.i];
-      const barMin = document.querySelectorAll(".array-bar")[currentIndices.min];
-      if (barI && barMin) {
-        gsap.to([barI, barMin], {
-          opacity: 0,
-          scale: 0.5,
-          duration: 0.2,
-          onComplete: () => {
-            gsap.to([barI, barMin], {
-              opacity: 1,
-              scale: 1,
-              duration: 0.2
-            });
-          }
-        });
-      }
-      
-      isSortingRef.current = false;
-      setSorting(false);
-      setSorted(true);
-      setCurrentPhase("Completed");
-      setStepExplanation("Array is fully sorted.");
-      setCurrentIndices({ i: -1, j: -1, min: -1 });
     };
   
     // Reset everything
@@ -254,6 +233,21 @@ const SelectionSortVisualizer = () => {
       sorted,
     });
   
+    const handleExplainStep = () => {
+      const prompt = `I am currently looking at the Selection Sort algorithm, at step ${currentStep} of ${totalSteps}.
+Phase: ${currentPhase}
+Explanation on screen: ${stepExplanation}
+Current Array State: [${array.join(", ")}]
+Currently at: outer index i = ${currentIndices.i}, inner index j = ${currentIndices.j}
+Current minimum index: ${currentIndices.min}
+
+Please explain exactly what is happening in this step in detail.`;
+      
+      window.dispatchEvent(
+        new CustomEvent("chatbot-explain", { detail: { prompt } })
+      );
+    };
+
     return (
       <main className="container mx-auto px-6 py-6">
         <p className="text-lg max-w-4xl mx-auto text-center text-gray-600 dark:text-gray-400 mb-8">
@@ -305,6 +299,7 @@ const SelectionSortVisualizer = () => {
                   onTogglePlayPause={togglePlayPause}
                   speed={speed}
                   onSpeedChange={setSpeed}
+                  onExplainStep={handleExplainStep}
                 />
               )}
 

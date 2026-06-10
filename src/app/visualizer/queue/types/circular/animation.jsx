@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { enqueueCircularGenerator, dequeueCircularGenerator, checkEmptyCircularGenerator, checkFullCircularGenerator } from "@/features/algorithms/queue/circularQueueLogic";
 
 const CircularQueueVisualizer = () => {
   const [maxSize, setMaxSize] = useState(5); // capacity
@@ -31,73 +32,103 @@ const CircularQueueVisualizer = () => {
   const isFull = count === maxSize;
 
   /* ---------- helpers ---------- */
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const showOp = async (txt, ms = 800) => {
-    setOperation(txt);
-    await sleep(ms / speed);
-    setOperation(null);
-  };
   const wrap = (idx) => (idx + maxSize) % maxSize;
 
   /* ---------- enqueue rear ---------- */
-  const enqueue = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+  const enqueue = () => {
+    const generator = enqueueCircularGenerator(queue, front, rear, count, maxSize, inputValue);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    if (isFull) {
-      setMessage("Circular queue is full!");
-      return;
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setQueue(step.value.queue);
+          setRear(step.value.rear);
+          setCount(step.value.count);
+          setOperation(null);
+          setMessage(step.value.message);
+          setInputValue("");
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
     }
-    setIsAnimating(true);
-    await showOp(`Enqueuing "${inputValue}" at rear …`);
-    const newRear = wrap(rear + 1);
-    const newQ = [...queue];
-    newQ[newRear] = inputValue;
-    setQueue(newQ);
-    setRear(newRear);
-    setCount(count + 1);
-    setMessage(`"${inputValue}" added`);
-    setInputValue("");
-    setIsAnimating(false);
   };
 
   /* ---------- dequeue front ---------- */
-  const dequeue = async () => {
-    if (isEmpty) {
-      setMessage("Circular queue is empty!");
+  const dequeue = () => {
+    const generator = dequeueCircularGenerator(queue, front, rear, count, maxSize);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const item = queue[front];
-    await showOp(`Dequeuing "${item}" from front …`);
-    const newQ = [...queue];
-    newQ[front] = null;
-    setQueue(newQ);
-    setFront(wrap(front + 1));
-    setCount(count - 1);
-    setMessage(`"${item}" removed`);
-    setIsAnimating(false);
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setQueue(step.value.queue);
+          setFront(step.value.front);
+          setCount(step.value.count);
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
+    }
   };
 
   /* ---------- isEmpty ---------- */
-  const checkEmpty = async () => {
-    setIsAnimating(true);
-    await showOp("Checking if empty …");
-    setMessage(
-      isEmpty ? "Circular queue is EMPTY" : "Circular queue is NOT empty"
-    );
-    setIsAnimating(false);
+  const checkEmpty = () => {
+    const generator = checkEmptyCircularGenerator(count);
+    let step = generator.next();
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- isFull ---------- */
-  const checkFull = async () => {
-    setIsAnimating(true);
-    await showOp("Checking if full …");
-    setMessage(
-      isFull ? "Circular queue is FULL" : "Circular queue is NOT full"
-    );
-    setIsAnimating(false);
+  const checkFull = () => {
+    const generator = checkFullCircularGenerator(count, maxSize);
+    let step = generator.next();
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- reset ---------- */

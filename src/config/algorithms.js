@@ -263,6 +263,12 @@ export const algorithmRegistry = {
   },
 },
     component: dynamic(() => import('@/app/visualizer/array/slidingwindow/AlgorithmClient')),
+  },"array/twopointers": {
+    component: dynamic(() => import("@/app/visualizer/array/twopointers/AlgorithmClient")),
+    metadata: {
+      title: "Two Pointers Technique | AlgoBuddy",
+      description: "Visualize how the Two Pointers technique solves array problems like Pair Sum, Remove Duplicates, Container With Most Water, and Three Sum.",
+    },
   },
   "complexity-analyzer": {
     metadata: {
@@ -950,6 +956,23 @@ export const algorithmRegistry = {
   robots: "index, follow",
 },
     component: dynamic(() => import('@/app/visualizer/recursion/factorial/AlgorithmClient')),
+  },
+  "recursion/tower-of-hanoi": {
+    metadata: {
+  title: "Tower of Hanoi Recursion Visualizer | AlgoBuddy",
+  description:
+    "Visualize the Tower of Hanoi recursive algorithm step-by-step. Witness disk transfers between pegs, call stack frame updates, and line-by-line active code traces.",
+  keywords: [
+    "Tower of Hanoi Visualizer",
+    "Tower of Hanoi Recursion",
+    "Call Stack Animation",
+    "Peg Transfer",
+    "DSA Recursion",
+    "Recurrence Relation",
+  ],
+  robots: "index, follow",
+},
+    component: dynamic(() => import('@/app/visualizer/recursion/tower-of-hanoi/AlgorithmClient')),
   },
   "recursion/fibonacci": {
     metadata: {

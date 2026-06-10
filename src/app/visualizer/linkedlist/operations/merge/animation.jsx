@@ -7,6 +7,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { mergeListsGenerator } from "@/features/algorithms/linkedlist/llMergeLogic";
 
 const LinkedListMerge = () => {
   const [list1, setList1] = useState([]);
@@ -64,15 +65,15 @@ const LinkedListMerge = () => {
   const animateMerge = async () => {
     if (isAnimating || list1.length === 0 || list2.length === 0) return;
 
+    const gen = mergeListsGenerator(list1, list2);
+    let step = gen.next().value;
+
+    if (step?.type === 'error') return;
+
     setIsAnimating(true);
     animationTimeline.current.clear();
-
-    const sortedList1 = [...list1].sort((a, b) => a.value - b.value);
-    const sortedList2 = [...list2].sort((a, b) => a.value - b.value);
-
-    let i = 0;
-    let j = 0;
-    const result = [];
+    setMergedList([]);
+    setCurrentPointers({ list1: 0, list2: 0 });
 
     gsap.set([...list1Refs.current, ...list2Refs.current], {
       opacity: 1,
@@ -81,107 +82,101 @@ const LinkedListMerge = () => {
     });
 
     gsap.set(arrowRefs.current, { opacity: 0.7 });
-    setMergedList([]);
-    setCurrentPointers({ list1: 0, list2: 0 });
 
-    const mergeStep = async () => {
-      if (i >= sortedList1.length && j >= sortedList2.length) {
+    const processStep = async () => {
+      if (!step) {
         setIsAnimating(false);
         return;
       }
 
-      animationTimeline.current.to(
-        [
-          i < sortedList1.length ? list1Refs.current[i] : null,
-          j < sortedList2.length ? list2Refs.current[j] : null,
-        ].filter(Boolean),
-        {
-          scale: 1.3,
-          duration: 0.3,
-          ease: "power1.inOut",
-        },
-        "<"
-      );
+      if (step.type === 'compare') {
+        animationTimeline.current.to(
+          [
+            step.i < step.list1Len ? list1Refs.current[step.i] : null,
+            step.j < step.list2Len ? list2Refs.current[step.j] : null,
+          ].filter(Boolean),
+          {
+            scale: 1.3,
+            duration: 0.3,
+            ease: "power1.inOut",
+          },
+          "<"
+        );
 
-      await new Promise((resolve) => {
+        await new Promise((resolve) => {
+          animationTimeline.current.call(() => {
+            setCurrentPointers({ list1: step.i, list2: step.j });
+            resolve();
+          }, null, "+=0.3");
+        });
+      } else if (step.type === 'add') {
+        const nextNode = step.nextNode;
+        const i = step.source === 'list1' ? step.currentIndex + 1 : step.currentIndex;
+        const j = step.source === 'list2' ? step.currentIndex + 1 : step.currentIndex;
+
+        const tempNode = document.createElement("div");
+        tempNode.className =
+          "node absolute flex h-16 w-20 items-center justify-center rounded-md bg-emerald-600 font-bold text-white shadow-md";
+        tempNode.textContent = nextNode.value;
+        containerRef.current.appendChild(tempNode);
+
+        const fromRect =
+          nextNode.source === "list1"
+            ? list1Refs.current[step.currentIndex]?.getBoundingClientRect()
+            : list2Refs.current[step.currentIndex]?.getBoundingClientRect();
+        const toPos = (step.mergedListSoFar.length - 1) * 80 + 40;
+
+        gsap.set(tempNode, {
+          x: fromRect?.left - containerRef.current.getBoundingClientRect().left || 0,
+          y: fromRect?.top - containerRef.current.getBoundingClientRect().top || 0,
+          opacity: 0,
+          scale: 0.5,
+        });
+
+        animationTimeline.current.to(
+          tempNode,
+          {
+            opacity: 1,
+            scale: 1.1,
+            duration: 0.4,
+            ease: "power2.out",
+          },
+          "<"
+        );
+
+        animationTimeline.current.to(tempNode, {
+          x: toPos,
+          y: 20,
+          scale: 1,
+          backgroundColor: "#2563eb",
+          duration: 0.8,
+          ease: "power3.inOut",
+        });
+
         animationTimeline.current.call(() => {
-          setCurrentPointers({ list1: i, list2: j });
-          resolve();
-        }, null, "+=0.3");
-      });
+          setMergedList([...step.mergedListSoFar]);
+          tempNode.remove();
+        }, null, "+=0.2");
 
-      let nextNode;
-      if (
-        j >= sortedList2.length ||
-        (i < sortedList1.length && sortedList1[i].value <= sortedList2[j].value)
-      ) {
-        nextNode = { ...sortedList1[i], source: "list1" };
-        i++;
-      } else {
-        nextNode = { ...sortedList2[j], source: "list2" };
-        j++;
+        await new Promise((resolve) => {
+          animationTimeline.current.call(() => {
+            resolve();
+          }, null, "+=0.1");
+        });
+      } else if (step.type === 'complete') {
+        setIsAnimating(false);
+        return;
       }
 
-      const tempNode = document.createElement("div");
-      tempNode.className =
-        "node absolute flex h-16 w-20 items-center justify-center rounded-md bg-emerald-600 font-bold text-white shadow-md";
-      tempNode.textContent = nextNode.value;
-      containerRef.current.appendChild(tempNode);
-
-      const fromRect =
-        nextNode.source === "list1"
-          ? list1Refs.current[i - 1]?.getBoundingClientRect()
-          : list2Refs.current[j - 1]?.getBoundingClientRect();
-      const toPos = mergedList.length * 80 + 40;
-
-      gsap.set(tempNode, {
-        x: fromRect?.left - containerRef.current.getBoundingClientRect().left || 0,
-        y: fromRect?.top - containerRef.current.getBoundingClientRect().top || 0,
-        opacity: 0,
-        scale: 0.5,
-      });
-
-      animationTimeline.current.to(
-        tempNode,
-        {
-          opacity: 1,
-          scale: 1.1,
-          duration: 0.4,
-          ease: "power2.out",
-        },
-        "<"
-      );
-
-      animationTimeline.current.to(tempNode, {
-        x: toPos,
-        y: 20,
-        scale: 1,
-        backgroundColor: "#2563eb",
-        duration: 0.8,
-        ease: "power3.inOut",
-      });
-
-      animationTimeline.current.call(() => {
-        result.push(nextNode);
-        setMergedList([...result]);
-        tempNode.remove();
-      }, null, "+=0.2");
-
+      step = gen.next().value;
       await new Promise((resolve) => {
         animationTimeline.current.call(() => {
-          setCurrentPointers({ list1: i, list2: j });
-          resolve();
-        }, null, "+=0.1");
-      });
-
-      await new Promise((resolve) => {
-        animationTimeline.current.call(() => {
-          mergeStep().then(resolve);
+          processStep().then(resolve);
         }, null, "+=0.3");
       });
     };
 
-    await mergeStep();
+    await processStep();
   };
 
   useEffect(() => {

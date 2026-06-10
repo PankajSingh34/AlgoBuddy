@@ -1,0 +1,102 @@
+import { createServerClient } from "@supabase/ssr";
+
+// For testing purposes, allow overriding the dependency functions
+let cookiesImpl = null;
+let createServerClientImpl = null;
+
+export function setMockDependencies(cookies, createServerClient) {
+  cookiesImpl = cookies;
+  createServerClientImpl = createServerClient;
+}
+
+function isValidSupabaseUrl(value) {
+  if (!value) return false;
+  const trimmed = String(value).trim();
+  if (trimmed.startsWith("Your ")) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isValidKey(value) {
+  if (!value) return false;
+  const trimmed = String(value).trim();
+  return trimmed && !trimmed.startsWith("Your ");
+}
+
+export function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!isValidSupabaseUrl(supabaseUrl) || !isValidKey(supabaseAnonKey) || !isValidKey(supabaseServiceKey)) {
+    return null;
+  }
+
+  let finalUrl = String(supabaseUrl).trim();
+  if (finalUrl.startsWith("http://localhost:")) {
+    finalUrl = finalUrl.replace("http://localhost:", "http://127.0.0.1:");
+  }
+
+  return {
+    supabaseUrl: finalUrl,
+    supabaseAnonKey: String(supabaseAnonKey).trim(),
+    supabaseServiceKey: String(supabaseServiceKey).trim(),
+  };
+}
+
+export async function getAuthenticatedUser() {
+  const config = getSupabaseConfig();
+  if (!config) {
+    console.error("[Authentication Helper] Config error: Missing or invalid Supabase environment variables.");
+    return { success: false, type: "CONFIG_ERROR" };
+  }
+
+  try {
+    let cookieStore;
+    if (cookiesImpl) {
+      cookieStore = await cookiesImpl();
+    } else {
+      const nextHeaders = await import("next/headers");
+      cookieStore = await nextHeaders.cookies();
+    }
+
+    const clientCreator = createServerClientImpl || createServerClient;
+    const client = clientCreator(config.supabaseUrl, config.supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch (e) {
+            // Can happen during GET requests or rendering in Next.js, which is expected/normal.
+          }
+        },
+      },
+    });
+
+    const { data, error } = await client.auth.getUser();
+
+    if (error) {
+      console.error("[Authentication Helper] Auth provider error during getUser:", error.message || error);
+      return { success: false, type: "AUTH_PROVIDER_ERROR" };
+    }
+
+    if (!data || !data.user) {
+      console.warn("[Authentication Helper] Unauthenticated request: No user session found.");
+      return { success: false, type: "UNAUTHENTICATED" };
+    }
+
+    return { success: true, user: data.user };
+  } catch (err) {
+    console.error("[Authentication Helper] Critical exception during authentication verification:", err.message || err);
+    return { success: false, type: "AUTH_PROVIDER_ERROR" };
+  }
+}

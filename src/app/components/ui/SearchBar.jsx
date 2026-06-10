@@ -3,6 +3,13 @@ import { useState, useEffect } from 'react';
 
 const SearchBar = ({ sections, onSearchResults }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const suggestions = [
+  "Binary Search",
+  "Merge Sort",
+  "Linked List",
+  "Graph BFS",
+  "Dynamic Programming",
+];
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
@@ -67,7 +74,26 @@ const SearchBar = ({ sections, onSearchResults }) => {
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
+      {searchQuery && (
+  <div className="absolute w-full mt-2 bg-white dark:bg-surface-900 border rounded-lg shadow-lg z-50">
+    {suggestions
+      .filter(item =>
+        item.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .map(item => (
+        <div
+          key={item}
+          onClick={() => setSearchQuery(item)}
+          className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-surface-800"
+        >
+          {item}
+        </div>
+      ))}
+  </div>
+)}
     </div>
+
+    
   );
 };
 

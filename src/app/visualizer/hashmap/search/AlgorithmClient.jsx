@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.hashmapSearch}
-          description="Mark HashMap : Search as done and view it on your dashboard"
+          description="Mark HashMap : Search as done and track your progress"
           initialDone={false}
         />
       }

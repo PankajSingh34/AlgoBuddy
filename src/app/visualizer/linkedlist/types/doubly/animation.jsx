@@ -5,7 +5,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
-
+import { insertDoublyGenerator } from "@/features/algorithms/linkedlist/doublyLinkedListLogic";
 const DoublyLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
   const [list, setList] = useState([]);
@@ -54,35 +54,27 @@ const DoublyLinkedListVisualizer = () => {
     );
   };
 
-  const generateMemoryAddress = () => {
-    return '0x' + Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
-  };
+
 
   const addNode = () => {
-    if (!inputValue || isAnimating) return;
-    setIsAnimating(true);
+    if (isAnimating) return;
+    const generator = insertDoublyGenerator(list, inputValue, () => nodeIdCounter.current++);
+    let step = generator.next();
 
-    animationRef.current = setTimeout(() => {
-      const newNode = {
-        value: inputValue,
-        id: nodeIdCounter.current++,
-        address: generateMemoryAddress(),
-        next: null,
-        prev: list.length > 0 ? list[list.length - 1].address : null
-      };
+    if (step.value?.type === 'error') return;
 
-      setList(prev => {
-        if (prev.length > 0) {
-          const updatedList = [...prev];
-          updatedList[updatedList.length - 1].next = newNode.address;
-          return [...updatedList, newNode];
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      
+      animationRef.current = setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setList(step.value.list);
+          setInputValue('');
+          setIsAnimating(false);
         }
-        return [newNode];
-      });
-
-      setInputValue('');
-      setIsAnimating(false);
-    }, 500);
+      }, 500);
+    }
   };
 
   const resetList = () => {

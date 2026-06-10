@@ -7,6 +7,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { compareListsGenerator } from "@/features/algorithms/linkedlist/llComparisonLogic";
 
 const LinkedListComparison = () => {
   const [list1, setList1] = useState([]);
@@ -59,49 +60,44 @@ const LinkedListComparison = () => {
   const animateComparison = async () => {
     if (isAnimating || list1.length === 0 || list2.length === 0) return;
 
+    const gen = compareListsGenerator(list1, list2);
+    let step = gen.next().value;
+    
+    if (step?.type === 'error') return;
+
     setIsAnimating(true);
     animationTimeline.current.clear();
     setCurrentPointers({ list1: 0, list2: 0 });
     setComparisonResult(null);
 
-    const maxLength = Math.max(list1.length, list2.length);
-    let areSame = true;
+    while (step) {
+      if (step.type === 'compare') {
+        setCurrentPointers({ list1: step.index, list2: step.index });
 
-    for (let i = 0; i < maxLength; i++) {
-      setCurrentPointers({ list1: i, list2: i });
+        const highlightNodes = [list1Refs.current[step.index], list2Refs.current[step.index]].filter(Boolean);
 
-      const node1 = list1[i];
-      const node2 = list2[i];
+        animationTimeline.current.to(highlightNodes, {
+          scale: 1.3,
+          duration: 0.4,
+          ease: "power1.inOut",
+        });
 
-      const highlightNodes = [list1Refs.current[i], list2Refs.current[i]].filter(Boolean);
+        await new Promise((resolve) => setTimeout(resolve, 600));
 
-      animationTimeline.current.to(highlightNodes, {
-        scale: 1.3,
-        duration: 0.4,
-        ease: "power1.inOut",
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      if (!node1 || !node2 || node1.value !== node2.value) {
-        areSame = false;
+        animationTimeline.current.to(highlightNodes, {
+          scale: 1,
+          duration: 0.3,
+        });
+      } else if (step.type === 'complete') {
         setComparisonResult({
-          match: false,
-          index: i,
-          value1: node1?.value,
-          value2: node2?.value,
+          match: step.match,
+          index: step.index,
+          value1: step.value1,
+          value2: step.value2,
         });
         break;
       }
-
-      animationTimeline.current.to(highlightNodes, {
-        scale: 1,
-        duration: 0.3,
-      });
-    }
-
-    if (areSame) {
-      setComparisonResult({ match: true });
+      step = gen.next().value;
     }
 
     animationTimeline.current.call(() => {

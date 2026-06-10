@@ -8,7 +8,7 @@ import {
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
 import { createLinkedListTempNode } from "@/app/visualizer/linkedlist/utils/createTempNode";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-
+import { addNodeDeletionGen, deleteLastNodeGen } from "@/features/algorithms/linkedlist/deletionLogic";
 const LinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState("");
   const [list, setList] = useState([]);
@@ -21,83 +21,85 @@ const LinkedListVisualizer = () => {
     setIsAnimating(false);
   });
 
-  const generateAddress = () =>
-    `0x${Math.floor(Math.random() * 0x10000)
-      .toString(16)
-      .toUpperCase()
-      .padStart(4, "0")}`;
-
   const addNode = () => {
     if (!inputValue || isAnimating) return;
     setIsAnimating(true);
 
-    const newNode = {
-      value: inputValue,
-      id: Date.now(),
-      address: generateAddress(),
-      next: "NULL",
-    };
+    const generator = addNodeDeletionGen(list, inputValue);
+    let step = generator.next();
 
-    const tempNode = createLinkedListTempNode({
-      value: inputValue,
-      nextText: "NULL",
-    });
-    containerRef.current.appendChild(tempNode);
+    if (step.value?.type === 'error') {
+      setIsAnimating(false);
+      return;
+    }
 
-    gsap.set(tempNode, {
-      x: window.innerWidth / 2 - 100,
-      y: -100,
-      opacity: 0,
-    });
+    if (step.value?.type === 'start') {
+      const { newNode } = step.value;
+      const tempNode = createLinkedListTempNode({
+        value: newNode.value,
+        nextText: "NULL",
+      });
+      containerRef.current.appendChild(tempNode);
 
-    const finalX = 50 + list.length * 220;
+      gsap.set(tempNode, {
+        x: window.innerWidth / 2 - 100,
+        y: -100,
+        opacity: 0,
+      });
 
-    gsap.to(tempNode, {
-      opacity: 1,
-      y: 50,
-      duration: 0.5,
-      onComplete: () => {
-        gsap.to(tempNode, {
-          x: finalX,
-          duration: 1,
-          onComplete: () => {
-            if (list.length > 0) {
-              const updatedList = [...list];
-              updatedList[updatedList.length - 1].next = newNode.address;
-              setList([...updatedList, newNode]);
-            } else {
-              setList([newNode]);
-            }
-            setIsAnimating(false);
-            tempNode.remove();
-          },
-        });
-      },
-    });
+      const finalX = 50 + list.length * 220;
+
+      gsap.to(tempNode, {
+        opacity: 1,
+        y: 50,
+        duration: 0.5,
+        onComplete: () => {
+          gsap.to(tempNode, {
+            x: finalX,
+            duration: 1,
+            onComplete: () => {
+              step = generator.next();
+              if (step.value?.type === 'complete') {
+                setList(step.value.list);
+              }
+              setIsAnimating(false);
+              tempNode.remove();
+            },
+          });
+        },
+      });
+    }
   };
 
   const deleteNode = () => {
     if (list.length === 0 || isAnimating) return;
     setIsAnimating(true);
 
-    const nodeToDelete = nodeRefs.current[list.length - 1];
+    const generator = deleteLastNodeGen(list);
+    let step = generator.next();
 
-    gsap.to(nodeToDelete, {
-      opacity: 0,
-      y: -50,
-      duration: 0.5,
-      onComplete: () => {
-        if (list.length > 1) {
-          const updatedList = [...list];
-          updatedList.pop();
-          updatedList[updatedList.length - 1].next = "NULL";
-          setList(updatedList);
-        } else {
-          setList([]);
-        }
-        setIsAnimating(false);
-      },
-    });
+    if (step.value?.type === 'error') {
+      setIsAnimating(false);
+      return;
+    }
+
+    if (step.value?.type === 'start') {
+      const { index } = step.value;
+      const nodeToDelete = nodeRefs.current[index];
+
+      gsap.to(nodeToDelete, {
+        opacity: 0,
+        y: -50,
+        duration: 0.5,
+        onComplete: () => {
+          step = generator.next();
+          if (step.value?.type === 'complete') {
+            setList(step.value.list);
+          }
+          setIsAnimating(false);
+        },
+      });
+    }
   };
 
   const resetList = () => {

@@ -71,9 +71,11 @@ export default function PersonalizedSection() {
         {/* ── LEFT: text ── */}
         <div className="flex-1 flex flex-col gap-5 items-start lg:min-w-[320px]">
           <h2
-            className="text-[2.6rem] sm:text-[3.2rem] font-black leading-[1.08] tracking-tight text-[#1a1a1a] dark:text-white transition-colors duration-300"
-            style={{ letterSpacing: "-0.03em" }}
-          >
+            className="text-[2.6rem] sm:text-[3.2rem] font-serif font-bold leading-[1.0] tracking-tight text-surface-900 dark:text-surface-50"
+            style={{
+            fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif'
+            }}>
+          
             Your DSA path,
             <br />
             your pace

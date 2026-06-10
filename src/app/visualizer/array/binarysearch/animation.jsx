@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
@@ -9,7 +9,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-import { useVisualizerSession } from "@/features/collaboration/VisualizerSessionContext";
+import { binarySearchGenerator } from "@/features/algorithms/array/binarySearchLogic";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -35,24 +35,23 @@ const BinarySearch = () => {
   const [messageType, setMessageType] = useState("");
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
-  const [pendingStart, setPendingStart] = useState(false);
   const [autoSort, setAutoSort] = useState(false);
   const [showAutoSort, setShowAutoSort] = useState(false);
 
   const {
     isPaused,
-    isPausedRef,
     speed,
     speedRef,
     setSpeed,
     togglePlayPause,
     increaseSpeed,
     decreaseSpeed,
+    checkPause,
   } = usePlayback(() => loadFromStorage("binary-speed", 1));
 
   const animationRef = useRef(null);
-  const wasPausedRef = useRef(false);
-  const searchStateRef = useRef({ l: 0, h: 0, arr: [], targetValue: 0, step: 0 });
+  const resolveRef = useRef(null);
+  const isSearchingRef = useRef(false);
   const formRef = useRef(null);
   const elementRefs = useRef([]);
 
@@ -64,18 +63,20 @@ const BinarySearch = () => {
   }, [speed, speedRef]);
 
   const handleReset = () => {
+    isSearchingRef.current = false;
     clearTimeout(animationRef.current);
+    if (resolveRef.current) {
+      resolveRef.current();
+      resolveRef.current = null;
+    }
     removeFromStorage("binary-array-elements");
     removeFromStorage("binary-target");
     removeFromStorage("binary-speed");
     setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
     setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
     setIsAnimating(false); 
-    setPendingStart(false);
     setAutoSort(false);
     setShowAutoSort(false);
-    isPausedRef.current = false;
-    wasPausedRef.current = false;
     setArrayElements(""); setTarget(""); setSpeed(1);
     if (formRef.current) formRef.current.reset();
     elementRefs.current.forEach((ref) => {
@@ -92,83 +93,83 @@ const BinarySearch = () => {
     setArrayElements(elements.join(", "));
   };
 
-  const animateBinarySearch = useCallback(() => {
-    const { l, h, arr, targetValue } = searchStateRef.current;
-    const delay = 1500 / speedRef.current;
-
-    if (l > h) {
-      setMessage(`Element ${targetValue} not found in the array.`);
-      setMessageType("error");
-      setStepExplanation(
-        `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`
-      );
-      setIsAnimating(false);
-      return;
-    }
-
-    const m = Math.floor((l + h) / 2);
-    const currentStep = searchStateRef.current.step + 1;
-    searchStateRef.current.step = currentStep;
-
-    setI(l);
-    setJ(h);
-    setMid(m);
-    setStepCount(currentStep);
-    setStepExplanation(
-      `Step ${currentStep}: low=${l}, high=${h} → mid = ⌊(${l} + ${h}) / 2⌋ = ${m}. Comparing arr[${m}] = ${arr[m]} with target ${targetValue}.`
-    );
-
-    elementRefs.current.forEach((ref, index) => {
-      if (!ref) return;
-      if (index === m) {
-        gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0.3 });
-      } else if (index >= l && index <= h) {
-        gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0.3 });
-      } else {
-        gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0.3 });
-      }
+  const cancellableDelay = async (multiplier = 1) => {
+    await new Promise((resolve) => {
+      resolveRef.current = resolve;
+      animationRef.current = setTimeout(resolve, (1500 / speedRef.current) * multiplier);
     });
+    await checkPause();
+  };
 
-    animationRef.current = setTimeout(() => {
-      if (arr[m] === targetValue) {
-        setFoundIndex(m);
-        setMessage(`Element ${targetValue} found at index ${m}!`);
+  const animateBinarySearch = async (processedElements, targetValue) => {
+    isSearchingRef.current = true;
+    const generator = binarySearchGenerator(processedElements, targetValue);
+
+    for (const frame of generator) {
+      if (!isSearchingRef.current) return;
+
+      if (frame.type === 'checking') {
+        setI(frame.l);
+        setJ(frame.h);
+        setMid(frame.m);
+        setStepCount(frame.step);
+        setStepExplanation(
+          `Step ${frame.step}: low=${frame.l}, high=${frame.h} → mid = ⌊(${frame.l} + ${frame.h}) / 2⌋ = ${frame.m}. Comparing arr[${frame.m}] = ${frame.arrM} with target ${targetValue}.`
+        );
+
+        elementRefs.current.forEach((ref, index) => {
+          if (!ref) return;
+          if (index === frame.m) {
+            gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0.3 });
+          } else if (index >= frame.l && index <= frame.h) {
+            gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0.3 });
+          } else {
+            gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0.3 });
+          }
+        });
+
+        await cancellableDelay(1);
+      } else if (frame.type === 'found') {
+        setFoundIndex(frame.m);
+        setMessage(`Element ${targetValue} found at index ${frame.m}!`);
         setMessageType("success");
         setStepExplanation(
-          `✓ arr[${m}] = ${arr[m]} equals target ${targetValue}. Found at index ${m} after ${currentStep} step${currentStep > 1 ? "s" : ""}!`
+          `✓ arr[${frame.m}] = ${targetValue} equals target ${targetValue}. Found at index ${frame.m} after ${frame.step} step${frame.step > 1 ? "s" : ""}!`
         );
         setIsAnimating(false);
-        gsap.to(elementRefs.current[m], {
+        isSearchingRef.current = false;
+        gsap.to(elementRefs.current[frame.m], {
           backgroundColor: "#22C55E",
           borderColor: "#15803D",
           duration: 0.3,
         });
-      } else if (arr[m] < targetValue) {
+        return;
+      } else if (frame.type === 'discard_left') {
         setStepExplanation(
-          `arr[${m}] = ${arr[m]} < target ${targetValue} → target is in the RIGHT half. Discard left side. New low = ${m + 1}.`
+          `arr[${frame.m}] = ${processedElements[frame.m]} < target ${targetValue} → target is in the RIGHT half. Discard left side. New low = ${frame.m + 1}.`
         );
-        searchStateRef.current.l = m + 1;
-        animationRef.current = setTimeout(() => {
-          if (!isPausedRef.current) animateBinarySearch();
-        }, delay * 0.6);
-      } else {
+        await cancellableDelay(0.6);
+      } else if (frame.type === 'discard_right') {
         setStepExplanation(
-          `arr[${m}] = ${arr[m]} > target ${targetValue} → target is in the LEFT half. Discard right side. New high = ${m - 1}.`
+          `arr[${frame.m}] = ${processedElements[frame.m]} > target ${targetValue} → target is in the LEFT half. Discard right side. New high = ${frame.m - 1}.`
         );
-        searchStateRef.current.h = m - 1;
-        animationRef.current = setTimeout(() => {
-          if (!isPausedRef.current) animateBinarySearch();
-        }, delay * 0.6);
+        await cancellableDelay(0.6);
+      } else if (frame.type === 'not_found') {
+        setMessage(`Element ${targetValue} not found in the array.`);
+        setMessageType("error");
+        setStepExplanation(
+          `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`
+        );
+        setIsAnimating(false);
+        isSearchingRef.current = false;
+        return;
       }
-    }, delay);
-  }, [speedRef, isPausedRef]);
+    }
+  };
 
   const handleGo = (e) => {
     e.preventDefault();
-    clearTimeout(animationRef.current);
-    setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
-    setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
-    setIsAnimating(false); setPendingStart(false);
+    handleReset();
 
     if (!arrayElements || !target) {
       setMessage("Please fill in all fields.");
@@ -211,173 +212,21 @@ const BinarySearch = () => {
       setShowAutoSort(false);
     }
 
-    searchStateRef.current = {
-      l: 0,
-      h: processedElements.length - 1,
-      arr: processedElements,
-      targetValue,
-      step: 0
-    };
-
     setArray(processedElements);
     setI(0);
     setJ(processedElements.length - 1);
     setIsAnimating(true);
-    isPausedRef.current = false;
-    wasPausedRef.current = false;
-    setPendingStart(true);
+    
+    animateBinarySearch(processedElements, targetValue);
   };
-
-  useEffect(() => {
-    if (pendingStart && array.length > 0) {
-      setPendingStart(false);
-      animateBinarySearch();
-    }
-  }, [pendingStart, array, animateBinarySearch]);
-
-  useEffect(() => {
-    if (isPaused) {
-      wasPausedRef.current = true;
-    } else if (wasPausedRef.current && isAnimating) {
-      wasPausedRef.current = false;
-      clearTimeout(animationRef.current);
-      animateBinarySearch();
-    }
-  }, [isPaused, isAnimating, animateBinarySearch]);
 
   const togglePlayPauseRef = useRef(togglePlayPause);
   useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
 
-  const { registerCallbacks, unregisterCallbacks } = useVisualizerSession();
-
-  const syncElementColors = useCallback((currI, currJ, currMid, currFoundIndex, currArray) => {
-    if (!currArray || currArray.length === 0) return;
-    setTimeout(() => {
-      elementRefs.current.forEach((ref, index) => {
-        if (!ref) return;
-        if (index === currFoundIndex) {
-          gsap.to(ref, { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0 });
-        } else if (index === currMid) {
-          gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0 });
-        } else if (index >= currI && index <= currJ) {
-          gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0 });
-        } else {
-          gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0 });
-        }
-      });
-    }, 50);
-  }, []);
-
-  const stateRef = useRef();
-  stateRef.current = {
-    arrayElements,
-    target,
-    speed,
-    array,
-    i,
-    j,
-    mid,
-    foundIndex,
-    isAnimating,
-    stepCount,
-    stepExplanation,
-    message,
-    messageType,
-    autoSort,
-    showAutoSort,
-    searchState: searchStateRef.current,
-  };
-
-  useEffect(() => {
-    registerCallbacks(
-      "binary-search",
-      () => ({
-        arrayElements: stateRef.current.arrayElements,
-        target: stateRef.current.target,
-        speed: stateRef.current.speed,
-        array: stateRef.current.array,
-        i: stateRef.current.i,
-        j: stateRef.current.j,
-        mid: stateRef.current.mid,
-        foundIndex: stateRef.current.foundIndex,
-        isAnimating: stateRef.current.isAnimating,
-        stepCount: stateRef.current.stepCount,
-        stepExplanation: stateRef.current.stepExplanation,
-        message: stateRef.current.message,
-        messageType: stateRef.current.messageType,
-        autoSort: stateRef.current.autoSort,
-        showAutoSort: stateRef.current.showAutoSort,
-        searchState: {
-          l: stateRef.current.searchState.l,
-          h: stateRef.current.searchState.h,
-          arr: stateRef.current.searchState.arr,
-          targetValue: stateRef.current.searchState.targetValue,
-          step: stateRef.current.searchState.step,
-        },
-      }),
-      (state) => {
-        clearTimeout(animationRef.current);
-        setArrayElements(state.arrayElements || "");
-        setTarget(state.target || "");
-        setSpeed(state.speed || 1);
-        setArray(state.array || []);
-        setI(state.i !== undefined ? state.i : -1);
-        setJ(state.j !== undefined ? state.j : -1);
-        setMid(state.mid !== undefined ? state.mid : -1);
-        setFoundIndex(state.foundIndex !== undefined ? state.foundIndex : -1);
-        setIsAnimating(state.isAnimating || false);
-        setMessage(state.message || "");
-        setMessageType(state.messageType || "");
-        setStepExplanation(state.stepExplanation || "");
-        setStepCount(state.stepCount || 0);
-        setAutoSort(state.autoSort || false);
-        setShowAutoSort(state.showAutoSort || false);
-        setPendingStart(false);
-
-        if (state.searchState) {
-          searchStateRef.current = {
-            l: state.searchState.l,
-            h: state.searchState.h,
-            arr: state.searchState.arr || [],
-            targetValue: state.searchState.targetValue,
-            step: state.searchState.step,
-          };
-        }
-
-        syncElementColors(
-          state.i !== undefined ? state.i : -1,
-          state.j !== undefined ? state.j : -1,
-          state.mid !== undefined ? state.mid : -1,
-          state.foundIndex !== undefined ? state.foundIndex : -1,
-          state.array || []
-        );
-      }
-    );
-
-    return () => {
-      unregisterCallbacks("binary-search");
-    };
-  }, [registerCallbacks, unregisterCallbacks, syncElementColors, setSpeed]);
-
   const isAnimatingRef = useRef(isAnimating);
   useVisualizerReset(() => {
-    clearTimeout(animationRef.current);
-    setArrayElements("");
-    setTarget("");
-    setArray([]);
-    setI(-1);
-    setJ(-1);
-    setMid(-1);
-    setFoundIndex(-1);
-    setIsAnimating(false);
-    setMessage("");
-    setMessageType("");
-    setStepExplanation("");
-    setStepCount(0);
-    setPendingStart(false);
-    setAutoSort(false);
-    setShowAutoSort(false);
-    });
+    handleReset();
+  });
   useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   useEffect(() => {
@@ -395,8 +244,6 @@ const BinarySearch = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-
 
   const messageClass =
     messageType === "success"

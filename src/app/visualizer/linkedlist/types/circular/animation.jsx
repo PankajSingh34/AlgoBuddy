@@ -6,6 +6,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { addNodeGenerator } from "@/features/algorithms/linkedlist/circularLinkedListLogic";
 
 const CircularLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -15,33 +16,19 @@ const CircularLinkedListVisualizer = () => {
   const nodeIdCounter = useRef(1);
   const stageRef = useRef(null);
 
-  // Generate random memory addresses
-  const generateMemoryAddress = () => {
-    return '0x' + Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
-  };
-
   const addNode = () => {
-    if (!inputValue || isAnimating) return;
+    if (isAnimating) return;
+
+    const gen = addNodeGenerator(list, inputValue, nodeIdCounter.current);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') return;
+
     setIsAnimating(true);
+    nodeIdCounter.current++;
 
-    const newNode = {
-      value: inputValue,
-      id: nodeIdCounter.current++,
-      address: generateMemoryAddress(),
-    };
-
-    setList(prev => {
-      if (prev.length === 0) {
-        newNode.next = newNode.address;
-        return [newNode];
-      } else {
-        const updatedList = [...prev];
-        newNode.next = updatedList[0].address;
-        updatedList[updatedList.length - 1].next = newNode.address;
-        return [...updatedList, newNode];
-      }
-    });
-
+    const completeState = gen.next().value;
+    setList(completeState.list);
     setInputValue('');
     setIsAnimating(false);
   };

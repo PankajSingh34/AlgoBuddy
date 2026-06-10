@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Animated Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=200&section=header&text=AlgoBuddy&fontSize=72&fontColor=ffffff&fontAlignY=38&desc=Visualize.%20Understand.%20Master.&descAlignY=58&descSize=20&animation=fadeIn" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=210&section=header&text=AlgoBuddy&fontSize=68&fontColor=ffffff&fontAlignY=34&desc=Visualize.%20Understand.%20Master.&descAlignY=66&descSize=20&animation=fadeIn" width="100%"/>
 
 <br/>
 
@@ -30,6 +30,39 @@
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 </div>
+## 📚 Table of Contents
+
+- [🎯 Why AlgoBuddy?](#-why-algobuddy)
+- [✨ Features](#-features)
+  - [🔮 Algorithm Visualizer](#-algorithm-visualizer)
+- [👤 User System & Progress Tracking](#-user-system--progress-tracking)
+- [📝 Blog Platform](#-blog-platform)
+- [🎨 UX & Design](#-ux--design)
+- [📸 Screenshots](#-screenshots)
+  - [🏠 Home Page](#-home-page)
+  - [🔐 Authentication Page](#-authentication-page)
+  - [🧠 Visualizer Dashboard](#-visualizer-dashboard)
+  - [🔄 Queue Visualization](#-queue-visualization)
+  - [📚 Queue Operations](#-queue-operations)
+- [🛠 Tech Stack](#-tech-stack)
+- [🏗 Architecture](#-architecture)
+- [🚀 Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [1️⃣ Clone the Repository](#1️⃣-clone-the-repository)
+  - [2️⃣ Install Dependencies](#2️⃣-install-dependencies)
+  - [3️⃣ Configure Database Schema](#3️⃣-configure-database-schema)
+  - [4️⃣ Configure Environment Variables](#4️⃣-configure-environment-variables)
+  - [5️⃣ Start the Development Server](#5️⃣-start-the-development-server)
+  - [6️⃣ Other Commands](#6️⃣-other-commands)
+- [📁 Project Structure](#-project-structure)
+- [🤝 Contributing](#-contributing)
+  - [Contribution Areas](#contribution-areas)
+  - [Getting Started](#getting-started)
+  - [Issue Assignment Process](#issue-assignment-process)
+- [💬 Community](#-community)
+- [🌟 Star History](#-star-history)
+- [👥 Contributors](#-contributors)
+- [📜 License](#-license)
 
 <br/>
 
@@ -343,7 +376,56 @@ cd AlgoBuddy
 npm install
 ```
 
-### 3️⃣ Configure Environment Variables
+### 3️⃣ Configure Database Schema
+
+Run the following SQL in the Supabase SQL Editor to enable user progress tracking:
+
+```sql
+create extension if not exists "pgcrypto";
+
+create table if not exists public.user_progress (
+  id uuid primary key default gen_random_uuid(),
+
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  module_id text not null,
+
+  is_done boolean default false,
+
+  created_at timestamptz default now(),
+
+  updated_at timestamptz default now(),
+
+  unique(user_id, module_id)
+);
+
+alter table public.user_progress enable row level security;
+
+create policy "Users can read own progress"
+on public.user_progress
+for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert own progress"
+on public.user_progress
+for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update own progress"
+on public.user_progress
+for update
+using (auth.uid() = user_id);
+```
+
+This table is required for:
+
+* Module completion tracking
+* Dashboard progress updates
+* Learning streak features
+
+> ⚠️ Without this table, progress tracking and streak features will not work locally.
+
+### 4️⃣ Configure Environment Variables
 
 Create a `.env.local` file in the project root:
 
@@ -375,7 +457,7 @@ UPSTASH_REDIS_REST_TOKEN=your-upstash-token
 
 > **💡 Tip:** See [`EnvExample.txt`](EnvExample.txt) for a complete reference of all environment variables.
 
-### 4️⃣ Start the Development Server
+### 5️⃣ Start the Development Server
 
 ```bash
 npm run dev
@@ -383,7 +465,7 @@ npm run dev
 
 Open **[http://localhost:3000](http://localhost:3000)** and start visualizing! 🎉
 
-### 5️⃣ Other Commands
+### 6️⃣ Other Commands
 
 ```bash
 npm run build          # Production build

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { enqueueGenerator, peekFrontGenerator } from "@/features/algorithms/queue/queuePeekFrontLogic";
 
 const QueueVisualizer = () => {
   const [queue, setQueue] = useState([]);
@@ -30,25 +31,37 @@ const QueueVisualizer = () => {
 
   /* ---------- enqueue ---------- */
   const enqueue = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+    const gen = enqueueGenerator(queue, inputValue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    await showOp(`Enqueuing "${inputValue}" to rear...`);
-    setQueue((q) => [...q, inputValue]);
-    setMessage(`"${inputValue}" added to rear`);
+    await showOp(startState.operation);
+
+    const completeState = gen.next().value;
+    setQueue(completeState.queue);
+    setMessage(completeState.message);
     setInputValue("");
     setIsAnimating(false);
   };
 
   /* ---------- peek front ---------- */
   const peekFront = () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty – nothing to peek");
+    const gen = peekFrontGenerator(queue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
-    setMessage(`Front element is "${queue[0]}"`);
+
+    // Since peek is instantaneous in this visualizer (no await showOp), we can just execute immediately
+    const completeState = gen.next().value;
+    setMessage(completeState.message);
   };
 
   /* ---------- random queue ---------- */

@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.prefix}
-          description="Mark Polish : prefix as done and view it on your dashboard"
+          description="Mark Polish : prefix as done and track your progress"
           initialDone={false}
         />
       }

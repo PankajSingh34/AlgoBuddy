@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.monotonicStack}
-          description="Mark Largest Rectangle in Histogram as done and view it on your dashboard"
+          description="Mark Largest Rectangle in Histogram as done and track your progress"
           initialDone={false}
         />
       }

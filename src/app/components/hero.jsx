@@ -50,13 +50,16 @@ const HeroSection = () => {
   const topic = TOPICS[index];
 
   return (
-    <main className="bg-white dark:bg-surface-900">
+    <main className="landing-page bg-white dark:bg-surface-900">
       <section className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
         <div className="relative z-10 w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* ══ LEFT — text ══ */}
           <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">
             {/* headline */}
-            <h1 className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-extrabold leading-[1.1] tracking-tighter text-surface-900 dark:text-surface-50">
+            <h1 className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-serif font-bold leading-[1.1] tracking-tight text-surface-900 dark:text-surface-50"
+            style={{
+            fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif'
+            }}>
               The smartest way
               <br />
               to learn DSA — <span className="text-primary">visually.</span>
@@ -248,7 +251,7 @@ const HeroSection = () => {
 
               {/* Floating status badges (positioned absolutely inside the relative wrapper) */}
               <div
-                className="absolute -top-3 -right-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                className="absolute -top-3 -right-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-neutral-200 text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
                 aria-hidden
               >
                 <span
@@ -259,12 +262,12 @@ const HeroSection = () => {
               </div>
 
               <div
-                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#121214] border border-[#2b2d2f] text-sm text-surface-50 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-neutral-200 text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
                 aria-hidden
               >
-                <span className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#28c840" }}>
+                <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#28c840" }}>
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <path d="M1 4L4 7L9 1" stroke="#07120A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M1 4L4 7L9 1" stroke="#e0ece3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
                 <span className="font-medium">Found at index 5</span>

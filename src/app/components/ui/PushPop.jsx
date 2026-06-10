@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import usePlayback from '@/app/hooks/usePlayback';
 import LinearMemoryControls from '@/app/components/ui/LinearMemoryControls';
+import { pushGenerator, popGenerator, peekGenerator } from '@/features/algorithms/stack/stackLogic';
 
 const PushPop = ({
   stack,
@@ -41,58 +42,80 @@ const PushPop = ({
 
   // Push operation
   const push = () => {
-    if (limit && stack.length >= limit) {
-      setMessage(`Stack Overflow! Cannot push. top (${stack.length - 1}) >= size - 1 (${limit - 1})`);
+    const generator = pushGenerator(stack, inputValue, limit);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    if (!inputValue.trim()) {
-      setMessage('Please enter a value');
-      return;
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setStack(step.value.stack);
+          setOperation(null);
+          setMessage(step.value.message);
+          setInputValue('');
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
     }
-    setIsAnimating(true);
-    setOperation(`Pushing "${inputValue}"...`);
-    
-    setTimeout(() => {
-      setStack(prev => [inputValue, ...prev]);
-      setOperation(null);
-      setMessage(`"${inputValue}" pushed to stack`);
-      setInputValue('');
-      setIsAnimating(false);
-    }, 1000 / speed);
   };
 
   // Pop operation
   const pop = () => {
-    if (stack.length === 0) {
-      setMessage('Stack is empty!');
+    const generator = popGenerator(stack);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const poppedValue = stack[0];
-    setOperation(`Popping "${poppedValue}"...`);
-    
-    setTimeout(() => {
-      setStack(prev => prev.slice(1));
-      setOperation(null);
-      setMessage(`"${poppedValue}" popped from stack`);
-      setIsAnimating(false);
-    }, 1000 / speed);
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setStack(step.value.stack);
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
+    }
   };
 
   // Peek operation
   const peek = () => {
-    if (stack.length === 0) {
-      setMessage('Stack is empty!');
+    const generator = peekGenerator(stack);
+    let step = generator.next();
+
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    setOperation(`Peeking at "${stack[0]}"`);
-    
-    setTimeout(() => {
-      setOperation(null);
-      setMessage(`Top element is "${stack[0]}"`);
-      setIsAnimating(false);
-    }, 1000 / speed);
+
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.operation);
+      
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setOperation(null);
+          setMessage(step.value.message);
+          setIsAnimating(false);
+        }
+      }, 1000 / speed);
+    }
   };
 
   // Handle capacity-not-set state

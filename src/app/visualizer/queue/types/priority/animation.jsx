@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-
+import { insertGenerator, extractMinGenerator } from "@/features/algorithms/queue/priorityQueueLogic";
 const PriorityQueueVisualizer = () => {
   /* ---------- state ---------- */
   const [pq, setPq] = useState([]);          // sorted: [0] = highest priority (min-val)
@@ -31,39 +31,53 @@ const PriorityQueueVisualizer = () => {
   };
 
   /* ---------- insert ---------- */
-  const insert = async () => {
-    if (!inputValue.trim() || inputPriority === "") {
-      setMessage("Please enter both value and priority");
+  const insert = () => {
+    if (isAnimating) return;
+    const generator = insertGenerator(pq, inputValue, inputPriority);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    const pri = Number(inputPriority);
-    if (isNaN(pri)) {
-      setMessage("Priority must be a number");
-      return;
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setPq(step.value.pq);
+          setMessage(step.value.message);
+          setInputValue("");
+          setInputPriority("");
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
     }
-    setIsAnimating(true);
-    await showOp(`Inserting "${inputValue}" with priority ${pri} …`);
-    const newEl = { val: inputValue, pri };
-    const newPq = [...pq, newEl].sort((a, b) => a.pri - b.pri);
-    setPq(newPq);
-    setMessage(`"${inputValue}" inserted`);
-    setInputValue("");
-    setInputPriority("");
-    setIsAnimating(false);
   };
 
   /* ---------- extract-min ---------- */
-  const extractMin = async () => {
-    if (pq.length === 0) {
-      setMessage("Priority queue is empty!");
+  const extractMin = () => {
+    if (isAnimating) return;
+    const generator = extractMinGenerator(pq);
+    let step = generator.next();
+    if (step.value?.type === 'error') {
+      setMessage(step.value.message);
       return;
     }
-    setIsAnimating(true);
-    const minEl = pq[0];
-    await showOp(`Extracting min element "${minEl.val}" …`);
-    setPq((p) => p.slice(1));
-    setMessage(`"${minEl.val}" (priority ${minEl.pri}) removed`);
-    setIsAnimating(false);
+    if (step.value?.type === 'start') {
+      setIsAnimating(true);
+      setOperation(step.value.message);
+      setTimeout(() => {
+        step = generator.next();
+        if (step.value?.type === 'complete') {
+          setPq(step.value.pq);
+          setMessage(step.value.message);
+          setOperation(null);
+          setIsAnimating(false);
+        }
+      }, 800 / speed);
+    }
   };
 
   /* ---------- peek-min ---------- */
