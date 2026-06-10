@@ -2,6 +2,9 @@
 import React, { useMemo, useState } from "react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { AnimatePresence, motion } from "framer-motion";
+import { insertGenerator } from "@/features/algorithms/hashmap/hashmapInsertLogic";
+import { searchGenerator } from "@/features/algorithms/hashmap/hashmapSearchLogic";
+import { deleteGenerator } from "@/features/algorithms/hashmap/hashmapDeleteLogic";
 
 const TABLE_SIZE = 8;
 const makeTable = () => Array.from({ length: TABLE_SIZE }, () => []);
@@ -62,43 +65,30 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
     const value = rawValue.trim();
     if (!key || !value || isAnimating) return;
 
-    const index = hashFunction(key);
     setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(450);
+    const gen = insertGenerator(hashMap, key, value, TABLE_SIZE, hashFunction);
 
-    const bucketBefore = hashMap[index];
-    const existingIndex = bucketBefore.findIndex((pair) => pair.key === key);
-
-    if (existingIndex === -1 && bucketBefore.length > 0) {
-      setCollisionIndex(index);
-      setOperation(`Collision Detected at bucket ${index}`);
-      showToast("Collision Detected", "collision");
-      await sleep(550);
-      setOperation(`Key inserted into existing bucket ${index} using separate chaining`);
-      await sleep(350);
+    for (let step of gen) {
+      if (step.type === 'hash') {
+        setHighlightIndex(step.index);
+        setOperation(step.operation);
+        await sleep(450);
+      } else if (step.type === 'collision') {
+        setCollisionIndex(step.index);
+        setOperation(step.operation);
+        showToast(step.message, "collision");
+        await sleep(550);
+      } else if (step.type === 'resolve') {
+        setOperation(step.operation);
+        await sleep(350);
+      } else if (step.type === 'complete') {
+        setHashMap(step.hashMap);
+        setActiveNode(step.activeNode);
+        setOperation(step.operation);
+        await sleep(700);
+      }
     }
 
-    if (existingIndex >= 0) {
-      setHashMap((prev) => {
-        const next = prev.map((bucket) => [...bucket]);
-        next[index][existingIndex] = { ...next[index][existingIndex], value };
-        return next;
-      });
-      setActiveNode({ bucket: index, index: existingIndex });
-      setOperation(`Updated key "${key}" in bucket ${index}`);
-    } else {
-      setHashMap((prev) => {
-        const next = prev.map((bucket) => [...bucket]);
-        next[index].push({ key, value, id: `${key}-${Date.now()}` });
-        return next;
-      });
-      setActiveNode({ bucket: index, index: bucketBefore.length });
-      setOperation(`Inserted "${key}: ${value}" at index ${index}`);
-    }
-
-    await sleep(700);
     setIsAnimating(false);
     resetHighlights();
   };
@@ -118,38 +108,25 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
   const handleSearch = async () => {
     const key = keyInput.trim();
     if (!key || isAnimating) return;
-    const index = hashFunction(key);
+
     setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(400);
+    const gen = searchGenerator(hashMap, key, TABLE_SIZE, hashFunction);
 
-    const bucket = hashMap[index];
-    if (bucket.length === 0) {
-      setOperation(`Bucket ${index} is empty. Key "${key}" not found`);
-      await sleep(650);
-      setIsAnimating(false);
-      resetHighlights();
-      setKeyInput("");
-      return;
-    }
-
-    for (let i = 0; i < bucket.length; i += 1) {
-      setActiveNode({ bucket: index, index: i });
-      setOperation(`Traversing chained bucket ${index}: checking "${bucket[i].key}"`);
-      await sleep(600);
-      if (bucket[i].key === key) {
-        setOperation(`Key "${key}" found at index ${index} with value "${bucket[i].value}"`);
-        await sleep(700);
-        setIsAnimating(false);
-        resetHighlights();
-        setKeyInput("");
-        return;
+    for (let step of gen) {
+      if (step.type === 'hash') {
+        setHighlightIndex(step.index);
+        setOperation(step.operation);
+        await sleep(400);
+      } else if (step.type === 'traverse') {
+        setActiveNode(step.activeNode);
+        setOperation(step.operation);
+        await sleep(600);
+      } else if (step.type === 'complete') {
+        setOperation(step.operation);
+        await sleep(step.found ? 700 : 650);
       }
     }
 
-    setOperation(`Traversal finished. Key "${key}" not found in bucket ${index}`);
-    await sleep(700);
     setIsAnimating(false);
     resetHighlights();
     setKeyInput("");
@@ -158,43 +135,28 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
   const handleDelete = async () => {
     const key = keyInput.trim();
     if (!key || isAnimating) return;
-    const index = hashFunction(key);
+
     setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(350);
+    const gen = deleteGenerator(hashMap, key, TABLE_SIZE, hashFunction);
 
-    const bucket = hashMap[index];
-    if (bucket.length === 0) {
-      setOperation(`Bucket ${index} is empty. Key "${key}" not found`);
-      await sleep(650);
-      setIsAnimating(false);
-      resetHighlights();
-      setKeyInput("");
-      return;
-    }
-
-    for (let i = 0; i < bucket.length; i += 1) {
-      setActiveNode({ bucket: index, index: i });
-      setOperation(`Traversing chained bucket ${index}: checking "${bucket[i].key}"`);
-      await sleep(600);
-      if (bucket[i].key === key) {
-        setHashMap((prev) => {
-          const next = prev.map((b) => [...b]);
-          next[index].splice(i, 1);
-          return next;
-        });
-        setOperation(`Deleted key "${key}" from bucket ${index}`);
-        await sleep(700);
-        setIsAnimating(false);
-        resetHighlights();
-        setKeyInput("");
-        return;
+    for (let step of gen) {
+      if (step.type === 'hash') {
+        setHighlightIndex(step.index);
+        setOperation(step.operation);
+        await sleep(350);
+      } else if (step.type === 'traverse') {
+        setActiveNode(step.activeNode);
+        setOperation(step.operation);
+        await sleep(600);
+      } else if (step.type === 'complete') {
+        if (step.found) {
+          setHashMap(step.hashMap);
+        }
+        setOperation(step.operation);
+        await sleep(step.found ? 700 : 650);
       }
     }
 
-    setOperation(`Traversal finished. Key "${key}" not found in bucket ${index}`);
-    await sleep(700);
     setIsAnimating(false);
     resetHighlights();
     setKeyInput("");

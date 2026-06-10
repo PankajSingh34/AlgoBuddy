@@ -12,6 +12,7 @@ const baseRelatedLinks = [
   { key: "bfs", text: "BFS", url: "/visualizer/graph/bfs" },
   { key: "dfs", text: "DFS", url: "/visualizer/graph/dfs" },
   { key: "dijkstra", text: "Dijkstra", url: "/visualizer/graph/dijkstra" },
+  { key: "bellman-ford", text: "Bellman-Ford", url: "/visualizer/graph/bellman-ford" },
   {
     key: "floyd-warshall",
     text: "Floyd-Warshall",
@@ -23,6 +24,16 @@ const baseRelatedLinks = [
     key: "topological-sort",
     text: "Topological Sort",
     url: "/visualizer/graph/topological-sort",
+  },
+  {
+    key: "kosaraju",
+    text: "Kosaraju's Algorithm",
+    url: "/visualizer/graph/kosaraju",
+  },
+  {
+    key: "tarjan",
+    text: "Tarjan's Algorithm",
+    url: "/visualizer/graph/tarjan",
   },
 ];
 
@@ -270,6 +281,54 @@ export const graphTopics = {
       { label: "Time", value: "O(V * E)" },
       { label: "Space", value: "O(V)" },
       { label: "Best for", value: "Negative weight edges / cycle detection" },
+    ],
+  },
+  kosaraju: {
+    key: "kosaraju",
+    title: "Kosaraju's Algorithm",
+    category: "Strongly Connected Components",
+    description:
+      "Find Strongly Connected Components (SCCs) in a directed graph using two passes of Depth-First Search (DFS).",
+    animationType: "kosaraju",
+    summary: [
+      "Kosaraju's algorithm uses two DFS passes.",
+      "First pass finds the finishing times of nodes in the original graph.",
+      "Second pass runs DFS on the transposed (reversed) graph in order of decreasing finishing time.",
+    ],
+    steps: [
+      "Run DFS on the original graph and push finished nodes to a stack.",
+      "Reverse the direction of all edges to create a transposed graph.",
+      "Pop nodes from the stack and run DFS on unvisited nodes in the transposed graph.",
+      "Each resulting DFS forest is a Strongly Connected Component.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V + E)" },
+      { label: "Space", value: "O(V + E)" },
+      { label: "Best for", value: "Finding SCCs efficiently" },
+    ],
+  },
+  tarjan: {
+    key: "tarjan",
+    title: "Tarjan's Algorithm",
+    category: "Strongly Connected Components",
+    description:
+      "Find Strongly Connected Components (SCCs) in a single pass using a stack and tracking low-link values.",
+    animationType: "tarjan",
+    summary: [
+      "Tarjan's algorithm finds SCCs in a single DFS pass.",
+      "It maintains an id, a low-link value, and a boolean for whether a node is on the current stack.",
+      "An SCC is found when a node's id matches its low-link value after returning from its descendants.",
+    ],
+    steps: [
+      "Run DFS, assigning IDs and low-link values, pushing nodes to a stack.",
+      "Update a node's low-link value based on descendants and back-edges to nodes on the stack.",
+      "If a node's ID equals its low-link value, it is the root of an SCC.",
+      "Pop the stack to extract all nodes in this newly discovered SCC.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V + E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Single-pass SCC finding" },
     ],
   },
 };

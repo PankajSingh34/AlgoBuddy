@@ -679,15 +679,15 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
 
     const sessions = [];
     const expiredIds = [];
-    let offset = 0;
-    let skipBoundary = parsed.sessionId ? true : false;
+    let currentMaxScore = maxScore;
+    let lastProcessedId = parsed.sessionId || null;
     const fetchSize = pageSize + MAX_EXPIRED_BUFFER;
 
     while (sessions.length < pageSize) {
-      const ids = await redis.zrange(SESSION_INDEX_KEY, maxScore, "-inf", {
+      const ids = await redis.zrange(SESSION_INDEX_KEY, currentMaxScore, "-inf", {
         byScore: true,
         rev: true,
-        limit: { offset, count: fetchSize },
+        limit: { offset: 0, count: fetchSize },
       });
 
       if (!ids || ids.length === 0) break;
@@ -698,12 +698,11 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
         const id = ids[i];
         const session = values[i];
 
-        if (skipBoundary && parsed.sessionId) {
-          const memberScore = await redis.zscore(SESSION_INDEX_KEY, id);
-          if (memberScore === parsed.score && id <= parsed.sessionId) {
-            continue;
+        if (lastProcessedId) {
+          if (id === lastProcessedId) {
+            lastProcessedId = null;
           }
-          skipBoundary = false;
+          continue;
         }
 
         if (session && session.visibility === "public") {
@@ -715,7 +714,21 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
       }
 
       if (sessions.length >= pageSize) break;
-      offset += ids.length;
+
+      // Advance cursor by the last entry's score so non-public sessions
+      // in the current score bucket do not cause public sessions to be skipped.
+      if (ids.length > 0) {
+        const lastId = ids[ids.length - 1];
+        const lastScore = await redis.zscore(SESSION_INDEX_KEY, lastId);
+        if (lastScore !== null) {
+          currentMaxScore = lastScore;
+          lastProcessedId = lastId;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
     }
 
     if (expiredIds.length > 0) {
@@ -754,7 +767,7 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
     startIndex = memorySessionsList.findIndex((s) => {
       const st = new Date(s.updatedAt).getTime();
       if (st < maxScore) return true;
-      if (st === maxScore && parsed.sessionId && s.id <= parsed.sessionId) return true;
+      if (st === maxScore && parsed.sessionId && s.id > parsed.sessionId) return true;
       return false;
     });
     if (startIndex < 0) {

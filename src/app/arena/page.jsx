@@ -50,6 +50,47 @@ const LEADERBOARD_ROWS = [
   { rank: 5, name: "Ananya", rating: 2105 },
 ];
 
+const LEARNING_RECOMMENDATIONS = [
+  {
+    topic: "Binary Search Tree",
+    reason: "Recommended after mastering Binary Search",
+    color: "purple"
+  },
+  {
+    topic: "Graph Traversal (BFS)",
+    reason: "Next logical step after Tree Traversal",
+    color: "blue"
+  },
+  {
+    topic: "Dynamic Programming Basics",
+    reason: "Suggested from your recent activity",
+    color: "green"
+  }
+];
+
+const LEARNING_TIMELINE = [
+  {
+    title: "Arrays Module Completed",
+    date: "12 May 2026",
+    color: "bg-purple-500",
+  },
+  {
+    title: "7-Day Learning Streak",
+    date: "18 May 2026",
+    color: "bg-green-500",
+  },
+  {
+    title: "Binary Search Master Badge",
+    date: "25 May 2026",
+    color: "bg-yellow-500",
+  },
+  {
+    title: "100 Problems Solved",
+    date: "01 June 2026",
+    color: "bg-blue-500",
+  },
+];
+
 function getInitials(name) {
   if (!name) return "??";
   const cleanName = name.includes("@") ? name.split("@")[0] : name;
@@ -63,6 +104,8 @@ function getInitials(name) {
 export default function ArenaPage() {
   const { user, loading } = useUser();
   const router = useRouter();
+
+ 
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,6 +121,16 @@ export default function ArenaPage() {
   const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState(null);
   const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
+  const [showXPWidget, setShowXPWidget] = useState(true);
+
+   useEffect(() => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(
+      "arena-show-xp-widget",
+      JSON.stringify(showXPWidget)
+    );
+  }
+}, [showXPWidget]);
 
   const [currentUserStats, setCurrentUserStats] = useState({
     name: "Pankaj Singh",
@@ -627,22 +680,150 @@ export default function ArenaPage() {
               </div>
             </div>
 
+            <button
+  onClick={() => setShowXPWidget(!showXPWidget)}
+  className="text-xs text-primary font-semibold"
+>
+  {showXPWidget ? "Hide XP Widget" : "Show XP Widget"}
+</button>
+
             {/* XP Progress */}
+{showXPWidget && (
+  <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+    <div className="flex justify-between items-center mb-3">
+      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+        XP Progress
+      </h3>
+      <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
+        Level {currentUserStats.level}
+      </span>
+    </div>
+
+    <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
+      <div
+        className="bg-primary h-full rounded-full"
+        style={{ width: "84%" }}
+      />
+    </div>
+
+    <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
+      <span>{currentUserStats.xp}/5000 XP</span>
+      <span className="font-semibold text-slate-700 dark:text-neutral-300">
+        Next Reward: Level 18 🎁
+      </span>
+    </div>
+  </div>
+)}
+
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">XP Progress</h3>
-                <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
-                  Level {currentUserStats.level}
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
-                <div className="bg-primary h-full rounded-full" style={{ width: "84%" }} />
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
-                <span>{currentUserStats.xp}/5000 XP</span>
-                <span className="font-semibold text-slate-700 dark:text-neutral-300">Next Reward: Level 18 🎁</span>
-              </div>
-            </div>
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      📈 Learning Timeline
+    </h3>
+
+    <span className="text-[10px] text-slate-400">
+      DSA Journey
+    </span>
+  </div>
+
+  <div className="space-y-4">
+    {LEARNING_TIMELINE.map((item, index) => (
+      <div key={index} className="relative pl-5 border-l-2 border-slate-200">
+        <div
+          className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ${item.color}`}
+        />
+        <p className="text-xs font-semibold">
+          {item.title}
+        </p>
+        <p className="text-[10px] text-slate-500">
+          {item.date}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
+            {/* Smart Revision Planner */}
+<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      📚 Revision Planner
+    </h3>
+    <span className="text-[10px] text-slate-400">
+      Weekly Plan
+    </span>
+  </div>
+
+  <div className="space-y-3">
+    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+      <p className="text-xs font-semibold">
+        Binary Search
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Last revised 14 days ago • High Priority
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800">
+      <p className="text-xs font-semibold">
+        Linked List
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Revision due in 2 days
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+      <p className="text-xs font-semibold">
+        Arrays
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Recently revised
+      </p>
+    </div>
+  </div>
+</div>
+
+{/* Personalized Learning Recommendations */}
+<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      🎯 Recommended For You
+    </h3>
+    <span className="text-[10px] text-slate-400">
+      Based on Progress
+    </span>
+  </div>
+
+  <div className="space-y-3">
+    <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+      <p className="text-xs font-semibold">
+        Binary Search Tree
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Recommended after mastering Binary Search
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+      <p className="text-xs font-semibold">
+        Graph Traversal (BFS)
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Next logical step after Tree Traversal
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+      <p className="text-xs font-semibold">
+        Dynamic Programming Basics
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Suggested from your recent activity
+      </p>
+    </div>
+  </div>
+</div>
 
             {/* Badges Grid */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">

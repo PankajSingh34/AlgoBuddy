@@ -15,7 +15,7 @@ async function apiFetch(url, options = {}) {
 }
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
-  const { user } = useUser();
+  const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
   
   useEffect(() => {

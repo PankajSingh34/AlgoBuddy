@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { PenLine, ArrowRight, Clock, CalendarDays } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
 const CATEGORIES = ["All", "Tutorial", "Experience", "Release", "Guide"];
 
@@ -14,6 +15,28 @@ const MOCK_POSTS = [
   { id: 5, title: "How I Used AlgoBuddy to Ace My Technical Interview", excerpt: "My personal experience using interactive visualizations to prepare for FAANG-style coding interviews.", category: "Experience", author: { name: "James Kim", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=james" }, date: "2026-05-15", readTime: "6 min", color: "#059669" },
   { id: 6, title: "Understanding Graph Traversal Algorithms", excerpt: "A visual deep-dive into BFS and DFS with real-world applications and complexity analysis.", category: "Tutorial", author: { name: "Maria Garcia", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=maria" }, date: "2026-05-12", readTime: "8 min", color: "#a435f0" },
 ];
+
+const handleReadPost = (post) => {
+  const updated = [
+    post,
+    ...readingHistory.filter((p) => p.id !== post.id),
+  ].slice(0, 5);
+
+  setReadingHistory(updated);
+
+  localStorage.setItem(
+    "blog-reading-history",
+    JSON.stringify(updated)
+  );
+};
+
+useEffect(() => {
+  const saved = JSON.parse(
+    localStorage.getItem("blog-reading-history") || "[]"
+  );
+
+  setReadingHistory(saved);
+}, []);
 
 function BlogSkeleton() {
   return (
@@ -83,14 +106,34 @@ function BlogCard({ post }) {
   );
 }
 
+<div className="mb-8">
+  <h3 className="text-lg font-bold mb-3">
+    Recommended For You
+  </h3>
+
+  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {recommendedPosts.slice(0, 3).map((post) => (
+      <BlogCard key={post.id} post={post} />
+    ))}
+  </div>
+</div>
+
 export default function CommunityBlogFeed({ loading = false }) {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [readingHistory, setReadingHistory] = useState([]);
 
   const filtered = activeCategory === "All"
     ? MOCK_POSTS
     : MOCK_POSTS.filter((p) => p.category === activeCategory);
 
   const categoryId = "blog-category-tablist";
+  const recommendedPosts =
+  readingHistory.length > 0
+    ? MOCK_POSTS.filter(
+        (post) =>
+          post.category === readingHistory[0].category
+      )
+    : MOCK_POSTS.slice(0, 3);
 
   return (
     <section className="section-app">
@@ -101,9 +144,11 @@ export default function CommunityBlogFeed({ loading = false }) {
               From Our Community
             </h2>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
+              
               Tutorials, guides, and stories from the AlgoBuddy community
             </p>
           </div>
+          
           <a
             href="https://discord.gg/PqnazRxPc"
             target="_blank"
@@ -160,7 +205,12 @@ export default function CommunityBlogFeed({ loading = false }) {
               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             >
               {filtered.map((post) => (
-                <BlogCard key={post.id} post={post} />
+                <div
+  key={post.id}
+  onClick={() => handleReadPost(post)}
+>
+  <BlogCard post={post} />
+</div>
               ))}
             </motion.div>
           </AnimatePresence>

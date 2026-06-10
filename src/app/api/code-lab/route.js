@@ -1,5 +1,5 @@
 import { getAuthenticatedUser } from "@/lib/auth";
-import { applyRateLimit } from "@/lib/rateLimit/rateLimitMiddleware";
+import { sandboxLimiter } from "@/lib/rateLimit";
 import { executeCode } from "@/lib/sandbox/executor";
 import { EXECUTION_STATUS, EXECUTION_MESSAGES } from "@/lib/sandbox/errorCodes";
 import { jsonResponse, errorResponse } from "@/lib/serverApi";
@@ -18,7 +18,7 @@ export async function POST(request) {
       return jsonResponse({ error: "Authentication required" }, 401);
     }
 
-    const limitResponse = await applyRateLimit(request);
+    const limitResponse = await sandboxLimiter.checkRequest(request);
     if (limitResponse) return limitResponse;
 
     let body;

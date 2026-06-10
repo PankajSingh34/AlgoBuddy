@@ -13,178 +13,9 @@ import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { BTreeManager, T, cloneTree } from "@/features/algorithms/tree/bTreeLogic";
 
-// === B-Tree Implementation (order t, min t-1 keys, max 2t-1 keys) ===
-const T = 2; // Min degree (B-Tree of order 4: max 3 keys per node, max 4 children)
-
-let nodeIdCounter = 0;
-function makeNode(isLeaf = true) {
-  return { id: `btn-${++nodeIdCounter}`, keys: [], children: [], isLeaf };
-}
-
-function cloneTree(node) {
-  if (!node) return null;
-  return {
-    id: node.id,
-    keys: [...node.keys],
-    children: node.children.map(cloneTree),
-    isLeaf: node.isLeaf
-  };
-}
-
-class BTreeManager {
-  constructor() {
-    this.root = makeNode(true);
-  }
-
-  clone() {
-    const mgr = new BTreeManager();
-    mgr.root = cloneTree(this.root);
-    return mgr;
-  }
-
-  // Returns array of steps [{tree, highlighted, explanation}]
-  insert(key, steps = []) {
-    steps.push({
-      tree: cloneTree(this.root),
-      highlighted: {},
-      explanation: `Insert key ${key} into B-Tree (order ${2 * T}). Max keys per node: ${2 * T - 1}.`
-    });
-
-    if (this.root.keys.length === 2 * T - 1) {
-      // Root is full: split
-      const newRoot = makeNode(false);
-      newRoot.children.push(this.root);
-      this.root = newRoot;
-
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [newRoot.id]: "visiting" },
-        explanation: `Root is full (${2 * T - 1} keys). Create a new root and split the old root.`
-      });
-
-      this._splitChild(this.root, 0, steps);
-
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [this.root.id]: "active" },
-        explanation: `Old root split. New root created. Tree height increased by 1.`
-      });
-    }
-
-    this._insertNonFull(this.root, key, steps);
-
-    steps.push({
-      tree: cloneTree(this.root),
-      highlighted: {},
-      explanation: `✅ Key ${key} successfully inserted into the B-Tree!`
-    });
-
-    return steps;
-  }
-
-  _insertNonFull(node, key, steps) {
-    let i = node.keys.length - 1;
-
-    if (node.isLeaf) {
-      node.keys.push(0);
-      while (i >= 0 && key < node.keys[i]) {
-        node.keys[i + 1] = node.keys[i];
-        i--;
-      }
-      node.keys[i + 1] = key;
-
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [node.id]: "matched" },
-        explanation: `Reached leaf node. Insert key ${key} in sorted position. Node now has ${node.keys.length} keys.`
-      });
-    } else {
-      while (i >= 0 && key < node.keys[i]) i--;
-      i++;
-
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [node.id]: "visiting" },
-        explanation: `Internal node: key ${key} goes into child[${i}] (between ${node.keys[i - 1] ?? "−∞"} and ${node.keys[i] ?? "+∞"}). Navigate down.`
-      });
-
-      if (node.children[i] && node.children[i].keys.length === 2 * T - 1) {
-        steps.push({
-          tree: cloneTree(this.root),
-          highlighted: { [node.children[i].id]: "error" },
-          explanation: `Child[${i}] is full (${2 * T - 1} keys). Must split child before descending.`
-        });
-        this._splitChild(node, i, steps);
-        if (key > node.keys[i]) i++;
-      }
-
-      this._insertNonFull(node.children[i], key, steps);
-    }
-  }
-
-  _splitChild(parent, i, steps) {
-    const t = T;
-    const y = parent.children[i];
-    const z = makeNode(y.isLeaf);
-
-    z.keys = y.keys.splice(t, t - 1);
-    if (!y.isLeaf) z.children = y.children.splice(t, t);
-
-    const medianKey = y.keys.pop();
-
-    parent.keys.splice(i, 0, medianKey);
-    parent.children.splice(i + 1, 0, z);
-
-    steps.push({
-      tree: cloneTree(this.root),
-      highlighted: { [y.id]: "active", [z.id]: "active", [parent.id]: "visiting" },
-      explanation: `Split child: median key ${medianKey} promoted to parent. Left child: [${y.keys}], Right child: [${z.keys}].`
-    });
-  }
-
-  search(key, steps = []) {
-    steps.push({
-      tree: cloneTree(this.root),
-      highlighted: {},
-      explanation: `Search for key ${key} in B-Tree. Start at root.`
-    });
-    this._searchDFS(this.root, key, steps);
-    return steps;
-  }
-
-  _searchDFS(node, key, steps) {
-    if (!node) return;
-    let i = 0;
-    while (i < node.keys.length && key > node.keys[i]) i++;
-
-    if (i < node.keys.length && key === node.keys[i]) {
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [node.id]: "matched" },
-        explanation: `✅ Found key ${key} in node [${node.keys.join(", ")}]!`
-      });
-      return;
-    }
-
-    if (node.isLeaf) {
-      steps.push({
-        tree: cloneTree(this.root),
-        highlighted: { [node.id]: "error" },
-        explanation: `Reached leaf node [${node.keys.join(", ")}]. Key ${key} not found in B-Tree.`
-      });
-      return;
-    }
-
-    steps.push({
-      tree: cloneTree(this.root),
-      highlighted: { [node.id]: "visiting" },
-      explanation: `Key ${key} not in node [${node.keys.join(", ")}]. Descend into child[${i}].`
-    });
-
-    this._searchDFS(node.children[i], key, steps);
-  }
-}
+// Logic moved to src/features/algorithms/tree/bTreeLogic.js
 
 // Layout: compute (x, y) positions for rendering
 function layoutTree(root) {
@@ -255,7 +86,10 @@ export default function BTreeAnimation() {
   // Initialize tree
   useEffect(() => {
     const mgr = new BTreeManager();
-    for (const key of INITIAL_KEYS) mgr.insert(key, []);
+    for (const key of INITIAL_KEYS) {
+      const gen = mgr.insertGenerator(key);
+      for (const step of gen) {} // exhaust generator
+    }
     managerRef.current = mgr;
     setDisplayRoot(cloneTree(mgr.root));
   }, []);
@@ -298,7 +132,10 @@ export default function BTreeAnimation() {
   const handleReset = () => {
     setIsAnimating(false);
     const mgr = new BTreeManager();
-    for (const key of INITIAL_KEYS) mgr.insert(key, []);
+    for (const key of INITIAL_KEYS) {
+      const gen = mgr.insertGenerator(key);
+      for (const step of gen) {} // exhaust generator
+    }
     managerRef.current = mgr;
     setDisplayRoot(cloneTree(mgr.root));
     setSteps([]);
@@ -313,7 +150,10 @@ export default function BTreeAnimation() {
     if (isNaN(key) || key < 1 || key > 999) { setMessage("⚠️ Enter a valid key (1-999)."); return; }
     setIsAnimating(false);
     setInputValue("");
-    const newSteps = managerRef.current.insert(key);
+    
+    const gen = managerRef.current.insertGenerator(key);
+    const newSteps = Array.from(gen);
+    
     setSteps(newSteps);
     setCurrentStepIdx(0);
     setIsAnimating(true);
@@ -324,7 +164,10 @@ export default function BTreeAnimation() {
     if (isNaN(key) || key < 1 || key > 999) { setMessage("⚠️ Enter a valid key to search (1-999)."); return; }
     setIsAnimating(false);
     setSearchValue("");
-    const newSteps = managerRef.current.search(key);
+    
+    const gen = managerRef.current.searchGenerator(key);
+    const newSteps = Array.from(gen);
+    
     setSteps(newSteps);
     setCurrentStepIdx(0);
     setIsAnimating(true);

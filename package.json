@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint src --max-warnings=0",
     "test": "npm run lint && npm run test:security",
-    "test:security": "node --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs security-tests/collaboration-rate-limit-client-ip.test.cjs security-tests/collaboration-session-lookup-rate-limit.test.cjs security-tests/auth-fail-closed.test.cjs",
+    "test:security": "node --experimental-detect-module --test security-tests/linkedlist-xss.test.cjs security-tests/session-secret-leak.test.cjs security-tests/collaboration-rate-limit-client-ip.test.cjs security-tests/collaboration-session-lookup-rate-limit.test.cjs security-tests/auth-fail-closed.test.cjs security-tests/session-list-pagination.test.cjs",
     "postbuild": "next-sitemap"
   },
   "dependencies": {
@@ -29,7 +29,7 @@
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.5.0",
-    "framer-motion": "^12.9.4",
+    "framer-motion": "12.40.0",
     "gsap": "^3.13.0",
     "highlight.js": "^11.11.1",
     "jose": "^6.2.3",

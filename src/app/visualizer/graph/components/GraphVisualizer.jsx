@@ -21,20 +21,23 @@ import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
+import { bfsGenerator } from "@/features/algorithms/graph/bfsLogic";
+import { dfsGenerator } from "@/features/algorithms/graph/dfsLogic";
+import { dijkstraGenerator } from "@/features/algorithms/graph/dijkstraLogic";
+import { bellmanFordGenerator } from "@/features/algorithms/graph/bellmanFordLogic";
+import { floydWarshallGenerator } from "@/features/algorithms/graph/floydWarshallLogic";
+import { primGenerator } from "@/features/algorithms/graph/primLogic";
+import { kruskalGenerator } from "@/features/algorithms/graph/kruskalLogic";
+import { topologicalSortGenerator } from "@/features/algorithms/graph/topologicalSortLogic";
+import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
+import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
 import { 
-  bfsFrames, 
-  dfsFrames, 
-  dijkstraFrames, 
-  floydWarshallFrames,
-  primFrames, 
-  kruskalFrames, 
-  topologicalSortFrames,
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
 
-const weightedAlgorithms = new Set(["dijkstra", "floyd-warshall", "prim", "kruskal"]);
-const directedAlgorithms = new Set(["dijkstra", "floyd-warshall", "topological-sort"]);
+const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal"]);
+const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan"]);
 
 const defaultGraphs = {
   bfs: {
@@ -112,6 +115,28 @@ const defaultGraphs = {
       { from: "4", to: "0", weight: 4, directed: true },
     ]
   },
+  "bellman-ford": {
+    nodes: [
+      { id: "0", x: 100, y: 250, label: "A" },
+      { id: "1", x: 300, y: 100, label: "B" },
+      { id: "2", x: 300, y: 400, label: "C" },
+      { id: "3", x: 500, y: 100, label: "D" },
+      { id: "4", x: 500, y: 400, label: "E" },
+      { id: "5", x: 700, y: 250, label: "F" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 4, directed: true },
+      { from: "0", to: "2", weight: 2, directed: true },
+      { from: "1", to: "3", weight: 5, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "1", weight: 8, directed: true },
+      { from: "2", to: "3", weight: 10, directed: true },
+      { from: "2", to: "4", weight: 3, directed: true },
+      { from: "3", to: "5", weight: 2, directed: true },
+      { from: "4", to: "3", weight: -4, directed: true },
+      { from: "4", to: "5", weight: 6, directed: true },
+    ]
+  },
   prim: {
     nodes: [
       { id: "0", x: 400, y: 80, label: "0" },
@@ -166,6 +191,40 @@ const defaultGraphs = {
       { from: "2", to: "5", weight: 1, directed: true },
     ]
   },
+  "kosaraju": {
+    nodes: [
+      { id: "0", x: 150, y: 150, label: "0" },
+      { id: "1", x: 350, y: 100, label: "1" },
+      { id: "2", x: 250, y: 300, label: "2" },
+      { id: "3", x: 500, y: 300, label: "3" },
+      { id: "4", x: 650, y: 150, label: "4" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 1, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "0", weight: 1, directed: true },
+      { from: "1", to: "3", weight: 1, directed: true },
+      { from: "3", to: "4", weight: 1, directed: true },
+      { from: "4", to: "3", weight: 1, directed: true },
+    ]
+  },
+  "tarjan": {
+    nodes: [
+      { id: "0", x: 150, y: 150, label: "0" },
+      { id: "1", x: 350, y: 100, label: "1" },
+      { id: "2", x: 250, y: 300, label: "2" },
+      { id: "3", x: 500, y: 300, label: "3" },
+      { id: "4", x: 650, y: 150, label: "4" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 1, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "0", weight: 1, directed: true },
+      { from: "1", to: "3", weight: 1, directed: true },
+      { from: "3", to: "4", weight: 1, directed: true },
+      { from: "4", to: "3", weight: 1, directed: true },
+    ]
+  },
   "adjacency-list": {
     nodes: [
       { id: "0", x: 100, y: 250, label: "0" },
@@ -213,6 +272,10 @@ const complexityData = {
     { name: 'Time', value: 100, label: 'O(V^3)', full: 'Time Complexity' },
     { name: 'Space', value: 90, label: 'O(V^2)', full: 'Space Complexity' },
   ],
+  "bellman-ford": [
+    { name: 'Time', value: 90, label: 'O(VE)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
   prim: [
     { name: 'Time', value: 90, label: 'O(ElogV)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
@@ -222,6 +285,14 @@ const complexityData = {
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
   "topological-sort": [
+    { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
+  "kosaraju": [
+    { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
+  "tarjan": [
     { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
@@ -239,8 +310,10 @@ const comparisonData = [
   { name: 'BFS', time: 80, space: 60 },
   { name: 'DFS', time: 80, space: 60 },
   { name: 'Dijkstra', time: 95, space: 65 },
+  { name: 'Bellman', time: 90, space: 60 },
   { name: 'Floyd', time: 100, space: 90 },
   { name: 'MST', time: 90, space: 60 },
+  { name: 'SCC', time: 80, space: 60 },
 ];
 
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
@@ -319,13 +392,16 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     });
 
     const startNodeId = initialStartNode || (nodes.length > 0 ? nodes[0].id : null);
-    if (algorithm === "bfs") return bfsFrames(adj, startNodeId);
-    if (algorithm === "dfs") return dfsFrames(adj, startNodeId);
-    if (algorithm === "dijkstra") return dijkstraFrames(adj, startNodeId);
-    if (algorithm === "floyd-warshall") return floydWarshallFrames(nodes, edges);
-    if (algorithm === "prim") return primFrames(adj, startNodeId);
-    if (algorithm === "kruskal") return kruskalFrames(nodes.map(n => n.id), edges);
-    if (algorithm === "topological-sort") return topologicalSortFrames(adj, nodes.map(n => n.id));
+    if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
+    if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
+    if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId));
+    if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
+    if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
+    if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
+    if (algorithm === "kruskal") return Array.from(kruskalGenerator(nodes, edges));
+    if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
+    if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
+    if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
     if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
@@ -514,7 +590,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-bold text-success">
-                    Order: {currentFrameData.result.join(" ??? ")}
+                    Order: {currentFrameData.result.join(" → ")}
+                  </div>
+                )}
+                {currentFrameData.sccs && currentFrameData.sccs.length > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400">
+                    SCCs: {currentFrameData.sccs.map(scc => `[${scc.join(",")}]`).join(" ")}
                   </div>
                 )}
               </div>
