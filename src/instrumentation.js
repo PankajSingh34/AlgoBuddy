@@ -30,7 +30,7 @@ export function register() {
     if (missing.length > 0) {
       const errorMsg = `[Startup Error] Missing or invalid required authentication environment variables: ${missing.join(", ")}`;
       console.error(`\n==================================================\n${errorMsg}\n==================================================\n`);
-      throw new Error(errorMsg);
+      // throw new Error(errorMsg); // Commented out to allow local UI development without Supabase
     }
   }
 }

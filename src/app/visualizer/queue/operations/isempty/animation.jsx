@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { enqueueGenerator, dequeueGenerator, checkEmptyGenerator } from "@/features/algorithms/queue/queueIsEmptyLogic";
 
 const QueueVisualizer = () => {
   const [queue, setQueue] = useState([]);
@@ -29,38 +30,53 @@ const QueueVisualizer = () => {
 
   /* ---------- enqueue ---------- */
   const enqueue = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+    const gen = enqueueGenerator(queue, inputValue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    await showOp(`Enqueuing “${inputValue}” …`);
-    setQueue((q) => [...q, inputValue]);
-    setMessage(`“${inputValue}” added to rear`);
+    await showOp(startState.operation);
+    
+    const completeState = gen.next().value;
+    setQueue(completeState.queue);
+    setMessage(completeState.message);
     setInputValue("");
     setIsAnimating(false);
   };
 
   /* ---------- dequeue ---------- */
   const dequeue = async () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty!");
+    const gen = dequeueGenerator(queue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    const front = queue[0];
-    await showOp(`Dequeuing “${front}” …`);
-    setQueue((q) => q.slice(1));
-    setMessage(`“${front}” removed from front`);
+    await showOp(startState.operation);
+
+    const completeState = gen.next().value;
+    setQueue(completeState.queue);
+    setMessage(completeState.message);
     setIsAnimating(false);
   };
 
   /* ---------- isEmpty ---------- */
   const checkEmpty = async () => {
+    const gen = checkEmptyGenerator(queue);
+    const startState = gen.next().value;
+
     setIsAnimating(true);
-    await showOp("Checking if queue is empty …");
-    const empty = queue.length === 0;
-    setMessage(empty ? "Queue is empty" : "Queue is NOT empty");
+    await showOp(startState.operation);
+
+    const completeState = gen.next().value;
+    setMessage(completeState.message);
     setIsAnimating(false);
   };
 

@@ -31,7 +31,7 @@ export async function POST(request) {
     const ip = getClientIp(request.headers);
 
     const { allowed, remaining, resetAt } =
-      await checkRateLimit(`contact:${ip}`);
+      await checkRateLimit(`review:${ip}`);
     if (!allowed) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
       return jsonResponse({ message: "Too many requests. Please try again later." }, 429, {
@@ -79,6 +79,17 @@ export async function POST(request) {
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
+    }
+
+    const smtpQuotaAllowed = await checkGlobalSmtpQuota(
+      parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
+    );
+    if (!smtpQuotaAllowed) {
+      console.error("[review] SMTP daily quota exceeded. Email not sent.");
+      return jsonResponse({ message: "Review received." }, 200, {
+        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Remaining": remaining.toString(),
+      });
     }
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;

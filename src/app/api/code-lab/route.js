@@ -1,4 +1,5 @@
-import { applyRateLimit } from "@/lib/rateLimit/rateLimitMiddleware";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { sandboxLimiter } from "@/lib/rateLimit";
 import { executeCode } from "@/lib/sandbox/executor";
 import { EXECUTION_STATUS, EXECUTION_MESSAGES } from "@/lib/sandbox/errorCodes";
 import { jsonResponse, errorResponse } from "@/lib/serverApi";
@@ -8,7 +9,16 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
-    const limitResponse = await applyRateLimit(request);
+    const authResult = await getAuthenticatedUser();
+
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return jsonResponse({ error: "Authentication service unavailable" }, 500);
+      }
+      return jsonResponse({ error: "Authentication required" }, 401);
+    }
+
+    const limitResponse = await sandboxLimiter.checkRequest(request);
     if (limitResponse) return limitResponse;
 
     let body;

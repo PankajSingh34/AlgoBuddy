@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
-import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { postfixGenerator } from "@/features/algorithms/stack/postfixLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 /* ----------  tiny reusable animated bits  ---------- */
 const AnimatedStackItem = ({ char, isTop }) => (
@@ -38,90 +38,78 @@ const AnimatedOutputToken = ({ char }) => (
 
 /* ----------  main component  ---------- */
 const InfixToPostfixVisualizer = () => {
-  /* =======  your existing state – nothing changed  ======= */
   const [infix, setInfix] = useState("(A+B)*C");
   const [postfix, setPostfix] = useState("");
-  const [stack, setStack] = useState([]);
-  const [output, setOutput] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [steps, setSteps] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [operation, setOperation] = useState(null);
   const [message, setMessage] = useState("Enter an infix expression and click Convert");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const { speed, setSpeed } = usePlayback(1);
+  
+  const [steps, setSteps] = useState([]);
+  const [visualState, setVisualState] = useState({
+    stack: [], output: [], operation: null, message: "Enter an infix expression and click Convert"
+  });
 
-  const reset = () => {
-    setStack([]); setOutput([]); setPostfix(""); setCurrentStep(0); setSteps([]);
-    setMessage("Enter an infix expression and click Convert"); setOperation(null); setIsPlaying(false);
-  };
+  const onStep = useCallback((step) => {
+    setVisualState({
+      stack: step.stack,
+      output: step.output,
+      operation: step.action,
+      message: step.description
+    });
+  }, []);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const currentStepData = steps[engine.currentStep];
+
+  const reset = useCallback(() => {
+    engine.reset();
+    setPostfix("");
+    setSteps([]);
+    setMessage("Enter an infix expression and click Convert");
+    setVisualState({ stack: [], output: [], operation: null, message: "Enter an infix expression and click Convert" });
+    setIsProcessing(false);
+  }, [engine]);
 
   const convertInfixToPostfix = () => {
     if (!infix.trim()) { setMessage("Please enter an infix expression"); return; }
-    setIsProcessing(true); reset();
+    setIsProcessing(true);
+    reset();
     const conversionSteps = Array.from(postfixGenerator(infix));
     const finalPostfix = conversionSteps.length > 0 ? conversionSteps[conversionSteps.length - 1].output.join(" ") : "";
-    setSteps(conversionSteps); setPostfix(finalPostfix); setIsProcessing(false); setIsPlaying(true);
+    setSteps(conversionSteps);
+    setPostfix(finalPostfix);
+    setIsProcessing(false);
+    setTimeout(() => {
+      engine.play();
+    }, 50);
   };
 
-  const playNextStep = useCallback(() => {
-    setCurrentStep((s) => s + 1);
-  }, []);
-  const playPrevStep = useCallback(() => {
-    setCurrentStep((s) => (s > 0 ? s - 1 : s));
-  }, []);
-  const togglePlayPause = useCallback(() => setIsPlaying((p) => !p), []);
-  const jumpToStep = useCallback((idx) => {
-    setCurrentStep(idx);
-    if (idx === steps.length - 1) setIsPlaying(false);
-  }, [steps.length]);
-
-  useEffect(() => {
-    let t;
-    if (isPlaying && currentStep < steps.length - 1) t = setTimeout(playNextStep, 1000 / speed);
-    else if (currentStep >= steps.length - 1) setIsPlaying(false);
-    return () => clearTimeout(t);
-  }, [isPlaying, currentStep, steps.length, speed, playNextStep]);
-
-  /* =======  NEW: tiny GSAP flash on step change  ======= */
   const statusRef = useRef();
+  
   useVisualizerReset(() => {
     setInfix("(A+B)*C");
-    setPostfix("");
-    setStack([]);
-    setOutput([]);
-    setCurrentStep(0);
-    setSteps([]);
-    setIsProcessing(false);
-    setIsAnimating(false);
-    setOperation(null);
-    setMessage("Enter an infix expression and click Convert");
-    setIsPlaying(false);
+    reset();
   });
+
   useEffect(() => {
     if (statusRef.current) gsap.fromTo(statusRef.current, { scale: 0.95, opacity: 0.7 }, { scale: 1, opacity: 1, duration: 0.3 });
-  }, [message]);
+  }, [visualState.message]);
 
   useVisualizerKeyboard({
-    onStart: undefined, // Space toggles play/pause, but only if sorting=true (or start if we add it)
+    onStart: undefined,
     onReset: reset,
-    onSpeedChange: setSpeed,
-    onTogglePlayPause: togglePlayPause,
-    speed: speed,
-    sorting: steps.length > 0 && currentStep < steps.length - 1,
-    sorted: currentStep === steps.length - 1 && steps.length > 0,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
     enabled: true,
   });
-
-  useEffect(() => { if (steps.length && currentStep < steps.length) { setIsAnimating(true); const s = steps[currentStep]; setStack(s.stack); setOutput(s.output); setOperation(s.action); setMessage(s.description); const t = setTimeout(() => setIsAnimating(false), 500 / speed); return () => clearTimeout(t); } }, [currentStep, steps, speed]);
 
   /* ----------  UI  ---------- */
   return (
     <main className="container mx-auto">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">Visualize the conversion from infix to postfix notation</p>
       <div className="max-w-4xl mx-auto">
-        {/* Input & Controls */}
         <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
           <div className="mb-4">
             <label className="block text-gray-700 dark:text-gray-300 mb-2">
@@ -134,11 +122,11 @@ const InfixToPostfixVisualizer = () => {
                 onChange={e => setInfix(e.target.value)}
                 placeholder="Enter infix expression (e.g., (A+B)*C)"
                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-[#a435f0] focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 transition duration-300"
-                disabled={isProcessing}
+                disabled={isProcessing || engine.isPlaying || (steps.length > 0 && engine.currentStep < steps.length - 1)}
               />
               <button
                 onClick={convertInfixToPostfix}
-                disabled={isProcessing}
+                disabled={isProcessing || engine.isPlaying || (steps.length > 0 && engine.currentStep < steps.length - 1)}
                 className="px-6 py-2 font-bold bg-[#a435f0] text-white rounded-lg hover:bg-[#8f2cd6] transition-all duration-200"
               >
                 {isProcessing ? "Converting..." : "Convert"}
@@ -157,36 +145,35 @@ const InfixToPostfixVisualizer = () => {
           {steps.length > 0 && (
             <div className="mt-6">
               <PlaybackControls
-                isPaused={!isPlaying}
-                onTogglePlayPause={togglePlayPause}
-                speed={speed}
-                onSpeedChange={setSpeed}
-                disabled={isAnimating && !isPlaying}
+                isPlaying={engine.isPlaying}
+                onTogglePlayPause={engine.isPlaying ? engine.pause : engine.play}
+                speed={engine.speed / 500}
+                onSpeedChange={(s) => engine.setSpeed(s * 500)}
+                disabled={steps.length === 0}
                 showShortcuts={true}
-                onStepForward={currentStep < steps.length - 1 ? playNextStep : undefined}
-                onStepBackward={currentStep > 0 ? playPrevStep : undefined}
+                onStepForward={engine.stepForward}
+                onStepBackward={engine.stepBackward}
                 onReset={reset}
-                progressText={`Step ${currentStep + 1} of ${steps.length}`}
+                progressText={`Step ${engine.currentStep + 1} of ${steps.length}`}
               />
             </div>
           )}
         </div>
 
-        {/* Status panel with GSAP flash */}
         <div ref={statusRef} className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="text-xl font-semibold mb-4">Conversion Status</h2>
-          {operation && (
+          {visualState.operation && (
             <div className="mb-4 p-3 rounded-lg bg-[#a435f0]/10 dark:bg-[#a435f0]/20 text-[#a435f0] border border-[#a435f0]/20">
               <span className="font-semibold uppercase text-xs tracking-wider mr-2">Status:</span>
-              {operation}
+              {visualState.operation}
             </div>
           )}
-          {message && (
+          {visualState.message && (
             <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900 text-primary-dark dark:text-blue-200">
-              <p className="font-medium text-center">{message}</p>
+              <p className="font-medium text-center">{visualState.message}</p>
             </div>
           )}
-          {postfix && currentStep === steps.length - 1 && (
+          {postfix && engine.currentStep === steps.length - 1 && (
             <motion.div initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} transition={{ type: "spring", stiffness: 200 }} className="mt-4 p-4 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800 text-center">
               <div className="font-bold uppercase text-xs tracking-widest mb-1">Final Postfix Result</div>
               <div className="text-3xl font-bold font-mono">{postfix}</div>
@@ -194,36 +181,33 @@ const InfixToPostfixVisualizer = () => {
           )}
         </div>
 
-        {/* Visualisations – now with motion */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* Stack */}
           <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-primary rounded-full"></span>
               Stack (Operators)
             </h2>
             <div className="flex flex-col items-center min-h-[300px]">
-              <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">{stack.length > 0 ? "↑ Top" : ""}</div>
+              <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">{visualState.stack.length > 0 ? "↑ Top" : ""}</div>
               <div className="w-32 relative">
                 <AnimatePresence>
-                  {stack.length === 0 ? (
+                  {visualState.stack.length === 0 ? (
                     <div className="text-center py-12 text-gray-400 border-2 border-dashed rounded-xl italic">
                       Stack is empty
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {stack.map((item, i) => (
-                        <AnimatedStackItem key={`${i}-${item}`} char={item} isTop={i === stack.length - 1} />
+                      {visualState.stack.map((item, i) => (
+                        <AnimatedStackItem key={`${i}-${item}`} char={item} isTop={i === visualState.stack.length - 1} />
                       ))}
                     </div>
                   )}
                 </AnimatePresence>
               </div>
-              <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{stack.length > 0 ? "↓ Bottom" : ""}</div>
+              <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">{visualState.stack.length > 0 ? "↓ Bottom" : ""}</div>
             </div>
           </div>
 
-          {/* Output */}
           <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
@@ -232,10 +216,10 @@ const InfixToPostfixVisualizer = () => {
             <div className="min-h-[300px] p-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col">
               <div className="flex flex-wrap gap-3 justify-center">
                 <AnimatePresence>
-                  {output.length === 0 ? (
+                  {visualState.output.length === 0 ? (
                     <div className="text-gray-400 italic w-full text-center py-12">Output will appear here</div>
                   ) : (
-                    output.map((c, i) => <AnimatedOutputToken key={`${i}-${c}`} char={c} />)
+                    visualState.output.map((c, i) => <AnimatedOutputToken key={`${i}-${c}`} char={c} />)
                   )}
                 </AnimatePresence>
               </div>
@@ -243,7 +227,6 @@ const InfixToPostfixVisualizer = () => {
           </div>
         </div>
 
-        {/* Step table – same as before, just with framer hover */}
         {steps.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
             <h2 className="text-xl font-semibold mb-4">Conversion Steps</h2>
@@ -257,7 +240,7 @@ const InfixToPostfixVisualizer = () => {
                 </tr></thead>
                 <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {steps.map((step, idx) => (
-                    <motion.tr key={idx} onClick={() => jumpToStep(idx)} className={`cursor-pointer ${currentStep === idx ? "bg-blue-50 dark:bg-neutral-950" : "hover:bg-gray-50 dark:hover:bg-neutral-950"}`}
+                    <motion.tr key={idx} onClick={() => { engine.pause(); while(engine.currentStep !== idx) { if (engine.currentStep < idx) engine.stepForward(); else engine.stepBackward(); } }} className={`cursor-pointer ${engine.currentStep === idx ? "bg-blue-50 dark:bg-neutral-950" : "hover:bg-gray-50 dark:hover:bg-neutral-950"}`}
                                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                       <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{idx + 1}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm">{step.action}</td>

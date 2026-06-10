@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/apiClient";
+import BackToTop from "@/app/components/ui/backtotop";
 import {
   Mail,
   Phone,
@@ -423,6 +424,7 @@ const ContactUs = () => {
         </section>
       </main>
       <Footer />
+      <BackToTop/>
     </>
   );
 };

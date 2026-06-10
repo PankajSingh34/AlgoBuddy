@@ -49,6 +49,7 @@ async function resolveSessionIdentifier(identifier) {
 export function useCollaboration({
   displayName = "Anonymous",
   onRemoteStateDelta,
+  userId,
 } = {}) {
   const clientId = useMemo(() => createClientId(), []);
   const [session, setSession] = useState(null);
@@ -70,6 +71,7 @@ export function useCollaboration({
   const currentDisplayNameRef = useRef(displayName);
   const recordingRef = useRef(recording);
   const presenterIdRef = useRef(presenterId);
+  const userIdRef = useRef(userId);
 
   useEffect(() => {
     callbacksRef.current.onRemoteStateDelta = onRemoteStateDelta;
@@ -86,6 +88,10 @@ export function useCollaboration({
   useEffect(() => {
     presenterIdRef.current = presenterId;
   }, [presenterId]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const cleanupTransport = useCallback(() => {
     if (channelRef.current) {
@@ -207,10 +213,12 @@ export function useCollaboration({
       throw new Error("Join or create a session first.");
     }
 
+    const isPrivileged = type === "control:grant" || type === "state:update";
+    const effectiveSenderId = isPrivileged ? (userIdRef.current || clientId) : clientId;
     const envelope = createSessionEvent({
       type,
       payload,
-      senderId: clientId,
+      senderId: effectiveSenderId,
       senderName: currentDisplayNameRef.current,
       sequence: ++sequenceRef.current,
     });

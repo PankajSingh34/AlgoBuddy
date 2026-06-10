@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { enqueueRearGenerator, dequeueFrontGenerator, peekFrontGenerator, peekRearGenerator } from "@/features/algorithms/queue/queueSingleEndedLogic";
 
 const SingleEndedQueueVisualizer = () => {
   const [queue, setQueue] = useState([]);
@@ -29,53 +30,78 @@ const SingleEndedQueueVisualizer = () => {
 
   /* ---------- enqueue (rear) ---------- */
   const enqueueRear = async () => {
-    if (!inputValue.trim()) {
-      setMessage("Please enter a value");
+    const gen = enqueueRearGenerator(queue, inputValue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    await showOp(`Enqueuing "${inputValue}" at rear …`);
-    setQueue((q) => [...q, inputValue]);
-    setMessage(`"${inputValue}" added to rear`);
+    await showOp(startState.operation);
+
+    const completeState = gen.next().value;
+    setQueue(completeState.queue);
+    setMessage(completeState.message);
     setInputValue("");
     setIsAnimating(false);
   };
 
   /* ---------- dequeue (front) ---------- */
   const dequeueFront = async () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty!");
+    const gen = dequeueFrontGenerator(queue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    const front = queue[0];
-    await showOp(`Dequeuing "${front}" from front …`);
-    setQueue((q) => q.slice(1));
-    setMessage(`"${front}" removed from front`);
+    await showOp(startState.operation);
+
+    const completeState = gen.next().value;
+    setQueue(completeState.queue);
+    setMessage(completeState.message);
     setIsAnimating(false);
   };
 
   /* ---------- peek front ---------- */
   const peekFront = async () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty!");
+    const gen = peekFrontGenerator(queue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    setMessage(`Front element: "${queue[0]}"`);
+    setMessage(startState.operation);
     await sleep(1500 / speed);
+    
+    const completeState = gen.next().value;
+    setMessage(completeState.message);
     setIsAnimating(false);
   };
 
   /* ---------- peek rear ---------- */
   const peekRear = async () => {
-    if (queue.length === 0) {
-      setMessage("Queue is empty!");
+    const gen = peekRearGenerator(queue);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
+
     setIsAnimating(true);
-    setMessage(`Rear element: "${queue[queue.length - 1]}"`);
+    setMessage(startState.operation);
     await sleep(1500 / speed);
+    
+    const completeState = gen.next().value;
+    setMessage(completeState.message);
     setIsAnimating(false);
   };
 

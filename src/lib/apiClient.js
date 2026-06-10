@@ -4,7 +4,10 @@ import { ApiError, AuthError } from "@/lib/apiErrors";
 class ApiClient {
   async request(path, options = {}) {
     const { method = 'GET', body, headers = {} } = options;
-    const token = localStorage.getItem('supabase.auth.token');
+
+    // Get session from Supabase SSR cookie store instead of localStorage
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const res = await fetch(path, {
       method,
@@ -18,14 +21,16 @@ class ApiClient {
 
     if (res.status === 401) {
       try {
-        const { data: { session } } = await supabase.auth.refreshSession();
-        if (session) {
-          localStorage.setItem('supabase.auth.token', session.access_token);
+        const { data: { session: newSession } } = await supabase.auth.refreshSession();
+        if (newSession) {
+          // Supabase SSR handles cookie storage automatically
           return this.request(path, options);
         }
       } catch {
         // refresh failed, redirect to login below
       }
+      // Clean up any stale localStorage artifact
+      localStorage.removeItem('supabase.auth.token');
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

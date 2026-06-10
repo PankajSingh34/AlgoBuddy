@@ -10,17 +10,25 @@ import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
-import { useProgress } from "@/app/hooks/useProgress";
+import { useSheetProgress } from "@/app/hooks/useSheetProgress";
+import { useUser } from "@/features/user/UserContext";
 
 export default function TopicPracticeSheet() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useUser();
   const topicSlug = params?.topic;
 
-  const { progress, updateProgress } = useProgress();
+  const { progress, updateProgress } = useSheetProgress();
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/login");
+    }
+  }, [user, router]);
 
   const { isBookmarked, toggleBookmark } = useProblemBookmarks();
 
@@ -56,19 +64,23 @@ export default function TopicPracticeSheet() {
     topic.subsections.forEach((sub) => {
       sub.items.forEach((item) => {
         total++;
-        const status = progress[item.id] || "Not Started";
-        if (status === "Completed") {
+        // progress entries from useSheetProgress are { status, updatedAt } objects
+        const entry = progress[item.id];
+        const statusStr = entry
+          ? (typeof entry === "object" ? entry.status : entry)
+          : "Not Started";
+        if (statusStr === "Completed") {
           solved++;
         }
         if (item.difficulty === "Easy") {
           easy++;
-          if (status === "Completed") easySolved++;
+          if (statusStr === "Completed") easySolved++;
         } else if (item.difficulty === "Medium") {
           medium++;
-          if (status === "Completed") mediumSolved++;
+          if (statusStr === "Completed") mediumSolved++;
         } else if (item.difficulty === "Hard") {
           hard++;
-          if (status === "Completed") hardSolved++;
+          if (statusStr === "Completed") hardSolved++;
         }
       });
     });
@@ -216,7 +228,10 @@ export default function TopicPracticeSheet() {
                   </thead>
                   <tbody>
                     {sub.items.map((item) => {
-                      const status = progress[item.id] || "Not Started";
+                      const entry = progress[item.id];
+                      const status = entry
+                        ? (typeof entry === "object" ? entry.status : entry)
+                        : "Not Started";
                       return (
                         <tr
                           key={item.id}

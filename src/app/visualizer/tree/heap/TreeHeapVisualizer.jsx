@@ -1,7 +1,8 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Footer from "@/app/components/footer";
-import usePlayback from "@/app/hooks/usePlayback";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -50,18 +51,18 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   const [inputValue, setInputValue] = useState("");
   const [buildInput, setBuildInput] = useState("");
   const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [message, setMessage] = useState("Build or insert values to start.");
-  const timerRef = useRef(null);
-  const { speed, setSpeed } = usePlayback(1);
+
+  const onStep = useCallback((step) => {
+    setMessage(step.explanation);
+  }, []);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1800 });
 
   const resetPlayback = useCallback(() => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    engine.reset();
     setSteps([]);
-    setCurrentStepIdx(-1);
-  }, []);
+  }, [engine]);
 
   const resetHeap = useCallback(
     (nextType) => {
@@ -83,9 +84,8 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   const startPlayback = useCallback((nextArray, nextSteps) => {
     setTargetHeapArray(nextArray);
     setSteps(nextSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
-  }, []);
+    setTimeout(() => { engine.play(); }, 50);
+  }, [engine]);
 
   const handleInsert = useCallback(() => {
     const value = parseInt(inputValue, 10);
@@ -135,36 +135,14 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
       setMessage("Run an operation first to generate an animation.");
       return;
     }
-    setIsAnimating(true);
-    if (currentStepIdx === -1) setCurrentStepIdx(0);
-  }, [currentStepIdx, steps.length]);
-
-  const pauseVisualizer = useCallback(() => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
-
-  const stepForward = useCallback(() => {
-    setIsAnimating(false);
-    if (currentStepIdx < steps.length - 1) {
-      setCurrentStepIdx((prev) => prev + 1);
-    }
-  }, [currentStepIdx, steps.length]);
-
-  const stepBackward = useCallback(() => {
-    setIsAnimating(false);
-    if (currentStepIdx > 0) {
-      setCurrentStepIdx((prev) => prev - 1);
-    }
-  }, [currentStepIdx]);
+    engine.play();
+  }, [engine, steps.length]);
 
   const handleResetPlayback = useCallback(() => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    engine.reset();
     setSteps([]);
-    setCurrentStepIdx(-1);
     setMessage("Playback reset.");
-  }, []);
+  }, [engine]);
 
   const clearHeap = useCallback(() => {
     resetPlayback();
@@ -176,32 +154,24 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   }, [isMinHeap, resetPlayback]);
 
   useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
-
-    if (currentStepIdx >= steps.length) {
-      setIsAnimating(false);
-      return;
+    if (engine.currentStep === steps.length - 1 && steps.length > 0 && !engine.isPlaying) {
+      setHeapArray(targetHeapArray);
+      setMessage("Operation completed successfully!");
     }
+  }, [engine.currentStep, steps.length, engine.isPlaying, targetHeapArray]);
 
-    const currentStep = steps[currentStepIdx];
-    setMessage(currentStep.explanation);
+  useVisualizerKeyboard({
+    onStart: startVisualizer,
+    onReset: clearHeap,
+    onSpeedChange: (s) => engine.setSpeed(1800 / s),
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    speed: 1800 / engine.speed,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
+    enabled: true,
+  });
 
-    timerRef.current = setTimeout(() => {
-      if (currentStepIdx < steps.length - 1) {
-        setCurrentStepIdx((prev) => prev + 1);
-      } else {
-        setIsAnimating(false);
-        setHeapArray(targetHeapArray);
-        setMessage("Operation completed successfully!");
-      }
-    }, 1800 / speed);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [currentStepIdx, isAnimating, speed, steps, targetHeapArray]);
-
-  const currentStep = steps[currentStepIdx] || null;
+  const currentStep = steps[engine.currentStep] || null;
   const activeArray = currentStep?.arraySnapshot || heapArray;
   const activeTypeLabel = isMinHeap ? "Min-Heap" : "Max-Heap";
 
@@ -261,14 +231,14 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Insert value"
-                disabled={isAnimating}
+                disabled={engine.isPlaying}
                 className="w-full sm:w-36 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 onKeyDown={(e) => e.key === "Enter" && handleInsert()}
               />
               <button
                 type="button"
                 onClick={handleInsert}
-                disabled={isAnimating}
+                disabled={engine.isPlaying}
                 className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:opacity-40 text-white rounded-xl transition-all"
               >
                 Insert
@@ -276,7 +246,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
               <button
                 type="button"
                 onClick={handleExtract}
-                disabled={isAnimating || heapArray.length <= 1}
+                disabled={engine.isPlaying || heapArray.length <= 1}
                 className="px-4 py-2 text-xs font-bold bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] text-slate-900 dark:text-slate-200 rounded-xl transition-all border border-gray-200 dark:border-[#333] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Extract Root
@@ -289,13 +259,13 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                 value={buildInput}
                 onChange={(e) => setBuildInput(e.target.value)}
                 placeholder="e.g. 5, 3, 8, 1, 4"
-                disabled={isAnimating}
+                disabled={engine.isPlaying}
                 className="w-full sm:w-72 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={handleBuild}
-                disabled={isAnimating}
+                disabled={engine.isPlaying}
                 className="px-4 py-2 text-xs font-bold bg-gray-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl transition-all border border-gray-800 dark:border-slate-600 disabled:opacity-40"
               >
                 Build Heap
@@ -304,18 +274,18 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
           </div>
 
           <PlaybackControls
-            isPlaying={isAnimating}
-            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
+            isPlaying={engine.isPlaying}
+            onPlayPause={engine.isPlaying ? engine.pause : startVisualizer}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
             onReset={handleResetPlayback}
             onClear={clearHeap}
             clearLabel="Clear Heap"
-            speed={speed}
-            onSpeedChange={setSpeed}
-            disabled={steps.length === 0 && !isAnimating}
+            speed={1800 / engine.speed}
+            onSpeedChange={(s) => engine.setSpeed(1800 / s)}
+            disabled={steps.length === 0 && !engine.isPlaying}
             showPlayPause={true}
-            progressText={`Step ${currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / ${steps.length || 0}`}
+            progressText={`Step ${steps.length > 0 ? engine.currentStep + 1 : 0} / ${steps.length || 0}`}
           />
         </div>
 
@@ -325,7 +295,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
               <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
             </span>
             <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-slate-700">
-              Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+              Step {steps.length > 0 ? engine.currentStep + 1 : 0} / {steps.length || 0}
             </span>
           </div>
           <div className="text-[14px] leading-relaxed min-h-[24px] text-center" style={{ color: "var(--color-muted)" }}>

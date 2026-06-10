@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: algobuddy-backend
+    env: docker
+    region: singapore # Feel free to change to ohio, frankfurt, or oregon based on your preference
+    plan: free
+    envVars:
+      # You will need to securely provide the values for these in the Render Dashboard:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false

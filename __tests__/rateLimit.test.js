@@ -5,7 +5,7 @@
 // Tests the sliding-window logic in lib/rateLimit/rateLimit.js.
 // No network, no Supabase, no Next.js needed — pure unit tests.
 
-const { checkRateLimit, resetKey, resetAll } = require("../lib/rateLimit/rateLimit");
+import { checkRateLimit, resetKey, resetAll } from "../src/lib/rateLimit/index.js";
 
 describe("checkRateLimit — sliding window", () => {
   const KEY = "test-user-123";

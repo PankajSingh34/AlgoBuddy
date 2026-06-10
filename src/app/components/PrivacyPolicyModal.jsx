@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 
-const policySections = [
+export const policySections = [
   {
     id: "information-we-collect",
     title: "Information We Collect",

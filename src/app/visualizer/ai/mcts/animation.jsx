@@ -36,6 +36,25 @@ const MCTSAnim = () => {
   const [highlightPath, setHighlightPath] = useState([]);
   const [stepExplanation, setStepExplanation] = useState("");
   const [stepCount, setStepCount] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [sessionHistory, setSessionHistory] = useState([]);
+  const handleStepForward = () => {
+  if (!isPaused) return;
+
+  runTick();
+};
+  const handleStepBackward = () => {
+  if (history.length === 0) return;
+
+  const previous = history[history.length - 1];
+
+  setTree(previous.tree);
+  setHighlightPath(previous.highlightPath);
+  setStepCount(previous.stepCount);
+  setStepExplanation(previous.stepExplanation);
+
+  setHistory(prev => prev.slice(0, -1));
+};
 
   const {
     isPaused,
@@ -54,6 +73,35 @@ const MCTSAnim = () => {
   useEffect(() => { saveToStorage("mcts-explore-c", exploreC); }, [exploreC]);
   useEffect(() => { saveToStorage("mcts-sim-size", simSize); }, [simSize]);
   useEffect(() => { saveToStorage("mcts-speed", speed); }, [speed]);
+  useEffect(() => {
+  const savedSessions = JSON.parse(
+    localStorage.getItem("mcts-session-history") || "[]"
+  );
+
+  setSessionHistory(savedSessions);
+}, []);
+
+const saveSession = () => {
+  const session = {
+    timestamp: new Date().toLocaleString(),
+    stepCount,
+    exploreC,
+    simSize,
+    bookmarked: false
+  };
+
+  const updatedSessions = [
+    session,
+    ...sessionHistory,
+  ].slice(0, 10);
+
+  localStorage.setItem(
+    "mcts-session-history",
+    JSON.stringify(updatedSessions)
+  );
+
+  setSessionHistory(updatedSessions);
+};
 
   const reset = useCallback(() => {
     runningRef.current = false;
@@ -103,6 +151,16 @@ const MCTSAnim = () => {
       lastPath = path;
     }
 
+    setHistory(prev => [
+  ...prev,
+  {
+    tree,
+    highlightPath,
+    stepCount,
+    stepExplanation,
+  },
+]);
+
     setTree(nodes);
     setHighlightPath(lastPath);
     setStepCount(count);
@@ -132,10 +190,15 @@ const MCTSAnim = () => {
   };
 
   const handleReset = () => {
-    reset();
-    setMessage("Visualizer reset.");
-    setMessageType("warning");
-  };
+  if (stepCount > 0) {
+    saveSession();
+  }
+
+  reset();
+
+  setMessage("Visualizer reset.");
+  setMessageType("warning");
+};
 
 
   const getPos = (index) => {
@@ -162,6 +225,17 @@ const MCTSAnim = () => {
       : messageType === "warning"
       ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
       : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200";
+
+  const replaySession = (session) => {
+  setExploreC(session.exploreC);
+  setSimSize(session.simSize);
+
+  setMessage(
+    `Loaded session from ${session.timestamp}`
+  );
+
+  setMessageType("success");
+};
 
   return (
     <main className="container mx-auto">
@@ -235,6 +309,24 @@ const MCTSAnim = () => {
                   className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
                   disabled={speed <= 0.5}
                 >-</button>
+
+                <div className="flex gap-2">
+  <button onClick={() => setSpeed(0.5)}>
+    Slow
+  </button>
+
+  <button onClick={() => setSpeed(1)}>
+    Normal
+  </button>
+
+  <button onClick={() => setSpeed(2)}>
+    Fast
+  </button>
+
+  <button onClick={() => setSpeed(5)}>
+    Ultra Fast
+  </button>
+</div>
                 <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center text-sm">
                   {speed}x speed
                 </span>
@@ -287,6 +379,52 @@ const MCTSAnim = () => {
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-10 text-center uppercase tracking-[0.2em]">
               Search Tree Visualization
             </h2>
+
+            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-md">
+  <h3 className="text-lg font-bold mb-4">
+    Session History
+  </h3>
+
+  {sessionHistory.length === 0 ? (
+    <p className="text-gray-500 text-sm">
+      No saved sessions yet.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {sessionHistory.map((session, index) => (
+        <div
+          key={index}
+          className="flex justify-between items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+        >
+          <div>
+            <p className="font-medium">
+              {session.timestamp}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              Steps: {session.stepCount}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              Explore C: {session.exploreC}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              Simulations: {session.simSize}
+            </p>
+          </div>
+
+          <button
+            onClick={() => replaySession(session)}
+            className="px-3 py-2 bg-primary text-white rounded-lg"
+          >
+            Replay
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
             <div className="min-w-[800px] h-[360px] relative mx-auto">
               <svg className="absolute w-full h-full left-0 top-0 pointer-events-none opacity-30">{edges}</svg>
               {tree.map((node, i) => {

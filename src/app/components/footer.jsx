@@ -12,16 +12,15 @@ import {
   FaInstagram,
 } from 'react-icons/fa6'
 
-import PrivacyPolicyModal from '@/app/components/PrivacyPolicyModal'
+
 import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
 import CookiePolicyModal from '@/app/components/cookie'
-import CodeOfConductModel from '@/app/components/CodeOfConductModel'
+
 
 const Footer = () => {
-  const [showPolicyModal, setShowPolicyModal] = useState(false)
+  
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showCookieModal, setShowCookieModal] = useState(false)
-  const [ShowShowOfConduct, setShowCodeOfConductModal] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
 
@@ -110,6 +109,16 @@ const Footer = () => {
                   aria-label="Instagram"
                 >
                   <FaInstagram className="w-4 h-4" />
+                </a>
+
+                <a
+                  href="https://discord.gg/PqnazRxPc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialIcon}
+                  aria-label="Join AlgoBuddy Discord Community"
+                >
+                  <FaDiscord className="w-4 h-4" />
                 </a>
               </div>
 
@@ -240,12 +249,11 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Legal</h3>
               <div className="space-y-4">
-                <button
-                  onClick={() => setShowPolicyModal(true)}
-                  className={footerLink}
+                <Link href="/privacy"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
                   Privacy Policy
-                </button>
+                </Link>
                 <button
                   onClick={() => setShowTermsModal(true)}
                   className={footerLink}
@@ -258,12 +266,11 @@ const Footer = () => {
                 >
                   Cookies Policy
                 </button>
-                <button
-                  onClick={() => setShowCodeOfConductModal(true)}
-                  className={footerLink}
+                <Link href="/code-of-conduct"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
-                  Code of Conduct
-                </button>
+                  Code Of Conduct
+                </Link>
               </div>
             </div>
           </div>
@@ -279,10 +286,7 @@ const Footer = () => {
         </div>
       </footer>
 
-      <PrivacyPolicyModal
-        isOpen={showPolicyModal}
-        onClose={() => setShowPolicyModal(false)}
-      />
+      
       <TermsOfServiceModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
@@ -291,10 +295,7 @@ const Footer = () => {
         isOpen={showCookieModal}
         onClose={() => setShowCookieModal(false)}
       />
-      <CodeOfConductModel
-        isOpen={ShowShowOfConduct}
-        onClose={() => setShowCodeOfConductModal(false)}
-      />
+      
     </>
   )
 }
