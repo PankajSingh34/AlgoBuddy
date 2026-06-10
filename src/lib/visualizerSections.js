@@ -289,14 +289,13 @@ export const sections = [
   {
     title: "AI Algorithms",
     slug: "ai",
-    desc: "Search algorithms used in Artificial Intelligence, heuristic pathfinding, and game tree decision making",
+    desc: "Search algorithms used in Artificial Intelligence (Min Max, Alpha Beta Pruning, etc.)",
     subsections: [
       {
         title: "Adversarial Search",
         items: [
           { name: "Min Max Algorithm", path: "/visualizer/ai/minmax" },
           { name: "Alpha Beta Pruning", path: "/visualizer/ai/alpha-beta-pruning" },
-          { name: "A* Search", path: "/visualizer/ai/astar" },
           { name: "Monte Carlo Tree Search (MCTS)", path: "/visualizer/ai/mcts" },
         ],
       },

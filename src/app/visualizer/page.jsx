@@ -666,7 +666,7 @@ const sections = [
   {
     title: "AI Algorithms",
     slug: "ai",
-    desc: "Search algorithms used in Artificial Intelligence, heuristic pathfinding, and game tree decision making",
+    desc: "Search algorithms used in Artificial Intelligence (Min Max, Alpha Beta Pruning, etc.)",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -685,7 +685,7 @@ const sections = [
     ),
     info: {
       About:
-        "AI algorithms involve search and optimization techniques used to find the best possible moves or paths, often used in game theory like Chess or Tic-Tac-Toe. Examples include Min Max, Alpha Beta Pruning, A* Search, and Monte Carlo Tree Search.",
+        "AI algorithms involve search and optimization techniques used to find the best possible moves or paths, often used in game theory like Chess or Tic-Tac-Toe. Examples include Min Max and Alpha Beta Pruning.",
       Representation: null,
     },
     subsections: [
@@ -699,10 +699,6 @@ const sections = [
           {
             name: "Alpha Beta Pruning",
             path: "/visualizer/ai/alpha-beta-pruning",
-          },
-          {
-            name: "A* Search",
-            path: "/visualizer/ai/astar",
           },
           {
             name: "Monte Carlo Tree Search (MCTS)",
