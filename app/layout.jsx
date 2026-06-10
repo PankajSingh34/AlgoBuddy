@@ -3,7 +3,7 @@ import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/app/contexts/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
-
+import BackToTopButton from "@/app/components/BackToTopButton";
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata = {
@@ -117,6 +117,7 @@ export default async function RootLayout({ children }) {
           </ClientLayoutWrapper>
         </UserProvider>
         <SpeedInsights />
+        <BackToTopButton />
       </body>
     </html>
   );
