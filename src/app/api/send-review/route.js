@@ -81,6 +81,17 @@ export async function POST(request) {
       return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
     }
 
+    const smtpQuotaAllowed = await checkGlobalSmtpQuota(
+      parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
+    );
+    if (!smtpQuotaAllowed) {
+      console.error("[review] SMTP daily quota exceeded. Email not sent.");
+      return jsonResponse({ message: "Review received." }, 200, {
+        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Remaining": remaining.toString(),
+      });
+    }
+
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
 
     const transporter = nodemailer.createTransport({

@@ -209,32 +209,30 @@ let localSmtpDate = new Date().toISOString().split("T")[0];
 export async function checkGlobalSmtpQuota(maxPerDay = 500) {
   const today = new Date().toISOString().split("T")[0];
 
-  if (shouldTryRedis()) {
-    try {
-      const dailyKey = `smtp:quota:${today}`;
-      const count = await redis.incr(dailyKey);
-      if (count === 1) {
-        await redis.expire(dailyKey, 86400);
-      }
-      markRedisOnline();
-      return {
-        allowed: count <= maxPerDay,
-        remaining: Math.max(0, maxPerDay - count),
-      };
-    } catch (err) {
-      markRedisOffline(err);
+  let count;
+
+  if (!redis) {
+    if (localSmtpDate !== today) {
+      localSmtpCounter = 0;
+      localSmtpDate = today;
+    }
+    localSmtpCounter += 1;
+    count = localSmtpCounter;
+  } else {
+    const dailyKey = `smtp:quota:${today}`;
+    count = await redis.incr(dailyKey);
+    if (count === 1) {
+      await redis.expire(dailyKey, 86400);
     }
   }
 
-  if (localSmtpDate !== today) {
-    localSmtpCounter = 0;
-    localSmtpDate = today;
+  const usagePercent = (count / maxPerDay) * 100;
+  if (usagePercent >= 80) {
+    console.warn(
+      `[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${count}/${maxPerDay}) consumed`,
+    );
   }
 
-  const isOutage = redis && (isRedisOffline || Date.now() < redisOfflineUntil);
-  const limit = isOutage ? Math.max(1, Math.floor(maxPerDay * 0.5)) : maxPerDay;
-
-  localSmtpCounter += 1;
   return {
     allowed: localSmtpCounter <= limit,
     remaining: Math.max(0, limit - localSmtpCounter),
