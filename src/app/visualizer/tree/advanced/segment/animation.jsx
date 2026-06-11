@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   RefreshCw,
 } from "lucide-react";
@@ -7,15 +7,13 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
-import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { buildSegTree, collectNodes, queryGenerator, updateGenerator } from "@/features/algorithms/tree/segmentTreeLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const DEFAULT_VALUES = [5, 11, 8, 12, 4, 9, 3, 7];
-
-// Logic moved to src/features/algorithms/tree/segmentTreeLogic.js
 
 export default function SegmentAnimation() {
   const [arr, setArr] = useState([...DEFAULT_VALUES]);
@@ -25,139 +23,104 @@ export default function SegmentAnimation() {
   const [queryR, setQueryR] = useState("");
   const [updateIdx, setUpdateIdx] = useState("");
   const [updateVal, setUpdateVal] = useState("");
+  
   const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const { speed, setSpeed } = usePlayback(1);
   const [message, setMessage] = useState("Build complete! Select a range query or point update to visualize.");
-  const [highlightedNodes, setHighlightedNodes] = useState({}); // node -> state
-  const [highlightedArray, setHighlightedArray] = useState({});
+  const [visualState, setVisualState] = useState(null);
   const [resultBox, setResultBox] = useState(null);
 
-  const timerRef = useRef(null);
-  useVisualizerReset(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsAnimating(false);
-    setMessage("...");
-    setSteps([]);
-    setCurrentStepIdx(-1);
-  });
-  const n = arr.length;
-  const treeNodes = collectNodes(tree, n);
-
-
-  useEffect(() => {
-    if (currentStepIdx < 0 || currentStepIdx >= steps.length) return;
-    const step = steps[currentStepIdx];
-    setHighlightedNodes(step.highlightedNodes || {});
-    setHighlightedArray(step.highlightedArray || {});
+  const onStep = useCallback((step, idx) => {
+    if (idx === -1) {
+      setVisualState(null);
+      setResultBox(null);
+      return;
+    }
+    setVisualState(step);
     setMessage(step.explanation || "");
     if (step.result !== undefined) setResultBox(step.result);
-  }, [currentStepIdx, steps]);
+    if (step.type === 'complete' && step.newArr) {
+      setArr(step.newArr);
+      setTree(step.newTree);
+    }
+  }, []);
 
-  useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
-    if (currentStepIdx >= steps.length - 1) { setIsAnimating(false); return; }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [isAnimating, currentStepIdx, steps, speed]);
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1 });
 
-  const pauseVisualizer = () => { setIsAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
-  const startVisualizer = () => {
-    if (steps.length === 0) return;
-    setIsAnimating(true);
-    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
-    setCurrentStepIdx(nextIdx);
-  };
-  const stepForward = () => { setIsAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setIsAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
-  const resetPlayback = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
-    setHighlightedNodes({});
-    setHighlightedArray({});
-    setResultBox(null);
-    setMessage("Playback reset.");
-  };
-
-  const handleReset = () => {
+  useVisualizerReset(() => {
+    engine.reset();
     setArr([...DEFAULT_VALUES]);
     setTree(buildSegTree(DEFAULT_VALUES));
     setSteps([]);
-    setCurrentStepIdx(-1);
-    setHighlightedNodes({});
-    setHighlightedArray({});
+    setMessage("...");
+    setVisualState(null);
+    setResultBox(null);
+  });
+
+  const n = arr.length;
+  const treeNodes = collectNodes(tree, n);
+
+  const handleReset = () => {
+    engine.reset();
+    setArr([...DEFAULT_VALUES]);
+    setTree(buildSegTree(DEFAULT_VALUES));
+    setSteps([]);
+    setVisualState(null);
     setResultBox(null);
     setQueryL(""); setQueryR(""); setUpdateIdx(""); setUpdateVal("");
     setMessage("Tree reset to default. Choose an operation to begin.");
+  };
+
+  const runOperation = (generatorFunc) => {
+    engine.reset();
+    setResultBox(null);
+    const generator = generatorFunc();
+    const newSteps = [];
+    for (const step of generator) {
+      if (step.type === 'error') {
+        setMessage(step.message);
+        return;
+      }
+      newSteps.push(step);
+    }
+    setSteps(newSteps);
+    if (newSteps.length > 0) {
+      setVisualState(newSteps[0]);
+      setTimeout(() => {
+        engine.play();
+      }, 50);
+    }
   };
 
   // === RANGE QUERY ===
   const triggerQuery = () => {
     const l = parseInt(queryL);
     const r = parseInt(queryR);
-    
-    setIsAnimating(false);
-    setResultBox(null);
-
-    const gen = queryGenerator(l, r, tree, n);
-    const newSteps = [];
-
-    for (const step of gen) {
-      if (step.type === 'error') {
-        setMessage(step.message);
-        return;
-      }
-      newSteps.push(step);
-    }
-
     setQueryL(""); setQueryR("");
-    setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
+    runOperation(() => queryGenerator(l, r, tree, n));
   };
 
   // === POINT UPDATE ===
   const triggerUpdate = () => {
     const idx = parseInt(updateIdx);
     const newVal = parseInt(updateVal);
-    
-    setIsAnimating(false);
-    setResultBox(null);
-
-    const gen = updateGenerator(idx, newVal, arr, n);
-    const newSteps = [];
-
-    for (const step of gen) {
-      if (step.type === 'error') {
-        setMessage(step.message);
-        return;
-      }
-      newSteps.push(step);
-      if (step.type === 'complete') {
-        setArr(step.newArr);
-        setTree(step.newTree);
-      }
-    }
-
     setUpdateIdx(""); setUpdateVal("");
-    setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
+    runOperation(() => updateGenerator(idx, newVal, arr, n));
   };
 
   useVisualizerKeyboard({
-    onStepForward: stepForward,
-    onStepBackward: stepBackward,
-    onTogglePlay: isAnimating ? pauseVisualizer : startVisualizer,
-    onReset: resetPlayback,
-    onSpeedChange: setSpeed,
-    speed: speed,
-    sorting: isAnimating,
-    sorted: false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onTogglePlay: engine.isPlaying ? engine.pause : (steps.length > 0 ? engine.play : undefined),
+    onReset: engine.reset,
+    onSpeedChange: (s) => engine.setSpeed(s * 500),
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep >= steps.length - 1 && steps.length > 0,
     enabled: true,
   });
+
+  const highlightedNodes = visualState?.highlightedNodes || {};
+  const highlightedArray = visualState?.highlightedArray || {};
 
   // Color helpers
   const getNodeColor = (nodeId) => {
@@ -194,7 +157,7 @@ export default function SegmentAnimation() {
       <VisualizerCard>
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl w-fit dark:bg-gray-800">
           {[["query", "Range Query"], ["update", "Point Update"]].map(([val, label]) => (
-            <button key={val} onClick={() => { setMode(val); resetPlayback(); }}
+            <button key={val} onClick={() => { setMode(val); engine.reset(); }}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === val ? "bg-[#a435f0] text-white shadow-md" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"}`}
             >
               {label}
@@ -207,11 +170,11 @@ export default function SegmentAnimation() {
             {mode === "query" ? (
               <>
                 <input type="number" value={queryL} onChange={e => setQueryL(e.target.value)} placeholder={`L (0-${n-1})`}
-                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={isAnimating} />
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={engine.isPlaying} />
                 <input type="number" value={queryR} onChange={e => setQueryR(e.target.value)} placeholder={`R (0-${n-1})`}
-                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={isAnimating}
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={engine.isPlaying}
                   onKeyDown={e => e.key === "Enter" && triggerQuery()} />
-                <button onClick={triggerQuery} disabled={isAnimating}
+                <button onClick={triggerQuery} disabled={engine.isPlaying}
                   className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50">
                   Query Sum
                 </button>
@@ -219,11 +182,11 @@ export default function SegmentAnimation() {
             ) : (
               <>
                 <input type="number" value={updateIdx} onChange={e => setUpdateIdx(e.target.value)} placeholder={`Index (0-${n-1})`}
-                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={isAnimating} />
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={engine.isPlaying} />
                 <input type="number" value={updateVal} onChange={e => setUpdateVal(e.target.value)} placeholder="New value"
-                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={isAnimating}
+                  className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={engine.isPlaying}
                   onKeyDown={e => e.key === "Enter" && triggerUpdate()} />
-                <button onClick={triggerUpdate} disabled={isAnimating}
+                <button onClick={triggerUpdate} disabled={engine.isPlaying}
                   className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50">
                   Update
                 </button>
@@ -240,13 +203,13 @@ export default function SegmentAnimation() {
 
         <div className="mt-6">
           <PlaybackControls 
-            isPlaying={isAnimating}
-            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
-            onReset={resetPlayback}
-            speed={speed}
-            onSpeedChange={setSpeed}
+            isPlaying={engine.isPlaying}
+            onPlayPause={engine.isPlaying ? engine.pause : engine.play}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
+            onReset={engine.reset}
+            speed={engine.speed / 500}
+            onSpeedChange={(s) => engine.setSpeed(s * 500)}
             disabled={steps.length === 0}
             showPlayPause={true}
           />
@@ -259,7 +222,7 @@ export default function SegmentAnimation() {
             ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
             : message.includes("Out of range") || message.includes("error") || message.includes("⚠️")
               ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-              : isAnimating
+              : engine.isPlaying
                 ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
                 : ""
         }
@@ -267,7 +230,7 @@ export default function SegmentAnimation() {
         <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
           <span>Step Explanation</span>
           <span className="font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-            Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+            Step {engine.currentStep !== -1 ? engine.currentStep + 1 : 0} / {steps.length || 0}
           </span>
         </div>
         <div className="flex items-center gap-3">
