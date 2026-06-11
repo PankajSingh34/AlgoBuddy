@@ -1,7 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Footer from "@/app/components/footer";
-import usePlayback from "@/app/hooks/usePlayback";
+import { generateSearchSteps } from "@/features/algorithms/tree/bstSearchLogic";
+import { generateInsertSteps } from "@/features/algorithms/tree/bstInsertLogic";
+import { generatePostOrderSteps } from "@/features/algorithms/tree/bstPostOrderLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -269,23 +273,24 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const [inputValue, setInputValue] = useState("");
   const [activeOperationValue, setActiveOperationValue] = useState(null);
   const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  
+  const onStep = useCallback((step) => {
+    setMessage(step.explanation);
+  }, []);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1800 });
   const [message, setMessage] = useState("Add nodes or select a mode to begin.");
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
-  const { speed, setSpeed } = usePlayback(1);
-  const timerRef = useRef(null);
+  
 
   const resetPlayback = useCallback(() => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
+    engine.reset();
     setSteps([]);
     setMessage("Playback reset. Click Start to begin operations.");
-  }, []);
+  }, [engine]);
 
   // Sync mode changes
   useEffect(() => {
@@ -312,8 +317,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
       setTargetTreeRoot(newRoot);
       const preCalculated = generateInsertSteps(root, val);
       setSteps(preCalculated);
-      setCurrentStepIdx(0);
-      setIsAnimating(true);
+      setTimeout(() => { engine.play(); }, 50);
       setInputValue("");
     } else {
       setRoot(prev => insertNodeFunctional(prev, val));
@@ -337,8 +341,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     setActiveOperationValue(val);
     const preCalculated = generateSearchSteps(root, val);
     setSteps(preCalculated);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
+      setTimeout(() => { engine.play(); }, 50);
     setInputValue("");
   };
 
@@ -364,8 +367,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     setTargetTreeRoot(newRoot);
     const preCalculated = generateDeleteSteps(root, val);
     setSteps(preCalculated);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
+      setTimeout(() => { engine.play(); }, 50);
     setInputValue("");
   };
 
@@ -448,8 +450,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
           return;
         }
         setSteps(preCalculated);
-        setCurrentStepIdx(0);
-        setIsAnimating(true);
+        setTimeout(() => { engine.play(); }, 50);
         return;
       }
     }
@@ -470,66 +471,32 @@ export default function TreeBSTVisualizer({ initialMode }) {
       return;
     }
 
-    setIsAnimating(true);
     setQuizSubmitted(false);
     setSelectedOption(null);
-
-    let nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
-    setCurrentStepIdx(nextIdx);
+    engine.play();
   };
 
   useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
-
-    if (currentStepIdx >= steps.length) {
-      setIsAnimating(false);
-      return;
-    }
-
-    const currentStep = steps[currentStepIdx];
-    setMessage(currentStep.explanation);
-
-    timerRef.current = setTimeout(() => {
-      if (currentStepIdx < steps.length - 1) {
-        setCurrentStepIdx(prev => prev + 1);
-      } else {
-        setIsAnimating(false);
-        // Permanently write to tree state if write operation completed successfully
+     if (engine.currentStep === steps.length - 1 && steps.length > 0 && !engine.isPlaying) {
         if (mode === "insertion" || mode === "deletion") {
           setRoot(targetTreeRoot);
           setMessage("Operation completed successfully!");
         } else {
-          setMessage(currentStep.explanation);
+          setMessage(steps[engine.currentStep].explanation);
         }
-      }
-    }, 1800 / speed);
+     }
+  }, [engine.currentStep, steps.length, engine.isPlaying, mode, targetTreeRoot]);
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [isAnimating, currentStepIdx, steps, speed, targetTreeRoot, mode]);
-
-  const pauseVisualizer = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-  };
-
-  const stepForward = () => {
-    setIsAnimating(false);
-    if (currentStepIdx < steps.length - 1) {
-      setCurrentStepIdx(prev => prev + 1);
-      if (currentStepIdx === steps.length - 2 && (mode === "insertion" || mode === "deletion")) {
-        setRoot(targetTreeRoot);
-      }
-    }
-  };
-
-  const stepBackward = () => {
-    setIsAnimating(false);
-    if (currentStepIdx > 0) {
-      setCurrentStepIdx(prev => prev - 1);
-    }
-  };
+  useVisualizerKeyboard({
+    onStart: startVisualizer,
+    onReset: handleResetTree,
+    onSpeedChange: (s) => engine.setSpeed(1800 / s),
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    speed: 1800 / engine.speed,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
+    enabled: true,
+  });
 
   const handleResetTree = () => {
     setRoot(null);
@@ -562,7 +529,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     const xOffset = 260 / Math.pow(2, level);
     const yOffset = 80;
 
-    const currentStep = steps[currentStepIdx];
+    const currentStep = steps[engine.currentStep];
     const highlightedState = currentStep?.highlightedNodes?.[node.value] || null;
 
     nodesList.push({
@@ -601,7 +568,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
   };
 
   const buildTreeRenderData = () => {
-    const currentStep = steps[currentStepIdx];
+    const currentStep = steps[engine.currentStep];
     const showInsertedNode = currentStep?.isNodeCreated || false;
 
     // Use the animated target tree only during write operations.
@@ -646,7 +613,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
     };
   }, [generateRandomTree]);
 
-  const currentStep = steps[currentStepIdx] || null;
+  const currentStep = steps[engine.currentStep] || null;
   const currentHighlightLine = currentStep ? currentStep.codeLine : -1;
   const activeComplexity = complexityInfo[mode];
   const activeQuizList = quizzes[mode];
@@ -707,7 +674,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
               <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
                 <button
                   onClick={generateRandomTree}
-                  disabled={isAnimating}
+                  disabled={engine.isPlaying}
                   className="px-4 py-2 text-xs font-bold bg-gray-900 hover:bg-slate-800 dark:bg-[#1a1a1a] dark:hover:bg-[#2a2a2a] text-white rounded-xl transition-all border border-gray-200 dark:border-[#333] disabled:opacity-40"
                 >
                   🎲 Random BST
@@ -719,12 +686,12 @@ export default function TreeBSTVisualizer({ initialMode }) {
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={isTraversalMode ? "Traversal uses the current tree" : mode === "searching" ? "Find key (1-99)" : mode === "deletion" ? "Delete key" : "Insert key (1-99)"}
                     className="w-full sm:w-28 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-                    disabled={isAnimating}
+                    disabled={engine.isPlaying}
                     onKeyDown={(e) => e.key === "Enter" && (isTraversalMode ? startVisualizer() : mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
                   />
                   <button
                     onClick={() => (isTraversalMode ? startVisualizer() : mode === "searching" ? handleSearch() : mode === "deletion" ? handleDelete() : handleInsert())}
-                    disabled={isAnimating}
+                    disabled={engine.isPlaying}
                     className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:opacity-40 text-white rounded-xl transition-all font-semibold"
                   >
                     {isTraversalMode ? "Traverse" : mode === "searching" ? "Search" : mode === "deletion" ? "Delete" : "Insert"}
@@ -734,18 +701,18 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
               {/* Playback Controls */}
               <PlaybackControls
-                isPlaying={isAnimating}
-                onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-                onStepForward={stepForward}
-                onStepBackward={stepBackward}
+                isPlaying={engine.isPlaying}
+                onPlayPause={engine.isPlaying ? engine.pause : startVisualizer}
+                onStepForward={engine.stepForward}
+                onStepBackward={engine.stepBackward}
                 onReset={resetPlayback}
                 onClear={handleResetTree}
                 clearLabel="Clear Tree"
-                speed={speed}
-                onSpeedChange={setSpeed}
-                disabled={steps.length === 0 && !isAnimating}
+                speed={1800 / engine.speed}
+                onSpeedChange={(s) => engine.setSpeed(1800 / s)}
+                disabled={steps.length === 0 && !engine.isPlaying}
                 showPlayPause={true}
-                progressText={`Step ${currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / ${steps.length || 0}`}
+                progressText={`Step ${steps.length > 0 ? engine.currentStep + 1 : 0} / ${steps.length || 0}`}
               />
             </div>
 
@@ -756,7 +723,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                   <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
                 </span>
                 <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-[#333]">
-                  Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
+                  Step {engine.currentStep !== -1 ? engine.currentStep + 1 : 0} / {steps.length || 0}
                 </span>
               </div>
               <div
