@@ -90,19 +90,6 @@ const Animation = () => {
 
   // Animate the element background and border colors whenever visualState changes
   useEffect(() => {
-  const animateStep = useCallback(() => {
-    if (currentStateIdxRef.current >= stateQueueRef.current.length) {
-      setIsAnimating(false);
-      setMessage("Visualization completed.");
-      setMessageType("success");
-      setShowQuiz(true);
-      return;
-    }
-
-    const state = stateQueueRef.current[currentStateIdxRef.current];
-    const delay = 1500 / 1; // Replace speedRef.current with actual speed value
-
-
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
       const activeWindow = visualState.activeWindow || [-1, -1];
@@ -123,27 +110,12 @@ const Animation = () => {
       }
     });
 
-    if (state.done && engine.isPlaying) {
+    if (visualState.done && engine.isPlaying) {
       setMessage("Visualization completed.");
       setMessageType("success");
       setShowQuiz(true);
     }
   }, [visualState, engine.isPlaying]);
-
-  useEffect(() => {
-    if (steps.length > 0) {
-      stateQueueRef.current = steps;
-      currentStateIdxRef.current = engine.currentStep;
-      wasPausedRef.current = !engine.isPlaying;
-      animationRef.current = requestAnimationFrame(animateStep);
-      
-      return () => {
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }
-  }, [visualState, steps, engine.currentStep, engine.isPlaying, animateStep]);
 
   useEffect(() => {
     const handleDownload = async () => {
