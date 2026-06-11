@@ -5,6 +5,7 @@ import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 import { generateReverseFrames } from "@/features/algorithms/recursion/reverseArrayLogic";
 const codeLines = [
@@ -17,19 +18,8 @@ const codeLines = [
 
 const ReverseArrayAnimation = () => {
   const [arrayInput, setArrayInput] = useState("10, 20, 30, 40, 50");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-    useVisualizerReset(() => {
-      setArrayInput("10, 20, 30, 40, 50");
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-      setErrorMsg("");
-    });
 
   const parsedArray = useMemo(() => {
     return arrayInput
@@ -45,17 +35,14 @@ const ReverseArrayAnimation = () => {
     return generateReverseFrames(parsedArray);
   }, [parsedArray, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1500 });
+
+  useVisualizerReset(() => {
+    setArrayInput("10, 20, 30, 40, 50");
+    engine.reset();
+    setIsVisualizing(false);
+    setErrorMsg("");
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -68,15 +55,14 @@ const ReverseArrayAnimation = () => {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    setTimeout(() => { engine.play(); }, 50);
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
+    engine.reset();
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
   };
 
@@ -87,30 +73,7 @@ const ReverseArrayAnimation = () => {
     handleReset();
   };
 
-  const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
-    } else {
-      setIsPlaying((prev) => !prev);
-    }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
+  const activeFrameData = frames[engine.currentStep] || {
     stack: [],
     arr: parsedArray,
     activeLine: 0,
@@ -121,12 +84,13 @@ const ReverseArrayAnimation = () => {
   };
 
   useVisualizerKeyboard({
-    onStart: togglePlay,
-    onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    onStart: engine.isPlaying ? engine.pause : engine.play,
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: 1500 / engine.speed,
+    onSpeedChange: (s) => engine.setSpeed(1500 / s),
+    enabled: isVisualizing,
   });
 
   const activeStack = activeFrameData.stack || [];
@@ -192,14 +156,14 @@ const ReverseArrayAnimation = () => {
         {isVisualizing && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
+              isPaused={!engine.isPlaying}
+              onTogglePlayPause={engine.isPlaying ? engine.pause : engine.play}
+              speed={1500 / engine.speed}
+              onSpeedChange={(s) => engine.setSpeed(1500 / s)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
               onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              progressText={`${frames.length > 0 ? engine.currentStep + 1 : 0} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>

@@ -5,6 +5,58 @@ import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+
+// Helper to generate the execution states step-by-step
+import { generateHanoiFrames } from "@/features/algorithms/recursion/hanoiLogic";
+const codeLinesByLanguage = {
+  javascript: [
+    { line: 1, code: "function hanoi(n, src, dest, aux) {" },
+    { line: 2, code: "  if (n === 1) {" },
+    { line: 3, code: "    moveDisk(1, src, dest);" },
+    { line: 4, code: "    return;" },
+    { line: 5, code: "  }" },
+    { line: 6, code: "  hanoi(n - 1, src, aux, dest);" },
+    { line: 7, code: "  moveDisk(n, src, dest);" },
+    { line: 8, code: "  hanoi(n - 1, aux, dest, src);" },
+    { line: 9, code: "}" }
+  ],
+  python: [
+    { line: 1, code: "def hanoi(n, src, dest, aux):" },
+    { line: 2, code: "    if n == 1:" },
+    { line: 3, code: "        move_disk(1, src, dest)" },
+    { line: 4, code: "        return" },
+    { line: 5, code: "    hanoi(n - 1, src, aux, dest)" },
+    { line: 6, code: "    move_disk(n, src, dest)" },
+    { line: 7, code: "    hanoi(n - 1, aux, dest, src)" }
+  ],
+  java: [
+    { line: 1, code: "void solveHanoi(int n, char src, char dest, char aux) {" },
+    { line: 2, code: "    if (n == 1) {" },
+    { line: 3, code: "        moveDisk(1, src, dest);" },
+    { line: 4, code: "        return;" },
+    { line: 5, code: "    }" },
+    { line: 6, code: "    solveHanoi(n - 1, src, aux, dest);" },
+    { line: 7, code: "    moveDisk(n, src, dest);" },
+    { line: 8, code: "    solveHanoi(n - 1, aux, dest, src);" },
+    { line: 9, code: "}" }
+  ],
+  cpp: [
+    { line: 1, code: "void solveHanoi(int n, char src, char dest, char aux) {" },
+    { line: 2, code: "    if (n == 1) {" },
+    { line: 3, code: "        moveDisk(1, src, dest);" },
+    { line: 4, code: "        return;" },
+    { line: 5, code: "    }" },
+    { line: 6, code: "    solveHanoi(n - 1, src, aux, dest);" },
+    { line: 7, code: "    moveDisk(n, src, dest);" },
+    { line: 8, code: "    solveHanoi(n - 1, aux, dest, src);" },
+    { line: 9, code: "}" }
+  ]
+};
+
+const lineHighlightMap = {
+  javascript: { entry: 1, check: 2, move1: 3, ret1: 4, recurse1: 6, moveN: 7, recurse2: 8 },
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 // Helper to generate the execution states step-by-step
 import { generateHanoiFrames } from "@/features/algorithms/recursion/hanoiLogic";
@@ -62,22 +114,9 @@ const lineHighlightMap = {
 
 const HanoiAnimation = () => {
   const [nVal, setNVal] = useState("3");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedLang, setSelectedLang] = useState("javascript");
-
-  useVisualizerReset(() => {
-    setNVal("3");
-    setIsPlaying(false);
-    setSpeed(1);
-    setCurrentFrame(-1);
-    setIsVisualizing(false);
-    setErrorMsg("");
-    setSelectedLang("javascript");
-  });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];
@@ -86,17 +125,15 @@ const HanoiAnimation = () => {
     return generateHanoiFrames(n);
   }, [nVal, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1500 });
+
+  useVisualizerReset(() => {
+    setNVal("3");
+    engine.reset();
+    setIsVisualizing(false);
+    setErrorMsg("");
+    setSelectedLang("javascript");
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -110,51 +147,28 @@ const HanoiAnimation = () => {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    setTimeout(() => { engine.play(); }, 50);
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
+    engine.reset();
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
   };
 
-  const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
-    } else {
-      setIsPlaying((prev) => !prev);
-    }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
   useVisualizerKeyboard({
-    onStart: togglePlay,
-    onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    onStart: engine.isPlaying ? engine.pause : engine.play,
+    onTogglePlayPause: engine.isPlaying ? engine.pause : engine.play,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: 1500 / engine.speed,
+    onSpeedChange: (s) => engine.setSpeed(1500 / s),
+    enabled: isVisualizing,
   });
 
-  const activeFrameData = frames[currentFrame] || {
+  const activeFrameData = frames[engine.currentStep] || {
     stack: [],
     pegs: { A: Array.from({ length: parseInt(nVal, 10) || 3 }, (_, i) => (parseInt(nVal, 10) || 3) - i), B: [], C: [] },
     activeLine: "none",
@@ -217,14 +231,14 @@ const HanoiAnimation = () => {
         {isVisualizing && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
+              isPaused={!engine.isPlaying}
+              onTogglePlayPause={engine.isPlaying ? engine.pause : engine.play}
+              speed={1500 / engine.speed}
+              onSpeedChange={(s) => engine.setSpeed(1500 / s)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
               onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              progressText={`${frames.length > 0 ? engine.currentStep + 1 : 0} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>

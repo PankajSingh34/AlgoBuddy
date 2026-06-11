@@ -3,7 +3,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
-import usePlayback from "@/app/hooks/usePlayback";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { generateMinMaxSteps } from "@/features/algorithms/ai/minMaxLogic";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 
 const MinMax = () => {
   const [arrayElements, setArrayElements] = useState("3, 5, 2, 9, 12, 5, 23, 23");
@@ -214,12 +217,12 @@ const MinMax = () => {
               onChange={(e) => setArrayElements(e.target.value)}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-gray-800 dark:text-gray-200 font-mono"
               placeholder="e.g., 3, 5, 2, 9, 12, 5, 23, 23"
-              disabled={isAnimating}
+              disabled={engine.isPlaying}
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 self-end sm:w-auto w-full">
-            <GoButton onClick={handleGo} isAnimating={isAnimating} disabled={isAnimating} />
-            <ResetButton onReset={handleReset} isAnimating={isAnimating} />
+            <GoButton onClick={handleGo} isAnimating={engine.isPlaying} disabled={engine.isPlaying} />
+            <ResetButton onReset={handleReset} isAnimating={engine.isPlaying} />
           </div>
         </div>
 
