@@ -36,7 +36,6 @@ const Animation = () => {
 
   const visualizerRef = useRef(null);
   const animationRef = useRef(null);
-  const visualizerRef = useRef(null);
   const wasPausedRef = useRef(false);
   const stateQueueRef = useRef([]);
   const currentStateIdxRef = useRef(0);
