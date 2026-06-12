@@ -5,20 +5,19 @@ We welcome and appreciate contributions from the community to help make this pro
 
 ---
 
-**Join our community**
-**Discord Server : https://discord.gg/Gv2N4U3KAc**
+**Join our community** **Discord Server : https://discord.gg/Gv2N4U3KAc**
 
 ---
 
 ## ↪️ Table of Contents
 
-* [Contribution Areas](#contribution-areas)
-* [Tech Stack](#tech-stack)
-* [Getting Started](#getting-started)
-* [Development Workflow](#development-workflow)
-* [Issue Assignment Process](#issue-assignment-process)
-* [Pull Request Guidelines](#pull-request-guidelines)
-* [Reporting Issues](#reporting-issues)
+- [Contribution Areas](#contribution-areas)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Development Workflow](#development-workflow)
+- [Issue Assignment Process](#issue-assignment-process)
+- [Pull Request Guidelines](#pull-request-guidelines)
+- [Reporting Issues](#reporting-issues)
 
 ---
 
@@ -28,23 +27,23 @@ We accept contributions in the following areas:
 
 | Area                   | Description                                       |
 | ---------------------- | ------------------------------------------------- |
-| **Bug Fixes**          | Resolve existing bugs and issues ([Bug Report](.github/ISSUE_TEMPLATE/bug_report.yml)) |
+| **Bug Fixes**          | Resolve existing bugs and issues                  |
 | **UI/UX Improvements** | Enhance responsiveness, accessibility, and design |
 | **New Visualizers**    | Add new DSA visualizers and animations            |
 | **Documentation**      | Improve guides, README, and contributor docs      |
 | **Performance**        | Optimize application performance and efficiency   |
 | **Theme Enhancements** | Improve dark/light mode experience                |
 
-Feel free to suggest new contribution ideas by opening a [Feature Request](.github/ISSUE_TEMPLATE/feature_request.yml) first.
+Feel free to suggest new contribution ideas by opening an issue first.
 
 ---
 
 # ↪️ Tech Stack
 
-* **Framework**: Next.js (App Router)
-* **Library**: React.js
-* **Styling**: Tailwind CSS
-* **Language**: JavaScript
+- **Framework**: Next.js (App Router)
+- **Library**: React.js
+- **Styling**: Tailwind CSS
+- **Language**: JavaScript
 
 ---
 
@@ -58,31 +57,31 @@ Click the **Fork** button at the top-right corner of this repository.
 
 ## 2. Clone Your Fork
 
-```bash
+```
 git clone https://github.com/your-username/AlgoBuddy.git
 ```
 
 ## 3. Navigate to the Project Directory
 
-```bash
+```
 cd AlgoBuddy
 ```
 
 ## 4. Install Dependencies
 
-```bash
+```
 npm install
 ```
 
 ## 5. Start the Development Server
 
-```bash
+```
 npm run dev
 ```
 
 The application will start locally at:
 
-```bash
+```
 http://localhost:3000
 ```
 
@@ -98,13 +97,13 @@ Create a separate branch before making any changes.
 
 ### Syntax
 
-```bash
+```
 git checkout -b feature/your-feature-name
 ```
 
 ### Example
 
-```bash
+```
 git checkout -b fix/navbar-responsive-issue
 ```
 
@@ -114,11 +113,11 @@ git checkout -b fix/navbar-responsive-issue
 
 You can now start working on:
 
-* Bug fixes
-* UI/UX improvements
-* Documentation updates
-* Performance enhancements
-* New visualizers
+- Bug fixes
+- UI/UX improvements
+- Documentation updates
+- Performance enhancements
+- New visualizers
 
 ---
 
@@ -128,13 +127,13 @@ Write clear and meaningful commit messages.
 
 ### Syntax
 
-```bash
+```
 git commit -m "type: short-description"
 ```
 
 ### Example
 
-```bash
+```
 git commit -m "fix: improve navbar responsiveness"
 ```
 
@@ -155,7 +154,7 @@ git commit -m "fix: improve navbar responsiveness"
 
 Push your branch to your forked repository.
 
-```bash
+```
 git push origin feature/your-branch-name
 ```
 
@@ -172,17 +171,49 @@ After pushing your changes:
 
 ---
 
+# ↪️ Issue Assignment Process
+
+To keep contributions organized and avoid duplicated effort, please follow this process before starting any work:
+
+## 1. Find or Create an Issue
+
+- Browse the [open issues](https://github.com/PankajSingh34/AlgoBuddy/issues) to find something you'd like to work on.
+- If no issue exists for the change you want to make, **open a new issue first** and describe what you plan to do.
+- Do not open a pull request for work that doesn't have a corresponding issue.
+
+## 2. Request Assignment
+
+- Leave a comment on the issue saying you'd like to work on it (e.g. *"I'd like to take this up"*).
+- Wait for a maintainer to **officially assign the issue to you** before you start coding.
+- Issues that already have an assignee are taken — please do not submit a PR for them without first checking with the assignee or a maintainer.
+
+## 3. Assignment Rules
+
+| Rule | Detail |
+| ---- | ------ |
+| **One issue at a time** | Please complete or close your current assigned issue before requesting a new one. |
+| **Inactivity timeout** | If there is no progress within **7 days** of assignment, the issue may be unassigned and reopened for others. |
+| **First-timers welcome** | Issues labelled `good first issue` are reserved for first-time contributors. |
+| **Discuss before building** | For large features, discuss the approach in the issue thread before submitting a PR to avoid wasted effort. |
+
+## 4. Staying in Sync
+
+- If you get stuck or need clarification, comment on the issue — maintainers and community members are happy to help.
+- You can also ask in our [Discord Server](https://discord.gg/Gv2N4U3KAc) for faster responses.
+
+---
+
 # ↪️ Pull Request Guidelines
 
 Before submitting a PR:
 
-* Ensure the project runs correctly
-* Test changes on multiple screen sizes
-* Follow clean coding practices
-* Avoid unnecessary files
-* Use meaningful commit messages
-* Keep PRs focused on a single issue/topic
-* Add screenshots for UI-related changes whenever possible
+- Ensure the project runs correctly
+- Test changes on multiple screen sizes
+- Follow clean coding practices
+- Avoid unnecessary files
+- Use meaningful commit messages
+- Keep PRs focused on a single issue/topic
+- Add screenshots for UI-related changes whenever possible
 
 ---
 
@@ -190,11 +221,11 @@ Before submitting a PR:
 
 When creating issues, include:
 
-* Clear title
-* Proper explanation
-* Reproduction steps
-* Expected behavior
-* Screenshots if applicable
+- Clear title
+- Proper explanation
+- Reproduction steps
+- Expected behavior
+- Screenshots if applicable
 
 ---
 
@@ -202,9 +233,9 @@ When creating issues, include:
 
 If you need help while contributing:
 
-* Open an issue
-* Start a discussion
-* Ask questions in the community
+- Open an issue
+- Start a discussion
+- Ask questions in the community
 
 We're happy to help new contributors.
 
