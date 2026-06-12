@@ -32,11 +32,6 @@ export async function GET(request) {
     }
   }
 
-  const errorTarget =
-    next === "/reset-password"
-      ? `${origin}/reset-password?error=auth_callback_failed`
-      : `${origin}/login?error=auth_callback_failed`;
-
-  // Return the user to the most relevant error page with some instructions
-  return NextResponse.redirect(errorTarget);
+  // Return the user to an error page with some instructions
+  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }

@@ -66,8 +66,6 @@ function createMissingAuthClient() {
     signInWithOAuth: missing,
     signInWithPassword: missing,
     signUp: missing,
-    resetPasswordForEmail: missing,
-    updateUser: missing,
     onAuthStateChange: () => ({
       data: {
         subscription: {
