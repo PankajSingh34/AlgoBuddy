@@ -214,6 +214,12 @@ const BinarySearch = () => {
             </div>
           </div>
         </div>
+        <PlaybackControls
+  isPaused={isPaused}
+  speed={speed}
+  onTogglePlayPause={togglePlayPause}
+  onSpeedChange={setSpeed}
+/>
         {isAnimating && (
           <div className="mt-4">
             <PlaybackControls
