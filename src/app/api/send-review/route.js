@@ -81,10 +81,10 @@ export async function POST(request) {
       return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
     }
 
-    const smtpQuotaAllowed = await checkGlobalSmtpQuota(
+    const smtpQuota = await checkGlobalSmtpQuota(
       parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
     );
-    if (!smtpQuotaAllowed) {
+    if (!smtpQuota.allowed) {
       console.error("[review] SMTP daily quota exceeded. Email not sent.");
       return jsonResponse({ message: "Review received." }, 200, {
         "X-RateLimit-Limit": "5",
