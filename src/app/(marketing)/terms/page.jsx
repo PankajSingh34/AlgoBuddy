@@ -60,13 +60,13 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[var(--udemy-dark-bg)]">
+    <div className="min-h-screen bg-udemy-bg dark:bg-udemy-dark-bg">
       <main className="container-app section-app">
         <div className="mx-auto max-w-3xl">
-          <h1 className="mb-2 text-3xl font-bold text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]">
+          <h1 className="mb-2 text-3xl font-bold text-udemy-text dark:text-udemy-dark-text">
             Terms of Service
           </h1>
-          <p className="mb-8 text-[var(--udemy-muted)] dark:text-[var(--udemy-dark-muted)]">
+          <p className="mb-8 text-udemy-muted dark:text-udemy-dark-muted">
             Please read these terms and conditions carefully before using our website and services.
             Your access to and use of the service is conditioned on your acceptance of and compliance
             with these terms.
@@ -78,10 +78,10 @@ export default function TermsPage() {
                 className="card-surface p-6"
               >
                 <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-sm font-semibold text-[var(--color-primary)]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-udemy-purple/10 text-sm font-semibold text-udemy-purple dark:text-udemy-purple-light">
                     {item.id}
                   </span>
-                  <h2 className="text-lg font-semibold text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]">
+                  <h2 className="text-lg font-semibold text-udemy-text dark:text-udemy-dark-text">
                     {item.title}
                   </h2>
                 </div>
@@ -90,9 +90,9 @@ export default function TermsPage() {
                     {item.points.map((point, i) => (
                       <li
                         key={i}
-                        className="list-disc text-[var(--color-primary)] marker:text-[var(--color-primary)]"
+                        className="list-disc text-udemy-purple dark:text-udemy-purple-light marker:text-udemy-purple dark:marker:text-udemy-purple-light"
                       >
-                        <span className="text-[var(--udemy-muted)] dark:text-[var(--udemy-dark-muted)]">
+                        <span className="text-udemy-muted dark:text-udemy-dark-muted">
                           {point}
                         </span>
                       </li>
@@ -100,19 +100,19 @@ export default function TermsPage() {
                   </ul>
                 )}
                 {item.data && (
-                  <p className="text-[var(--udemy-muted)] dark:text-[var(--udemy-dark-muted)]">
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted">
                     {item.data}
                   </p>
                 )}
                 {item.contact && (
-                  <p className="mt-1 font-medium text-[var(--color-primary)]">
+                  <p className="mt-1 font-medium text-udemy-purple dark:text-udemy-purple-light">
                     {item.contact}
                   </p>
                 )}
               </div>
             ))}
           </div>
-          <p className="mt-8 text-xs text-[var(--udemy-muted)] dark:text-[var(--udemy-dark-muted)]">
+          <p className="mt-8 text-xs text-udemy-muted dark:text-udemy-dark-muted">
             Last updated: May 19, 2026
           </p>
         </div>
