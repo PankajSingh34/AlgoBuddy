@@ -139,12 +139,12 @@ const AboutSection = () => {
                 <div className="relative bg-white dark:bg-udemy-dark-surface p-8 rounded-3xl border border-udemy-border dark:border-udemy-dark-border shadow-xl">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-udemy-bg dark:bg-udemy-dark-bg p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3">
-                      <BookMarked className="w-8 h-8 text-udemy-muted" />
-                      <span className="text-sm font-medium text-udemy-muted">Traditional Learning</span>
+                      <BookMarked className="w-8 h-8 text-udemy-muted dark:text-udemy-dark-muted" />
+                      <span className="text-sm font-medium text-udemy-muted dark:text-udemy-dark-muted">Traditional Learning</span>
                     </div>
                     <div className="bg-udemy-purple/10 dark:bg-udemy-purple/20 p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3 border border-udemy-purple/30">
-                      <Zap className="w-8 h-8 text-udemy-purple" />
-                      <span className="text-sm font-medium text-udemy-purple">Visual Learning</span>
+                      <Zap className="w-8 h-8 text-udemy-purple dark:text-udemy-purple-light" />
+                      <span className="text-sm font-medium text-udemy-purple dark:text-udemy-purple-light">Visual Learning</span>
                     </div>
                   </div>
                 </div>
@@ -254,7 +254,7 @@ const AboutSection = () => {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
               {stats.map((stat, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-14 h-14 rounded-full bg-white dark:bg-udemy-dark-surface border border-udemy-purple/20 flex items-center justify-center text-udemy-purple shadow-sm">
+                  <div className="w-14 h-14 rounded-full bg-white dark:bg-udemy-dark-surface border border-udemy-purple/20 flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light shadow-sm">
                     {stat.icon}
                   </div>
                   <h3 className="text-4xl md:text-5xl font-bold text-udemy-text dark:text-udemy-dark-text tracking-tight">

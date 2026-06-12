@@ -12,9 +12,9 @@ export default function CodeOfConductContent() {
             <ul>
               {codeOfConductSections.map((item, index) => (
                 <li key={index} className="mb-4">
-                  <div className="bg-neutral-50 dark:bg-neutral-800/40 p-5 rounded-xl border border-neutral-200 dark:border-neutral-700 transition-all duration-300">
+                  <div className="bg-udemy-surface dark:bg-udemy-dark-surface p-5 rounded-xl border border-udemy-border dark:border-udemy-dark-border transition-all duration-300">
                     <div className="flex items-start">
-                      <span className="w-6 h-6 flex-shrink-0 font-semibold bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-700 dark:text-neutral-300 mr-3 mt-0.5">
+                      <span className="w-6 h-6 flex-shrink-0 font-semibold bg-udemy-purple/10 dark:bg-udemy-purple/20 rounded-full flex items-center justify-center text-udemy-purple dark:text-udemy-purple-light mr-3 mt-0.5">
                         {item.id}
                       </span>
                       <h3 className="text-xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-2">
@@ -26,7 +26,7 @@ export default function CodeOfConductContent() {
                         {item.points.map((subitem, subindex) => (
                           <li
                             key={subindex}
-                            className="list-disc text-neutral-500 pl-1"
+                            className="list-disc text-udemy-muted dark:text-udemy-dark-muted pl-1"
                           >
                             <span className="text-udemy-muted dark:text-udemy-dark-muted">
                               {subitem}
@@ -44,7 +44,7 @@ export default function CodeOfConductContent() {
                       <div className="pl-9 mt-2">
                         <a
                           href={`mailto:${item.contact}`}
-                          className="font-medium text-neutral-900 dark:text-neutral-100 hover:underline"
+                          className="font-medium text-udemy-text dark:text-udemy-dark-text hover:underline"
                         >
                           {item.contact}
                         </a>
@@ -66,7 +66,7 @@ export default function CodeOfConductContent() {
         <div className="sticky bottom-0 bg-white dark:bg-udemy-dark-surface border-t border-udemy-border dark:border-udemy-dark-border p-4 flex justify-end">
           <Link
             href="/"
-            className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+            className="px-6 py-2.5 bg-udemy-purple hover:bg-udemy-purple-dark text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm"
           >
             Accept & Continue
           </Link>
