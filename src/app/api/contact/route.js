@@ -76,7 +76,7 @@ export async function POST(req) {
     const smtpQuotaAllowed = await checkGlobalSmtpQuota(
       parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
     );
-    if (!smtpQuotaAllowed) {
+    if (!smtpQuotaAllowed.allowed) {
       console.error("[contact] SMTP daily quota exceeded. Email not sent.");
       return jsonResponse({ message: "Message received." }, 200, {
         "X-RateLimit-Limit": "5",
