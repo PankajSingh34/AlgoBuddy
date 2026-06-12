@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiUsers, FiCheck } from "react-icons/fi";
 import { useUser } from "@/features/user/UserContext";
-import { supabase } from "@/lib/supabase";
 
 const DISCORD_INVITE = "https://discord.gg/PqnazRxPc";
 
@@ -18,12 +17,9 @@ export default function JoinCommunityButton() {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase
-      .from("user_profiles")
-      .select("joined_community")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
+    fetch("/api/community/join")
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.joined_community) setJoined(true);
       })
       .catch(() => {});
@@ -31,11 +27,14 @@ export default function JoinCommunityButton() {
 
   const handleClick = async () => {
     if (user?.id && !joined) {
-      await supabase
-        .from("user_profiles")
-        .upsert({ id: user.id, joined_community: true }, { onConflict: "id" })
-        .catch(() => {});
-      setJoined(true);
+      try {
+        await fetch("/api/community/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ joined: true }),
+        });
+        setJoined(true);
+      } catch {}
     }
     window.open(DISCORD_INVITE, "_blank", "noopener,noreferrer");
   };

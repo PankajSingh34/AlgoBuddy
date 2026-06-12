@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/features/user/UserContext";
+import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
+import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 import {
   Home,
@@ -49,6 +51,65 @@ const LEADERBOARD_ROWS = [
   { rank: 5, name: "Ananya", rating: 2105 },
 ];
 
+const LEARNING_RECOMMENDATIONS = [
+  {
+    topic: "Binary Search Tree",
+    reason: "Recommended after mastering Binary Search",
+    color: "purple"
+  },
+  {
+    topic: "Graph Traversal (BFS)",
+    reason: "Next logical step after Tree Traversal",
+    color: "blue"
+  },
+  {
+    topic: "Dynamic Programming Basics",
+    reason: "Suggested from your recent activity",
+    color: "green"
+  }
+];
+
+const LEARNING_TIMELINE = [
+  {
+    title: "Arrays Module Completed",
+    date: "12 May 2026",
+    color: "bg-purple-500",
+  },
+  {
+    title: "7-Day Learning Streak",
+    date: "18 May 2026",
+    color: "bg-green-500",
+  },
+  {
+    title: "Binary Search Master Badge",
+    date: "25 May 2026",
+    color: "bg-yellow-500",
+  },
+  {
+    title: "100 Problems Solved",
+    date: "01 June 2026",
+    color: "bg-blue-500",
+  },
+];
+
+const ACHIEVEMENT_BADGES = [
+  { title: "Module Master", icon: "🏆" },
+  { title: "7-Day Streak", icon: "🔥" },
+  { title: "Community Helper", icon: "🤝" },
+  { title: "Arena Champion", icon: "⚔️" },
+];
+
+const LEARNING_GOALS = {
+  weekly: {
+    completed: 8,
+    target: 10,
+  },
+  monthly: {
+    completed: 32,
+    target: 50,
+  },
+};
+
 function getInitials(name) {
   if (!name) return "??";
   const cleanName = name.includes("@") ? name.split("@")[0] : name;
@@ -63,11 +124,16 @@ export default function ArenaPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
+ 
+
+  const ensureLoggedIn = () => {
+    if (!user) {
+      toast.error("Please login to use this feature!");
+      router.push("/login");
+      return false;
     }
-  }, [user, loading, router]);
+    return true;
+  };
 
   const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, streak, tournaments, badges, history
 
@@ -77,6 +143,16 @@ export default function ArenaPage() {
   const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState(null);
   const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
+  const [showXPWidget, setShowXPWidget] = useState(true);
+
+   useEffect(() => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(
+      "arena-show-xp-widget",
+      JSON.stringify(showXPWidget)
+    );
+  }
+}, [showXPWidget]);
 
   const [currentUserStats, setCurrentUserStats] = useState({
     name: "Pankaj Singh",
@@ -118,7 +194,7 @@ export default function ArenaPage() {
     setDuelSimulatorOpen(true);
   };
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -153,7 +229,12 @@ export default function ArenaPage() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => {
+                        if (["ranked", "friend", "streak", "badges", "history"].includes(item.id)) {
+                          if (!ensureLoggedIn()) return;
+                        }
+                        setActiveTab(item.id);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${isActive
                           ? "bg-primary text-white shadow-sm"
                           : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-900/40"
@@ -208,7 +289,10 @@ export default function ArenaPage() {
               </div>
 
               <button
-                onClick={() => setMatchmakingOpen(true)}
+                onClick={() => {
+                  if (!ensureLoggedIn()) return;
+                  setMatchmakingOpen(true);
+                }}
                 className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10"
               >
                 Find Match
@@ -234,14 +318,20 @@ export default function ArenaPage() {
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                       <button
-                        onClick={() => setMatchmakingOpen(true)}
+                        onClick={() => {
+                          if (!ensureLoggedIn()) return;
+                          setMatchmakingOpen(true);
+                        }}
                         className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Zap size={14} />
                         Find Match
                       </button>
                       <button
-                        onClick={() => setCreateDuelOpen(true)}
+                        onClick={() => {
+                          if (!ensureLoggedIn()) return;
+                          setCreateDuelOpen(true);
+                        }}
                         className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Swords size={14} />
@@ -470,7 +560,10 @@ export default function ArenaPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => handleWatchLive("You", b.opponent, b.topic)}
+                            onClick={() => {
+                              if (!ensureLoggedIn()) return;
+                              handleWatchLive("You", b.opponent, b.topic);
+                            }}
                             className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-neutral-900 dark:hover:bg-neutral-850 border border-slate-200 dark:border-neutral-800 rounded-xl font-bold transition shrink-0"
                           >
                             Replay
@@ -586,6 +679,20 @@ export default function ArenaPage() {
                 <span>Longest Streak</span>
                 <span className="font-bold text-slate-800 dark:text-neutral-200">43 Days</span>
               </div>
+              <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+  <div className="flex items-center justify-between">
+    <span className="text-xs font-semibold text-slate-700 dark:text-neutral-200">
+      📊 Consistency Score
+    </span>
+    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+      85%
+    </span>
+  </div>
+
+  <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-1">
+    Active on 26 of the last 30 days.
+  </p>
+</div>
             </div>
 
             {/* Detailed Stats */}
@@ -612,58 +719,226 @@ export default function ArenaPage() {
               </div>
             </div>
 
+            <button
+  onClick={() => setShowXPWidget(!showXPWidget)}
+  className="text-xs text-primary font-semibold"
+>
+  {showXPWidget ? "Hide XP Widget" : "Show XP Widget"}
+</button>
+
             {/* XP Progress */}
+{showXPWidget && (
+  <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+    <div className="flex justify-between items-center mb-3">
+      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+        XP Progress
+      </h3>
+      <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
+        Level {currentUserStats.level}
+      </span>
+    </div>
+
+    <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
+      <div
+        className="bg-primary h-full rounded-full"
+        style={{ width: "84%" }}
+      />
+    </div>
+
+    <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
+      <span>{currentUserStats.xp}/5000 XP</span>
+      <span className="font-semibold text-slate-700 dark:text-neutral-300">
+        Next Reward: Level 18 🎁
+      </span>
+    </div>
+  </div>
+)}
+
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">XP Progress</h3>
-                <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
-                  Level {currentUserStats.level}
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
-                <div className="bg-primary h-full rounded-full" style={{ width: "84%" }} />
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
-                <span>{currentUserStats.xp}/5000 XP</span>
-                <span className="font-semibold text-slate-700 dark:text-neutral-300">Next Reward: Level 18 🎁</span>
-              </div>
-            </div>
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      📈 Learning Timeline
+    </h3>
+
+    <span className="text-[10px] text-slate-400">
+      DSA Journey
+    </span>
+  </div>
+
+  <div className="space-y-4">
+    {LEARNING_TIMELINE.map((item, index) => (
+      <div key={index} className="relative pl-5 border-l-2 border-slate-200">
+        <div
+          className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ${item.color}`}
+        />
+        <p className="text-xs font-semibold">
+          {item.title}
+        </p>
+        <p className="text-[10px] text-slate-500">
+          {item.date}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* Learning Goal Tracker */}
+<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold">
+      🎯 Learning Goals
+    </h3>
+    <span className="text-[10px] text-slate-400">
+      Weekly & Monthly
+    </span>
+  </div>
+
+  <div className="space-y-4">
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>Weekly Goal</span>
+        <span>8 / 10 Problems</span>
+      </div>
+      <div className="w-full bg-slate-200 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full w-[80%]" />
+      </div>
+    </div>
+
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>Monthly Goal</span>
+        <span>32 / 50 Problems</span>
+      </div>
+      <div className="w-full bg-slate-200 rounded-full h-2">
+        <div className="bg-blue-500 h-2 rounded-full w-[64%]" />
+      </div>
+    </div>
+
+    <div className="p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+      <p className="text-xs font-semibold">
+        🏅 Next Milestone Badge
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Complete 50 monthly problems to unlock Goal Crusher Badge
+      </p>
+    </div>
+  </div>
+</div>
+
+            {/* Smart Revision Planner */}
+<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      📚 Revision Planner
+    </h3>
+    <span className="text-[10px] text-slate-400">
+      Weekly Plan
+    </span>
+  </div>
+
+  <div className="space-y-3">
+    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+      <p className="text-xs font-semibold">
+        Binary Search
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Last revised 14 days ago • High Priority
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800">
+      <p className="text-xs font-semibold">
+        Linked List
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Revision due in 2 days
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+      <p className="text-xs font-semibold">
+        Arrays
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Recently revised
+      </p>
+    </div>
+  </div>
+</div>
+
+{/* Personalized Learning Recommendations */}
+<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      🎯 Recommended For You
+    </h3>
+    <span className="text-[10px] text-slate-400">
+      Based on Progress
+    </span>
+  </div>
+
+  <div className="space-y-3">
+    <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+      <p className="text-xs font-semibold">
+        Binary Search Tree
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Recommended after mastering Binary Search
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+      <p className="text-xs font-semibold">
+        Graph Traversal (BFS)
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Next logical step after Tree Traversal
+      </p>
+    </div>
+
+    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+      <p className="text-xs font-semibold">
+        Dynamic Programming Basics
+      </p>
+      <p className="text-[10px] text-slate-500">
+        Suggested from your recent activity
+      </p>
+    </div>
+  </div>
+</div>
 
             {/* Badges Grid */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Badges</h3>
-                <span
-                  onClick={() => setActiveTab("badges")}
-                  className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
-                >
-                  View All
-                </span>
-              </div>
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+      Achievement Showcase
+    </h3>
+    <span className="text-xs text-primary">
+      {ACHIEVEMENT_BADGES.length} Earned
+    </span>
+  </div>
 
-              <div className="grid grid-cols-4 gap-2.5">
-                {[
-                  { label: "Binary Search Master", emoji: "🏆", bg: "bg-purple-500/10 border-purple-500/20" },
-                  { label: "Speed Demon", emoji: "⚡", bg: "bg-amber-500/10 border-amber-500/20" },
-                  { label: "Streak God", emoji: "🔥", bg: "bg-red-500/10 border-red-500/20" },
-                  { label: "Consistency King", emoji: "👑", bg: "bg-blue-500/10 border-blue-500/20" }
-                ].map((b, idx) => (
-                  <div
-                    key={idx}
-                    className={`aspect-square rounded-xl flex items-center justify-center text-xl border ${b.bg} shadow-sm`}
-                    title={b.label}
-                  >
-                    {b.emoji}
-                  </div>
-                ))}
-              </div>
-            </div>
+  <div className="grid grid-cols-2 gap-3">
+    {ACHIEVEMENT_BADGES.map((badge, index) => (
+      <div
+        key={index}
+        className="p-3 rounded-xl border border-slate-200 dark:border-neutral-700 text-center"
+      >
+        <div className="text-2xl">{badge.icon}</div>
+        <p className="text-[10px] font-medium mt-1">
+          {badge.title}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
           </aside>
 
         </div>
       </div>
 
       <Footer />
+       <BackToTop />
 
       {/* ─── Interactive Modals ────────────────────────────────────────────── */}
       <MatchmakingModal

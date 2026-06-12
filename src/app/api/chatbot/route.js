@@ -12,8 +12,10 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
+import { jsonResponse } from "@/lib/serverApi";
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are **AlgoBot** 🤖 — the official AI assistant embedded inside **AlgoBuddy** (https://www.algobuddy.me), a free, open-source, interactive platform built to help students and developers master Data Structures & Algorithms (DSA) through visualizations, practice, and progress tracking.
@@ -224,37 +226,36 @@ function toGeminiContents(messages) {
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(request) {
+  // Chatbot is open to guest/unauthenticated users as well, so we don't return 401.
+  const authResult = await getAuthenticatedUser().catch(() => ({ success: false }));
+
   const ip = getClientIp(request.headers);
   const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);
   if (!allowed) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-    return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-      status: 429,
-      headers: {
-        "Content-Type": "application/json",
-        "Retry-After": retryAfter.toString(),
-      },
+    return jsonResponse({ error: "Too many requests. Please try again later." }, 429, {
+      "Retry-After": retryAfter.toString(),
     });
+  }
+
+  // ─── Configuration Validation ─────────────────────────────────────────────
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[AlgoBot] Missing GEMINI_API_KEY environment variable");
+    return jsonResponse({ error: "AI service is not configured. Please set GEMINI_API_KEY." }, 500);
   }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body." }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
   const { messages } = body;
   const { valid, error } = validateMessages(messages);
 
   if (!valid) {
-    return new Response(JSON.stringify({ error }), {
-      status: 422,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error }, 422);
   }
 
   // Clamp to last 20 turns to manage token budget
@@ -267,42 +268,55 @@ export async function POST(request) {
   }
   const encoder = new TextEncoder();
 
+  const abortController = new AbortController();
+  const STREAM_TIMEOUT_MS = 30000;
+
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (data) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, STREAM_TIMEOUT_MS);
+
       try {
-        // Build Gemini model configuration with direct system instruction context mapping
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
           generationConfig: { maxOutputTokens: MAX_TOKENS },
         });
 
-        // Pass the fully structured content array to generateContentStream
-        // This avoids history-alternation validation errors with the Welcome message format
         const structuredContents = toGeminiContents(clampedMessages);
         const result = await model.generateContentStream({
           contents: structuredContents,
         });
 
         for await (const chunk of result.stream) {
+          if (abortController.signal.aborted) throw new Error("Stream timeout");
           const text = chunk.text();
           if (text) {
             enqueue({ type: "delta", content: text });
           }
         }
 
+        if (abortController.signal.aborted) throw new Error("Stream timeout");
+
         enqueue({ type: "done" });
       } catch (err) {
-        console.error("[AlgoBot API Error]", err?.message ?? err);
-        enqueue({
-          type: "error",
-          message: "AI service connection error. Please verify your local configuration and try again.",
-        });
+        const message = err?.message ?? String(err);
+        console.error("[AlgoBot API Error]", message);
+        if (err?.stack) console.error("[AlgoBot API Error Stack]", err.stack);
+        try {
+          enqueue({
+            type: "error",
+            message: "AI service connection error. Please verify your local configuration and try again.",
+          });
+        } catch (_) {}
+        controller.error(err);
       } finally {
-        controller.close();
+        clearTimeout(timeoutId);
+        try { controller.close(); } catch (_) {}
       }
     },
   });

@@ -30,6 +30,39 @@
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 </div>
+## 📚 Table of Contents
+
+- [🎯 Why AlgoBuddy?](#-why-algobuddy)
+- [✨ Features](#-features)
+  - [🔮 Algorithm Visualizer](#-algorithm-visualizer)
+- [👤 User System & Progress Tracking](#-user-system--progress-tracking)
+- [📝 Blog Platform](#-blog-platform)
+- [🎨 UX & Design](#-ux--design)
+- [📸 Screenshots](#-screenshots)
+  - [🏠 Home Page](#-home-page)
+  - [🔐 Authentication Page](#-authentication-page)
+  - [🧠 Visualizer Dashboard](#-visualizer-dashboard)
+  - [🔄 Queue Visualization](#-queue-visualization)
+  - [📚 Queue Operations](#-queue-operations)
+- [🛠 Tech Stack](#-tech-stack)
+- [🏗 Architecture](#-architecture)
+- [🚀 Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [1️⃣ Clone the Repository](#1️⃣-clone-the-repository)
+  - [2️⃣ Install Dependencies](#2️⃣-install-dependencies)
+  - [3️⃣ Configure Database Schema](#3️⃣-configure-database-schema)
+  - [4️⃣ Configure Environment Variables](#4️⃣-configure-environment-variables)
+  - [5️⃣ Start the Development Server](#5️⃣-start-the-development-server)
+  - [6️⃣ Other Commands](#6️⃣-other-commands)
+- [📁 Project Structure](#-project-structure)
+- [🤝 Contributing](#-contributing)
+  - [Contribution Areas](#contribution-areas)
+  - [Getting Started](#getting-started)
+  - [Issue Assignment Process](#issue-assignment-process)
+- [💬 Community](#-community)
+- [🌟 Star History](#-star-history)
+- [👥 Contributors](#-contributors)
+- [📜 License](#-license)
 
 <br/>
 
@@ -420,6 +453,10 @@ GEMINI_API_KEY=your-gemini-api-key
 # ──────────── Rate Limiting (Production) ────────────
 UPSTASH_REDIS_REST_URL=your-upstash-url
 UPSTASH_REDIS_REST_TOKEN=your-upstash-token
+
+# ──────────── Spring Boot Backend CORS (Optional in dev, required in prod) ────────────
+ALLOWED_ORIGINS=http://localhost:3000
+APP_ENV=dev
 ```
 
 > **💡 Tip:** See [`EnvExample.txt`](EnvExample.txt) for a complete reference of all environment variables.

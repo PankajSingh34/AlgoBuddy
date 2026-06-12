@@ -1,42 +1,39 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { AnimatePresence, motion } from "framer-motion";
+import { insertGenerator } from "@/features/algorithms/hashmap/hashmapInsertLogic";
+import { searchGenerator } from "@/features/algorithms/hashmap/hashmapSearchLogic";
+import { deleteGenerator } from "@/features/algorithms/hashmap/hashmapDeleteLogic";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const TABLE_SIZE = 8;
 const makeTable = () => Array.from({ length: TABLE_SIZE }, () => []);
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const HashMapChainingVisualizer = ({ mode = "insert" }) => {
-  const [hashMap, setHashMap] = useState(makeTable());
+  const [baseHashMap, setBaseHashMap] = useState(makeTable());
   const [keyInput, setKeyInput] = useState("");
   const [valueInput, setValueInput] = useState("");
   const [insertKey, setInsertKey] = useState("");
   const [insertValue, setInsertValue] = useState("");
-  const [operation, setOperation] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [highlightIndex, setHighlightIndex] = useState(null);
-  const [activeNode, setActiveNode] = useState({ bucket: null, index: null });
-  const [collisionIndex, setCollisionIndex] = useState(null);
+  
+  const [frames, setFrames] = useState([]);
+
+  // Clear frames when mode changes
+  useEffect(() => {
+    setFrames([]);
+  }, [mode]);
+
   useVisualizerReset(() => {
-    setHashMap(makeTable());
+    setBaseHashMap(makeTable());
     setKeyInput("");
     setValueInput("");
     setInsertKey("");
     setInsertValue("");
-    setOperation(null);
-    setToast(null);
-    setIsAnimating(false);
-    setHighlightIndex(null);
-    setActiveNode({ bucket: null, index: null });
-    setCollisionIndex(null);
+    setFrames([]);
   });
-
-  const totalCollisions = useMemo(
-    () => hashMap.reduce((sum, bucket) => sum + Math.max(0, bucket.length - 1), 0),
-    [hashMap]
-  );
 
   const hashFunction = (key) => {
     let hash = 0;
@@ -46,174 +43,182 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
     return hash;
   };
 
-  const resetHighlights = () => {
-    setHighlightIndex(null);
-    setActiveNode({ bucket: null, index: null });
-    setCollisionIndex(null);
+  const generateFrames = (generator) => {
+    const rawSteps = Array.from(generator);
+    const newFrames = [];
+    
+    let currentMap = baseHashMap;
+    let highlightIndex = null;
+    let collisionIndex = null;
+    let activeNode = { bucket: null, index: null };
+    let operation = null;
+    let toast = null;
+
+    for (const step of rawSteps) {
+      // Reset toast from previous frame
+      toast = null;
+      
+      if (step.type === 'hash') {
+        highlightIndex = step.index;
+        operation = step.operation;
+      } else if (step.type === 'collision') {
+        collisionIndex = step.index;
+        operation = step.operation;
+        toast = { message: step.message, type: "collision" };
+      } else if (step.type === 'resolve') {
+        operation = step.operation;
+      } else if (step.type === 'traverse') {
+        activeNode = step.activeNode;
+        operation = step.operation;
+      } else if (step.type === 'complete') {
+        if (step.hashMap) {
+          currentMap = step.hashMap;
+        }
+        if (step.activeNode) {
+          activeNode = step.activeNode;
+        } else {
+          // If searching/deleting and it wasn't found or activeNode wasn't updated
+          activeNode = { bucket: null, index: null };
+        }
+        operation = step.operation;
+      }
+
+      newFrames.push({
+        hashMap: currentMap,
+        highlightIndex,
+        collisionIndex,
+        activeNode,
+        operation,
+        toast,
+        isComplete: step.type === 'complete'
+      });
+    }
+
+    return newFrames;
   };
 
-  const showToast = (message, type = "info") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 1300);
-  };
+  const handleSequenceFinish = useCallback((stepIndex, currentFrames) => {
+    if (currentFrames.length > 0 && stepIndex === currentFrames.length - 1) {
+      const lastFrame = currentFrames[stepIndex];
+      if (lastFrame && lastFrame.isComplete) {
+        setBaseHashMap(lastFrame.hashMap);
+      }
+    }
+  }, []);
 
-  const applyInsert = async (rawKey, rawValue) => {
+  const engine = useAnimationEngine({ 
+    steps: frames, 
+    initialSpeed: 1000,
+    onStep: (stepIdx) => {
+      // We could trigger handleSequenceFinish here, but we also want it to apply 
+      // if the user scrubs to the end. The effect below handles it better.
+    }
+  });
+
+  // When animation finishes entirely (or user steps to the end manually), 
+  // lock in the state so subsequent operations start from the new state.
+  useEffect(() => {
+    if (frames.length > 0 && engine.currentStep === frames.length - 1) {
+      handleSequenceFinish(engine.currentStep, frames);
+    }
+  }, [engine.currentStep, frames, handleSequenceFinish]);
+
+  const applyInsert = (rawKey, rawValue) => {
     const key = rawKey.trim();
     const value = rawValue.trim();
-    if (!key || !value || isAnimating) return;
+    if (!key || !value || engine.isPlaying) return;
 
-    const index = hashFunction(key);
-    setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(450);
+    // Use the current baseHashMap to generate the next sequence
+    const gen = insertGenerator(baseHashMap, key, value, TABLE_SIZE, hashFunction);
+    const newFrames = generateFrames(gen);
+    setFrames(newFrames);
+    engine.reset();
+    engine.play();
+  };
 
-    const bucketBefore = hashMap[index];
-    const existingIndex = bucketBefore.findIndex((pair) => pair.key === key);
+  const handleInsert = () => {
+    applyInsert(keyInput, valueInput);
+    setKeyInput("");
+    setValueInput("");
+  };
 
-    if (existingIndex === -1 && bucketBefore.length > 0) {
-      setCollisionIndex(index);
-      setOperation(`Collision Detected at bucket ${index}`);
-      showToast("Collision Detected", "collision");
-      await sleep(550);
-      setOperation(`Key inserted into existing bucket ${index} using separate chaining`);
-      await sleep(350);
-    }
+  const handleAuxInsert = () => {
+    applyInsert(insertKey, insertValue);
+    setInsertKey("");
+    setInsertValue("");
+  };
 
-    if (existingIndex >= 0) {
-      setHashMap((prev) => {
-        const next = prev.map((bucket) => [...bucket]);
-        next[index][existingIndex] = { ...next[index][existingIndex], value };
-        return next;
-      });
-      setActiveNode({ bucket: index, index: existingIndex });
-      setOperation(`Updated key "${key}" in bucket ${index}`);
+  const handleSearch = () => {
+    const key = keyInput.trim();
+    if (!key || engine.isPlaying) return;
+
+    const gen = searchGenerator(baseHashMap, key, TABLE_SIZE, hashFunction);
+    const newFrames = generateFrames(gen);
+    setFrames(newFrames);
+    engine.reset();
+    engine.play();
+    setKeyInput("");
+  };
+
+  const handleDelete = () => {
+    const key = keyInput.trim();
+    if (!key || engine.isPlaying) return;
+
+    const gen = deleteGenerator(baseHashMap, key, TABLE_SIZE, hashFunction);
+    const newFrames = generateFrames(gen);
+    setFrames(newFrames);
+    engine.reset();
+    engine.play();
+    setKeyInput("");
+  };
+
+  const handleClear = () => {
+    setBaseHashMap(makeTable());
+    setFrames([]);
+    setKeyInput("");
+    setValueInput("");
+    setInsertKey("");
+    setInsertValue("");
+    engine.reset();
+  };
+
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setHashMap((prev) => {
-        const next = prev.map((bucket) => [...bucket]);
-        next[index].push({ key, value, id: `${key}-${Date.now()}` });
-        return next;
-      });
-      setActiveNode({ bucket: index, index: bucketBefore.length });
-      setOperation(`Inserted "${key}: ${value}" at index ${index}`);
+      engine.play();
     }
-
-    await sleep(700);
-    setIsAnimating(false);
-    resetHighlights();
   };
 
-  const handleInsert = async () => {
-    await applyInsert(keyInput, valueInput);
-    setKeyInput("");
-    setValueInput("");
-  };
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: engine.reset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
-  const handleAuxInsert = async () => {
-    await applyInsert(insertKey, insertValue);
-    setInsertKey("");
-    setInsertValue("");
-  };
+  // Render State
+  const currentFrame = frames.length > 0 ? frames[engine.currentStep] : null;
+  const renderHashMap = currentFrame ? currentFrame.hashMap : baseHashMap;
+  const renderHighlight = currentFrame ? currentFrame.highlightIndex : null;
+  const renderCollision = currentFrame ? currentFrame.collisionIndex : null;
+  const renderActiveNode = currentFrame ? currentFrame.activeNode : { bucket: null, index: null };
+  const renderOperation = currentFrame ? currentFrame.operation : null;
+  const renderToast = currentFrame ? currentFrame.toast : null;
 
-  const handleSearch = async () => {
-    const key = keyInput.trim();
-    if (!key || isAnimating) return;
-    const index = hashFunction(key);
-    setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(400);
-
-    const bucket = hashMap[index];
-    if (bucket.length === 0) {
-      setOperation(`Bucket ${index} is empty. Key "${key}" not found`);
-      await sleep(650);
-      setIsAnimating(false);
-      resetHighlights();
-      setKeyInput("");
-      return;
-    }
-
-    for (let i = 0; i < bucket.length; i += 1) {
-      setActiveNode({ bucket: index, index: i });
-      setOperation(`Traversing chained bucket ${index}: checking "${bucket[i].key}"`);
-      await sleep(600);
-      if (bucket[i].key === key) {
-        setOperation(`Key "${key}" found at index ${index} with value "${bucket[i].value}"`);
-        await sleep(700);
-        setIsAnimating(false);
-        resetHighlights();
-        setKeyInput("");
-        return;
-      }
-    }
-
-    setOperation(`Traversal finished. Key "${key}" not found in bucket ${index}`);
-    await sleep(700);
-    setIsAnimating(false);
-    resetHighlights();
-    setKeyInput("");
-  };
-
-  const handleDelete = async () => {
-    const key = keyInput.trim();
-    if (!key || isAnimating) return;
-    const index = hashFunction(key);
-    setIsAnimating(true);
-    setHighlightIndex(index);
-    setOperation(`Key "${key}" hashes to index ${index}`);
-    await sleep(350);
-
-    const bucket = hashMap[index];
-    if (bucket.length === 0) {
-      setOperation(`Bucket ${index} is empty. Key "${key}" not found`);
-      await sleep(650);
-      setIsAnimating(false);
-      resetHighlights();
-      setKeyInput("");
-      return;
-    }
-
-    for (let i = 0; i < bucket.length; i += 1) {
-      setActiveNode({ bucket: index, index: i });
-      setOperation(`Traversing chained bucket ${index}: checking "${bucket[i].key}"`);
-      await sleep(600);
-      if (bucket[i].key === key) {
-        setHashMap((prev) => {
-          const next = prev.map((b) => [...b]);
-          next[index].splice(i, 1);
-          return next;
-        });
-        setOperation(`Deleted key "${key}" from bucket ${index}`);
-        await sleep(700);
-        setIsAnimating(false);
-        resetHighlights();
-        setKeyInput("");
-        return;
-      }
-    }
-
-    setOperation(`Traversal finished. Key "${key}" not found in bucket ${index}`);
-    await sleep(700);
-    setIsAnimating(false);
-    resetHighlights();
-    setKeyInput("");
-  };
-
-  const handleReset = () => {
-    setHashMap(makeTable());
-    setOperation(null);
-    setIsAnimating(false);
-    resetHighlights();
-    setKeyInput("");
-    setValueInput("");
-    setInsertKey("");
-    setInsertValue("");
-  };
+  const totalCollisions = useMemo(
+    () => renderHashMap.reduce((sum, bucket) => sum + Math.max(0, bucket.length - 1), 0),
+    [renderHashMap]
+  );
 
   return (
     <main className="container mx-auto px-6 pb-8">
-      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
+      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8 mt-6">
         Visual hash buckets with separate chaining collision handling
       </p>
 
@@ -237,16 +242,16 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
               />
               <button
                 onClick={handleInsert}
-                disabled={isAnimating}
+                disabled={engine.isPlaying}
                 className="bg-[#a435f0] text-white px-4 py-2 rounded hover:bg-[#8710d8] disabled:opacity-50"
               >
                 Insert
               </button>
               <button
-                onClick={handleReset}
+                onClick={handleClear}
                 className="border border-gray-300 dark:border-gray-600 px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                Reset
+                Clear Map
               </button>
             </div>
           </div>
@@ -271,7 +276,7 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
                 />
                 <button
                   onClick={handleAuxInsert}
-                  disabled={isAnimating}
+                  disabled={engine.isPlaying}
                   className="bg-[#a435f0] text-white px-4 py-2 rounded hover:bg-[#8710d8] disabled:opacity-50"
                 >
                   Insert
@@ -293,7 +298,7 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
                 />
                 <button
                   onClick={mode === "search" ? handleSearch : handleDelete}
-                  disabled={isAnimating}
+                  disabled={engine.isPlaying}
                   className={`text-white px-4 py-2 rounded disabled:opacity-50 ${
                     mode === "search" ? "bg-blue-500 hover:bg-blue-600" : "bg-red-500 hover:bg-red-600"
                   }`}
@@ -301,42 +306,42 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
                   {mode === "search" ? "Search" : "Delete"}
                 </button>
                 <button
-                  onClick={handleReset}
+                  onClick={handleClear}
                   className="border border-gray-300 dark:border-gray-600 px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
-                  Reset
+                  Clear Map
                 </button>
               </div>
             </div>
           </>
         )}
 
-        {operation && (
+        {renderOperation && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             className={`mb-4 p-3 rounded-lg text-center border ${
-              collisionIndex !== null
+              renderCollision !== null
                 ? "bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700 text-orange-900 dark:text-orange-200"
                 : "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-primary-dark dark:text-blue-200"
             }`}
           >
-            {operation}
+            {renderOperation}
           </motion.div>
         )}
         <AnimatePresence>
-          {toast && (
+          {renderToast && (
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
               className={`fixed bottom-6 right-6 z-50 px-4 py-2 rounded-lg border shadow-lg ${
-                toast.type === "collision"
+                renderToast.type === "collision"
                   ? "bg-orange-100 dark:bg-orange-900/90 border-orange-300 dark:border-orange-700 text-orange-900 dark:text-orange-200"
                   : "bg-blue-100 dark:bg-blue-900/90 border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-200"
               }`}
             >
-              {toast.message}
+              {renderToast.message}
             </motion.div>
           )}
         </AnimatePresence>
@@ -350,10 +355,10 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
           </div>
 
           <div className="space-y-2">
-            {hashMap.map((bucket, index) => {
+            {renderHashMap.map((bucket, index) => {
               const bucketCollisions = Math.max(0, bucket.length - 1);
-              const highlighted = highlightIndex === index;
-              const collisionGlow = collisionIndex === index;
+              const highlighted = renderHighlight === index;
+              const collisionGlow = renderCollision === index;
               return (
                 <motion.div
                   key={index}
@@ -394,7 +399,7 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
                       ) : (
                         <AnimatePresence>
                           {bucket.map((pair, i) => {
-                            const isActive = activeNode.bucket === index && activeNode.index === i;
+                            const isActive = renderActiveNode.bucket === index && renderActiveNode.index === i;
                             return (
                               <React.Fragment key={pair.id || `${pair.key}-${i}`}>
                                 <motion.div
@@ -450,6 +455,21 @@ const HashMapChainingVisualizer = ({ mode = "insert" }) => {
           <div className="mt-4 p-3 bg-[#faf5ff] dark:bg-[#1a0a2e] rounded-lg border border-[#e9d5ff] dark:border-[#3b1a6e] text-sm text-gray-600 dark:text-gray-400">
             Hash Function: sum of char codes % {TABLE_SIZE}. Collision handling: Separate Chaining.
           </div>
+        </div>
+
+        {/* Playback Controls Wrapper */}
+        <div className="mt-6">
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            onPlayPause={togglePlay}
+            speed={engine.speed / 1000}
+            onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
+            onReset={engine.reset}
+            progressText={frames.length > 0 ? `${engine.currentStep + 1} / ${frames.length}` : "0 / 0"}
+            disabled={frames.length === 0}
+          />
         </div>
       </div>
     </main>

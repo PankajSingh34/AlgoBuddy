@@ -10,16 +10,28 @@ import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import { practiceData } from "@/lib/practiceData";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
+import { useSheetProgress } from "@/app/hooks/useSheetProgress";
+import { useUser } from "@/features/user/UserContext";
 
 export default function TopicPracticeSheet() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useUser();
   const topicSlug = params?.topic;
 
-  const [progress, setProgress] = useState({});
+  const { progress, updateProgress } = useSheetProgress();
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const ensureLoggedIn = () => {
+    if (!user) {
+      toast.error("Please login to use this feature!");
+      router.push("/login");
+      return false;
+    }
+    return true;
+  };
 
   const { isBookmarked, toggleBookmark } = useProblemBookmarks();
 
@@ -55,19 +67,23 @@ export default function TopicPracticeSheet() {
     topic.subsections.forEach((sub) => {
       sub.items.forEach((item) => {
         total++;
-        const status = progress[item.id] || "Not Started";
-        if (status === "Completed") {
+        // progress entries from useSheetProgress are { status, updatedAt } objects
+        const entry = progress[item.id];
+        const statusStr = entry
+          ? (typeof entry === "object" ? entry.status : entry)
+          : "Not Started";
+        if (statusStr === "Completed") {
           solved++;
         }
         if (item.difficulty === "Easy") {
           easy++;
-          if (status === "Completed") easySolved++;
+          if (statusStr === "Completed") easySolved++;
         } else if (item.difficulty === "Medium") {
           medium++;
-          if (status === "Completed") mediumSolved++;
+          if (statusStr === "Completed") mediumSolved++;
         } else if (item.difficulty === "Hard") {
           hard++;
-          if (status === "Completed") hardSolved++;
+          if (statusStr === "Completed") hardSolved++;
         }
       });
     });
@@ -82,17 +98,8 @@ export default function TopicPracticeSheet() {
     };
   }, [topic, progress]);
 
-  // Load progress from localStorage on mount
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem("algobuddy_practice_progress");
-      if (saved) {
-        setProgress(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error("Failed to load practice progress:", e);
-    }
   }, []);
 
   if (!topic) {
@@ -110,27 +117,15 @@ export default function TopicPracticeSheet() {
     );
   }
 
-  // Handle progress status change
-  const handleStatusChange = (problemId, newStatus) => {
-    const updated = { ...progress, [problemId]: newStatus };
-    setProgress(updated);
-    try {
-      localStorage.setItem("algobuddy_practice_progress", JSON.stringify(updated));
-
-      if (newStatus === "Completed") {
-        toast.success("Problem marked as Completed! 🔥", {
-          style: {
-            background: "#22c55e",
-            color: "#fff",
-            fontWeight: "bold",
-          },
-        });
-      } else {
-        toast.success(`Status updated to ${newStatus}`);
-      }
-    } catch (e) {
-      console.error("Failed to save progress:", e);
-      toast.error("Failed to save progress.");
+  const handleStatusChange = async (problemId, newStatus) => {
+    if (!ensureLoggedIn()) return;
+    await updateProgress(problemId, newStatus);
+    if (newStatus === "Completed") {
+      toast.success("Problem marked as Completed! 🔥", {
+        style: { background: "#22c55e", color: "#fff", fontWeight: "bold" },
+      });
+    } else {
+      toast.success(`Status updated to ${newStatus}`);
     }
   };
 
@@ -237,7 +232,10 @@ export default function TopicPracticeSheet() {
                   </thead>
                   <tbody>
                     {sub.items.map((item) => {
-                      const status = progress[item.id] || "Not Started";
+                      const entry = progress[item.id];
+                      const status = entry
+                        ? (typeof entry === "object" ? entry.status : entry)
+                        : "Not Started";
                       return (
                         <tr
                           key={item.id}
@@ -247,7 +245,10 @@ export default function TopicPracticeSheet() {
                           <td className="py-4 px-6 font-bold text-sm text-surface-900 dark:text-white">
                             <div className="flex items-center gap-2.5">
                               <button
-                                onClick={() => toggleBookmark(item.id, topicSlug)}
+                                onClick={() => {
+                                  if (!ensureLoggedIn()) return;
+                                  toggleBookmark(item.id, topicSlug);
+                                }}
                                 className={`p-1.5 rounded-lg border transition hover:scale-105 active:scale-95 duration-200 ${
                                   mounted && isBookmarked(item.id)
                                     ? "bg-amber-500/10 border-amber-500/30 text-amber-500 dark:bg-amber-950/20"
@@ -369,4 +370,3 @@ export default function TopicPracticeSheet() {
     </div>
   );
 }
-

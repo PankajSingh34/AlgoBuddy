@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
+import { X } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
 /* ─── colour + icon theme per DS ─── */
 const DS_THEME = {
@@ -573,9 +574,10 @@ placeholder="Search algorithms... (Press / or Ctrl+K)"
             {search && (
               <button
                 onClick={() => setSearch("")}
+                aria-label="Clear search"
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
               >
-                x
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -616,6 +618,7 @@ placeholder="Search algorithms... (Press / or Ctrl+K)"
       : addBookmark({ name: item.name, path: item.path, category: item.ds });
   }}
   className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+  aria-label={isBookmarked(item.path) ? `Remove ${item.name} from bookmarks` : `Bookmark ${item.name}`}
 >
   <FiBookmark
     className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}

@@ -167,7 +167,7 @@ export default function Cheatsheets() {
                   </thead>
                   <tbody className="divide-y divide-[var(--color-border)]">
                     {DS_COMPLEXITY.map((ds) => (
-                      <tr key={ds.name} className="hover:bg-[var(--color-neutral-50)] dark:hover:bg-[var(--udemy-dark-surface)]/20 transition-colors">
+                      <tr key={ds.name} className="hover:bg-[var(--color-neutral-100)] dark:hover:bg-[var(--udemy-dark-surface)]/60 transition-colors">
                         <td className="p-4 font-bold text-sm text-[var(--udemy-text)] dark:text-white">{ds.name}</td>
                         {/* Avg */}
                         <td className="p-3 text-center border-l border-[var(--color-border)]/30"><span className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-medium border ${getBadgeColor(ds.avgAccess)}`}>{ds.avgAccess}</span></td>
@@ -199,7 +199,7 @@ export default function Cheatsheets() {
                   </thead>
                   <tbody className="divide-y divide-[var(--color-border)]">
                     {ALGO_COMPLEXITY.map((algo) => (
-                      <tr key={algo.name} className="hover:bg-[var(--color-neutral-50)] dark:hover:bg-[var(--udemy-dark-surface)]/20 transition-colors">
+                      <tr key={algo.name} className="hover:bg-[var(--color-neutral-100)] dark:hover:bg-[var(--udemy-dark-surface)]/60 transition-colors">
                         <td className="p-4 font-bold text-sm text-[var(--udemy-text)] dark:text-white">{algo.name}</td>
                         <td className="p-4 text-center"><span className={`inline-block px-2.5 py-0.5 rounded text-xs font-mono font-medium border ${getBadgeColor(algo.best)}`}>{algo.best}</span></td>
                         <td className="p-4 text-center"><span className={`inline-block px-2.5 py-0.5 rounded text-xs font-mono font-medium border ${getBadgeColor(algo.avg)}`}>{algo.avg}</span></td>

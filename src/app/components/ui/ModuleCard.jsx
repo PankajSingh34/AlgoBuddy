@@ -1,42 +1,35 @@
 "use client";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-import { useEffect } from "react";
 
+async function apiFetch(url, options = {}) {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...options.headers },
+    ...options,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
-  const { user } = useUser();
+  const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
   
   useEffect(() => {
-  const fetchUserProgress = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("is_done")
-      .eq("user_id", user.id)
-      .eq("module_id", moduleId)
-      .maybeSingle();
-
-    if (error) {
-  console.error("Error fetching user progress:", error);
-
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database is not configured.");
-  }
-
-  return;
-}
-
-    setIsDone(data?.is_done ?? false);
-  };
-
-  fetchUserProgress();
-}, [user, moduleId]);
+    const fetchUserProgress = async () => {
+      if (!user) return;
+      try {
+        const data = await apiFetch(`/api/progress?moduleId=${encodeURIComponent(moduleId)}`);
+        setIsDone(data?.is_done ?? false);
+      } catch (e) {
+        console.error("Error fetching user progress:", e);
+      }
+    };
+    fetchUserProgress();
+  }, [user, moduleId]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -71,39 +64,15 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            module_id: moduleId,
-            is_done: !isDone,
-            updated_at: new Date(),
-          },
-          { onConflict: ["user_id", "module_id"] }
-        );
-
-      if (error) {
-  console.error(
-    "Error updating progress:",
-    error.message,
-    error.details
-  );
-
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database table is missing.");
-  } else {
-    toast.error(`Failed to update progress: ${error.message}`);
-  }
-
-  return;
-}
-
+      await apiFetch("/api/progress", {
+        method: "POST",
+        body: JSON.stringify({ moduleId, isDone: !isDone }),
+      });
       setIsDone(!isDone);
       toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
     } catch (err) {
-      console.error("Unexpected error during progress update:", err);
-      toast.error("Unexpected error. Please try again.");
+      console.error("Error updating progress:", err);
+      toast.error("Failed to update progress. Please try again.");
     }
   }
 

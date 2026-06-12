@@ -1,11 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
   Info,
   RefreshCw,
   Plus
@@ -13,188 +8,8 @@ import {
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-
-// === Red-Black Tree Implementation ===
-const RED = "RED";
-const BLACK = "BLACK";
-
-class RBNode {
-  constructor(value) {
-    this.value = value;
-    this.color = RED;
-    this.left = null;
-    this.right = null;
-    this.parent = null;
-    this.id = `node-${value}-${Date.now()}`;
-  }
-}
-
-class RBTree {
-  constructor() {
-    this.NIL = new RBNode(null);
-    this.NIL.color = BLACK;
-    this.NIL.id = "NIL";
-    this.root = this.NIL;
-  }
-
-  clone() {
-    const cloneNode = (node, parent = null) => {
-      if (node === this.NIL) return newTree.NIL;
-      const n = new RBNode(node.value);
-      n.color = node.color;
-      n.id = node.id;
-      n.parent = parent;
-      n.left = cloneNode(node.left, n);
-      n.right = cloneNode(node.right, n);
-      return n;
-    };
-    const newTree = new RBTree();
-    newTree.root = cloneNode(this.root);
-    return newTree;
-  }
-
-  insert(value) {
-    const steps = [];
-    const newNode = new RBNode(value);
-    newNode.left = this.NIL;
-    newNode.right = this.NIL;
-
-    steps.push({ tree: this.clone(), highlighted: {}, explanation: `Insert value ${value}. Color it RED (all new nodes start as RED).` });
-
-    // BST Insert
-    let y = null;
-    let x = this.root;
-
-    while (x !== this.NIL) {
-      y = x;
-      if (newNode.value < x.value) x = x.left;
-      else x = x.right;
-    }
-
-    newNode.parent = y;
-    if (y === null) this.root = newNode;
-    else if (newNode.value < y.value) y.left = newNode;
-    else y.right = newNode;
-
-    steps.push({ tree: this.clone(), highlighted: { [newNode.id]: "visiting" }, explanation: `BST Insert: Placed ${value} in the correct position. Now fix RB violations.` });
-
-    // Fix violations
-    this._fixInsert(newNode, steps);
-
-    this.root.color = BLACK;
-    steps.push({ tree: this.clone(), highlighted: { [this.root.id]: "matched" }, explanation: `Root is always BLACK. Recolor root to BLACK. Insertion of ${value} complete!` });
-
-    return steps;
-  }
-
-  _fixInsert(node, steps) {
-    let z = node;
-
-    while (z.parent && z.parent.color === RED) {
-      if (z.parent === z.parent.parent?.left) {
-        const uncle = z.parent.parent.right;
-
-        if (uncle && uncle !== this.NIL && uncle.color === RED) {
-          // Case 1: Uncle is RED - Recolor
-          z.parent.color = BLACK;
-          uncle.color = BLACK;
-          z.parent.parent.color = RED;
-          steps.push({
-            tree: this.clone(),
-            highlighted: { [z.id]: "visiting", [z.parent.id]: "active", [uncle.id]: "active", [z.parent.parent.id]: "active" },
-            explanation: `Case 1: Uncle is RED. Recolor parent and uncle to BLACK, grandparent to RED. Move z up to grandparent.`
-          });
-          z = z.parent.parent;
-        } else {
-          if (z === z.parent.right) {
-            // Case 2: z is a right child
-            z = z.parent;
-            steps.push({
-              tree: this.clone(),
-              highlighted: { [z.id]: "visiting" },
-              explanation: `Case 2: Node is a right child. Move z to its parent, then LEFT ROTATE parent to move into Case 3.`
-            });
-            this._leftRotate(z);
-            steps.push({ tree: this.clone(), highlighted: { [z.id]: "active" }, explanation: `Left rotation applied at node ${z.value}.` });
-          }
-          // Case 3: z is a left child
-          z.parent.color = BLACK;
-          z.parent.parent.color = RED;
-          steps.push({
-            tree: this.clone(),
-            highlighted: { [z.id]: "visiting", [z.parent?.id]: "active" },
-            explanation: `Case 3: Recolor parent to BLACK, grandparent to RED. Then RIGHT ROTATE grandparent.`
-          });
-          this._rightRotate(z.parent?.parent);
-          steps.push({ tree: this.clone(), highlighted: { [z.id]: "matched" }, explanation: `Right rotation applied. RB violation resolved!` });
-        }
-      } else {
-        // Mirror cases
-        const uncle = z.parent.parent?.left;
-
-        if (uncle && uncle !== this.NIL && uncle.color === RED) {
-          z.parent.color = BLACK;
-          uncle.color = BLACK;
-          z.parent.parent.color = RED;
-          steps.push({
-            tree: this.clone(),
-            highlighted: { [z.id]: "visiting", [z.parent.id]: "active", [uncle.id]: "active", [z.parent.parent.id]: "active" },
-            explanation: `Case 1 (mirror): Uncle is RED. Recolor parent and uncle to BLACK, grandparent to RED.`
-          });
-          z = z.parent.parent;
-        } else {
-          if (z === z.parent.left) {
-            z = z.parent;
-            steps.push({
-              tree: this.clone(),
-              highlighted: { [z.id]: "visiting" },
-              explanation: `Case 2 (mirror): Node is a left child. RIGHT ROTATE parent.`
-            });
-            this._rightRotate(z);
-          }
-          z.parent.color = BLACK;
-          z.parent.parent.color = RED;
-          steps.push({
-            tree: this.clone(),
-            highlighted: { [z.id]: "visiting", [z.parent?.id]: "active" },
-            explanation: `Case 3 (mirror): Recolor, then LEFT ROTATE grandparent.`
-          });
-          this._leftRotate(z.parent?.parent);
-          steps.push({ tree: this.clone(), highlighted: { [z.id]: "matched" }, explanation: `Left rotation applied. RB violation resolved!` });
-        }
-      }
-      if (!z.parent) break;
-    }
-
-    this.root.color = BLACK;
-  }
-
-  _leftRotate(x) {
-    if (!x || !x.right || x.right === this.NIL) return;
-    const y = x.right;
-    x.right = y.left;
-    if (y.left !== this.NIL) y.left.parent = x;
-    y.parent = x.parent;
-    if (!x.parent) this.root = y;
-    else if (x === x.parent.left) x.parent.left = y;
-    else x.parent.right = y;
-    y.left = x;
-    x.parent = y;
-  }
-
-  _rightRotate(x) {
-    if (!x || !x.left || x.left === this.NIL) return;
-    const y = x.left;
-    x.left = y.right;
-    if (y.right !== this.NIL) y.right.parent = x;
-    y.parent = x.parent;
-    if (!x.parent) this.root = y;
-    else if (x === x.parent.right) x.parent.right = y;
-    else x.parent.left = y;
-    y.right = x;
-    x.parent = y;
-  }
-}
+import { RBTree, RBNode, RED, BLACK } from "@/features/algorithms/tree/redBlackTreeLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 // Compute tree layout (x, y coordinates for each node)
 function computeLayout(tree) {
@@ -234,86 +49,64 @@ function computeLayout(tree) {
 const INITIAL_VALUES = [30, 15, 70, 10, 20, 60, 85];
 
 export default function RedBlackAnimation() {
-  const [rbTree] = useState(() => {
-    const t = new RBTree();
-    for (const v of INITIAL_VALUES) t.insert(v);
-    return t;
-  });
   const [displayTree, setDisplayTree] = useState(() => {
     const t = new RBTree();
-    for (const v of INITIAL_VALUES) t.insert(v);
+    for (const v of INITIAL_VALUES) {
+      for (const step of t.insertGenerator(v)) {}
+    }
     return t;
   });
   const [inputValue, setInputValue] = useState("");
   const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [speed, setSpeed] = useState(1);
   const [message, setMessage] = useState("Red-Black Tree pre-loaded! Insert values to observe rotations and recoloring.");
-  const [highlighted, setHighlighted] = useState({});
+  
+  const [visualState, setVisualState] = useState(null);
 
-  const timerRef = useRef(null);
-  useVisualizerReset(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsAnimating(false);
-    setMessage("...");
-    setSteps([]);
-    setCurrentStepIdx(-1);
-  });
   const activeTreeRef = useRef(() => {
     const t = new RBTree();
-    for (const v of INITIAL_VALUES) t.insert(v);
+    for (const v of INITIAL_VALUES) {
+      for (const step of t.insertGenerator(v)) {}
+    }
     return t;
   });
 
   useEffect(() => {
     const t = new RBTree();
-    for (const v of INITIAL_VALUES) t.insert(v);
+    for (const v of INITIAL_VALUES) {
+      for (const step of t.insertGenerator(v)) {}
+    }
     activeTreeRef.current = t;
   }, []);
 
-
-
-  useEffect(() => {
-    if (currentStepIdx < 0 || currentStepIdx >= steps.length) return;
-    const step = steps[currentStepIdx];
-    setDisplayTree(step.tree);
-    setHighlighted(step.highlighted || {});
+  const onStep = useCallback((step, idx) => {
+    if (idx === -1) {
+      setVisualState(null);
+      return;
+    }
+    setVisualState(step);
+    if (step.tree) setDisplayTree(step.tree);
     setMessage(step.explanation || "");
-  }, [currentStepIdx, steps]);
+  }, []);
 
-  useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
-    if (currentStepIdx >= steps.length - 1) { setIsAnimating(false); return; }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [isAnimating, currentStepIdx, steps, speed]);
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1 });
 
-  const pauseVisualizer = () => { setIsAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
-  const startVisualizer = () => {
-    if (steps.length === 0) return;
-    setIsAnimating(true);
-    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
-    setCurrentStepIdx(nextIdx);
-  };
-  const stepForward = () => { setIsAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setIsAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
-  const resetPlayback = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
-    setHighlighted({});
-    setMessage("Playback reset.");
-  };
+  useVisualizerReset(() => {
+    engine.reset();
+    setMessage("...");
+    setSteps([]);
+    setVisualState(null);
+  });
 
   const handleReset = () => {
+    engine.reset();
     const t = new RBTree();
-    for (const v of INITIAL_VALUES) t.insert(v);
+    for (const v of INITIAL_VALUES) {
+      for (const step of t.insertGenerator(v)) {}
+    }
     activeTreeRef.current = t;
     setDisplayTree(t.clone());
     setSteps([]);
-    setCurrentStepIdx(-1);
-    setHighlighted({});
+    setVisualState(null);
     setInputValue("");
     setMessage("Tree reset to default. Insert values to observe RB tree balancing.");
   };
@@ -324,32 +117,38 @@ export default function RedBlackAnimation() {
       setMessage("⚠️ Please enter a valid integer (1-999).");
       return;
     }
-    setIsAnimating(false);
     setInputValue("");
 
-    const newSteps = activeTreeRef.current.insert(val);
-    activeTreeRef.current = activeTreeRef.current; // stays same ref
-
+    engine.reset();
+    const gen = activeTreeRef.current.insertGenerator(val);
+    const newSteps = Array.from(gen);
+    
     setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(false);
+    if (newSteps.length > 0) {
+      setVisualState(newSteps[0]);
+      setTimeout(() => {
+        engine.play();
+      }, 50);
+    }
   };
 
   useVisualizerKeyboard({
-    onStepForward: stepForward,
-    onStepBackward: stepBackward,
-    onTogglePlayPause: isAnimating ? pauseVisualizer : startVisualizer,
-    onReset: resetPlayback,
-    onSpeedChange: setSpeed,
-    speed: speed,
-    sorting: isAnimating,
-    sorted: false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onTogglePlayPause: engine.isPlaying ? engine.pause : (steps.length > 0 ? engine.play : undefined),
+    onReset: engine.reset,
+    onSpeedChange: (s) => engine.setSpeed(s * 500),
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep >= steps.length - 1 && steps.length > 0,
     enabled: true,
   });
 
   const { nodes, edges } = computeLayout(displayTree);
   const svgWidth = Math.max(800, nodes.length > 0 ? Math.max(...nodes.map(n => n.x)) + 100 : 800);
   const svgHeight = Math.max(380, nodes.length > 0 ? Math.max(...nodes.map(n => n.y)) + 60 : 380);
+
+  const highlighted = visualState?.highlighted || {};
 
   const getNodeStyle = (nodeId, color) => {
     const state = highlighted[nodeId];
@@ -372,10 +171,10 @@ export default function RedBlackAnimation() {
             onChange={e => setInputValue(e.target.value)}
             placeholder="Value (1-999)"
             className="w-full sm:w-36 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#a435f0] transition-colors"
-            disabled={isAnimating}
+            disabled={engine.isPlaying}
             onKeyDown={e => e.key === "Enter" && triggerInsert()}
           />
-          <button onClick={triggerInsert} disabled={isAnimating}
+          <button onClick={triggerInsert} disabled={engine.isPlaying}
             className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#a435f0] hover:bg-[#8f2cd6] text-white rounded-xl transition-all shadow-md w-full sm:w-auto">
             <Plus className="w-3.5 h-3.5" /> Insert
           </button>
@@ -383,15 +182,15 @@ export default function RedBlackAnimation() {
 
         <div className="w-full xl:w-auto flex justify-center xl:justify-end">
           <PlaybackControls 
-            isPlaying={isAnimating}
-            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
-            onReset={resetPlayback}
+            isPlaying={engine.isPlaying}
+            onPlayPause={engine.isPlaying ? engine.pause : engine.play}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
+            onReset={engine.reset}
             onClear={handleReset}
             clearLabel="Clear Tree"
-            speed={speed}
-            onSpeedChange={setSpeed}
+            speed={engine.speed / 500}
+            onSpeedChange={(s) => engine.setSpeed(s * 500)}
             disabled={steps.length === 0}
             showPlayPause={true}
           />
@@ -402,7 +201,7 @@ export default function RedBlackAnimation() {
       <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Info className="w-3.5 h-3.5 text-red-400" /> Insertion Step Explanation</span>
-          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}</span>
+          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">Step {engine.currentStep !== -1 ? engine.currentStep + 1 : 0} / {steps.length || 0}</span>
         </div>
         <div className="text-sm font-medium text-red-200/90 leading-relaxed min-h-[40px] flex items-center">{message}</div>
       </div>

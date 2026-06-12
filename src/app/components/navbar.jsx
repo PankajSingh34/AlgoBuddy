@@ -131,6 +131,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("algobuddy_practice_progress");
+      localStorage.removeItem("algobuddy_current_streak");
+      localStorage.removeItem("algobuddy_best_streak");
+      localStorage.removeItem("algobuddy_last_active_date");
+      localStorage.removeItem("PROBLEM_BOOKMARKS");
+    }
     router.push("/");
     setMenuOpen(false);
   };
@@ -167,7 +174,7 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -307,7 +314,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link

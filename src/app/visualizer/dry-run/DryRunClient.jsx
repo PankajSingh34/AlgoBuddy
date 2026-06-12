@@ -16,7 +16,7 @@ import Link from "next/link";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { useUser } from "@/features/user/UserContext";
-import { useCollaboration } from "@/app/components/ui/useCollaboration";
+import { useGlobalCollaboration } from "@/app/components/ui/CollaborationProvider";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const SAMPLES = {
@@ -359,17 +359,8 @@ export default function DryRunClient() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(900);
-  const [sessionTitle, setSessionTitle] = useState("Dry-run study room");
-  const [sessionVisibility, setSessionVisibility] = useState("public");
-  const [sessionPassword, setSessionPassword] = useState("");
-  const [sessionCodeInput, setSessionCodeInput] = useState("");
-  const [joinPassword, setJoinPassword] = useState("");
   const [annotationDraft, setAnnotationDraft] = useState("");
-  const [sessionJoinUrl, setSessionJoinUrl] = useState("");
   const [followPresenter, setFollowPresenter] = useState(true);
-  const [sessionActionLoading, setSessionActionLoading] = useState(false);
-  const [sessionNotice, setSessionNotice] = useState("");
-  const [importNotice, setImportNotice] = useState("");
 
   const skipBroadcastGenerationRef = useRef(0);
   const sendStateRef = useRef(null);
@@ -434,15 +425,15 @@ export default function DryRunClient() {
     }
   }
 
-  const collaboration = useCollaboration({
-    displayName,
-    onRemoteStateDelta: handleRemoteStateDelta,
-  });
+  const collaboration = useGlobalCollaboration();
+  const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId, registerHandler, unregisterHandler } = collaboration;
+
+  useEffect(() => {
+    registerHandler("dryRun", handleRemoteStateDelta);
+    return () => unregisterHandler("dryRun");
+  }, [registerHandler, unregisterHandler, handleRemoteStateDelta]);
 
   collaborationRef.current = collaboration;
-
-  const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId } =
-    collaboration;
 
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
@@ -598,53 +589,6 @@ export default function DryRunClient() {
     setSource(SAMPLES[nextLanguage]);
   };
 
-  const handleCreateSession = async () => {
-    setSessionActionLoading(true);
-    setSessionNotice("");
-    setImportNotice("");
-    try {
-      const data = await collaboration.createSession({
-        title: sessionTitle,
-        visibility: sessionVisibility,
-        password: sessionVisibility === "private" ? sessionPassword : undefined,
-        module: "dry-run",
-        createdBy: displayName,
-      });
-      setSessionJoinUrl(data.joinUrl);
-      setSessionNotice(`Created ${data.session.visibility} session ${data.session.joinCode}.`);
-    } catch (error) {
-      setSessionNotice(error.message || "Failed to create session.");
-    } finally {
-      setSessionActionLoading(false);
-    }
-  };
-
-  const handleJoinSession = async () => {
-    setSessionActionLoading(true);
-    setSessionNotice("");
-    setImportNotice("");
-    try {
-      const data = await collaboration.joinSession({
-        sessionCode: sessionCodeInput,
-        password: joinPassword,
-        createdBy: displayName,
-      });
-      setSessionJoinUrl(`/visualizer/dry-run?session=${data.session.joinCode}`);
-      setSessionNotice(`Joined session ${data.session.joinCode}.`);
-    } catch (error) {
-      setSessionNotice(error.message || "Failed to join session.");
-    } finally {
-      setSessionActionLoading(false);
-    }
-  };
-
-  const handleLeaveSession = async () => {
-    await collaboration.leaveSession();
-    setSessionJoinUrl("");
-    setSessionNotice("Left the collaboration session.");
-    setAnnotationDraft("");
-  };
-
   const handleAddAnnotation = () => {
     const annotation = collaboration.addAnnotation({
       timeIndex: step,
@@ -653,47 +597,6 @@ export default function DryRunClient() {
 
     if (annotation) {
       setAnnotationDraft("");
-      setSessionNotice(`Added annotation at step ${step + 1}.`);
-    }
-  };
-
-  const handleExportRecording = () => {
-    const traceJson = collaboration.exportRecording();
-    const blob = new Blob([traceJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `algobuddy-session-${new Date().toISOString().slice(0, 19).replaceAll(":", "-")}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setSessionNotice("Exported session trace.");
-  };
-
-  const handleImportRecording = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const snapshot = collaboration.importRecording(text, {
-        source: SAMPLES.JavaScript,
-        language: "JavaScript",
-        step: 0,
-        playing: false,
-        speed: 900,
-      });
-
-      setSource(snapshot.source || SAMPLES.JavaScript);
-      setLanguage(snapshot.language || "JavaScript");
-      setStep(snapshot.step || 0);
-      setPlaying(Boolean(snapshot.playing));
-      setSpeed(snapshot.speed || 900);
-      setImportNotice(`Imported ${file.name}.`);
-      setSessionNotice("Replayed the imported trace locally.");
-    } catch (error) {
-      setImportNotice(error.message || "Failed to import session trace.");
-    } finally {
-      event.target.value = "";
     }
   };
 
@@ -841,242 +744,6 @@ export default function DryRunClient() {
                 className="w-full accent-violet-600"
               />
             </label>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="font-semibold text-slate-900 dark:text-white">Collaboration</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {collaboration.connectionStatus === "connected"
-                    ? "Live session connected"
-                    : collaboration.connectionStatus === "connecting"
-                      ? "Connecting to session"
-                      : "Create or join a shared dry-run session"}
-                </p>
-              </div>
-              <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-                Presenter: {collaboration.presenterId ? (collaboration.presenterId === collaboration.clientId ? "You" : "Remote") : "Open"}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                Session title
-                <input
-                  value={sessionTitle}
-                  onChange={(event) => setSessionTitle(event.target.value)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                />
-              </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                Visibility
-                <select
-                  value={sessionVisibility}
-                  onChange={(event) => setSessionVisibility(event.target.value)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                >
-                  <option value="public">Public</option>
-                  <option value="unlisted">Unlisted</option>
-                  <option value="private">Private</option>
-                </select>
-              </label>
-              {sessionVisibility === "private" ? (
-                <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200 sm:col-span-2">
-                  Session password
-                  <input
-                    type="password"
-                    value={sessionPassword}
-                    onChange={(event) => setSessionPassword(event.target.value)}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                  />
-                </label>
-              ) : null}
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleCreateSession}
-                disabled={sessionActionLoading}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
-              >
-                Create session
-              </button>
-              <button
-                type="button"
-                onClick={handleLeaveSession}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-              >
-                Leave
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                Join code or link
-                <input
-                  value={sessionCodeInput}
-                  onChange={(event) => setSessionCodeInput(event.target.value)}
-                  placeholder="Paste a session code or /?session= link"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                />
-              </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                Password
-                <input
-                  type="password"
-                  value={joinPassword}
-                  onChange={(event) => setJoinPassword(event.target.value)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                />
-              </label>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleJoinSession}
-                disabled={sessionActionLoading}
-                className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-              >
-                Join session
-              </button>
-              <button
-                type="button"
-                onClick={() => setFollowPresenter((value) => !value)}
-                className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
-                  followPresenter
-                    ? "border-violet-400 text-violet-700 dark:border-violet-400 dark:text-violet-200"
-                    : "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300"
-                }`}
-              >
-                {followPresenter ? "Following presenter" : "Manual control"}
-              </button>
-            </div>
-
-            {sessionJoinUrl ? (
-              <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <p className="font-semibold text-slate-900 dark:text-white">Share link</p>
-                <p className="mt-1 break-all text-slate-600 dark:text-slate-300">{sessionJoinUrl}</p>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard?.writeText(window.location.origin + sessionJoinUrl)}
-                  className="mt-2 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-                >
-                  Copy full URL
-                </button>
-              </div>
-            ) : null}
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Participants</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {collaboration.participants.length ? (
-                    collaboration.participants.map((participant) => (
-                      <span
-                        key={participant.id}
-                        className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-200"
-                      >
-                        {participant.displayName || participant.id.slice(0, 6)}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-slate-500 dark:text-slate-400">No one else has joined yet.</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Annotations</p>
-                <div className="mt-2 max-h-28 space-y-2 overflow-auto text-sm text-slate-600 dark:text-slate-300">
-                  {collaboration.annotations.length ? (
-                    collaboration.annotations.slice(-4).map((item) => (
-                      <div key={item.id} className="rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
-                        <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                          <span>{item.author}</span>
-                          <span>Step {Number(item.timeIndex) + 1}</span>
-                        </div>
-                        <p className="mt-1">{item.text}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-sm text-slate-500 dark:text-slate-400">No annotations yet.</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                Annotation
-                <input
-                  value={annotationDraft}
-                  onChange={(event) => setAnnotationDraft(event.target.value)}
-                  placeholder="Add a note for this frame"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400 dark:border-slate-700 dark:bg-slate-950"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={handleAddAnnotation}
-                className="self-end rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-              >
-                Add note
-              </button>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => collaboration.requestControl()}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-              >
-                Request control
-              </button>
-              <button
-                type="button"
-                onClick={() => collaboration.grantControl().catch(() => {})}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-              >
-                Handoff to me
-              </button>
-              <button
-                type="button"
-                onClick={collaboration.recording ? collaboration.stopRecording : collaboration.startRecording}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
-                  collaboration.recording ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
-                }`}
-              >
-                {collaboration.recording ? "Stop recording" : "Start recording"}
-              </button>
-              <button
-                type="button"
-                onClick={handleExportRecording}
-                disabled={!collaboration.recordedEvents.length}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
-              >
-                Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:text-slate-200"
-              >
-                Import JSON
-              </button>
-              <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportRecording} />
-            </div>
-
-            <div className="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-              {sessionNotice ? <p>{sessionNotice}</p> : null}
-              {importNotice ? <p>{importNotice}</p> : null}
-              <p>
-                Events recorded: {collaboration.recordedEvents.length} · Session mode:{" "}
-                {collaboration.session ? collaboration.session.visibility : "none"}
-              </p>
-            </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">

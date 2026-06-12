@@ -68,7 +68,7 @@ export default function UserProfileCard() {
           <div className="space-y-3">
             {/* GitHub */}
             <a
-              href="https://github.com/pankajsingh"
+              href="https://github.com/PankajSingh34"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-start gap-3 group"
@@ -84,7 +84,7 @@ export default function UserProfileCard() {
 
             {/* LinkedIn */}
             <a
-              href="https://linkedin.com/in/pankaj-singh"
+              href="https://www.linkedin.com/in/pankaj-singh-2a968b212"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-start gap-3 group"

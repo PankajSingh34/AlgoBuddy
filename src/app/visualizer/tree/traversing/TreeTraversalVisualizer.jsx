@@ -9,9 +9,9 @@ import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import { generateInOrderSteps } from "@/features/algorithms/tree/inOrderLogic";
 import { generatePreOrderSteps } from "@/features/algorithms/tree/preOrderLogic";
-import { generatePostOrderSteps } from "@/features/algorithms/tree/postOrderLogic";
-import { generateLevelOrderSteps } from "@/features/algorithms/tree/levelOrderLogic";
 import { generateMorrisSteps } from "@/features/algorithms/tree/morrisLogic";
+import { generateLevelOrderSteps } from "@/features/algorithms/tree/levelOrderLogic";
+import { generatePostOrderSteps } from "@/features/algorithms/tree/postOrderLogic";
 
 class TreeNode {
   constructor(value) {
@@ -352,6 +352,28 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
       generateRandomTree();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pre-calculate steps based on current tree and traversal mode
+  const preCalculateSteps = () => {
+    if (!root) return [];
+    
+    switch (mode) {
+      case 'pre-order':
+        return generatePreOrderSteps(root);
+      case 'in-order':
+        return generateInOrderSteps(root);
+      case 'post-order':
+        return generatePostOrderSteps(root);
+      case 'level-order':
+        return generateLevelOrderSteps(root);
+      case 'morris':
+        return generateMorrisSteps(root);
+      default:
+        return [];
+    }
+  };
+
+
 
   useVisualizerKeyboard({
     onTogglePlayPause: engine.isPlaying ? engine.pause : startPlayback,

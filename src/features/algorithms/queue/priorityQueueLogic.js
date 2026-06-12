@@ -1,8 +1,3 @@
-/**
- * Pure generator functions for Priority Queue operations.
- * Yields frames representing the operation state.
- */
-
 export function* insertGenerator(currentPq, value, priorityStr) {
   if (!value || priorityStr === "") {
     yield { type: 'error', message: 'Please enter both value and priority' };
@@ -14,12 +9,37 @@ export function* insertGenerator(currentPq, value, priorityStr) {
     return;
   }
 
-  yield { type: 'start', message: `Inserting "${value}" with priority ${pri} …`, action: 'insert' };
+  yield { 
+      phase: 'start', 
+      action: 'insert', 
+      pq: [...currentPq],
+      newValue: value,
+      newPri: pri,
+      explanation: `Inserting "${value}" with priority ${pri}...` 
+  };
   
-  const newEl = { val: value, pri };
-  const newPq = [...currentPq, newEl].sort((a, b) => a.pri - b.pri);
+  const newEl = { id: Date.now(), val: value, pri };
+  // Visualizing the insertion and sorting process step-by-step
+  let newPq = [...currentPq, newEl];
   
-  yield { type: 'complete', pq: newPq, message: `"${value}" inserted` };
+  yield {
+      phase: 'append',
+      action: 'insert',
+      pq: [...newPq],
+      newValue: value,
+      newPri: pri,
+      explanation: `Appended to the array. Now we need to sort based on priority.`
+  };
+
+  newPq.sort((a, b) => a.pri - b.pri);
+  
+  yield { 
+      phase: 'complete', 
+      action: 'insert',
+      pq: newPq, 
+      newValue: null,
+      explanation: `"${value}" inserted and queue sorted by priority.` 
+  };
 }
 
 export function* extractMinGenerator(currentPq) {
@@ -29,7 +49,19 @@ export function* extractMinGenerator(currentPq) {
   }
   
   const minEl = currentPq[0];
-  yield { type: 'start', message: `Extracting min element "${minEl.val}" …`, action: 'extract_min' };
+  yield { 
+      phase: 'start', 
+      action: 'extract_min', 
+      pq: [...currentPq],
+      extractedNode: minEl,
+      explanation: `Extracting min element "${minEl.val}" (priority ${minEl.pri}) from the front...` 
+  };
   
-  yield { type: 'complete', pq: currentPq.slice(1), message: `"${minEl.val}" (priority ${minEl.pri}) removed` };
+  yield { 
+      phase: 'complete', 
+      action: 'extract_min', 
+      pq: currentPq.slice(1), 
+      extractedNode: null,
+      explanation: `"${minEl.val}" removed.` 
+  };
 }

@@ -1,217 +1,14 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
-function generateBinarySearchFrames(arr, target) {
-  const frames = [];
-  const stack = [];
-  let frameIdCounter = 0;
-
-  function run(low, high, parentId = null) {
-    const myId = ++frameIdCounter;
-    const currentFrame = {
-      id: myId,
-      name: "binarySearch",
-      low,
-      high,
-      mid: null,
-      status: "calling",
-      parentId,
-    };
-    stack.push(currentFrame);
-
-    frames.push({
-      stack: JSON.parse(JSON.stringify(stack)),
-      low,
-      high,
-      mid: null,
-      activeLine: 1,
-      description: `Calling binarySearch(low = ${low}, high = ${high}). Pushing new stack frame.`,
-      activeFrameId: myId,
-    });
-
-    // Check base case: low > high
-    stack[stack.length - 1].status = "checking_base";
-    frames.push({
-      stack: JSON.parse(JSON.stringify(stack)),
-      low,
-      high,
-      mid: null,
-      activeLine: 2,
-      description: `Checking base case: low (${low}) > high (${high})?`,
-      activeFrameId: myId,
-    });
-
-    if (low > high) {
-      stack[stack.length - 1].status = "not_found";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid: null,
-        activeLine: 2,
-        description: `Base case met: low (${low}) > high (${high}). Target element ${target} not found!`,
-        activeFrameId: myId,
-      });
-
-      stack[stack.length - 1].status = "returning";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid: null,
-        activeLine: 2,
-        description: `Returning -1 from binarySearch(low = ${low}, high = ${high}).`,
-        activeFrameId: myId,
-      });
-
-      stack.pop();
-      return -1;
-    }
-
-    // Compute mid
-    const mid = Math.floor((low + high) / 2);
-    stack[stack.length - 1].mid = mid;
-    stack[stack.length - 1].status = "computing_mid";
-    frames.push({
-      stack: JSON.parse(JSON.stringify(stack)),
-      low,
-      high,
-      mid,
-      activeLine: 4,
-      description: `Computing mid index: mid = Math.floor((${low} + ${high}) / 2) = ${mid}. Element at mid is ${arr[mid]}.`,
-      activeFrameId: myId,
-    });
-
-    // Check if target found
-    stack[stack.length - 1].status = "checking_match";
-    frames.push({
-      stack: JSON.parse(JSON.stringify(stack)),
-      low,
-      high,
-      mid,
-      activeLine: 5,
-      description: `Checking if arr[mid] (${arr[mid]}) === target (${target})?`,
-      activeFrameId: myId,
-    });
-
-    if (arr[mid] === target) {
-      stack[stack.length - 1].status = "found";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid,
-        activeLine: 5,
-        description: `Target element found at index ${mid}!`,
-        activeFrameId: myId,
-      });
-
-      stack[stack.length - 1].status = "returning";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid,
-        activeLine: 5,
-        description: `Returning index ${mid} from binarySearch(low = ${low}, high = ${high}).`,
-        activeFrameId: myId,
-      });
-
-      stack.pop();
-      return mid;
-    }
-
-    // Check if target is smaller
-    stack[stack.length - 1].status = "checking_less";
-    frames.push({
-      stack: JSON.parse(JSON.stringify(stack)),
-      low,
-      high,
-      mid,
-      activeLine: 7,
-      description: `Checking if target (${target}) < arr[mid] (${arr[mid]})?`,
-      activeFrameId: myId,
-    });
-
-    if (target < arr[mid]) {
-      stack[stack.length - 1].status = "searching_left";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid,
-        activeLine: 8,
-        description: `Target ${target} is smaller than ${arr[mid]}. Searching left half: binarySearch(low = ${low}, high = ${mid - 1}).`,
-        activeFrameId: myId,
-      });
-
-      const res = run(low, mid - 1, myId);
-
-      const myFrameIndex = stack.findIndex((f) => f.id === myId);
-      if (myFrameIndex !== -1) {
-        stack[myFrameIndex].status = "returning";
-        frames.push({
-          stack: JSON.parse(JSON.stringify(stack.slice(0, myFrameIndex + 1))),
-          low,
-          high,
-          mid,
-          activeLine: 8,
-          description: `Returning ${res} to caller from binarySearch(low = ${low}, high = ${high}).`,
-          activeFrameId: myId,
-        });
-        stack.pop();
-      }
-      return res;
-    } else {
-      stack[stack.length - 1].status = "searching_right";
-      frames.push({
-        stack: JSON.parse(JSON.stringify(stack)),
-        low,
-        high,
-        mid,
-        activeLine: 10,
-        description: `Target ${target} is greater than ${arr[mid]}. Searching right half: binarySearch(low = ${mid + 1}, high = ${high}).`,
-        activeFrameId: myId,
-      });
-
-      const res = run(mid + 1, high, myId);
-
-      const myFrameIndex = stack.findIndex((f) => f.id === myId);
-      if (myFrameIndex !== -1) {
-        stack[myFrameIndex].status = "returning";
-        frames.push({
-          stack: JSON.parse(JSON.stringify(stack.slice(0, myFrameIndex + 1))),
-          low,
-          high,
-          mid,
-          activeLine: 10,
-          description: `Returning ${res} to caller from binarySearch(low = ${low}, high = ${high}).`,
-          activeFrameId: myId,
-        });
-        stack.pop();
-      }
-      return res;
-    }
-  }
-
-  const result = run(0, arr.length - 1);
-  frames.push({
-    stack: [],
-    low: null,
-    high: null,
-    mid: null,
-    activeLine: 0,
-    description: `Recursion finished. Binary Search result index is ${result}.`,
-    activeFrameId: null,
-  });
-
-  return frames;
-}
+import { generateBinarySearchFrames } from "@/features/algorithms/recursion/binarySearchLogic";
 
 const codeLines = [
   { line: 1, code: "function binarySearch(arr, target, low, high) {" },
@@ -231,20 +28,8 @@ const codeLines = [
 export default function BinarySearchAnimation() {
   const [arrayVal, setArrayVal] = useState("10, 20, 30, 40, 50, 60, 70, 80");
   const [targetVal, setTargetVal] = useState("60");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-    useVisualizerReset(() => {
-      setArrayVal("10, 20, 30, 40, 50, 60, 70, 80");
-      setTargetVal("60");
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-      setErrorMsg("");
-    });
 
   const parsedArray = useMemo(() => {
     return arrayVal
@@ -258,20 +43,18 @@ export default function BinarySearchAnimation() {
     if (!isVisualizing) return [];
     const target = parseInt(targetVal, 10);
     if (isNaN(target)) return [];
-    return generateBinarySearchFrames(parsedArray, target);
+    return Array.from(generateBinarySearchFrames(parsedArray, target));
   }, [parsedArray, targetVal, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setArrayVal("10, 20, 30, 40, 50, 60, 70, 80");
+    setTargetVal("60");
+    setIsVisualizing(false);
+    setErrorMsg("");
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -285,58 +68,47 @@ export default function BinarySearchAnimation() {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
+    engine.reset();
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
+      engine.play();
     }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    low: null,
-    high: null,
-    mid: null,
-    activeLine: 0,
-    description: "Click Visualize Go! to watch recursive search state building.",
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
+
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0 
+    ? frames[engine.currentStep] 
+    : {
+        stack: [],
+        low: null,
+        high: null,
+        mid: null,
+        activeLine: 0,
+        description: "Click Visualize Go! to watch recursive search state building.",
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activeLine = activeFrameData.activeLine;
@@ -406,17 +178,17 @@ export default function BinarySearchAnimation() {
 
         {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs font-semibold mt-2">{errorMsg}</p>}
 
-        {isVisualizing && (
+        {isVisualizing && frames.length > 0 && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>

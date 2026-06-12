@@ -18,7 +18,7 @@ const teamMembers = [
     role: "Founder",
     title: "Full Stack Developer",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80",
-    links: { github: "#", linkedin: "#", twitter: "#" },
+    links: { github: "https://github.com/PankajSingh34", linkedin: "https://www.linkedin.com/in/pankaj-singh-2a968b212", twitter: "#" },
   },
   {
     name: "Rohit Verma",

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/apiClient";
+import BackToTop from "@/app/components/ui/backtotop";
 import {
   Mail,
   Phone,
@@ -62,25 +64,17 @@ const ContactUs = () => {
     setSubmitted(false);
 
     try {
-      const res = await fetch("/api/contact", {
+      const data = await api.request("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           name: formData.name,
           email: formData.email,
           subject: formData.subject,
           category: formData.category,
           message: formData.message,
           captchaToken: "",
-        }),
+        },
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data?.message || "Failed to send message. Please try again.");
-        return;
-      }
 
       setSubmitted(true);
       setFormData({
@@ -103,7 +97,7 @@ const ContactUs = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-udemy-dark-bg text-white overflow-hidden">
+      <main className="min-h-screen bg-udemy-bg dark:bg-udemy-dark-bg text-udemy-text dark:text-udemy-dark-text overflow-hidden">
         {/* Background Glow */}
         <div className="absolute top-0 left-0 w-72 h-72 bg-primary/20 blur-3xl rounded-full opacity-40" />
         <div className="absolute bottom-0 right-0 w-72 h-72 bg-blue-500/10 blur-3xl rounded-full opacity-30" />
@@ -120,7 +114,7 @@ const ContactUs = () => {
               Contact <span className="text-primary">AlgoBuddy</span>
             </h1>
 
-            <p className="mt-6 text-lg md:text-xl text-udemy-dark-muted leading-relaxed max-w-2xl mx-auto">
+            <p className="mt-6 text-lg md:text-xl text-udemy-muted dark:text-udemy-dark-muted ...">
               Whether you have feedback, collaboration ideas, feature requests, or
               bug reports — our inbox is always open.
             </p>
@@ -133,7 +127,7 @@ const ContactUs = () => {
             {/* LEFT SIDE */}
             <div className="space-y-8">
               {/* Contact Info Card */}
-              <div className="bg-udemy-dark-surface/80 backdrop-blur-xl border border-udemy-dark-border rounded-3xl p-8 shadow-2xl">
+              <div className="bg-white/80 dark:bg-udemy-dark-surface/80 backdrop-blur-xl border border-udemy-border dark:border-udemy-dark-border rounded-3xl p-8 shadow-2xl">
                 <h2 className="text-2xl font-bold mb-8">Contact Information</h2>
 
                 <div className="space-y-6">
@@ -143,7 +137,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Email</h3>
-                      <p className="text-udemy-dark-muted text-sm mt-1">
+                      <p className="text-udemy-muted dark:text-udemy-dark-muted text-sm mt-1">
                         singhps588@gmail.com
                       </p>
                     </div>
@@ -155,7 +149,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Phone</h3>
-                      <p className="text-udemy-dark-muted text-sm mt-1">
+                      <p className="text-udemy-muted dark:text-udemy-dark-muted text-sm mt-1">
                         +91 XXXXX XXXXX
                       </p>
                     </div>
@@ -167,7 +161,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Location</h3>
-                      <p className="text-udemy-dark-muted text-sm mt-1">India</p>
+                      <p className="text-udemy-muted dark:text-udemy-dark-muted text-sm mt-1">India</p>
                     </div>
                   </div>
 
@@ -177,7 +171,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">Response Time</h3>
-                      <p className="text-udemy-dark-muted text-sm mt-1">
+                      <p className="text-udemy-muted dark:text-udemy-dark-muted text-sm mt-1">
                         Usually within 24-48 hours
                       </p>
                     </div>
@@ -193,7 +187,7 @@ const ContactUs = () => {
                       href="https://github.com/PankajSingh34/AlgoBuddy"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-14 h-14 rounded-2xl border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"
+                      className="w-14 h-14 rounded-2xl border border-udemy-border dark:border-udemy-dark-border flex items-center justify-center text-udemy-muted dark:text-udemy-dark-muted hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"
                     >
                       <Github size={24} />
                     </a>
@@ -201,7 +195,7 @@ const ContactUs = () => {
                       href="https://www.linkedin.com/in/pankaj-singh-2a968b212/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-14 h-14 rounded-2xl border border-udemy-dark-border flex items-center justify-center text-udemy-dark-muted hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"
+                      className="w-14 h-14 rounded-2xl border border-udemy-border dark:border-udemy-dark-border flex items-center justify-center text-udemy-muted dark:text-udemy-dark-muted  hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"
                     >
                       <Linkedin size={24} />
                     </a>
@@ -215,20 +209,20 @@ const ContactUs = () => {
                   <MessageSquare className="text-primary" size={26} />
                   <h3 className="text-2xl font-bold">Need Quick Help?</h3>
                 </div>
-                <p className="text-udemy-dark-muted leading-relaxed">
+                <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
                   For faster communication, mention the exact issue, feature, or
                   topic in your subject line.
                 </p>
                 <div className="mt-6 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-white">
+                  <div className="flex items-center gap-2 text-sm text-udemy-text dark:text-udemy-dark-text">
                     <CheckCircle2 size={18} className="text-primary" />
                     Bug Reports
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-white">
+                  <div className="flex items-center gap-2 text-sm text-udemy-text dark:text-udemy-dark-text">
                     <CheckCircle2 size={18} className="text-primary" />
                     Feature Requests
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-white">
+                  <div className="flex items-center gap-2 text-sm text-udemy-text dark:text-udemy-dark-text">
                     <CheckCircle2 size={18} className="text-primary" />
                     Collaboration Ideas
                   </div>
@@ -237,9 +231,9 @@ const ContactUs = () => {
             </div>
 
             {/* RIGHT SIDE — Contact Form */}
-            <div className="bg-udemy-dark-surface/80 backdrop-blur-xl border border-udemy-dark-border rounded-3xl p-8 shadow-2xl">
+            <div className="bg-white/80 dark:bg-udemy-dark-surface/80 backdrop-blur-xl border border-udemy-border dark:border-udemy-dark-border rounded-3xl p-8 shadow-2xl">
               <h2 className="text-3xl font-bold mb-2">Send a Message</h2>
-              <p className="text-udemy-dark-muted mb-8">
+              <p className="text-udemy-muted dark:text-udemy-dark-muted mb-8">
                 Fill out the form below and we'll get back to you soon.
               </p>
 
@@ -270,7 +264,7 @@ const ContactUs = () => {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="John Doe"
-                      className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
+                      className="w-full rounded-2xl bg-white dark:bg-udemy-dark-bg border border-udemy-border dark:border-udemy-dark-border text-udemy-text dark:text-udemy-dark-text px-4 py-3 outline-none focus:border-primary transition"
                     />
                   </div>
                   <div>
@@ -284,7 +278,7 @@ const ContactUs = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="john@example.com"
-                      className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
+                      className="w-full rounded-2xl bg-white dark:bg-udemy-dark-bg border border-udemy-border dark:border-udemy-dark-border text-udemy-text dark:text-udemy-dark-text px-4 py-3 outline-none focus:border-primary transition"
                     />
                   </div>
                 </div>
@@ -301,7 +295,7 @@ const ContactUs = () => {
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder="Enter subject"
-                      className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
+                      className="w-full rounded-2xl bg-white dark:bg-udemy-dark-bg border border-udemy-border dark:border-udemy-dark-border text-udemy-text dark:text-udemy-dark-text px-4 py-3 outline-none focus:border-primary transition"
                     />
                   </div>
                   <div>
@@ -312,7 +306,7 @@ const ContactUs = () => {
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-3 outline-none focus:border-primary transition"
+                      className="w-full rounded-2xl bg-white dark:bg-udemy-dark-bg border border-udemy-border dark:border-udemy-dark-border text-udemy-text dark:text-udemy-dark-text px-4 py-3 outline-none focus:border-primary transition"
                     >
                       <option>General</option>
                       <option>Bug Report</option>
@@ -334,7 +328,7 @@ const ContactUs = () => {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Write your message here..."
-                    className="w-full rounded-2xl bg-udemy-dark-bg border border-udemy-dark-border px-4 py-4 outline-none focus:border-primary transition resize-none"
+                    className="w-full rounded-2xl bg-white dark:bg-udemy-dark-bg border border-udemy-border dark:border-udemy-dark-border text-udemy-text dark:text-udemy-dark-text px-4 py-4 outline-none focus:border-primary transition resize-none"
                   />
                 </div>
 
@@ -385,7 +379,7 @@ const ContactUs = () => {
           <section className="mt-24">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-black">Frequently Asked Questions</h2>
-              <p className="text-udemy-dark-muted mt-4">
+              <p className="text-udemy-muted dark:text-udemy-dark-muted mt-4">
                 Quick answers to common questions.
               </p>
             </div>
@@ -394,7 +388,7 @@ const ContactUs = () => {
               {faqs.map((faq, index) => (
                 <div
                   key={index}
-                  className="border border-udemy-dark-border rounded-2xl overflow-hidden bg-udemy-dark-surface"
+                  className="border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden bg-white dark:bg-udemy-dark-surface"
                 >
                   <button
                     onClick={() =>
@@ -430,6 +424,7 @@ const ContactUs = () => {
         </section>
       </main>
       <Footer />
+      <BackToTop/>
     </>
   );
 };

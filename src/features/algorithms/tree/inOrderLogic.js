@@ -1,8 +1,10 @@
 /**
- * Pure function to generate step-by-step frames for In-Order Traversal.
+ * Pure function to generate step-by-step frames for Tree In-Order Traversal.
  * Decoupled from React UI.
  */
 export function generateInOrderSteps(treeRoot) {
+  if (!treeRoot) return [];
+
   const records = [];
   const visited = [];
   const stack = [];
@@ -74,8 +76,6 @@ export function generateInOrderSteps(treeRoot) {
       });
     }
   };
-
-  if (!treeRoot) return records;
 
   records.push({
     currentNode: treeRoot.value,
