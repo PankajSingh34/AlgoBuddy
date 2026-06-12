@@ -186,9 +186,9 @@ export default function Navbar() {
                   href={dynamicHref}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
-                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
-                      ? "text-primary dark:text-primary font-semibold"
-                      : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
+                  className={`relative pb-2 text-[15px] flex flex-col items-center justify-center border-b-2 transition-colors duration-150 focus-ring ${isActive(l.href)
+                      ? "border-primary text-primary dark:text-primary font-semibold"
+                      : "border-transparent text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white hover:border-surface-300 dark:hover:border-surface-600"
                     }`}
                 >
                   {l.label}
