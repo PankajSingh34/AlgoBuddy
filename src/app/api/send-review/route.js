@@ -81,7 +81,7 @@ export async function POST(request) {
       return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
     }
 
-    const smtpQuotaAllowed = await checkGlobalSmtpQuota(
+    const { allowed: smtpQuotaAllowed } = await checkGlobalSmtpQuota(
       parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
     );
     if (!smtpQuotaAllowed) {
