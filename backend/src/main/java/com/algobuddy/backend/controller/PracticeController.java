@@ -5,6 +5,7 @@ import com.algobuddy.backend.dto.ProgressRequest;
 import com.algobuddy.backend.dto.ProgressResponse;
 import com.algobuddy.backend.service.PracticeService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -28,7 +29,7 @@ public class PracticeController {
 
     @PostMapping("/progress")
     public ResponseEntity<ProgressResponse> updateProgress(@AuthenticationPrincipal Jwt jwt, 
-                                                           @RequestBody ProgressRequest request) {
+                                                           @Valid @RequestBody ProgressRequest request) {
         UUID userId = UUID.fromString(jwt.getSubject());
         ProgressResponse response = practiceService.updateProgress(userId, request);
         return ResponseEntity.ok(response);
@@ -36,7 +37,7 @@ public class PracticeController {
 
     @PostMapping("/progress/bulk")
     public ResponseEntity<ProgressResponse> bulkUpdateProgress(@AuthenticationPrincipal Jwt jwt,
-                                                               @RequestBody BulkProgressRequest request) {
+                                                               @Valid @RequestBody BulkProgressRequest request) {
         UUID userId = UUID.fromString(jwt.getSubject());
         ProgressResponse response = practiceService.bulkUpdateProgress(userId, request);
         return ResponseEntity.ok(response);

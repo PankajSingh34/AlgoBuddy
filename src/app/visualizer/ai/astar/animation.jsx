@@ -1,46 +1,18 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Play, Pause, PenLine, Target, ShieldAlert, Trash2 } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
-import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { loadFromStorage, saveToStorage } from "@/utils/storage";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { astarGenerator } from "@/features/algorithms/ai/astarLogic";
 
 const pointKey = (row, col) => `${row},${col}`;
-const parsePointKey = (key) => {
-  const [row, col] = key.split(",").map(Number);
-  return { row, col };
-};
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const clampPoint = (point, size) => ({ row: clamp(point.row, 0, size - 1), col: clamp(point.col, 0, size - 1) });
-
-const heuristicDistance = (a, b, heuristic) => {
-  const dr = Math.abs(a.row - b.row);
-  const dc = Math.abs(a.col - b.col);
-  if (heuristic === "euclidean") return Math.sqrt(dr * dr + dc * dc);
-  if (heuristic === "chebyshev") return Math.max(dr, dc);
-  return dr + dc;
-};
-
-const reconstructPath = (cameFrom, currentKey) => {
-  const path = [currentKey];
-  let cursor = currentKey;
-  while (cameFrom.has(cursor)) {
-    cursor = cameFrom.get(cursor);
-    path.push(cursor);
-  }
-  return path.reverse();
-};
-
-const getNeighbors = (row, col, size) => {
-  const neighbors = [];
-  if (row > 0) neighbors.push({ row: row - 1, col });
-  if (row < size - 1) neighbors.push({ row: row + 1, col });
-  if (col > 0) neighbors.push({ row, col: col - 1 });
-  if (col < size - 1) neighbors.push({ row, col: col + 1 });
-  return neighbors;
-};
 
 const AStarAnimation = () => {
   const initialSize = loadFromStorage("astar-grid-size", 10);
@@ -50,29 +22,11 @@ const AStarAnimation = () => {
   const [start, setStart] = useState({ row: 0, col: 0 });
   const [goal, setGoal] = useState({ row: initialSize - 1, col: initialSize - 1 });
   const [walls, setWalls] = useState(() => new Set());
-  const [currentFrame, setCurrentFrame] = useState(null);
-  const [message, setMessage] = useState("Build a maze, choose a heuristic, and press Go.");
-  const [stepExplanation, setStepExplanation] = useState("Choose wall, start, or goal editing mode before running the search.");
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [status, setStatus] = useState("idle");
-
-  const animationRef = useRef(null);
-  const framesRef = useRef([]);
-  const frameIndexRef = useRef(0);
-
-  const {
-    isPaused,
-    isPausedRef,
-    speed,
-    speedRef,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-  } = usePlayback(() => loadFromStorage("astar-speed", 1));
+  
+  const [frames, setFrames] = useState([]);
 
   useEffect(() => saveToStorage("astar-grid-size", gridSize), [gridSize]);
   useEffect(() => saveToStorage("astar-heuristic", heuristic), [heuristic]);
-  useEffect(() => saveToStorage("astar-speed", speed), [speed]);
 
   useEffect(() => {
     setStart((current) => clampPoint(current, gridSize));
@@ -86,7 +40,7 @@ const AStarAnimation = () => {
     setWalls((current) => {
       const next = new Set();
       current.forEach((cell) => {
-        const { row, col } = parsePointKey(cell);
+        const [row, col] = cell.split(",").map(Number);
         if (row < gridSize && col < gridSize) next.add(cell);
       });
       return next;
@@ -94,14 +48,7 @@ const AStarAnimation = () => {
   }, [gridSize]);
 
   const resetBoard = useCallback(() => {
-    clearTimeout(animationRef.current);
-    framesRef.current = [];
-    frameIndexRef.current = 0;
-    setCurrentFrame(null);
-    setIsAnimating(false);
-    setStatus("idle");
-    setMessage("Board reset. Add walls or run a new search.");
-    setStepExplanation("The board is clear and ready for a new route.");
+    setFrames([]);
     setStart({ row: 0, col: 0 });
     setGoal({ row: gridSize - 1, col: gridSize - 1 });
     setWalls(new Set());
@@ -109,177 +56,43 @@ const AStarAnimation = () => {
 
   useVisualizerReset(resetBoard);
 
-  const buildFrames = useCallback(() => {
-    const startKey = pointKey(start.row, start.col);
-    const goalKey = pointKey(goal.row, goal.col);
-    const wallSet = new Set([...walls].filter((cell) => cell !== startKey && cell !== goalKey));
-    const openSet = new Set([startKey]);
-    const closedSet = new Set();
-    const cameFrom = new Map();
-    const gScore = new Map([[startKey, 0]]);
-    const fScore = new Map([[startKey, heuristicDistance(start, goal, heuristic)]]);
-    const frames = [];
-
-    const capture = (messageText, detailText, currentKey = null, path = [], goalReached = false) => {
-      const currentPoint = currentKey ? parsePointKey(currentKey) : null;
-      const currentG = currentKey ? gScore.get(currentKey) ?? 0 : 0;
-      const currentH = currentPoint ? heuristicDistance(currentPoint, goal, heuristic) : 0;
-      const currentF = currentKey ? fScore.get(currentKey) ?? currentG + currentH : 0;
-      frames.push({
-        message: messageText,
-        detail: detailText,
-        currentKey,
-        open: [...openSet],
-        closed: [...closedSet],
-        path,
-        g: currentG,
-        h: currentH,
-        f: currentF,
-        goalReached,
-      });
-    };
-
-    const pickNext = () => {
-      let bestKey = null;
-      for (const candidateKey of openSet) {
-        if (!bestKey) {
-          bestKey = candidateKey;
-          continue;
-        }
-
-        const candidateF = fScore.get(candidateKey) ?? Infinity;
-        const bestF = fScore.get(bestKey) ?? Infinity;
-        if (candidateF !== bestF) {
-          if (candidateF < bestF) bestKey = candidateKey;
-          continue;
-        }
-
-        const candidatePoint = parsePointKey(candidateKey);
-        const bestPoint = parsePointKey(bestKey);
-        const candidateH = heuristicDistance(candidatePoint, goal, heuristic);
-        const bestH = heuristicDistance(bestPoint, goal, heuristic);
-        if (candidateH !== bestH) {
-          if (candidateH < bestH) bestKey = candidateKey;
-          continue;
-        }
-
-        const candidateG = gScore.get(candidateKey) ?? Infinity;
-        const bestG = gScore.get(bestKey) ?? Infinity;
-        if (candidateG !== bestG) {
-          if (candidateG < bestG) bestKey = candidateKey;
-          continue;
-        }
-
-        if (candidateKey < bestKey) bestKey = candidateKey;
-      }
-      return bestKey;
-    };
-
-    capture(
-      "A* is ready. The frontier begins at the start node.",
-      "The priority of each node is computed with f = g + h."
-    );
-
-    while (openSet.size > 0) {
-      const currentKey = pickNext();
-      const currentPoint = parsePointKey(currentKey);
-
-      if (currentKey === goalKey) {
-        const path = reconstructPath(cameFrom, currentKey);
-        capture(
-          "Goal reached. Reconstructing the shortest route.",
-          "The goal node was removed from the open set with the best score.",
-          currentKey,
-          path,
-          true
-        );
-        return { frames, found: true };
-      }
-
-      openSet.delete(currentKey);
-      closedSet.add(currentKey);
-
-      capture(
-        `Expanding node (${currentPoint.row + 1}, ${currentPoint.col + 1}).`,
-        `Selected node has g = ${gScore.get(currentKey) ?? 0}, h = ${heuristicDistance(currentPoint, goal, heuristic).toFixed(2)}, and f = ${(fScore.get(currentKey) ?? 0).toFixed(2)}.`,
-        currentKey
-      );
-
-      for (const neighbor of getNeighbors(currentPoint.row, currentPoint.col, gridSize)) {
-        const neighborKey = pointKey(neighbor.row, neighbor.col);
-        if (wallSet.has(neighborKey) || closedSet.has(neighborKey)) continue;
-
-        const tentativeG = (gScore.get(currentKey) ?? Infinity) + 1;
-        const knownG = gScore.get(neighborKey) ?? Infinity;
-        if (tentativeG < knownG) {
-          cameFrom.set(neighborKey, currentKey);
-          gScore.set(neighborKey, tentativeG);
-          const nextH = heuristicDistance(neighbor, goal, heuristic);
-          fScore.set(neighborKey, tentativeG + nextH);
-          openSet.add(neighborKey);
-          capture(
-            `Updated neighbor (${neighbor.row + 1}, ${neighbor.col + 1}).`,
-            `New values: g = ${tentativeG}, h = ${nextH.toFixed(2)}, f = ${(tentativeG + nextH).toFixed(2)}.`,
-            currentKey
-          );
-        }
-      }
-    }
-
-    capture(
-      "No path was found.",
-      "The open set is empty, so the goal cannot be reached with the current walls."
-    );
-
-    return { frames, found: false };
-  }, [goal, gridSize, heuristic, start, walls]);
-
-  const runPlayback = useCallback(() => {
-    if (isPausedRef.current) {
-      animationRef.current = setTimeout(runPlayback, 120);
-      return;
-    }
-
-    const frame = framesRef.current[frameIndexRef.current];
-    if (!frame) {
-      setIsAnimating(false);
-      return;
-    }
-
-    frameIndexRef.current += 1;
-    setCurrentFrame(frame);
-    setMessage(frame.message);
-    setStepExplanation(frame.detail);
-    setStatus(frame.goalReached ? "success" : frame.message.startsWith("No path") ? "error" : "running");
-
-    animationRef.current = setTimeout(runPlayback, Math.max(70, 1000 / Math.max(speedRef.current, 0.5)));
-  }, [isPausedRef, speedRef]);
-
-  useEffect(() => () => clearTimeout(animationRef.current), []);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 
   const handleGo = useCallback((event) => {
     event.preventDefault();
-    if (isAnimating) return;
+    if (engine.isPlaying) return;
 
-    clearTimeout(animationRef.current);
-    const { frames, found } = buildFrames();
-    framesRef.current = frames;
-    frameIndexRef.current = 0;
-    setCurrentFrame(null);
-    setIsAnimating(true);
-    setStatus("running");
-    setMessage("Running A* Search...");
-    setStepExplanation(found ? "The search will now animate from the first frame to the shortest path." : "The search will animate until it determines there is no valid path.");
-    runPlayback();
-  }, [buildFrames, isAnimating, runPlayback]);
+    const newFrames = Array.from(astarGenerator(start, goal, walls, gridSize, heuristic));
+    setFrames(newFrames);
+    engine.reset();
+    engine.play();
+  }, [engine, start, goal, walls, gridSize, heuristic]);
 
-  const handleReset = useCallback(() => {
-    resetBoard();
-    setMessage("Visualizer reset.");
-  }, [resetBoard]);
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
+  };
+
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: () => {
+        setFrames([]);
+        engine.reset();
+    },
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
   const handleCellClick = useCallback((row, col) => {
-    if (isAnimating) return;
+    if (engine.isPlaying) return;
 
     const clickedKey = pointKey(row, col);
     const startKey = pointKey(start.row, start.col);
@@ -314,29 +127,35 @@ const AStarAnimation = () => {
       next.delete(clickedKey);
       return next;
     });
-  }, [editMode, goal.col, goal.row, isAnimating, start.col, start.row]);
+  }, [editMode, goal.col, goal.row, engine.isPlaying, start.col, start.row]);
 
-  const renderedFrame = currentFrame ?? {
+  // Derived state for rendering
+  const renderedFrame = frames.length > 0 ? frames[engine.currentStep] : {
     open: [pointKey(start.row, start.col)],
     closed: [],
     path: [],
     currentKey: pointKey(start.row, start.col),
     g: 0,
-    h: heuristicDistance(start, goal, heuristic),
-    f: heuristicDistance(start, goal, heuristic),
+    h: 0, // In original it calculates initial H here, but 0 is fine for idle state
+    f: 0,
     goalReached: false,
+    message: "Build a maze, choose a heuristic, and press Go.",
+    detail: "Choose wall, start, or goal editing mode before running the search."
   };
 
   const openSet = new Set(renderedFrame.open);
   const closedSet = new Set(renderedFrame.closed);
   const pathSet = new Set(renderedFrame.path);
+  const isRunning = engine.isPlaying;
+  const isSuccess = renderedFrame.goalReached;
+  const isError = renderedFrame.message && renderedFrame.message.startsWith("No path");
 
   const statusClass =
-    status === "success"
+    isSuccess
       ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-      : status === "error"
+      : isError
       ? "bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200"
-      : status === "running"
+      : isRunning
       ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
       : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
 
@@ -348,7 +167,7 @@ const AStarAnimation = () => {
 
   return (
     <main className="container mx-auto">
-      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto font-sans">
+      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto font-sans mt-6">
         Explore how A* Search blends real path cost with a heuristic estimate to reach the goal efficiently.
       </p>
 
@@ -365,7 +184,7 @@ const AStarAnimation = () => {
               max="15"
               value={gridSize}
               onChange={(event) => setGridSize(parseInt(event.target.value, 10))}
-              disabled={isAnimating}
+              disabled={engine.isPlaying}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-gray-400 mt-2">
@@ -382,7 +201,7 @@ const AStarAnimation = () => {
               id="heuristic"
               value={heuristic}
               onChange={(event) => setHeuristic(event.target.value)}
-              disabled={isAnimating}
+              disabled={engine.isPlaying}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
             >
               <option value="manhattan">Manhattan</option>
@@ -403,7 +222,7 @@ const AStarAnimation = () => {
                   key={button.id}
                   type="button"
                   onClick={() => setEditMode(button.id)}
-                  disabled={isAnimating}
+                  disabled={engine.isPlaying}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${active ? button.className : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700"}`}
                 >
                   <Icon size={16} />
@@ -415,7 +234,7 @@ const AStarAnimation = () => {
               type="button"
               onClick={() => setWalls(new Set())}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 transition-colors"
-              disabled={isAnimating}
+              disabled={engine.isPlaying}
             >
               <Trash2 size={16} />
               Clear Walls
@@ -423,32 +242,29 @@ const AStarAnimation = () => {
           </div>
 
           <div className="flex flex-wrap gap-2 justify-start xl:justify-end">
-            <GoButton onClick={handleGo} isAnimating={isAnimating} disabled={isAnimating} />
-            <ResetButton onReset={handleReset} isAnimating={isAnimating} />
-            {isAnimating && (
-              <button
-                type="button"
-                onClick={togglePlayPause}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white font-bold shadow-sm hover:bg-primary/90 transition-colors"
-              >
-                {isPaused ? <Play size={18} /> : <Pause size={18} />}
-                {isPaused ? "Play" : "Pause"}
-              </button>
-            )}
-            {isAnimating && (
-              <div className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 bg-gray-50 dark:bg-gray-900">
-                <button type="button" onClick={decreaseSpeed} className="font-black text-lg px-2" disabled={speed <= 0.5}>-</button>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[72px] text-center">{speed}x</span>
-                <button type="button" onClick={increaseSpeed} className="font-black text-lg px-2" disabled={speed >= 5}>+</button>
-              </div>
-            )}
+            <GoButton onClick={handleGo} isAnimating={engine.isPlaying} disabled={engine.isPlaying} />
+            <ResetButton onReset={() => { setFrames([]); resetBoard(); }} isAnimating={engine.isPlaying} />
           </div>
+        </div>
+        
+        <div className="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            onPlayPause={togglePlay}
+            speed={engine.speed / 1000}
+            onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
+            onReset={() => { setFrames([]); engine.reset(); }}
+            progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+            disabled={frames.length === 0}
+          />
         </div>
       </form>
 
-      {message && (
+      {renderedFrame.message && (
         <div className={`max-w-4xl mx-auto mb-8 p-4 rounded-lg ${statusClass} shadow-sm border border-current/10`}>
-          <p className="text-center font-medium">{message}</p>
+          <p className="text-center font-medium">{renderedFrame.message}</p>
         </div>
       )}
 
@@ -457,10 +273,10 @@ const AStarAnimation = () => {
           <div className="flex flex-wrap items-center gap-2 bg-[#a435f0]/10 dark:bg-[#a435f0]/20 px-4 py-3 border-b border-[#a435f0]/20">
             <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
             <span className="text-sm font-semibold text-[#a435f0] dark:text-[#c56eff] uppercase tracking-wide">Step Explanation</span>
-            <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">{isAnimating ? "Search in progress" : "Ready"}</span>
+            <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">{engine.isPlaying ? "Search in progress" : "Ready"}</span>
           </div>
           <div className="px-4 py-4">
-            <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">{stepExplanation}</p>
+            <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">{renderedFrame.detail}</p>
           </div>
           <div className="px-4 py-3 bg-gray-50 dark:bg-neutral-950 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-4 text-[10px] text-gray-500 uppercase font-bold tracking-tight">
             <span><span className="text-blue-500">● Blue</span> = current node</span>
@@ -518,7 +334,7 @@ const AStarAnimation = () => {
                       key={cellKey}
                       type="button"
                       onClick={() => handleCellClick(row, col)}
-                      disabled={isAnimating}
+                      disabled={engine.isPlaying}
                       className={`aspect-square rounded-lg border-2 transition-all duration-300 flex items-center justify-center font-bold text-[10px] sm:text-xs select-none ${className}`}
                       title={`Row ${row + 1}, Column ${col + 1}`}
                     >

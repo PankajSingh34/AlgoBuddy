@@ -31,7 +31,6 @@ function getValidKey(value) {
 const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
-const turnstileConfigured = process.env.TURNSTILE_CONFIGURED === "true";
 
 const supabaseAdmin =
   supabaseUrl && supabaseServiceKey
@@ -214,28 +213,31 @@ export async function POST(req) {
 
     const ip = getClientIp(req.headers);
 
-    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
-    const isConfigured = turnstileConfigured && turnstileSecretKey && turnstileSecretKey !== "undefined";
-
+    const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
     let captcha;
-    if (!isConfigured) {
-      const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
 
-      if (isProduction && !explicitBypass) {
-        return jsonResponse({ success: false, message: "Server misconfigured: CAPTCHA secret key is not set." }, 500);
-      }
-
-      if (!explicitBypass) {
-        console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
-      }
-
+    if (explicitBypass) {
       captcha = { ok: true };
     } else {
-      captcha = await verifyTurnstile(String(captchaToken), { ip });
+      try {
+        captcha = await verifyTurnstile(String(captchaToken), { ip });
+      } catch (err) {
+        if (err.message === 'CAPTCHA_CONFIG_MISSING') {
+          if (!isProduction) {
+            console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
+            captcha = { ok: true };
+          } else {
+            console.error("Server misconfigured: CAPTCHA secret key is not set.");
+            return jsonResponse({ success: false, message: "We're having trouble verifying the CAPTCHA. Please try again later." }, 500);
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (!captcha.ok) {
-      return jsonResponse({ success: false, message: captcha.error }, 400);
+      return jsonResponse({ success: false, message: captcha.error || "Captcha verification failed. Please try again." }, 400);
     }
 
     const normalizedEmail = normalizeEmail(email);

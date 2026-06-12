@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/features/user/UserContext";
+import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
@@ -125,11 +126,14 @@ export default function ArenaPage() {
 
  
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
+  const ensureLoggedIn = () => {
+    if (!user) {
+      toast.error("Please login to use this feature!");
+      router.push("/login");
+      return false;
     }
-  }, [user, loading, router]);
+    return true;
+  };
 
   const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, streak, tournaments, badges, history
 
@@ -190,7 +194,7 @@ export default function ArenaPage() {
     setDuelSimulatorOpen(true);
   };
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -225,7 +229,12 @@ export default function ArenaPage() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => {
+                        if (["ranked", "friend", "streak", "badges", "history"].includes(item.id)) {
+                          if (!ensureLoggedIn()) return;
+                        }
+                        setActiveTab(item.id);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${isActive
                           ? "bg-primary text-white shadow-sm"
                           : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-900/40"
@@ -280,7 +289,10 @@ export default function ArenaPage() {
               </div>
 
               <button
-                onClick={() => setMatchmakingOpen(true)}
+                onClick={() => {
+                  if (!ensureLoggedIn()) return;
+                  setMatchmakingOpen(true);
+                }}
                 className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10"
               >
                 Find Match
@@ -306,14 +318,20 @@ export default function ArenaPage() {
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                       <button
-                        onClick={() => setMatchmakingOpen(true)}
+                        onClick={() => {
+                          if (!ensureLoggedIn()) return;
+                          setMatchmakingOpen(true);
+                        }}
                         className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Zap size={14} />
                         Find Match
                       </button>
                       <button
-                        onClick={() => setCreateDuelOpen(true)}
+                        onClick={() => {
+                          if (!ensureLoggedIn()) return;
+                          setCreateDuelOpen(true);
+                        }}
                         className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Swords size={14} />
@@ -542,7 +560,10 @@ export default function ArenaPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => handleWatchLive("You", b.opponent, b.topic)}
+                            onClick={() => {
+                              if (!ensureLoggedIn()) return;
+                              handleWatchLive("You", b.opponent, b.topic);
+                            }}
                             className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-neutral-900 dark:hover:bg-neutral-850 border border-slate-200 dark:border-neutral-800 rounded-xl font-bold transition shrink-0"
                           >
                             Replay

@@ -12,10 +12,16 @@ export async function GET(request) {
       .from("problem_bookmarks")
       .select("*")
       .eq("user_id", authResult.user.id);
-    if (error) return jsonResponse({ error: error.message }, 500);
+    if (error) {
+      // Log server-side for debugging; always return [] so the UI degrades
+      // gracefully (local storage handles the fallback) instead of showing 500.
+      console.error("[/api/bookmarks GET] Supabase error:", error.message, error.code);
+      return jsonResponse([]);
+    }
     return jsonResponse(data || []);
   } catch (error) {
-    return errorResponse(error);
+    console.error("[/api/bookmarks GET] Unexpected error:", error.message);
+    return jsonResponse([]);
   }
 }
 
@@ -33,7 +39,10 @@ export async function POST(request) {
       { user_id: authResult.user.id, problem_id: problemId, topic_slug: topicSlug, created_at: new Date().toISOString() },
       { onConflict: ["user_id", "problem_id"] }
     );
-    if (error) return jsonResponse({ error: error.message }, 500);
+    if (error) {
+      console.error("[/api/bookmarks POST] Supabase error:", error.message, error.code);
+      return jsonResponse({ error: error.message }, 500);
+    }
     return jsonResponse({ success: true });
   } catch (error) {
     return errorResponse(error);
@@ -55,7 +64,10 @@ export async function DELETE(request) {
       .delete()
       .eq("user_id", authResult.user.id)
       .eq("problem_id", problemId);
-    if (error) return jsonResponse({ error: error.message }, 500);
+    if (error) {
+      console.error("[/api/bookmarks DELETE] Supabase error:", error.message, error.code);
+      return jsonResponse({ error: error.message }, 500);
+    }
     return jsonResponse({ success: true });
   } catch (error) {
     return errorResponse(error);

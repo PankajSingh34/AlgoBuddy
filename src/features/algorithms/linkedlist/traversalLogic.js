@@ -1,7 +1,3 @@
-/**
- * Pure generator/function for Linked List Traversal operations.
- */
-
 export function generateRandomListLogic() {
   const values = [
     "\u{1F436}", "\u{1F431}", "\u{1F42D}", "\u{1F439}", 
@@ -25,4 +21,28 @@ export function generateRandomListLogic() {
   }));
 
   return newList;
+}
+
+export function* traversalGenerator(list) {
+  if (list.length === 0) return;
+
+  yield {
+    list: [...list],
+    currentNodeIndex: -1,
+    explanation: "Starting traversal...",
+  };
+
+  for (let i = 0; i < list.length; i++) {
+    yield {
+      list: [...list],
+      currentNodeIndex: i,
+      explanation: `Visiting node at address ${list[i].address} with value ${list[i].value}.`,
+    };
+  }
+
+  yield {
+    list: [...list],
+    currentNodeIndex: list.length,
+    explanation: "Traversal complete. Reached NULL.",
+  };
 }

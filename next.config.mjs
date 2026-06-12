@@ -44,7 +44,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: https://*.googlesyndication.com",
-      "connect-src 'self' http://localhost:8080 https://algobuddy-j3op.onrender.com https://*.supabase.co https://*.googlesyndication.com https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.tagassistant.google.com https://*.cloudflare.com",
+      "connect-src 'self' http://localhost:8080 https://algobuddy-1.onrender.com https://*.supabase.co https://*.googlesyndication.com https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.tagassistant.google.com https://*.cloudflare.com",
       "frame-src https://challenges.cloudflare.com https://*.googleads.g.doubleclick.net https://*.google.com",
       "frame-ancestors 'none'",
     ].join("; "),
@@ -52,6 +52,9 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   devIndicators: false,
   images: {
     remotePatterns: [

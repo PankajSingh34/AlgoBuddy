@@ -12,3 +12,7 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

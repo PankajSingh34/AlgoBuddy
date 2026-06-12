@@ -1,17 +1,16 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import ChallengeModePanel, {
   createOptions,
   useSortingChallenge,
 } from "@/app/visualizer/array/components/ChallengeMode";
 import { selectionSortGenerator } from "@/features/algorithms/array/selectionSortLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -38,31 +37,17 @@ const createSelectionMinimumQuestion = (arr, minIndex, passIndex) => {
 
 const SelectionSortVisualizer = () => {
     const [array, setArray] = useState([]);
-    const [sorting, setSorting] = useState(false);
-    const [sorted, setSorted] = useState(false);
     const [challengeEnabled, setChallengeEnabled] = useState(false);
-    const {
-      isPaused,
-      speed,
-      speedRef,
-      setSpeed,
-      togglePlayPause,
-      increaseSpeed,
-      decreaseSpeed,
-      checkPause,
-    } = usePlayback(1);
-    const [comparisons, setComparisons] = useState(0);
-    const [swaps, setSwaps] = useState(0);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [totalSteps, setTotalSteps] = useState(0);
-    const [currentIndices, setCurrentIndices] = useState({ 
-      i: -1,    // Current outer loop index
-      j: -1,    // Current inner loop index
-      min: -1   // Current minimum element index
-    });  const [currentPhase, setCurrentPhase] = useState("");
-  const [stepExplanation, setStepExplanation] = useState("");    const animationRef = useRef(null);
-    const resolveRef = useRef(null);
-    const isSortingRef = useRef(false);
+    
+    const [visualState, setVisualState] = useState({
+        comparisons: 0,
+        swaps: 0,
+        totalSteps: 0,
+        currentPhase: "",
+        stepExplanation: "",
+        currentIndices: { i: -1, j: -1, min: -1 }
+    });
+
     const {
       activeQuestion,
       askChallenge,
@@ -71,175 +56,108 @@ const SelectionSortVisualizer = () => {
       submitAnswer,
     } = useSortingChallenge(challengeEnabled);
 
-    const cancellableDelay = async () => {
-      await new Promise((resolve) => {
-        resolveRef.current = resolve;
-        animationRef.current = setTimeout(resolve, 1000 / speedRef.current);
-      });
-      await checkPause();
-    };
-  
-    // Generate random array
-    const handleGenerateRandomArray = (newArray) => {
-      setArray(newArray);
-      setSorted(false);
-      resetStats();
-    };
-  
-    // Use custom array input
-    const handleCustomArray = (newArray) => {
-      setArray(newArray);
-      setSorted(false);
-      resetStats();
-    };
-  
-    // Reset all stats and state
-    const resetStats = () => {
-      setComparisons(0);
-      setSwaps(0);
-      setCurrentStep(0);
-      setTotalSteps(0);
-      setCurrentIndices({ i: -1, j: -1, min: -1 });
-      setCurrentPhase("");
-      setStepExplanation("");
-      resetChallengeStats();
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-      }
-      if (resolveRef.current) {
-        resolveRef.current();
-        resolveRef.current = null;
-      }
-      isSortingRef.current = false;
-    };
-  
-    // Selection sort algorithm
-    const selectionSort = async () => {
-      if (sorted || sorting || array.length === 0) return;
-      
-      isSortingRef.current = true;
-      setSorting(true);
+    const steps = useMemo(() => {
+        if (array.length === 0) return [];
+        return Array.from(selectionSortGenerator(array)).map(frame => ({ type: frame.type, ...frame.payload }));
+    }, [array]);
 
-      const generator = selectionSortGenerator(array);
+    const onStep = useCallback((step) => {
+        setVisualState(prev => {
+            let next = { ...prev };
+            
+            if (step.type === 'init') {
+                next.totalSteps = step.totalSteps;
+            } else if (step.type === 'phase_start') {
+                next.currentPhase = `Pass ${step.pass} of ${step.totalPasses}`;
+                next.stepExplanation = `Selecting minimum element from the remaining array starting at index ${step.i}.`;
+                next.currentIndices = { i: step.i, j: step.i + 1, min: step.minIndex };
+            } else if (step.type === 'comparing') {
+                next.currentIndices = { ...next.currentIndices, j: step.j, min: step.minIndex };
+                next.comparisons = step.comparisons;
+                next.stepExplanation = `Comparing ${step.arr[step.j]} at index ${step.j} with current minimum ${step.arr[step.minIndex]} at index ${step.minIndex}.`;
+            } else if (step.type === 'new_min') {
+                next.currentIndices = { ...next.currentIndices, min: step.minIndex };
+                next.stepExplanation = `Found new minimum ${step.arr[step.j]} at index ${step.j}.`;
+            } else if (step.type === 'swap_needed') {
+                next.stepExplanation = `Swapping minimum ${step.arr[step.minIndex]} into position ${step.i}.`;
+            } else if (step.type === 'swapped') {
+                next.swaps = step.swaps;
+            } else if (step.type === 'no_swap') {
+                next.stepExplanation = `Index ${step.i} already contains the minimum element ${step.arr[step.minIndex]}. No swap needed.`;
+            } else if (step.type === 'completed') {
+                next.currentPhase = "Completed";
+                next.stepExplanation = "Array is fully sorted.";
+                next.currentIndices = { i: -1, j: -1, min: -1 };
+            }
+            return next;
+        });
 
-      for (const frame of generator) {
-        if (!isSortingRef.current) return;
-        const { type, payload } = frame;
-
-        if (type === 'init') {
-          setTotalSteps(payload.totalSteps);
-          setCurrentStep(0);
+        if (step.type === 'swapped') {
+            const bars = document.querySelectorAll(".array-bar");
+            const barI = bars[step.i];
+            const barMin = bars[step.minIndex];
+            if (barI && barMin) {
+                gsap.to([barI, barMin], { opacity: 0, scale: 0.5, duration: 0.2, onComplete: () => { gsap.to([barI, barMin], { opacity: 1, scale: 1, duration: 0.2 }); } });
+            }
         }
-        else if (type === 'phase_start') {
-          setCurrentPhase(`Pass ${payload.pass} of ${payload.totalPasses}`);
-          setStepExplanation(`Selecting minimum element from the remaining array starting at index ${payload.i}.`);
-          setCurrentIndices({ i: payload.i, j: payload.i + 1, min: payload.minIndex });
-        }
-        else if (type === 'comparing') {
-          setCurrentIndices(prev => ({ ...prev, j: payload.j, min: payload.minIndex }));
-          setComparisons(payload.comparisons);
-          setCurrentStep(payload.step);
-          setStepExplanation(`Comparing ${payload.arr[payload.j]} at index ${payload.j} with current minimum ${payload.arr[payload.minIndex]} at index ${payload.minIndex}.`);
-          await cancellableDelay();
-        }
-        else if (type === 'new_min') {
-          setCurrentIndices(prev => ({ ...prev, min: payload.minIndex }));
-          setStepExplanation(`Found new minimum ${payload.arr[payload.j]} at index ${payload.j}.`);
-          await cancellableDelay();
-        }
-        else if (type === 'swap_needed') {
-          setStepExplanation(`Swapping minimum ${payload.arr[payload.minIndex]} into position ${payload.i}.`);
-          await cancellableDelay();
-          if (!isSortingRef.current) return;
-        }
-        else if (type === 'swapped') {
-          setSwaps(payload.swaps);
-          setArray(payload.arr);
-
-          const barI = document.querySelectorAll(".array-bar")[payload.i];
-          const barMin = document.querySelectorAll(".array-bar")[payload.minIndex];
-          if (barI && barMin) {
-            gsap.to([barI, barMin], {
-              opacity: 0,
-              scale: 0.5,
-              duration: 0.2,
-              onComplete: () => {
-                gsap.to([barI, barMin], {
-                  opacity: 1,
-                  scale: 1,
-                  duration: 0.2
-                });
-              }
-            });
-          }
-          await cancellableDelay();
-        }
-        else if (type === 'no_swap') {
-          setStepExplanation(`Index ${payload.i} already contains the minimum element ${payload.arr[payload.minIndex]}. No swap needed.`);
-        }
-        else if (type === 'completed') {
-          setArray(payload.arr);
-          isSortingRef.current = false;
-          setSorting(false);
-          setSorted(true);
-          setCurrentPhase("Completed");
-          setStepExplanation("Array is fully sorted.");
-          setCurrentIndices({ i: -1, j: -1, min: -1 });
-        }
-      }
-    };
-  
-    // Reset everything
-    const reset = () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-      }
-      setArray([]);
-      setSorting(false);
-      setSorted(false);
-      resetStats();
-    };
-  
-    // Clean up on unmount
-  useVisualizerReset(() => {
-    isSortingRef.current = false;
-    if (resolveRef.current) { resolveRef.current(); resolveRef.current = null; }
-    if (animationRef.current) clearTimeout(animationRef.current);
-    setArray([]);
-    setSorting(false);
-    setSorted(false);
-    setComparisons(0);
-    setSwaps(0);
-    setCurrentStep(0);
-    setTotalSteps(0);
-    setCurrentIndices({ i: -1, j: -1, minIdx: -1 });
-  });
-    useEffect(() => {
-      return () => {
-        if (animationRef.current) {
-          clearTimeout(animationRef.current);
-        }
-      };
     }, []);
 
-    // keyboard shortcuts
+    const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+    const currentStepData = steps[engine.currentStep];
+    const displayArray = currentStepData?.arr || array;
+    const sorted = currentStepData?.type === 'completed';
+    const isSorting = engine.isPlaying || (engine.currentStep > 0 && !sorted);
+
+    const handleGenerateRandomArray = (newArray) => {
+      setArray(newArray);
+      engine.reset();
+      resetStats();
+    };
+  
+    const handleCustomArray = (newArray) => {
+      setArray(newArray);
+      engine.reset();
+      resetStats();
+    };
+  
+    const resetStats = () => {
+      setVisualState({ comparisons: 0, swaps: 0, totalSteps: 0, currentPhase: "", stepExplanation: "", currentIndices: { i: -1, j: -1, min: -1 } });
+      resetChallengeStats();
+    };
+
+    const startSelectionSort = () => {
+        if (!array.length) return;
+        if (sorted) {
+            engine.reset();
+            setTimeout(() => engine.play(), 50);
+        } else {
+            engine.play();
+        }
+    };
+
+    const reset = () => {
+      engine.reset();
+      setArray([]);
+      resetStats();
+    };
+  
     useVisualizerKeyboard({
-      onStart:       selectionSort,
-      onReset:       reset,
-      onSpeedChange: setSpeed,
-      onTogglePlayPause: togglePlayPause,
-      speed,
-      sorting,
-      sorted,
+      onStart: startSelectionSort,
+      onReset: reset,
+      onSpeedChange: (s) => engine.setSpeed(s * 1000),
+      onTogglePlayPause: engine.isPlaying ? engine.pause : startSelectionSort,
+      speed: engine.speed / 1000,
+      sorting: engine.isPlaying,
+      sorted: sorted,
     });
   
     const handleExplainStep = () => {
-      const prompt = `I am currently looking at the Selection Sort algorithm, at step ${currentStep} of ${totalSteps}.
-Phase: ${currentPhase}
-Explanation on screen: ${stepExplanation}
-Current Array State: [${array.join(", ")}]
-Currently at: outer index i = ${currentIndices.i}, inner index j = ${currentIndices.j}
-Current minimum index: ${currentIndices.min}
+      const prompt = `I am currently looking at the Selection Sort algorithm, at step ${engine.currentStep} of ${visualState.totalSteps}.
+Phase: ${visualState.currentPhase}
+Explanation on screen: ${visualState.stepExplanation}
+Current Array State: [${displayArray.join(", ")}]
+Currently at: outer index i = ${visualState.currentIndices.i}, inner index j = ${visualState.currentIndices.j}
+Current minimum index: ${visualState.currentIndices.min}
 
 Please explain exactly what is happening in this step in detail.`;
       
@@ -256,13 +174,12 @@ Please explain exactly what is happening in this step in detail.`;
           </p>
 
           <div className="max-w-4xl mx-auto">
-            {/* Controls */}
             <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md mb-8 border border-gray-200 dark:border-gray-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="space-y-2">
                   <ArrayGenerator
                     onGenerate={handleGenerateRandomArray}
-                    disabled={sorting}
+                    disabled={isSorting}
                     isPrimary={array.length === 0}
                     defaultSize={10}
                     minValue={5}
@@ -270,40 +187,45 @@ Please explain exactly what is happening in this step in detail.`;
                   />
                   <CustomArrayInput
                     onUseCustomArray={handleCustomArray}
-                    disabled={sorting}
+                    disabled={isSorting}
                     placeholder="e.g. 5, 3, 8, 1, 2"
                     currentArray={array}
                   />
                 </div>
                 <div className="flex flex-col">
                   <button
-                    onClick={selectionSort}
-                    disabled={!array.length || sorting || sorted}
+                    onClick={startSelectionSort}
+                    disabled={!array.length}
                     className="w-full bg-[#a435f0] hover:bg-[#8f2cd6] text-white px-4 py-2 rounded disabled:opacity-50 transition-colors"
                   >
-                    {sorting ? "Sorting..." : "Start Selection Sort"}
+                    {engine.isPlaying ? "Sorting..." : sorted ? "Restart Selection Sort" : "Start Selection Sort"}
                   </button>
                   <button
                     onClick={reset}
-                    disabled={sorting}
+                    disabled={engine.isPlaying}
                     className="w-full bg-transparent border border-[#a435f0] text-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 mt-4 px-4 py-2 rounded transition-colors"
                   >
                     Reset All
                   </button>
                 </div>
               </div>
-              {/* Playback & Speed controls */}
-              {sorting && (
+
+              {engine.isPlaying && (
                 <PlaybackControls
-                  isPaused={isPaused}
-                  onTogglePlayPause={togglePlayPause}
-                  speed={speed}
-                  onSpeedChange={setSpeed}
+                  isPlaying={engine.isPlaying}
+                  onPlayPause={engine.isPlaying ? engine.pause : startSelectionSort}
+                  speed={engine.speed / 1000}
+                  onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+                  onStepForward={engine.stepForward}
+                  onStepBackward={engine.stepBackward}
+                  onReset={engine.reset}
                   onExplainStep={handleExplainStep}
+                  disabled={steps.length === 0}
+                  progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
                 />
               )}
 
-              {!sorting && (
+              {!engine.isPlaying && (
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
                   <input
@@ -311,18 +233,18 @@ Please explain exactly what is happening in this step in detail.`;
                     min="0.5"
                     max="5"
                     step="0.5"
-                    value={speed}
-                    onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                    value={engine.speed / 1000}
+                    onChange={(e) => engine.setSpeed(parseFloat(e.target.value) * 1000)}
                     className="w-24 sm:w-32"
-                    disabled={sorting}
+                    disabled={isSorting}
                   />
-                  <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed}x</span>
+                  <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{engine.speed / 1000}x</span>
                 </div>
               )}
 
               <ChallengeModePanel
                 activeQuestion={activeQuestion}
-                disabled={sorting}
+                disabled={isSorting}
                 enabled={challengeEnabled}
                 onEnabledChange={setChallengeEnabled}
                 onResetStats={resetChallengeStats}
@@ -330,45 +252,43 @@ Please explain exactly what is happening in this step in detail.`;
                 stats={challengeStats}
               />
 
-              {/* Stats */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
                   <div className="font-medium">Comparisons:</div>
-                  <div className="text-2xl">{comparisons}</div>
+                  <div className="text-2xl">{visualState.comparisons}</div>
                 </div>
                 <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
                   <div className="font-medium">Swaps:</div>
-                  <div className="text-2xl">{swaps}</div>
+                  <div className="text-2xl">{visualState.swaps}</div>
                 </div>
               </div>
               <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
                 <div className="font-medium">Step:</div>
-                <div className="text-xl font-bold">{totalSteps > 0 ? `${currentStep} / ${totalSteps}` : '—'}</div>
-                <div className="text-xs text-gray-500 mt-1">{currentStep > 0 && !sorted ? `Finding minimum from index ${currentIndices.i}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
+                <div className="text-xl font-bold">{visualState.totalSteps > 0 ? `${currentStepData?.step || 0} / ${visualState.totalSteps}` : '—'}</div>
+                <div className="text-xs text-gray-500 mt-1">{engine.currentStep > 0 && !sorted ? `Finding minimum from index ${visualState.currentIndices.i}` : sorted ? 'Sorting complete!' : 'Start sorting to see steps'}</div>
               </div>
               <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
                 <div className="font-medium">Phase:</div>
                 <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
-                  {currentPhase || (sorted ? 'Completed' : 'Ready to start')}
+                  {visualState.currentPhase || (sorted ? 'Completed' : 'Ready to start')}
                 </div>
                 <div className="font-medium mt-2">Explanation:</div>
                 <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                  {stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
+                  {visualState.stepExplanation || (sorted ? 'Array is fully sorted.' : 'Run the algorithm to see educational hints.')}
                 </div>
               </div>
             </div>
 
-            {/* Visualization */}
             <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4">
                 Array Visualization
               </h2>
-              {array.length > 0 ? (
+              {displayArray.length > 0 ? (
                 <div className="flex flex-wrap gap-4 justify-center">
-                  {array.map((value, index) => {
-                    const isCurrent = index === currentIndices.j;
-                    const isMin = index === currentIndices.min;
-                    const isSorted = sorted || index < currentIndices.i;
+                  {displayArray.map((value, index) => {
+                    const isCurrent = index === visualState.currentIndices.j;
+                    const isMin = index === visualState.currentIndices.min;
+                    const isSorted = sorted || index < visualState.currentIndices.i;
 
                     return (
                       <div key={index} className="flex flex-col items-center">
@@ -387,9 +307,9 @@ Please explain exactly what is happening in this step in detail.`;
                           {value}
                         </div>
                         <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                          {index === currentIndices.i && "i"}
-                          {index === currentIndices.j && "j"}
-                          {index === currentIndices.min && "min"}
+                          {index === visualState.currentIndices.i && "i"}
+                          {index === visualState.currentIndices.j && "j"}
+                          {index === visualState.currentIndices.min && "min"}
                         </div>
                       </div>
                     );
@@ -397,7 +317,7 @@ Please explain exactly what is happening in this step in detail.`;
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  {sorting
+                  {engine.isPlaying
                     ? "Sorting..."
                     : "Generate or enter an array to begin"}
                 </div>

@@ -25,8 +25,8 @@ const BackToTop = () => {
       onClick={scrollToTop}
       aria-label="Back to top"
       className={`
-        fixed bottom-24 right-7 z-50
-        w-12 h-12 rounded-full
+        fixed bottom-20 right-3 sm:bottom-28 sm:right-7 z-50
+        w-10 h-10 sm:w-12 sm:h-12 rounded-full
         bg-[#a435f0]
         text-white shadow-lg
         transition-all duration-300 ease-in-out
@@ -51,7 +51,7 @@ const BackToTop = () => {
       {/* Arrow icon */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="w-5 h-5 transition-transform group-hover:-translate-y-0.5"
+        className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:-translate-y-0.5"
         viewBox="0 0 20 20"
         fill="currentColor"
       >

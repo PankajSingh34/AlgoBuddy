@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import jsPDF from "jspdf";
 import { toast } from "react-hot-toast";
 import { 
   Search, 
@@ -13,18 +11,10 @@ import {
   CheckCircle2, 
   ChevronLeft,
   ChevronRight,
-  Moon,
-  Sun,
-  X,
-  Crown,
+  ExternalLink,
   BookOpen,
   Play,
-  ExternalLink,
-  ScrollText,
-  Home,
-  Trophy,
-  Zap,
-  User
+  ScrollText
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
@@ -33,6 +23,7 @@ import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBann
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import BackToTop from "@/app/components/ui/backtotop";
+import Footer from "@/app/components/footer";
 
 import { practiceData } from "@/lib/practiceData";
 import { useUser } from "@/features/user/UserContext";
@@ -79,11 +70,14 @@ export default function PracticePage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (mounted && !user) {
-      router.replace("/login");
+  const ensureLoggedIn = () => {
+    if (!user) {
+      toast.error("Please login to use this feature!");
+      router.push("/login");
+      return false;
     }
-  }, [user, router, mounted]);
+    return true;
+  };
 
   // Dynamically flatten all problems from practiceData (Zero Hardcoding!)
   const allProblems = useMemo(() => {
@@ -171,6 +165,7 @@ export default function PracticePage() {
 
   // Handle status circle toggle (Not Started -> In Progress -> Completed -> Not Started)
   const handleStatusToggle = async (problemId, currentStatus) => {
+    if (!ensureLoggedIn()) return;
     let nextStatus = "Not Started";
     if (currentStatus === "Not Started" || !currentStatus) {
       nextStatus = "In Progress";
@@ -278,6 +273,7 @@ export default function PracticePage() {
 
   // Solve random unsolved problem
   const handleSolveRandom = () => {
+    if (!ensureLoggedIn()) return;
     const unsolved = allProblems.filter((p) => getStatus(p.id) !== "Completed");
     if (unsolved.length === 0) {
       toast.error("Wow, you've completed all problems! 🎉");
@@ -302,142 +298,39 @@ export default function PracticePage() {
     return user.user_metadata?.name || user.email?.split("@")[0] || "Guest User";
   }, [user]);
 
-  const downloadReport = () => {
-  const doc = new jsPDF();
-
-  doc.setFontSize(20);
-  doc.text("AlgoBuddy Progress Report", 20, 20);
-
-  doc.setFontSize(12);
-
-  doc.text(`User: ${userName}`, 20, 40);
-  doc.text(`Total Problems: ${stats.total}`, 20, 50);
-  doc.text(`Solved Problems: ${stats.solved}`, 20, 60);
-  doc.text(`Attempted Problems: ${stats.attempted}`, 20, 70);
-  doc.text(`Remaining Problems: ${stats.remaining}`, 20, 80);
-
-  doc.text(`Daily Solved: ${stats.dailySolved}`, 20, 100);
-  doc.text(`Weekly Solved: ${stats.weeklySolved}`, 20, 110);
-  doc.text(`Monthly Solved: ${stats.monthlySolved}`, 20, 120);
-
-  doc.text(`Current Streak: ${currentStreak}`, 20, 140);
-  doc.text(`Longest Streak: ${longestStreak}`, 20, 150);
-
-  doc.text(`Generated On: ${new Date().toLocaleString()}`, 20, 170);
-
-  doc.save("algobuddy-progress-report.pdf");
-};
-
   // Seed values if not loaded
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300 flex">
-      {/* ─── Sidebar navigation ────────────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-[260px] bg-white dark:bg-[#1a1b1e] border-r border-slate-100 dark:border-neutral-800/80 fixed left-0 top-[72px] bottom-0 z-40 p-5 select-none justify-between">
-        <div className="space-y-6">
-          <nav className="space-y-1.5">
-            {[
-              { label: "Home", icon: Home, href: "/" },
-              { label: "Visualizer", icon: Play, href: "/visualizer" },
-              { label: "Practice", icon: BookOpen, href: "/practice", active: true },
-              { label: "Arena", icon: Trophy, href: "/arena" },
-              { label: "Bookmarks", icon: Bookmark, href: "#" },
-              { label: "Challenges", icon: Zap, href: "#" },
-              { label: "Profile", icon: User, href: "#" }
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={idx}
-                  href={item.href}
-                  className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-semibold transition ${
-                    item.active
-                      ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/50"
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="space-y-4">
-          {/* Upgrade Card */}
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/10 border border-purple-100 dark:border-purple-900/30 rounded-2xl p-5 text-center">
-            <div className="mx-auto w-9 h-9 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2.5">
-              <Crown size={18} />
-            </div>
-            <h4 className="text-sm font-bold text-slate-850 dark:text-neutral-100">Upgrade to Pro</h4>
-            <p className="text-xs text-slate-400 dark:text-neutral-500 mt-1.5 leading-normal">
-              Unlock premium features, unlimited visualization & more.
-            </p>
-            <button className="w-full mt-4 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10">
-              Upgrade Now
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* ─── Main Content ─────────────────────────────────────────────────── */}
-      <main className="flex-1 md:pl-[290px] pt-8 pb-16 px-8 max-w-[1400px] mx-auto w-full overflow-hidden">
-        {/* Two-Column Top Header Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 mb-10 items-start">
-          <div>
-            <span className="text-xs font-bold text-primary dark:text-purple-400 uppercase tracking-widest block mb-1">
-              Practice
-            </span>
-            <h1 className="text-4xl font-black text-slate-800 dark:text-white leading-tight">
-              Master DSA, one problem at a time.
-            </h1>
-            <p className="text-sm text-slate-400 dark:text-neutral-500 mt-2.5 font-medium">
-              Practice structured. Visualize deeply. Solve confidently.
-            </p>
-
-            {/* Search inputs */}
-            <div className="relative mt-6 max-w-lg">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-neutral-600" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search problems, topics or companies..."
-                className="w-full h-12 pl-12 pr-10 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-850 text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition shadow-sm"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Your Progress Widget */}
-          <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4.5">
-              <h3 className="text-sm font-bold text-slate-850 dark:text-neutral-200 uppercase tracking-wider">
-                Your Progress
-              </h3>
-              <Link href="/arena" className="text-xs font-bold text-primary dark:text-purple-400 hover:underline">
-                View Arena →
-              </Link>
-            </div>
-            <button
-  onClick={downloadReport}
-  className="mt-4 w-full py-2 bg-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition"
->
-  Download Progress Report
-</button>
-
-          </div>
-        </div>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
+      
+      {/* Container holding three-column layout */}
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-8">
+        
+        {/* Left Sidebar */}
+        <PracticeSidebar 
+          activeView={activeView}
+          onViewChange={(view) => {
+            if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
+              if (!ensureLoggedIn()) return;
+            }
+            setActiveView(view);
+            setCurrentPage(1); // Reset page on view change
+            setSelectedCompanyFilter("All"); // Reset company filter
+          }}
+          solvedCount={stats.solved}
+          dailySolved={stats.dailySolved}
+          weeklySolved={stats.weeklySolved}
+          monthlySolved={stats.monthlySolved}
+          dailyGoal={3}
+          weeklyGoal={10}
+          monthlyGoal={50}
+          streakDays={currentStreak}
+          bestStreak={longestStreak}
+          mySheetCount={sheetCount}
+          onBackToPractice={() => router.push("/")}
+          onBackToSessions={() => setActiveView("problem-list")}
+        />
 
         {/* Center Content */}
         <div className="flex-1 min-w-0 space-y-6">
@@ -581,7 +474,11 @@ export default function PracticePage() {
                               </td>
                               <td className="py-4 px-5 text-center">
                                 <button
-                                  onClick={() => { removeFromSheet(prob.id); toast.success('Removed from My Sheet'); }}
+                                  onClick={() => {
+                                    if (!ensureLoggedIn()) return;
+                                    removeFromSheet(prob.id);
+                                    toast.success('Removed from My Sheet');
+                                  }}
                                   className="text-slate-300 dark:text-neutral-700 hover:text-red-500 dark:hover:text-red-400 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
                                   title="Remove from My Sheet"
                                 >
@@ -720,9 +617,15 @@ export default function PracticePage() {
                                   {indexNumber}
                                 </td>
                                 <td className="py-4 px-5">
-                                  <div className="font-bold text-xs text-slate-800 dark:text-white">
-                                    {prob.name}
-                                  </div>
+                                  <a
+                                    href={prob.practiceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition"
+                                  >
+                                    <span>{prob.name}</span>
+                                    <ExternalLink size={12} className="opacity-50 shrink-0" />
+                                  </a>
                                 </td>
                                 <td className="py-4 px-5 text-xs font-bold text-slate-500 dark:text-neutral-400">
                                   {prob.topic}
@@ -769,7 +672,10 @@ export default function PracticePage() {
                                 </td>
                                 <td className="py-4 px-5 text-center">
                                   <button
-                                    onClick={() => toggleBookmark(prob.id, prob.topic.toLowerCase())}
+                                    onClick={() => {
+                                      if (!ensureLoggedIn()) return;
+                                      toggleBookmark(prob.id, prob.topic.toLowerCase());
+                                    }}
                                     className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
                                       isSaved 
                                         ? "text-primary bg-primary/10 dark:text-purple-400" 
@@ -782,6 +688,7 @@ export default function PracticePage() {
                                 <td className="py-4 px-5 text-center">
                                   <button
                                     onClick={() => {
+                                      if (!ensureLoggedIn()) return;
                                       if (isInSheet(prob.id)) {
                                         removeFromSheet(prob.id);
                                         toast.success('Removed from My Sheet');
@@ -1161,7 +1068,7 @@ export default function PracticePage() {
           activityData={activityData}
         />
 
-      </main>
+      </div>
 
       {/* Theory Drawer */}
       <TheoryDrawer
@@ -1172,7 +1079,7 @@ export default function PracticePage() {
       />
 
       <BackToTop />
-      <div className="h-[72px]" />
+      <Footer />
     </div>
   );
 }

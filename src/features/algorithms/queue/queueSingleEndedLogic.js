@@ -1,8 +1,3 @@
-/**
- * Pure generator functions for Single-Ended Queue operations.
- * Yields frames representing the state of the operation.
- */
-
 export function* enqueueRearGenerator(currentQueue, value) {
   const val = typeof value === 'string' ? value.trim() : value;
   if (!val) {
@@ -10,11 +5,23 @@ export function* enqueueRearGenerator(currentQueue, value) {
     return;
   }
 
-  yield { type: 'start', operation: `Enqueuing "${val}" at rear …` };
+  yield { 
+      phase: 'start', 
+      action: 'enqueue',
+      queue: [...currentQueue],
+      newValue: val,
+      explanation: `Enqueuing "${val}" at rear...` 
+  };
   
-  const nextQueue = [...currentQueue, val];
+  const nextQueue = [...currentQueue, { id: Date.now(), value: val }];
   
-  yield { type: 'complete', queue: nextQueue, message: `"${val}" added to rear` };
+  yield { 
+      phase: 'complete', 
+      action: 'enqueue',
+      queue: nextQueue, 
+      newValue: null,
+      explanation: `"${val}" added to rear.` 
+  };
 }
 
 export function* dequeueFrontGenerator(currentQueue) {
@@ -23,12 +30,24 @@ export function* dequeueFrontGenerator(currentQueue) {
     return;
   }
 
-  const val = currentQueue[0];
-  yield { type: 'start', operation: `Dequeuing "${val}" from front …` };
+  const dequeuedNode = currentQueue[0];
+  yield { 
+      phase: 'start', 
+      action: 'dequeue',
+      queue: [...currentQueue],
+      dequeuedNode: dequeuedNode,
+      explanation: `Dequeuing "${dequeuedNode.value}" from front...` 
+  };
 
   const nextQueue = currentQueue.slice(1);
   
-  yield { type: 'complete', queue: nextQueue, message: `"${val}" removed from front` };
+  yield { 
+      phase: 'complete', 
+      action: 'dequeue',
+      queue: nextQueue, 
+      dequeuedNode: null,
+      explanation: `"${dequeuedNode.value}" removed from front.` 
+  };
 }
 
 export function* peekFrontGenerator(queue) {
@@ -37,10 +56,22 @@ export function* peekFrontGenerator(queue) {
     return;
   }
 
-  const val = queue[0];
-  yield { type: 'start', operation: `Front element: "${val}"` };
+  const peekedNode = queue[0];
+  yield { 
+      phase: 'start', 
+      action: 'peek_front',
+      queue: [...queue],
+      peekedNode: peekedNode,
+      explanation: `Peeking at front element...` 
+  };
   
-  yield { type: 'complete', message: `Front element: "${val}"` };
+  yield { 
+      phase: 'complete', 
+      action: 'peek_front',
+      queue: [...queue],
+      peekedNode: null,
+      explanation: `Front element: "${peekedNode.value}"` 
+  };
 }
 
 export function* peekRearGenerator(queue) {
@@ -49,8 +80,20 @@ export function* peekRearGenerator(queue) {
     return;
   }
 
-  const val = queue[queue.length - 1];
-  yield { type: 'start', operation: `Rear element: "${val}"` };
+  const peekedNode = queue[queue.length - 1];
+  yield { 
+      phase: 'start', 
+      action: 'peek_rear',
+      queue: [...queue],
+      peekedNode: peekedNode,
+      explanation: `Peeking at rear element...` 
+  };
   
-  yield { type: 'complete', message: `Rear element: "${val}"` };
+  yield { 
+      phase: 'complete', 
+      action: 'peek_rear',
+      queue: [...queue],
+      peekedNode: null,
+      explanation: `Rear element: "${peekedNode.value}"` 
+  };
 }

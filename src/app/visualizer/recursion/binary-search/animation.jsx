@@ -1,10 +1,12 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 import { generateBinarySearchFrames } from "@/features/algorithms/recursion/binarySearchLogic";
 
@@ -26,20 +28,8 @@ const codeLines = [
 export default function BinarySearchAnimation() {
   const [arrayVal, setArrayVal] = useState("10, 20, 30, 40, 50, 60, 70, 80");
   const [targetVal, setTargetVal] = useState("60");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-    useVisualizerReset(() => {
-      setArrayVal("10, 20, 30, 40, 50, 60, 70, 80");
-      setTargetVal("60");
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-      setErrorMsg("");
-    });
 
   const parsedArray = useMemo(() => {
     return arrayVal
@@ -53,20 +43,18 @@ export default function BinarySearchAnimation() {
     if (!isVisualizing) return [];
     const target = parseInt(targetVal, 10);
     if (isNaN(target)) return [];
-    return generateBinarySearchFrames(parsedArray, target);
+    return Array.from(generateBinarySearchFrames(parsedArray, target));
   }, [parsedArray, targetVal, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setArrayVal("10, 20, 30, 40, 50, 60, 70, 80");
+    setTargetVal("60");
+    setIsVisualizing(false);
+    setErrorMsg("");
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -80,58 +68,47 @@ export default function BinarySearchAnimation() {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
+    engine.reset();
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
+      engine.play();
     }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    low: null,
-    high: null,
-    mid: null,
-    activeLine: 0,
-    description: "Click Visualize Go! to watch recursive search state building.",
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
+
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0 
+    ? frames[engine.currentStep] 
+    : {
+        stack: [],
+        low: null,
+        high: null,
+        mid: null,
+        activeLine: 0,
+        description: "Click Visualize Go! to watch recursive search state building.",
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activeLine = activeFrameData.activeLine;
@@ -201,17 +178,17 @@ export default function BinarySearchAnimation() {
 
         {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs font-semibold mt-2">{errorMsg}</p>}
 
-        {isVisualizing && (
+        {isVisualizing && frames.length > 0 && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>

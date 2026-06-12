@@ -134,17 +134,8 @@ export function useMySheet() {
         if (cancelled) return;
 
         if (serverSheet) {
-          // Merge: server wins (by addedAt timestamp)
-          const merged = { ...local };
-          Object.entries(serverSheet).forEach(([id, entry]) => {
-            const localTs = local[id]?.addedAt ? new Date(local[id].addedAt).getTime() : 0;
-            const serverTs = entry.addedAt ? new Date(entry.addedAt).getTime() : 0;
-            if (serverTs >= localTs) merged[id] = entry;
-          });
-          writeLocal(merged);
-          if (!cancelled) setSheet(merged);
-
-          // Bulk-sync local items that aren't on server
+          // DB is authoritative for logged-in users.
+          // 1. Find local-only items (added offline/before login) → sync them up
           const toSync = Object.entries(local)
             .filter(([id]) => !serverSheet[id])
             .map(([id, entry]) => ({ problemId: id, note: entry.note || "" }));
@@ -152,6 +143,17 @@ export function useMySheet() {
           for (const item of toSync) {
             await addToSheetOnServer(item.problemId, item.note).catch(() => {});
           }
+
+          // 2. After syncing local-only items up, build the authoritative state:
+          //    server data + local-only items that were just synced.
+          //    Items deleted in another browser (exist in local but not server) are dropped.
+          const authoritative = { ...serverSheet };
+          toSync.forEach(({ problemId }) => {
+            if (local[problemId]) authoritative[problemId] = local[problemId];
+          });
+
+          writeLocal(authoritative);
+          if (!cancelled) setSheet(authoritative);
         }
       } catch (err) {
         console.error("[useMySheet] sync failed:", err);

@@ -7,11 +7,12 @@ import jakarta.persistence.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import jakarta.persistence.UniqueConstraint;
 import java.util.UUID;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "user_progress")
+@Table(name = "user_progress", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "problem_id"})})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "my_sheet")
+@Table(name = "my_sheet", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "problem_id"})})
 @Data
 @NoArgsConstructor
 public class MySheet {

@@ -24,11 +24,14 @@ export default function TopicPracticeSheet() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  const ensureLoggedIn = () => {
     if (!user) {
-      router.replace("/login");
+      toast.error("Please login to use this feature!");
+      router.push("/login");
+      return false;
     }
-  }, [user, router]);
+    return true;
+  };
 
   const { isBookmarked, toggleBookmark } = useProblemBookmarks();
 
@@ -115,6 +118,7 @@ export default function TopicPracticeSheet() {
   }
 
   const handleStatusChange = async (problemId, newStatus) => {
+    if (!ensureLoggedIn()) return;
     await updateProgress(problemId, newStatus);
     if (newStatus === "Completed") {
       toast.success("Problem marked as Completed! 🔥", {
@@ -241,7 +245,10 @@ export default function TopicPracticeSheet() {
                           <td className="py-4 px-6 font-bold text-sm text-surface-900 dark:text-white">
                             <div className="flex items-center gap-2.5">
                               <button
-                                onClick={() => toggleBookmark(item.id, topicSlug)}
+                                onClick={() => {
+                                  if (!ensureLoggedIn()) return;
+                                  toggleBookmark(item.id, topicSlug);
+                                }}
                                 className={`p-1.5 rounded-lg border transition hover:scale-105 active:scale-95 duration-200 ${
                                   mounted && isBookmarked(item.id)
                                     ? "bg-amber-500/10 border-amber-500/30 text-amber-500 dark:bg-amber-950/20"

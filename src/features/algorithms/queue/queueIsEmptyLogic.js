@@ -1,17 +1,19 @@
-/**
- * Pure generator functions for Queue IsEmpty operation.
- * Yields frames representing the state of the operation.
- */
-
 export function* checkEmptyGenerator(queue) {
-  yield { type: 'start', operation: 'Checking if queue is empty …' };
+  yield { 
+      phase: 'start', 
+      action: 'check',
+      queue: [...queue],
+      explanation: 'Checking if queue is empty... We evaluate if the length of the queue is 0.' 
+  };
   
   const empty = queue.length === 0;
   
   yield { 
-    type: 'complete', 
+    phase: 'complete', 
+    action: 'check',
+    queue: [...queue],
     isEmpty: empty, 
-    message: empty ? 'Queue is empty' : 'Queue is NOT empty' 
+    explanation: empty ? 'Length is 0. The Queue is empty!' : `Length is ${queue.length}. The Queue is NOT empty.` 
   };
 }
 
@@ -22,11 +24,23 @@ export function* enqueueGenerator(currentQueue, value) {
     return;
   }
 
-  yield { type: 'start', operation: `Enqueuing “${val}” …` };
+  yield { 
+      phase: 'start', 
+      action: 'enqueue',
+      queue: [...currentQueue],
+      newValue: val,
+      explanation: `Enqueuing "${val}"...` 
+  };
   
-  const nextQueue = [...currentQueue, val];
+  const nextQueue = [...currentQueue, { id: Date.now(), value: val }];
   
-  yield { type: 'complete', queue: nextQueue, message: `“${val}” added to rear` };
+  yield { 
+      phase: 'complete', 
+      action: 'enqueue',
+      queue: nextQueue, 
+      newValue: null,
+      explanation: `"${val}" added to rear.` 
+  };
 }
 
 export function* dequeueGenerator(currentQueue) {
@@ -35,10 +49,22 @@ export function* dequeueGenerator(currentQueue) {
     return;
   }
 
-  const val = currentQueue[0];
-  yield { type: 'start', operation: `Dequeuing “${val}” …` };
+  const dequeuedNode = currentQueue[0];
+  yield { 
+      phase: 'start', 
+      action: 'dequeue',
+      queue: [...currentQueue],
+      dequeuedNode: dequeuedNode,
+      explanation: `Dequeuing "${dequeuedNode.value}" from the front...` 
+  };
 
   const nextQueue = currentQueue.slice(1);
   
-  yield { type: 'complete', queue: nextQueue, message: `“${val}” removed from front` };
+  yield { 
+      phase: 'complete', 
+      action: 'dequeue',
+      queue: nextQueue, 
+      dequeuedNode: null,
+      explanation: `"${dequeuedNode.value}" removed from front.` 
+  };
 }
