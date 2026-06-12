@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { FiX } from "react-icons/fi";
 
-const termsSections = [
+export const termsSections = [
   {
     id: "1",
     title: "Acceptance of Terms",
