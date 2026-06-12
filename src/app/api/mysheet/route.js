@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 // GET /api/mysheet — returns the user's curated sheet as a map
 export async function GET(request) {
@@ -12,7 +13,8 @@ export async function GET(request) {
       );
     }
 
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { data, error } = await supabase
       .from("my_sheet")
       .select("problem_id, added_at, note")
@@ -49,7 +51,8 @@ export async function POST(request) {
     const { problemId, note = "" } = body;
     if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
 
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase.from("my_sheet").upsert(
       {
         user_id: authResult.user.id,
@@ -82,7 +85,8 @@ export async function DELETE(request) {
     const problemId = searchParams.get("problemId");
     if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
 
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase
       .from("my_sheet")
       .delete()
