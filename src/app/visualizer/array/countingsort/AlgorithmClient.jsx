@@ -30,6 +30,7 @@ export default function Page() {
           { text: "Quick Sort", url: "/visualizer/array/quicksort" },
           { text: "Comparison Mode", url: "/visualizer/array/comparison" },
           { text: "Heap Sort", url: "/visualizer/array/heapsort" },
+          { text: "Radix Sort", url: "/visualizer/array/radixsort" },
         ]} />}
       />
     </>

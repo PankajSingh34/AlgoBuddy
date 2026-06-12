@@ -137,6 +137,15 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/array/countingsort/AlgorithmClient')),
   },
+  "array/radixsort": {
+    metadata: {
+  title: "Radix Sort Algorithm | Step-by-Step Animation",
+  description: "Learn Radix Sort with interactive bucket visualizations showing digit-by-digit sorting.",
+  robots: "index, follow",
+  openGraph: { images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Radix Sort" }] },
+},
+    component: dynamic(() => import('@/app/visualizer/array/radixsort/AlgorithmClient')),
+  },
   "array/heapsort": {
     metadata: {
   title: "Heap Sort Algorithm | Learn with Interactive Animations",
