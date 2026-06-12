@@ -1,10 +1,29 @@
 import "./globals.css";
 import Script from "next/script";
+import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
+const sourceSans3 = Source_Sans_3({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-source-sans-3",
+});
+
+const sourceSerif4 = Source_Serif_4({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-source-serif-4",
+});
 
 export const metadata = {
   metadataBase: new URL("https://algobuddy.in"),
@@ -61,7 +80,12 @@ export default async function RootLayout({ children }) {
   // auth is handled client-side via UserContext (Supabase)
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+      className={`${inter.variable} ${sourceSans3.variable} ${sourceSerif4.variable}`}
+    >
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />

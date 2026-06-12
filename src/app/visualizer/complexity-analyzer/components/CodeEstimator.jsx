@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { useUser } from "@/features/user/UserContext";
 import ReactMarkdown from "react-markdown";
@@ -18,6 +18,15 @@ import {
   FolderSync
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[340px] items-center justify-center bg-neutral-50 dark:bg-neutral-950 text-sm font-semibold text-neutral-400">
+      Loading Editor...
+    </div>
+  ),
+});
 
 const SAMPLES = {
   JavaScript: `// JavaScript: Calculate the sum of an array
@@ -198,11 +207,6 @@ export default function CodeEstimator() {
               theme={isDarkMode ? "vs-dark" : "light"}
               value={code}
               onChange={(value) => setCode(value || "")}
-              loading={
-                <div className="flex h-[340px] items-center justify-center bg-neutral-50 dark:bg-neutral-950 text-sm font-semibold text-neutral-400">
-                  Loading Editor...
-                </div>
-              }
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,

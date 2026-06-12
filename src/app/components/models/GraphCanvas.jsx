@@ -69,11 +69,7 @@ export default function GraphCanvas({
   nodes,
   edges,
   isDirected,
-<<<<<<< HEAD:app/components/models/GraphCanvas.jsx
-  isWeighted,         // NEW prop
-=======
   isWeighted = false,
->>>>>>> upstream/main:src/app/components/models/GraphCanvas.jsx
   visitedSet,
   currentNode,
   animationState = {},
@@ -278,11 +274,9 @@ onMouseLeave={handleMouseUp}
               stroke={edgeColor}
               strokeWidth={isActive ? 2 : 1.5}
               markerEnd={markerEnd}
-<<<<<<< HEAD:app/components/models/GraphCanvas.jsx
-              style={{ cursor: "pointer" }}
+              style={{ cursor: interactive ? "pointer" : "default" }}
               onContextMenu={(e) => handleEdgeRightClick(e, idx)}
             />
-            {/* Weight label — only shown in weighted mode */}
             {isWeighted && (
               <EdgeWeightLabel
                 x1={src.x}
@@ -292,35 +286,6 @@ onMouseLeave={handleMouseUp}
                 weight={edge.weight ?? 1}
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
               />
-=======
-              style={{ cursor: interactive ? "pointer" : "default" }}
-              onContextMenu={(e) => handleEdgeRightClick(e, idx)}
-            />
-            {isWeighted && (
-              <g>
-                <rect
-                  x={labelX - 12}
-                  y={labelY - 10}
-                  width="24"
-                  height="18"
-                  rx="6"
-                  fill="#111827"
-                  stroke={isActive ? "#f97316" : "#4b5563"}
-                />
-                <text
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#f9fafb"
-                  fontSize={11}
-                  fontWeight={700}
-                  fontFamily="monospace"
-                >
-                  {edge.weight}
-                </text>
-              </g>
->>>>>>> upstream/main:src/app/components/models/GraphCanvas.jsx
             )}
           </g>
         );
