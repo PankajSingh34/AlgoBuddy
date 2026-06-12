@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Calendar, User, Clock, ArrowRight, X, Newspaper } from "lucide-react";
 import Footer from "@/app/components/footer";
+import CopyCodeButton from "@/app/components/ui/CopyCodeButton";
 
 const BLOG_POSTS = [
   {
@@ -35,6 +36,47 @@ const BLOG_POSTS = [
           <li><strong>You inspect variables in real-time:</strong> Seeing indices moving helps you see exactly *why* off-by-one errors happen.</li>
           <li><strong>You learn edge cases:</strong> Boundary conditions (like empty lists or single nodes) become visually obvious.</li>
         </ul>
+
+        <div className="relative my-6">
+          <CopyCodeButton code={`// Example: Stack Push Operation
+class Stack {
+  constructor() {
+    this.items = [];
+  }
+  
+  push(element) {
+    this.items.push(element);  // Add to top
+  }
+  
+  pop() {
+    return this.items.pop();   // Remove from top
+  }
+  
+  peek() {
+    return this.items[this.items.length - 1]; // View top
+  }
+}`} />
+          <pre className="bg-gray-900 text-green-400 p-4 pt-10 rounded-lg overflow-x-auto text-sm">
+            <code>{`// Example: Stack Push Operation
+class Stack {
+  constructor() {
+    this.items = [];
+  }
+  
+  push(element) {
+    this.items.push(element);  // Add to top
+  }
+  
+  pop() {
+    return this.items.pop();   // Remove from top
+  }
+  
+  peek() {
+    return this.items[this.items.length - 1]; // View top
+  }
+}`}</code>
+          </pre>
+        </div>
         <p className="mb-4">
           Next time you struggle to understand how an algorithm works, don't just stare at the code. Go to the visualizer, feed it custom inputs, step through it line-by-line, and watch the structure evolve.
         </p>

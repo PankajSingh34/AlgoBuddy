@@ -7,6 +7,7 @@ import sanitizeHtml from 'sanitize-html';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'highlight.js/styles/github.css';
 import 'highlight.js/styles/github-dark.css';
+import CodeBlock from "@/app/components/ui/CodeBlock";
 
 /**
  * Cleanly translates a given JavaScript implementation into standard textbook pseudocode.

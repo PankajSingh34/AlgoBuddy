@@ -7,7 +7,7 @@ import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 
 export async function generateStaticParams() {
-  const params = [];
+const params = [];
   
   // Category slugs
   sections.forEach(s => params.push({ slug: [s.slug] }));
