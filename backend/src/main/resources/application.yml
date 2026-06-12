@@ -3,31 +3,16 @@ spring:
     name: backend
 
   datasource:
-    # IMPORTANT: Use environment variables to keep your secrets safe!
-    # Port 6543 = Supabase transaction-mode pooler (higher concurrency, no session limits)
-    # Port 5432 = session-mode pooler (max 15 clients — causes EMAXCONNSESSION)
-    # prepareThreshold=0 disables server-side prepared statements, which PgBouncer
-    # transaction-mode (port 6543) does not support — prevents "prepared statement S_X does not exist"
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-      connection-timeout: 30000
-      idle-timeout: 300000
-      keepalive-time: 60000
-      max-lifetime: 600000
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  port: 8080
+
+server:
+  port: ${PORT:8080}
 
 supabase:
   url: ${SUPABASE_URL:https://your-project-id.supabase.co}
