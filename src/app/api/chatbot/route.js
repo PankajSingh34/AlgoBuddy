@@ -183,11 +183,82 @@ GENERAL FORMATTING RULES
 - NEVER fabricate AlgoBuddy features that don't exist
 - Be warm, encouraging, and make learning feel fun!`;
 
-// ─── Gemini Client ────────────────────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 const MODEL = "gemini-2.0-flash";
 const MAX_TOKENS = 2048;
+
+// ─── Provider / Offline Fallback Helpers ─────────────────────────────────────
+function getGeminiClient() {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  return apiKey ? new GoogleGenerativeAI(apiKey) : null;
+}
+
+function getLatestUserQuestion(messages) {
+  return [...messages].reverse().find((msg) => msg.role === "user")?.content?.trim() ?? "";
+}
+
+function buildOfflineResponse(messages) {
+  const question = getLatestUserQuestion(messages);
+  const normalized = question.toLowerCase();
+
+  if (normalized.includes("algobuddy") || normalized.includes("what is this")) {
+    return `## What is AlgoBuddy?
+
+AlgoBuddy is a free, open-source learning platform for Data Structures and Algorithms. Think of it as a study companion where you can **watch algorithms run**, **practice problems**, and **track your progress** instead of learning from static notes only.
+
+### In simple terms
+- **Visualizer:** turns algorithms like sorting, searching, trees, and graphs into step-by-step animations.
+- **Practice Arena:** helps you solve curated DSA problems with topic tags and learning support.
+- **Progress Dashboard:** shows what you have completed and where you should revise next.
+
+AlgoBot is temporarily running in built-in help mode, but you can still ask about AlgoBuddy features or common DSA topics.`;
+  }
+
+  if (
+    normalized.includes("binary search") ||
+    normalized.includes("sorting") ||
+    normalized.includes("graph") ||
+    normalized.includes("tree") ||
+    normalized.includes("complexity") ||
+    normalized.includes("dsa")
+  ) {
+    return `## Quick DSA Help
+
+AlgoBot is temporarily using built-in help mode, so here is a practical way to continue:
+
+1. Identify the topic, such as arrays, sorting, searching, trees, graphs, or dynamic programming.
+2. Open the matching AlgoBuddy visualizer to watch the steps.
+3. Note the time and space complexity.
+4. Solve 2-3 practice problems for the same pattern.
+
+For example, if you are studying **Binary Search**, remember:
+
+| Case | Time | Space |
+|------|------|-------|
+| Best | O(1) | O(1) |
+| Average | O(log n) | O(1) |
+| Worst | O(log n) | O(1) |
+
+Ask a more specific question like "explain binary search with an example" and I can guide you from there.`;
+  }
+
+  return `## AlgoBot Help Mode
+
+AlgoBot is temporarily using a built-in fallback because the AI provider is unavailable or not configured. You can still ask me about:
+
+- AlgoBuddy features
+- sorting and searching
+- stacks, queues, linked lists
+- trees and graphs
+- dynamic programming basics
+- interview-oriented DSA roadmaps
+
+Try asking: **"What is AlgoBuddy?"** or **"Explain binary search with an example."**`;
+}
+
+function streamFallbackAnswer(enqueue, messages) {
+  enqueue({ type: "delta", content: buildOfflineResponse(messages) });
+  enqueue({ type: "done" });
+}
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 function validateMessages(messages) {
@@ -281,6 +352,11 @@ export async function POST(request) {
       }, STREAM_TIMEOUT_MS);
 
       try {
+        const genAI = getGeminiClient();
+        if (!genAI) {
+          streamFallbackAnswer(enqueue, clampedMessages);
+          return;
+        }
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
@@ -307,13 +383,7 @@ export async function POST(request) {
         const message = err?.message ?? String(err);
         console.error("[AlgoBot API Error]", message);
         if (err?.stack) console.error("[AlgoBot API Error Stack]", err.stack);
-        try {
-          enqueue({
-            type: "error",
-            message: "AI service connection error. Please verify your local configuration and try again.",
-          });
-        } catch (_) {}
-        controller.error(err);
+        streamFallbackAnswer(enqueue, clampedMessages);
       } finally {
         clearTimeout(timeoutId);
         try { controller.close(); } catch (_) {}

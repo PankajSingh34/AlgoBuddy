@@ -6,9 +6,9 @@ import {
   BarChart3,
   Info
 } from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
+import {
+  BarChart,
+  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 
