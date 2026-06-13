@@ -9,6 +9,7 @@ import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { generateLcaSequence } from "@/features/algorithms/tree/lcaLogic";
 
 const NODES = [
   { id: "3", val: "3", x: 400, y: 60, parent: null },
@@ -84,52 +85,7 @@ export default function LCAAnimation() {
     setMessage("Playback reset.");
   };
 
-  const generateDFSSequence = (rootId, p, q) => {
-    const sequence = [];
-    
-    const dfs = (nodeId) => {
-      if (!nodeId) return null;
-      
-      sequence.push({ type: "VISIT", node: nodeId });
-      
-      if (nodeId === p || nodeId === q) {
-        sequence.push({ type: "FOUND_TARGET", node: nodeId });
-        sequence.push({ type: "BACKTRACK", node: nodeId, returnValue: nodeId });
-        return nodeId;
-      }
-      
-      const children = EDGES.filter(e => e.parent === nodeId).map(e => e.child);
-      const leftChild = children[0] || null;
-      const rightChild = children[1] || null;
-      
-      let leftResult = null;
-      let rightResult = null;
-      
-      if (leftChild) {
-        leftResult = dfs(leftChild);
-        sequence.push({ type: "RETURN_LEFT", node: nodeId, child: leftChild, val: leftResult });
-      }
-      
-      if (rightChild) {
-        rightResult = dfs(rightChild);
-        sequence.push({ type: "RETURN_RIGHT", node: nodeId, child: rightChild, val: rightResult });
-      }
-      
-      if (leftResult && rightResult) {
-        sequence.push({ type: "LCA_FOUND", node: nodeId });
-        sequence.push({ type: "BACKTRACK", node: nodeId, returnValue: nodeId });
-        return nodeId;
-      }
-      
-      const ret = leftResult || rightResult;
-      sequence.push({ type: "BACKTRACK", node: nodeId, returnValue: ret });
-      return ret;
-    };
-    
-    dfs(rootId);
-    sequence.push({ type: "FINISH" });
-    return sequence;
-  };
+
 
   const handleFindLca = () => {
     if (targetP === targetQ) {
@@ -138,7 +94,7 @@ export default function LCAAnimation() {
     }
     setAnimating(false);
 
-    const sequence = generateDFSSequence("3", targetP, targetQ);
+    const sequence = generateLcaSequence("3", targetP, targetQ, EDGES);
     const newSteps = [];
     
     let currentVisited = [];

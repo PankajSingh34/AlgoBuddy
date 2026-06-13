@@ -1,276 +1,222 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import React, { useMemo, useState } from "react";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { generateRandomListLogic } from "@/features/algorithms/linkedlist/traversalLogic";
+import { compareListsGenerator } from "@/features/algorithms/linkedlist/llComparisonLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const LinkedListComparison = () => {
   const [list1, setList1] = useState([]);
   const [list2, setList2] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [currentPointers, setCurrentPointers] = useState({ list1: 0, list2: 0 });
-  const [comparisonResult, setComparisonResult] = useState(null);
-  useVisualizerReset(() => {
-    setList1([]);
-    setList2([]);
-    setIsAnimating(false);
-    setCurrentPointers({ list1: 0, list2: 0 });
-    setComparisonResult(null);
-  });
-  const list1Refs = useRef([]);
-  const list2Refs = useRef([]);
-  const animationTimeline = useRef(gsap.timeline());
+  
+  const frames = useMemo(() => {
+    if (list1.length === 0 || list2.length === 0) return [];
+    return Array.from(compareListsGenerator(list1, list2));
+  }, [list1, list2]);
 
-  const generateRandomList = (setList) => {
-    const size = Math.floor(Math.random() * 3) + 3;
-    const values = Array.from({ length: size }, (_, i) => {
-      const base = Math.floor(Math.random() * 20) + 1;
-      return base + i * 5;
-    }).sort((a, b) => a - b);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 
-    const newList = values.map((value, index) => ({
-      value,
-      id: Date.now() + index + Math.random(),
-      next:
-        index < size - 1
-          ? `0x${(1000 + index).toString(16).padStart(4, "0")}`
-          : "NULL",
-    }));
+  const handleGenerateIdentical = () => {
+    if (engine.isPlaying) return;
+    const baseList = generateRandomListLogic();
+    const listCopy = baseList.map((node) => ({ ...node }));
+    setList1(baseList);
+    setList2(listCopy);
+    engine.reset();
+  };
 
-    setList(newList);
+  const handleGenerateDifferent = () => {
+    if (engine.isPlaying) return;
+    setList1(generateRandomListLogic());
+    setList2(generateRandomListLogic());
+    engine.reset();
+  };
+
+  const startComparison = () => {
+    if (engine.isPlaying || list1.length === 0 || list2.length === 0) return;
+    engine.reset();
+    engine.play();
+  };
+
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
   };
 
   const handleReset = () => {
-    gsap.killTweensOf("*");
-    animationTimeline.current.clear();
     setList1([]);
     setList2([]);
-    setIsAnimating(false);
-    setCurrentPointers({ list1: 0, list2: 0 });
-    setComparisonResult(null);
-    list1Refs.current = [];
-    list2Refs.current = [];
+    engine.reset();
   };
 
-  const animateComparison = async () => {
-    if (isAnimating || list1.length === 0 || list2.length === 0) return;
+  useVisualizerKeyboard({
+    onStart: startComparison,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
-    setIsAnimating(true);
-    animationTimeline.current.clear();
-    setCurrentPointers({ list1: 0, list2: 0 });
-    setComparisonResult(null);
+  const currentFrame = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        phase: 'idle',
+        list1Index: -1,
+        list2Index: -1,
+        explanation: list1.length > 0 ? "Ready to compare. Click 'Compare Lists'." : "Generate identical or different lists to compare."
+      };
 
-    const maxLength = Math.max(list1.length, list2.length);
-    let areSame = true;
+  const renderList = (listData, name, activeIndex) => (
+    <div className="mb-6 flex flex-col items-center">
+      <h3 className="mb-4 text-lg font-bold text-gray-700 dark:text-gray-300">
+        {name}
+      </h3>
+      <div className="relative flex w-full items-start justify-center overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818] min-h-[140px]">
+        {listData.length === 0 ? (
+          <div className="w-full py-6 text-center text-gray-500">
+            Empty List
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4 sm:space-x-8">
+            {listData.map((node, index) => {
+              const isCurrent = activeIndex === index;
+              let bgData = "bg-primary";
+              let scaleClass = "scale-100";
+              
+              if (isCurrent) {
+                  if (currentFrame.phase === 'compare') {
+                      bgData = "bg-amber-500";
+                      scaleClass = "scale-110 shadow-lg";
+                  } else if (currentFrame.phase === 'matched' || currentFrame.match === true) {
+                      bgData = "bg-emerald-500";
+                      scaleClass = "scale-105";
+                  } else if (currentFrame.phase === 'complete' && currentFrame.match === false) {
+                      bgData = "bg-rose-500";
+                      scaleClass = "scale-105";
+                  }
+              }
 
-    for (let i = 0; i < maxLength; i++) {
-      setCurrentPointers({ list1: i, list2: i });
-
-      const node1 = list1[i];
-      const node2 = list2[i];
-
-      const highlightNodes = [list1Refs.current[i], list2Refs.current[i]].filter(Boolean);
-
-      animationTimeline.current.to(highlightNodes, {
-        scale: 1.3,
-        duration: 0.4,
-        ease: "power1.inOut",
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      if (!node1 || !node2 || node1.value !== node2.value) {
-        areSame = false;
-        setComparisonResult({
-          match: false,
-          index: i,
-          value1: node1?.value,
-          value2: node2?.value,
-        });
-        break;
-      }
-
-      animationTimeline.current.to(highlightNodes, {
-        scale: 1,
-        duration: 0.3,
-      });
-    }
-
-    if (areSame) {
-      setComparisonResult({ match: true });
-    }
-
-    animationTimeline.current.call(() => {
-      setIsAnimating(false);
-    });
-  };
-
-  useEffect(() => {
-    list1Refs.current = list1Refs.current.slice(0, list1.length);
-    list2Refs.current = list2Refs.current.slice(0, list2.length);
-  }, [list1, list2]);
+              return (
+              <div key={node.id} className="flex items-center">
+                <div className={`node flex flex-col items-center transition-all duration-300 ${scaleClass}`}>
+                  <span className="text-[10px] font-mono text-gray-500 mb-1">{node.address}</span>
+                  <div className="flex">
+                      <div className={`data-part w-16 rounded-l-lg ${bgData} p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg transition-colors`}>
+                      {node.value}
+                      </div>
+                      <div className="next-part w-16 rounded-r-lg bg-[#c27cf7] p-3 text-center font-mono text-xs dark:bg-primary sm:w-20 sm:p-4 sm:text-base">
+                      {node.next}
+                      </div>
+                  </div>
+                </div>
+                {index < listData.length - 1 && (
+                  <div className="mx-1 text-2xl sm:mx-2 sm:text-3xl text-gray-400">&rarr;</div>
+                )}
+              </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <VisualizerInteractiveLayout>
       <p className="text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
-        Visualize how two linked lists are compared node by node from left to right.
+        Visualize the parallel traversal required to compare two linked lists.
       </p>
 
       <VisualizerCard>
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <button
-            onClick={() => generateRandomList(setList1)}
-            disabled={isAnimating}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-white transition hover:bg-emerald-700 disabled:bg-gray-400 sm:px-6"
-          >
-            Generate List 1
-          </button>
-          <button
-            onClick={() => generateRandomList(setList2)}
-            disabled={isAnimating}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-white transition hover:bg-emerald-700 disabled:bg-gray-400 sm:px-6"
-          >
-            Generate List 2
-          </button>
-          <button
-            onClick={animateComparison}
-            disabled={isAnimating || list1.length === 0 || list2.length === 0}
-            className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400 sm:px-6"
-          >
-            {isAnimating ? "Comparing..." : "Compare Lists"}
-          </button>
-          <button
-            onClick={handleReset}
-            className="flex-1 rounded-lg border border-black px-4 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700 sm:px-6"
-          >
-            Reset All
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              onClick={handleGenerateIdentical}
+              disabled={engine.isPlaying}
+              className="flex-1 rounded-lg bg-[#10b981]/10 px-6 py-3 text-[#10b981] transition hover:bg-[#10b981]/20 border border-[#10b981]/30 disabled:opacity-50"
+            >
+              Generate Identical
+            </button>
+            <button
+              onClick={handleGenerateDifferent}
+              disabled={engine.isPlaying}
+              className="flex-1 rounded-lg bg-[#ef4444]/10 px-6 py-3 text-[#ef4444] transition hover:bg-[#ef4444]/20 border border-[#ef4444]/30 disabled:opacity-50"
+            >
+              Generate Different
+            </button>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              onClick={startComparison}
+              disabled={engine.isPlaying || list1.length === 0}
+              className="flex-1 rounded-lg bg-primary px-6 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400"
+            >
+              {engine.isPlaying ? "Comparing..." : "Compare Lists"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex-1 rounded-lg border border-black px-6 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700"
+            >
+              Reset
+            </button>
+          </div>
         </div>
+        
+        {frames.length > 0 && (
+          <div className="mt-6">
+            <PlaybackControls
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+              disabled={frames.length === 0}
+            />
+          </div>
+        )}
       </VisualizerCard>
 
-      {comparisonResult && (
-        <VisualizerCard
-          className={
-            comparisonResult.match
-              ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
-              : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-          }
-        >
-          <p
-            className={`text-center text-lg font-semibold ${
-              comparisonResult.match
-                ? "text-green-700 dark:text-green-300"
-                : "text-red-700 dark:text-red-300"
-            }`}
-          >
-            {comparisonResult.match
-              ? "Both linked lists are the same."
-              : `Lists differ at node ${comparisonResult.index + 1}: List 1 has ${comparisonResult.value1 ?? "NULL"} and List 2 has ${comparisonResult.value2 ?? "NULL"}.`}
-          </p>
-        </VisualizerCard>
-      )}
+      <div className="w-full mb-6 max-w-4xl mx-auto p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm text-center min-h-[60px] flex items-center justify-center">
+         <p className="text-gray-800 dark:text-gray-200 font-medium">
+             {currentFrame.explanation}
+         </p>
+      </div>
 
-      <VisualizerCard className="space-y-10">
-        <div className="flex flex-wrap justify-center gap-3 text-sm sm:gap-6 sm:text-base">
+      <VisualizerCard>
+        <div className="mb-6 flex justify-center gap-4 text-sm sm:gap-8 sm:text-base">
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-emerald-600"></div>
-            <span>List 1</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-amber-500"></div>
+            <span>Comparing</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-emerald-600"></div>
-            <span>List 2</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-emerald-500"></div>
+            <span>Match</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-gray-400"></div>
-            <span>Pointer</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-rose-500"></div>
+            <span>Mismatch</span>
           </div>
         </div>
 
-        <div className="space-y-10">
-          <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-emerald-600">
-              List 1 {currentPointers.list1 < list1.length && `(Current: ${currentPointers.list1 + 1})`}
-            </h3>
-            <div className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]">
-              {list1.length === 0 ? (
-                <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                  Generate List 1 to begin.
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  {list1.map((node, index) => (
-                    <React.Fragment key={`list1-${node.id}`}>
-                      <div
-                        ref={(el) => (list1Refs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-emerald-600 text-lg text-white shadow-md transition-all ${
-                          index === currentPointers.list1 && isAnimating ? "scale-110 ring-4 ring-emerald-300" : ""
-                        }`}
-                      >
-                        {node.value}
-                        <div className="mt-1 text-xs opacity-80">{node.next}</div>
-                      </div>
-                      {index < list1.length - 1 && (
-                        <svg
-                          className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {renderList(list1, "List 1", currentFrame.list1Index)}
+        {renderList(list2, "List 2", currentFrame.list2Index)}
 
-          <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-emerald-600">
-              List 2 {currentPointers.list2 < list2.length && `(Current: ${currentPointers.list2 + 1})`}
-            </h3>
-            <div className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]">
-              {list2.length === 0 ? (
-                <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                  Generate List 2 to continue.
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  {list2.map((node, index) => (
-                    <React.Fragment key={`list2-${node.id}`}>
-                      <div
-                        ref={(el) => (list2Refs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-emerald-600 text-lg text-white shadow-md transition-all ${
-                          index === currentPointers.list2 && isAnimating ? "scale-110 ring-4 ring-emerald-300" : ""
-                        }`}
-                      >
-                        {node.value}
-                        <div className="mt-1 text-xs opacity-80">{node.next}</div>
-                      </div>
-                      {index < list2.length - 1 && (
-                        <svg
-                          className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </VisualizerCard>
     </VisualizerInteractiveLayout>
   );

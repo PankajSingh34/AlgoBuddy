@@ -49,19 +49,20 @@ async function resolveSessionIdentifier(identifier) {
 export function useCollaboration({
   displayName = "Anonymous",
   onRemoteStateDelta,
+  userId,
 } = {}) {
   const clientId = useMemo(() => createClientId(), []);
   const [session, setSession] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("idle");
   const [participants, setParticipants] = useState([]);
   const [annotations, setAnnotations] = useState([]);
+  const [cursors, setCursors] = useState({});
   const [presenterId, setPresenterId] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordedEvents, setRecordedEvents] = useState([]);
   const [error, setError] = useState(null);
 
   const channelRef = useRef(null);
-  const broadcastRef = useRef(null);
   const sessionRef = useRef(null);
   const sequenceRef = useRef(0);
   const seenSequencesRef = useRef(new Map());
@@ -70,6 +71,7 @@ export function useCollaboration({
   const currentDisplayNameRef = useRef(displayName);
   const recordingRef = useRef(recording);
   const presenterIdRef = useRef(presenterId);
+  const userIdRef = useRef(userId);
 
   useEffect(() => {
     callbacksRef.current.onRemoteStateDelta = onRemoteStateDelta;
@@ -87,15 +89,14 @@ export function useCollaboration({
     presenterIdRef.current = presenterId;
   }, [presenterId]);
 
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+
   const cleanupTransport = useCallback(() => {
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
-    }
-
-    if (broadcastRef.current) {
-      broadcastRef.current.close();
-      broadcastRef.current = null;
     }
   }, []);
 
@@ -212,10 +213,12 @@ export function useCollaboration({
       throw new Error("Join or create a session first.");
     }
 
+    const isPrivileged = type === "control:grant" || type === "state:update";
+    const effectiveSenderId = isPrivileged ? (userIdRef.current || clientId) : clientId;
     const envelope = createSessionEvent({
       type,
       payload,
-      senderId: clientId,
+      senderId: effectiveSenderId,
       senderName: currentDisplayNameRef.current,
       sequence: ++sequenceRef.current,
     });
@@ -229,10 +232,6 @@ export function useCollaboration({
       event: "session:event",
       payload: envelope,
     });
-
-    if (broadcastRef.current) {
-      broadcastRef.current.postMessage(envelope);
-    }
 
     return envelope;
   }, [clientId, processEnvelope]);
@@ -260,6 +259,20 @@ export function useCollaboration({
       processEnvelope(payload);
     });
 
+    channel.on("broadcast", { event: "cursor:move" }, ({ payload }) => {
+      if (payload && payload.senderId) {
+        setCursors((prev) => ({
+          ...prev,
+          [payload.senderId]: {
+            x: payload.x,
+            y: payload.y,
+            name: payload.name,
+            timestamp: Date.now(),
+          },
+        }));
+      }
+    });
+
     const subscribed = await new Promise((resolve) => {
       channel.subscribe((status) => resolve(status));
     });
@@ -276,12 +289,6 @@ export function useCollaboration({
     }
 
     channelRef.current = channel;
-
-    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      const broadcastChannel = new BroadcastChannel(sessionChannelName);
-      broadcastChannel.onmessage = (event) => processEnvelope(event.data);
-      broadcastRef.current = broadcastChannel;
-    }
 
     return nextSession;
   }, [cleanupTransport, processEnvelope, sendEnvelope]);
@@ -355,6 +362,7 @@ export function useCollaboration({
     setConnectionStatus("idle");
     setParticipants([]);
     setAnnotations([]);
+    setCursors({});
     setPresenterId(null);
     presenterIdRef.current = null;
     seenSequencesRef.current = new Map();
@@ -387,6 +395,23 @@ export function useCollaboration({
   const updateState = useCallback((delta) => {
     return sendEnvelope("state:update", { delta });
   }, [sendEnvelope]);
+
+  const sendCursor = useCallback(
+    (x, y) => {
+      if (!channelRef.current || !sessionRef.current) return;
+      channelRef.current.send({
+        type: "broadcast",
+        event: "cursor:move",
+        payload: {
+          senderId: clientId,
+          name: currentDisplayNameRef.current,
+          x,
+          y,
+        },
+      });
+    },
+    [clientId]
+  );
 
   const startRecording = useCallback(() => {
     setRecordedEvents([]);
@@ -425,6 +450,7 @@ export function useCollaboration({
       connectionStatus,
       participants,
       annotations,
+      cursors,
       presenterId,
       recording,
       recordedEvents,
@@ -434,6 +460,7 @@ export function useCollaboration({
       joinSession,
       leaveSession,
       sendEnvelope: updateState,
+      sendCursor,
       requestControl,
       grantControl,
       addAnnotation,
@@ -451,6 +478,7 @@ export function useCollaboration({
       clearRecording,
       clientId,
       connectionStatus,
+      cursors,
       createSession,
       error,
       exportRecording,
@@ -466,6 +494,7 @@ export function useCollaboration({
       session,
       stopRecording,
       startRecording,
+      sendCursor,
       updateState,
     ],
   );

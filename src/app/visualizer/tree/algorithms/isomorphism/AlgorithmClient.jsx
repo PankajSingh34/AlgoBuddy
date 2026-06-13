@@ -23,7 +23,7 @@ export default function IsomorphismAlgorithmPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.isomorphism}
-          description="Mark Tree Isomorphism as done and view it on your dashboard"
+          description="Mark Tree Isomorphism as done and track your progress"
           initialDone={false}
         />
       }

@@ -23,7 +23,7 @@ export default function DsuPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.dsu}
-          description="Mark Disjoint Set Union (DSU) as done and view it on your dashboard"
+          description="Mark Disjoint Set Union (DSU) as done and track your progress"
           initialDone={false}
         />
       }

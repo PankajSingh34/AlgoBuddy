@@ -12,21 +12,24 @@ import {
   FaInstagram,
 } from 'react-icons/fa6'
 
-import PrivacyPolicyModal from '@/app/components/PrivacyPolicyModal'
+
 import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
 import CookiePolicyModal from '@/app/components/cookie'
-import CodeOfConductModel from '@/app/components/CodeOfConductModel'
+
 
 const Footer = () => {
-  const [showPolicyModal, setShowPolicyModal] = useState(false)
+  
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showCookieModal, setShowCookieModal] = useState(false)
-  const [ShowShowOfConduct, setShowCodeOfConductModal] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
 
-  const validateEmail = (value) => {
+  const validateEmail = (value, isSubmit = false) => {
     if (!value) {
+      if (isSubmit) {
+        setNewsletterEmailError("Email is required");
+        return false;
+      }
       setNewsletterEmailError("");
       return true;
     }
@@ -41,7 +44,7 @@ const Footer = () => {
 
   const handleNewsletterSubscribe = (e) => {
     e.preventDefault();
-    if (!validateEmail(newsletterEmail)) {
+    if (!validateEmail(newsletterEmail, true)) {
       return;
     }
     // TODO: Implement newsletter subscription API call here
@@ -111,10 +114,20 @@ const Footer = () => {
                 >
                   <FaInstagram className="w-4 h-4" />
                 </a>
+
+                <a
+                  href="https://discord.gg/PqnazRxPc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={socialIcon}
+                  aria-label="Join AlgoBuddy Discord Community"
+                >
+                  <FaDiscord className="w-4 h-4" />
+                </a>
               </div>
 
               {/* Newsletter */}
-              <div className="mt-10">
+              <form onSubmit={handleNewsletterSubscribe} className="mt-10">
                 <h3 className="text-white font-semibold mb-2">Stay updated</h3>
                 <p className="text-sm mb-4 text-gray-400 max-w-xs">
                   Subscribe to get the latest updates, features, and tutorials.
@@ -124,13 +137,23 @@ const Footer = () => {
                   <input
                     type="email"
                     placeholder="Enter your email"
+                    value={newsletterEmail}
+                    onChange={(e) => {
+                      setNewsletterEmail(e.target.value);
+                      validateEmail(e.target.value, false);
+                    }}
                     className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
                   />
-                  <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
+                  <button type="submit" className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
                     Subscribe
                   </button>
                 </div>
-              </div>
+                {newsletterEmailError && (
+                  <p className="text-red-500 text-xs mt-2" role="alert">
+                    {newsletterEmailError}
+                  </p>
+                )}
+              </form>
             </div>
 
             {/* Quick Links */}
@@ -162,7 +185,7 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Resources</h3>
               <div className="space-y-4">
-                {/* <Link href="/tutorials" className={footerLink}>
+                <Link href="/tutorials" className={footerLink}>
                   Tutorials
                 </Link>
                 <Link href="/cheatsheets" className={footerLink}>
@@ -174,9 +197,12 @@ const Footer = () => {
                 <Link href="/roadmaps" className={footerLink}>
                   Roadmaps
                 </Link>
+                <Link href="/recently-viewed" className={footerLink}>
+                  Recently Viewed
+                </Link>
                 <Link href="/blog" className={footerLink}>
                   Blog
-                </Link> */}
+                </Link>
                 <Link href="/faq" className={footerLink}>
                   FAQ
                 </Link>
@@ -198,9 +224,8 @@ const Footer = () => {
                 >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
-                <a href="https://github.com/PankajSingh34/AlgoBuddy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"></a>
                 <a
-                  href="https://github.com/PankajSingh34"
+                  href="https://github.com/PankajSingh34/AlgoBuddy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
@@ -208,10 +233,20 @@ const Footer = () => {
                   <FaGithub className="w-4 h-4" /> GitHub
                 </a>
                 <a
-                  href="#"
+                  href="https://www.youtube.com/@AlgoBuddy.connect"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaYoutube className="w-4 h-4" /> YouTube
+                </a>
+                <a
+                  href="https://www.instagram.com/algobuddy.connect/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                >
+                  <FaInstagram className="w-4 h-4" /> Instagram
                 </a>
                 <a
                   href="https://x.com/AlgoBuddy_"
@@ -228,12 +263,11 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Legal</h3>
               <div className="space-y-4">
-                <button
-                  onClick={() => setShowPolicyModal(true)}
-                  className={footerLink}
+                <Link href="/privacy"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
                   Privacy Policy
-                </button>
+                </Link>
                 <button
                   onClick={() => setShowTermsModal(true)}
                   className={footerLink}
@@ -246,12 +280,11 @@ const Footer = () => {
                 >
                   Cookies Policy
                 </button>
-                <button
-                  onClick={() => setShowCodeOfConductModal(true)}
-                  className={footerLink}
+                <Link href="/code-of-conduct"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
-                  Code of Conduct
-                </button>
+                  Code Of Conduct
+                </Link>
               </div>
             </div>
           </div>
@@ -267,10 +300,7 @@ const Footer = () => {
         </div>
       </footer>
 
-      <PrivacyPolicyModal
-        isOpen={showPolicyModal}
-        onClose={() => setShowPolicyModal(false)}
-      />
+      
       <TermsOfServiceModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
@@ -279,10 +309,7 @@ const Footer = () => {
         isOpen={showCookieModal}
         onClose={() => setShowCookieModal(false)}
       />
-      <CodeOfConductModel
-        isOpen={ShowShowOfConduct}
-        onClose={() => setShowCodeOfConductModal(false)}
-      />
+      
     </>
   )
 }

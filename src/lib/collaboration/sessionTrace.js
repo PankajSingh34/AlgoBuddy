@@ -42,9 +42,9 @@ export function createSessionSnapshot(initial = {}) {
   };
 }
 
-export function canApplyPrivilegedSessionEvent(snapshot, event) {
+export function canApplyPrivilegedSessionEvent(snapshot, event, verifiedSenderId) {
   const presenterId = snapshot?.presenterId || null;
-  const senderId = event?.senderId || null;
+  const senderId = verifiedSenderId || event?.senderId || null;
 
   switch (event?.type) {
     case "control:grant":
@@ -54,6 +54,11 @@ export function canApplyPrivilegedSessionEvent(snapshot, event) {
     default:
       return true;
   }
+}
+
+export function verifySessionEvent(event, authenticatedUserId) {
+  if (!event || !authenticatedUserId) return false;
+  return event.senderId === authenticatedUserId;
 }
 
 

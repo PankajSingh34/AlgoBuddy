@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -54,36 +55,21 @@ export default function AuthForm({ isLogin = true }) {
       if (!captchaToken) throw new Error("Please complete captcha");
 
       if (isLogin) {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "login",
-          }),
+          body: { email, password, captchaToken, action: "login" },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Login failed");
 
         // The API route set the session as cookies.
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user || null);
-        router.push("/dashboard");
+        router.push("/arena");
       } else {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "signup",
-            name,
-          }),
+          body: { email, password, captchaToken, action: "signup", name },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Signup failed");
         toast.success(data.message || "Account created! Please sign in.");
         router.push("/login");
@@ -100,6 +86,10 @@ export default function AuthForm({ isLogin = true }) {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) setError(error.message);
@@ -108,7 +98,7 @@ export default function AuthForm({ isLogin = true }) {
   // Safe Turnstile sitekey fallback for testing/dev environments
   const turnstileSiteKey =
     (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
-     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key")
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key")
       ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
       : "1x00000000000000000000AA";
 
@@ -132,7 +122,7 @@ export default function AuthForm({ isLogin = true }) {
             </h1>
             <p className="text-purple-200 text-sm mt-1">
               {isLogin
-                ? "Sign in to access your dashboard"
+                ? "Sign in to access Arena"
                 : "Join us to get started"}
             </p>
           </div>
@@ -247,11 +237,10 @@ export default function AuthForm({ isLogin = true }) {
             <button
               type="submit"
               disabled={loading || !captchaToken || (email && emailError)}
-              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
-                loading || !captchaToken || (email && emailError)
+              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${loading || !captchaToken || (email && emailError)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
-              }`}
+                }`}
             >
               {loading ? (
                 <>

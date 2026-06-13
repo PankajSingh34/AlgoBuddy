@@ -5,15 +5,12 @@ import { Redis } from "@upstash/redis";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { jsonResponse, errorResponse } from "@/lib/serverApi";
 
-// Service-role client is only used for signup so it can create users regardless
-// of RLS policies. It is never used for login — that goes through the anon client
-// so that Supabase's own per-user RLS applies from the first request.
 function getValidUrl(value) {
   if (!value) return null;
   let trimmed = String(value).trim();
   if (!trimmed || trimmed.startsWith("Your ")) return null;
-  // Node 18+ fetch localhost IPv6 issue fix
   if (trimmed.startsWith("http://localhost:")) {
     trimmed = trimmed.replace("http://localhost:", "http://127.0.0.1:");
   }
@@ -34,7 +31,6 @@ function getValidKey(value) {
 const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
-const turnstileConfigured = process.env.TURNSTILE_CONFIGURED === "true";
 
 const supabaseAdmin =
   supabaseUrl && supabaseServiceKey
@@ -56,6 +52,34 @@ const redis =
     ? Redis.fromEnv()
     : null;
 
+let isRedisOffline = false;
+let redisOfflineUntil = 0;
+const COOLDOWN_MS = 10000;
+
+function markRedisOffline(err) {
+  if (!isRedisOffline) {
+    isRedisOffline = true;
+    console.error(`[auth] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`);
+  }
+  redisOfflineUntil = Date.now() + COOLDOWN_MS;
+}
+
+function markRedisOnline() {
+  if (isRedisOffline) {
+    isRedisOffline = false;
+    console.log("[auth] Redis connection restored, resuming Redis-based auth lockout.");
+  }
+}
+
+function shouldTryRedis() {
+  if (!redis) return false;
+  if (!isRedisOffline) return true;
+  if (Date.now() >= redisOfflineUntil) {
+    return true;
+  }
+  return false;
+}
+
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -71,9 +95,14 @@ function failKey(email) {
 async function isEmailLocked(email) {
   if (!email) return false;
 
-  if (redis) {
-    const value = await redis.get(lockKey(email));
-    return Boolean(value);
+  if (shouldTryRedis()) {
+    try {
+      const value = await redis.get(lockKey(email));
+      markRedisOnline();
+      return Boolean(value);
+    } catch (err) {
+      markRedisOffline(err);
+    }
   }
 
   const until = memoryLockouts.get(email);
@@ -88,22 +117,39 @@ async function isEmailLocked(email) {
 async function recordLoginFailure(email) {
   if (!email) return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD };
 
-  if (redis) {
-    const attempts = await redis.incr(failKey(email));
-    // Ensure the failure counter expires.
-    if (attempts === 1) {
-      await redis.expire(failKey(email), LOGIN_FAILURE_WINDOW_SECONDS);
+  if (shouldTryRedis()) {
+    try {
+      const attempts = await redis.incr(failKey(email));
+      // Ensure the failure counter expires.
+      if (attempts === 1) {
+        await redis.expire(failKey(email), LOGIN_FAILURE_WINDOW_SECONDS);
+      }
+      const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - attempts);
+      if (attempts >= LOGIN_FAILURE_THRESHOLD) {
+        await redis.set(lockKey(email), "1", { ex: LOGIN_LOCK_SECONDS });
+        await redis.del(failKey(email));
+        markRedisOnline();
+        return { locked: true, remaining: 0 };
+      }
+      markRedisOnline();
+      return { locked: false, remaining };
+    } catch (err) {
+      markRedisOffline(err);
     }
-    const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - attempts);
-    if (attempts >= LOGIN_FAILURE_THRESHOLD) {
-      await redis.set(lockKey(email), "1", { ex: LOGIN_LOCK_SECONDS });
-      await redis.del(failKey(email));
-      return { locked: true, remaining: 0 };
-    }
-    return { locked: false, remaining };
   }
 
   const now = Date.now();
+  
+  // --- Memory Leak Fix: Probabilistic Garbage Collection ---
+  if (Math.random() < 0.05) {
+    for (const [k, until] of memoryLockouts.entries()) {
+      if (until <= now) memoryLockouts.delete(k);
+    }
+    for (const [k, bucket] of memoryFailures.entries()) {
+      if (bucket.resetAt <= now) memoryFailures.delete(k);
+    }
+  }
+
   const bucket = memoryFailures.get(email);
   if (!bucket || bucket.resetAt <= now) {
     memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
@@ -121,10 +167,15 @@ async function recordLoginFailure(email) {
 
 async function clearLoginFailures(email) {
   if (!email) return;
-  if (redis) {
-    await redis.del(failKey(email));
-    await redis.del(lockKey(email));
-    return;
+  if (shouldTryRedis()) {
+    try {
+      await redis.del(failKey(email));
+      await redis.del(lockKey(email));
+      markRedisOnline();
+      return;
+    } catch (err) {
+      markRedisOffline(err);
+    }
   }
   memoryFailures.delete(email);
   memoryLockouts.delete(email);
@@ -137,149 +188,117 @@ function genericAuthError() {
 
 export async function POST(req) {
   try {
-    // Enforce Redis in production environments to prevent silent in-memory bypasses
     const isProduction = process.env.NODE_ENV === "production";
     const hasRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
     if (isProduction && !hasRedis) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Server misconfigured: Redis environment variables are not set." }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      console.warn("Production environment is missing Redis variables; using in-memory rate limiters/lockouts.");
     }
 
     let body;
     try {
       body = await req.json();
     } catch {
-      return new Response(
-        JSON.stringify({ success: false, message: "Invalid request body" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: false, message: "Invalid request body" }, 400);
     }
 
     const { email, password, captchaToken, action, name } = body || {};
 
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Email and password are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: false, message: "Email and password are required" }, 400);
     }
 
     if (!captchaToken) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Captcha token missing" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: false, message: "Captcha token missing" }, 400);
     }
 
     const ip = getClientIp(req.headers);
 
-    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
-    const isConfigured = turnstileConfigured && turnstileSecretKey && turnstileSecretKey !== "undefined";
-
+    const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
     let captcha;
-    if (!isConfigured) {
-      const isProduction = process.env.NODE_ENV === "production";
-      const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
 
-      if (isProduction && !explicitBypass) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Server misconfigured: CAPTCHA secret key is not set." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
-      }
-
-      if (!explicitBypass) {
-        console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
-      }
-
+    if (explicitBypass) {
       captcha = { ok: true };
     } else {
-      captcha = await verifyTurnstile(String(captchaToken), { ip });
+      try {
+        captcha = await verifyTurnstile(String(captchaToken), { ip });
+      } catch (err) {
+        if (err.message === 'CAPTCHA_CONFIG_MISSING') {
+          if (!isProduction) {
+            console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
+            captcha = { ok: true };
+          } else {
+            console.error("Server misconfigured: CAPTCHA secret key is not set.");
+            return jsonResponse({ success: false, message: "We're having trouble verifying the CAPTCHA. Please try again later." }, 500);
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (!captcha.ok) {
-      return new Response(
-        JSON.stringify({ success: false, message: captcha.error }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: false, message: captcha.error || "Captcha verification failed. Please try again." }, 400);
     }
 
     const normalizedEmail = normalizeEmail(email);
     const actionName = action === "signup" ? "signup" : "login";
 
-    // Rate limit auth globally by IP and also by email to resist distributed attacks.
-    // In production this is enforced via Upstash Redis across instances; locally
-    // it falls back to an in-memory limiter.
     const [ipLimit, emailLimit] = await Promise.all([
       checkRateLimit(`${AUTH_RATE_LIMIT_PREFIX}:${actionName}:ip:${ip}`),
       checkRateLimit(`${AUTH_RATE_LIMIT_PREFIX}:${actionName}:email:${normalizedEmail}`),
     ]);
 
     if (!ipLimit.allowed || !emailLimit.allowed) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Too many attempts. Please wait and try again." }),
-        { status: 429, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: false, message: "Too many attempts. Please wait and try again." }, 429);
     }
 
     if (action === "signup") {
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
-        ? String(process.env.SUPABASE_SERVICE_KEY).trim()
-        : null;
-
-      if (!supabaseUrl || !supabaseServiceKey) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Auth server is not configured." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
+      const serviceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
+      if (!supabaseUrl || !serviceKey) {
+        return jsonResponse({ success: false, message: "Auth server is not configured." }, 500);
       }
 
-      const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
+      const admin = createClient(supabaseUrl, serviceKey);
+
+      const emailConfirm = process.env.AUTO_CONFIRM_EMAIL === "true";
+
+      const { error } = await admin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true,
+        email_confirm: emailConfirm,
         user_metadata: { display_name: name },
       });
 
       if (error) {
-        return new Response(
-          JSON.stringify({ success: false, message: error.message }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
-        );
+        return jsonResponse({ success: false, message: error.message }, 400);
       }
 
-      return new Response(
-        JSON.stringify({
+      if (emailConfirm) {
+        return jsonResponse({
           success: true,
           message: "Signup successful. You can now log in!",
           trigger: true,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
+        });
+      }
+
+      return jsonResponse({
+        success: true,
+        message: "Signup successful! Please check your email to verify your account before logging in.",
+        trigger: false,
+      });
     }
 
     if (action === "login") {
-      // Temporary lockout after repeated failures for this email (defense in depth).
       if (await isEmailLocked(normalizedEmail)) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Too many failed login attempts. Please try again later." }),
-          { status: 429, headers: { "Content-Type": "application/json" } },
-        );
+        return jsonResponse({ success: false, message: "Too many failed login attempts. Please try again later." }, 429);
       }
 
       if (!supabaseUrl || !supabaseAnonKey) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Auth server is not configured." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
+        return jsonResponse({ success: false, message: "Auth server is not configured." }, 500);
       }
 
       const cookieStore = await cookies();
 
-      // createServerClient writes the session into cookies automatically when
-      // signInWithPassword resolves. Tokens are never placed in the response body.
       const client = createServerClient(
         supabaseUrl,
         supabaseAnonKey,
@@ -301,36 +320,22 @@ export async function POST(req) {
 
       if (error) {
         const { locked } = await recordLoginFailure(normalizedEmail);
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: locked
-              ? "Too many failed login attempts. Please try again later."
-              : genericAuthError(),
-          }),
-          { status: 401, headers: { "Content-Type": "application/json" } },
-        );
+        return jsonResponse({
+          success: false,
+          message: locked
+            ? "Too many failed login attempts. Please try again later."
+            : genericAuthError(),
+        }, 401);
       }
 
       await clearLoginFailures(normalizedEmail);
 
-      // Session is now stored in httpOnly cookies by the createServerClient adapter.
-      // Tokens must never appear in the response body — they would be visible in
-      // server logs, CDN logs, and browser DevTools Network captures.
-      return new Response(
-        JSON.stringify({ success: true, message: "Login successful" }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ success: true, message: "Login successful" });
     }
 
-    return new Response(
-      JSON.stringify({ success: false, message: "Invalid action" }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    );
+    return jsonResponse({ success: false, message: "Invalid action" }, 400);
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    );
+    console.error("Auth API error:", err);
+    return jsonResponse({ success: false, message: "Internal server error" }, 500);
   }
 }

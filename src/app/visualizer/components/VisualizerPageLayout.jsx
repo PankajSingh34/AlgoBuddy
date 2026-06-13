@@ -1,6 +1,10 @@
 import Footer from "@/app/components/footer";
 import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import { CollaborationProvider } from "@/app/components/ui/CollaborationProvider";
+import CollaborationToolbar from "@/app/visualizer/components/CollaborationToolbar";
+import LiveCursors from "@/app/visualizer/components/LiveCursors";
+
 export function createVisualizerPaths(...segments) {
   return [
     { name: "Home", href: "/" },
@@ -38,9 +42,10 @@ export default function VisualizerPageLayout({
   moduleSectionClassName = "px-6 md:px-12 my-12",
   exploreSectionClassName = "px-6",
 }) {
+  
   return (
-    <>
-
+    <CollaborationProvider>
+      <LiveCursors />
       <div className="bg-white pb-16 pt-6 text-[#1a1a1a] dark:bg-[#1c1d1f] dark:text-[#f5f5f5]">
         <section className="px-6 md:px-12">
           <div className="mb-4 mt-2">
@@ -69,6 +74,8 @@ export default function VisualizerPageLayout({
 
           <div className="mx-auto my-10 h-px max-w-4xl bg-gradient-to-r from-transparent via-[#d1d7dc] to-transparent dark:via-[#333]" />
         </section>
+
+        <CollaborationToolbar />
 
         <VisualizerPageSection className={animationSectionClassName}>
           {animation}
@@ -106,7 +113,7 @@ export default function VisualizerPageLayout({
 
       <BackToTop />
       <Footer />
-    </>
+    </CollaborationProvider>
   );
 }
 

@@ -22,7 +22,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.slidingWindow}
-          description="Mark Sliding Window as done and view it on your dashboard"
+          description="Mark Sliding Window as done and track your progress"
           initialDone={false}
         />
       }

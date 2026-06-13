@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.hashmapDelete}
-          description="Mark HashMap : Delete as done and view it on your dashboard"
+          description="Mark HashMap : Delete as done and track your progress"
           initialDone={false}
         />
       }

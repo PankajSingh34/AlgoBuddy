@@ -2,10 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Moon, Sun, Menu, X, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -27,6 +27,17 @@ function applyTheme(nextTheme) {
   window.localStorage.setItem("theme", nextTheme);
 }
 
+function getInitials(name) {
+  if (!name) return "??";
+  const cleanName = name.includes("@") ? name.split("@")[0] : name;
+  const parts = cleanName.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -36,6 +47,7 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
+ 
   const { user, setUser } = useUser();
   const userRef = useRef(null);
 
@@ -120,11 +132,20 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("algobuddy_practice_progress");
+      localStorage.removeItem("algobuddy_current_streak");
+      localStorage.removeItem("algobuddy_best_streak");
+      localStorage.removeItem("algobuddy_last_active_date");
+      localStorage.removeItem("PROBLEM_BOOKMARKS");
+    }
     router.push("/");
+     window.location.href = "/";
     setMenuOpen(false);
   };
 
   const isActive = (href) => {
+     if (!pathname) return false; 
     if (href.startsWith("http")) return false;
 
     if (href.startsWith("/#")) {
@@ -134,17 +155,18 @@ export default function Navbar() {
     return (
       pathname === href ||
       pathname.startsWith(href + "/")
+
+
     );
   };
 
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-[9998] h-[72px] bg-white dark:bg-udemy-dark-bg flex items-center transition-all duration-200 ${scrolled
             ? "border-b border-surface-200 dark:border-udemy-dark-border shadow-sm"
             : "border-b border-transparent"
-        }`}
+          }`}
       >
         <div className="w-full max-w-[1200px] mx-auto px-8 flex items-center justify-between h-full">
           <Link
@@ -157,27 +179,43 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
-              
+              const dynamicHref = l.href;
+
               return (
                 <Link
                   key={l.href}
                   href={dynamicHref}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
-                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${
-                    isActive(l.href)
+                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
                       ? "text-primary dark:text-primary font-semibold"
                       : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {l.label}
+                  {l.label === "Community" && process.env.NEXT_PUBLIC_SHOW_COMMUNITY_BADGE === "true" && (
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold text-white bg-purple-600 rounded">NEW</span>
+                  )}
                 </Link>
               );
             })}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              className="flex items-center gap-2.5 h-[38px] px-3.5 rounded-full border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-udemy-dark-surface hover:border-primary dark:hover:border-primary transition-all duration-150 focus-ring cursor-pointer group"
+              aria-label="Search site (Ctrl+K)"
+            >
+              <Search className="w-4 h-4 text-surface-500 group-hover:text-primary transition-colors" />
+              <span className="text-[13px] text-surface-500 dark:text-surface-400 font-medium group-hover:text-surface-700 dark:group-hover:text-white transition-colors">
+                Search...
+              </span>
+              <kbd className="inline-flex items-center gap-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-600 bg-white dark:bg-neutral-800 text-surface-400 dark:text-surface-500 select-none group-hover:border-primary/50 group-hover:text-primary transition-colors">
+                ⌘K
+              </kbd>
+            </button>
+
             {user ? (
               <div
                 ref={userRef}
@@ -189,16 +227,20 @@ export default function Navbar() {
                   }
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
                 >
-                  <Image
-                    src={`https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(
-                      user.email
-                    )}`}
-                    alt="avatar"
-                    width={28}
-                    height={28}
-                    unoptimized
-                    className="w-7 h-7 rounded-full"
-                  />
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <Image
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt="avatar"
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-[11px] font-bold">
+                      {getInitials(user.user_metadata?.name || user.email)}
+                    </div>
+                  )}
 
                   <ChevronDown className="w-3.5 h-3.5 text-surface-500" />
                 </button>
@@ -212,14 +254,14 @@ export default function Navbar() {
                     </div>
 
                     <Link
-                      href="/dashboard"
+                      href="/arena"
                       onClick={() =>
                         setUserMenuOpen(false)
                       }
                       className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-surface-500" />
-                      My Dashboard
+                      <Swords className="w-4 h-4 text-surface-500" />
+                      Arena
                     </Link>
 
                     <button
@@ -248,17 +290,16 @@ export default function Navbar() {
               onClick={toggleTheme}
               aria-label={
                 themeMounted
-                  ? `Switch to ${
-                      theme === "light"
-                        ? "dark"
-                        : "light"
-                    } mode`
+                  ? `Switch to ${theme === "light"
+                    ? "dark"
+                    : "light"
+                  } mode`
                   : "Toggle theme"
               }
               className="w-9 h-9 flex items-center justify-center rounded-full text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
             >
               {!themeMounted ||
-              theme === "light" ? (
+                theme === "light" ? (
                 <Moon className="w-5 h-5" />
               ) : (
                 <Sun className="w-5 h-5" />
@@ -266,21 +307,30 @@ export default function Navbar() {
             </button>
           </div>
 
-          <button
-            onClick={() =>
-              setMenuOpen((o) => !o)
-            }
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            className="md:hidden w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
-          >
-            {menuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 md:hidden">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              aria-label="Search site"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() =>
+                setMenuOpen((o) => !o)
+              }
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              {menuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -292,7 +342,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/dashboard" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -306,13 +356,15 @@ export default function Navbar() {
                       ? "page"
                       : undefined
                   }
-                  className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${
-                    isActive(l.href)
+                  className={`block px-6 py-3.5 text-[16px] font-medium transition-colors focus-ring ${isActive(l.href)
                       ? "text-primary bg-primary/5 dark:bg-primary/10"
                       : "text-surface-700 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface hover:text-surface-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {l.label}
+                  {l.label === "Community" && process.env.NEXT_PUBLIC_SHOW_COMMUNITY_BADGE === "true" && (
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold text-white bg-purple-600 rounded">NEW</span>
+                  )}
                 </Link>
               );
             })}
@@ -325,16 +377,15 @@ export default function Navbar() {
               className="mb-3 h-[44px] w-full flex items-center justify-center gap-2 text-[15px] font-semibold text-surface-900 dark:text-white border border-surface-300 dark:border-udemy-dark-border rounded-full hover:border-primary hover:text-primary transition-all focus-ring"
               aria-label={
                 themeMounted
-                  ? `Switch to ${
-                      theme === "light"
-                        ? "dark"
-                        : "light"
-                    } mode`
+                  ? `Switch to ${theme === "light"
+                    ? "dark"
+                    : "light"
+                  } mode`
                   : "Toggle theme"
               }
             >
               {!themeMounted ||
-              theme === "light" ? (
+                theme === "light" ? (
                 <>
                   <Moon className="w-4 h-4" />
                   Dark mode
@@ -354,13 +405,13 @@ export default function Navbar() {
                 </p>
 
                 <Link
-                  href="/dashboard"
+                  href="/arena"
                   onClick={() =>
                     setMenuOpen(false)
                   }
                   className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
                 >
-                  My Dashboard
+                  Arena
                 </Link>
 
                 <button

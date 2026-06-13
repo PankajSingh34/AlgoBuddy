@@ -23,7 +23,7 @@ export default function LCAAlgorithmPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.lca}
-          description="Mark Lowest Common Ancestor as done and view it on your dashboard"
+          description="Mark Lowest Common Ancestor as done and track your progress"
           initialDone={false}
         />
       }

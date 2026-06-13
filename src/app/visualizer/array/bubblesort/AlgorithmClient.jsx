@@ -21,7 +21,7 @@ export default function Page() {
         content={<Content />}
         code={<Code />}
         quiz={<Quiz />}
-        moduleCard={<ModuleCard moduleId={MODULE_MAPS.bubbleSort} description="Mark Bubble Sort as done and view it on your dashboard" initialDone={false} />}
+        moduleCard={<ModuleCard moduleId={MODULE_MAPS.bubbleSort} description="Mark Bubble Sort as done and track your progress" initialDone={false} />}
         exploreOther={<ExploreOther title="Explore Sorting Algorithms" links={[
           { text: "Selection Sort", url: "/visualizer/array/selectionsort" },
           { text: "Insertion Sort", url: "/visualizer/array/insertionsort" },

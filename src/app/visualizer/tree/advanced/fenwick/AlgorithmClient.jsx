@@ -23,7 +23,7 @@ export default function FenwickTreePage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.fenwickTree}
-          description="Mark Fenwick Tree as done and view it on your dashboard"
+          description="Mark Fenwick Tree as done and track your progress"
           initialDone={false}
         />
       }
