@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import PushPop from "@/app/components/ui/PushPop";
 import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { checkFullGenerator } from "@/features/algorithms/stack/stackIsFullLogic";
 
 const StackVisualizer = () => {
   const [stack, setStack] = useState([]);
@@ -23,15 +24,22 @@ const StackVisualizer = () => {
 
   // Check if stack is full
   const checkIfFull = () => {
-    if (capacity === null) return;
+    const gen = checkFullGenerator(stack, capacity);
+    const startState = gen.next().value;
+    
+    if (startState.type === 'error') {
+      setMessage(startState.message);
+      return;
+    }
+    
     setIsAnimating(true);
-    setOperation("Checking if stack is full...");
+    setOperation(startState.operation);
 
     setTimeout(() => {
-      const fullStatus = stack.length >= capacity;
-      setIsFull(fullStatus);
+      const completeState = gen.next().value;
+      setIsFull(completeState.isFull);
       setOperation(null);
-      setMessage(fullStatus ? `Stack is FULL! top (${stack.length - 1}) >= size - 1 (${capacity - 1})` : "Stack is NOT full");
+      setMessage(completeState.message);
       setIsAnimating(false);
     }, 1000 / speed);
   };

@@ -7,10 +7,13 @@ export async function generateStaticParams() {
     { algorithm: "bfs" },
     { algorithm: "dfs" },
     { algorithm: "dijkstra" },
+    { algorithm: "bellman-ford" },
     { algorithm: "floyd-warshall" },
     { algorithm: "prim" },
     { algorithm: "kruskal" },
     { algorithm: "topological-sort" },
+    { algorithm: "kosaraju" },
+    { algorithm: "tarjan" },
     { algorithm: "adjacency-list" },
     { algorithm: "adjacency-matrix" },
   ];

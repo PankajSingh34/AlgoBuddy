@@ -23,7 +23,7 @@ export default function TriePage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.trie}
-          description="Mark Trie (Prefix Tree) as done and view it on your dashboard"
+          description="Mark Trie (Prefix Tree) as done and track your progress"
           initialDone={false}
         />
       }

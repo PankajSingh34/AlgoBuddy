@@ -3,9 +3,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const code = request.nextUrl.searchParams.get('code');
+  const next = request.nextUrl.searchParams.get('next') ?? '/arena';
 
   if (code) {
     const cookieStore = await cookies();
@@ -28,15 +27,19 @@ export async function GET(request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = next;
+      redirectUrl.search = '';
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
+  // Return the user to the most relevant error page with some instructions
+  const origin = request.nextUrl.origin;
   const errorTarget =
     next === "/reset-password"
       ? `${origin}/reset-password?error=auth_callback_failed`
       : `${origin}/login?error=auth_callback_failed`;
 
-  // Return the user to the most relevant error page with some instructions
   return NextResponse.redirect(errorTarget);
 }

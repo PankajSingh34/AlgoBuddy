@@ -158,10 +158,38 @@ const redis =
     ? Redis.fromEnv()
     : null;
 
+let isRedisOffline = false;
+let redisOfflineUntil = 0;
+const COOLDOWN_MS = 10000;
+
+function markRedisOffline(err) {
+  if (!isRedisOffline) {
+    isRedisOffline = true;
+    console.error(`[sessionStore] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`);
+  }
+  redisOfflineUntil = Date.now() + COOLDOWN_MS;
+}
+
+function markRedisOnline() {
+  if (isRedisOffline) {
+    isRedisOffline = false;
+    console.log("[sessionStore] Redis connection restored, resuming Redis session storage.");
+  }
+}
+
+function shouldTryRedis() {
+  if (!redis) return false;
+  if (!isRedisOffline) return true;
+  if (Date.now() >= redisOfflineUntil) {
+    return true;
+  }
+  return false;
+}
+
 function ensureRedisConnection() {
   if (process.env.NODE_ENV === "production" && !redis) {
-    throw new Error(
-      "Critical: Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) must be configured in production environments."
+    console.warn(
+      "Production environment is missing Redis variables; using in-memory collaboration session store."
     );
   }
 }
@@ -305,23 +333,34 @@ async function readSession(sessionId) {
   ensureRedisConnection();
   if (!sessionId) return null;
 
-  let session;
-  if (redis) {
-    const value = await redis.get(sessionKey(sessionId));
-    session = value ? value : null;
-  } else {
-    session = memorySessions.get(sessionId) || null;
-  }
-
-  if (session && Array.isArray(session.subscriptionTokens) && session.subscriptionTokens.length > 0) {
-    const pruned = pruneActiveSubscriptionTokens(session.subscriptionTokens);
-    if (pruned.length < session.subscriptionTokens.length) {
-      session.subscriptionTokens = pruned;
-      await writeSession(session);
+  const doRead = async () => {
+    let session;
+    if (shouldTryRedis()) {
+      try {
+        const value = await redis.get(sessionKey(sessionId));
+        session = value ? value : null;
+        markRedisOnline();
+      } catch (err) {
+        markRedisOffline(err);
+        session = memorySessions.get(sessionId) || null;
+      }
+    } else {
+      session = memorySessions.get(sessionId) || null;
     }
-  }
 
-  return session;
+    if (session && Array.isArray(session.subscriptionTokens) && session.subscriptionTokens.length > 0) {
+      const pruned = pruneActiveSubscriptionTokens(session.subscriptionTokens);
+      if (pruned.length < session.subscriptionTokens.length) {
+        session.subscriptionTokens = pruned;
+        await writeSession(session);
+      }
+    }
+
+    return session;
+  };
+
+  if (redis) return doRead();
+  return withMemoryLock(`read:${sessionId}`, doRead);
 }
 
 async function findSessionByJoinCode(joinCode) {
@@ -329,20 +368,31 @@ async function findSessionByJoinCode(joinCode) {
   const normalizedJoinCode = normalizeJoinCode(joinCode);
   if (!normalizedJoinCode) return null;
 
-  if (redis) {
-    const sessionId = await redis.get(joinCodeKey(normalizedJoinCode));
-    if (!sessionId) return null;
-    const session = await readSession(sessionId);
-    if (!session) {
-      await redis.del(joinCodeKey(normalizedJoinCode));
-      return null;
+  if (shouldTryRedis()) {
+    try {
+      const sessionId = await redis.get(joinCodeKey(normalizedJoinCode));
+      if (!sessionId) {
+        markRedisOnline();
+        return null;
+      }
+      const session = await readSession(sessionId);
+      if (!session) {
+        await redis.del(joinCodeKey(normalizedJoinCode));
+        markRedisOnline();
+        return null;
+      }
+      markRedisOnline();
+      return session;
+    } catch (err) {
+      markRedisOffline(err);
     }
-    return session;
   }
 
-  return [...memorySessions.values()].find(
-    (session) => normalizeJoinCode(session.joinCode) === normalizedJoinCode,
-  ) || null;
+  return withMemoryLock("findByJoinCode", async () => {
+    return [...memorySessions.values()].find(
+      (session) => normalizeJoinCode(session.joinCode) === normalizedJoinCode,
+    ) || null;
+  });
 }
 
 async function readSessionByIdentifier(identifier) {
@@ -358,17 +408,29 @@ async function writeSession(session) {
     updatedAt: new Date().toISOString(),
   };
 
-  if (redis) {
-    await redis.set(sessionKey(nextSession.id), nextSession, {
-      ex: SESSION_TTL_SECONDS,
-    });
-  } else {
-    startMemorySweeper();
-    memorySessions.set(nextSession.id, nextSession);
-    touchMemorySession(nextSession.id);
-  }
+  const doWrite = async () => {
+    if (shouldTryRedis()) {
+      try {
+        await redis.set(sessionKey(nextSession.id), nextSession, {
+          ex: SESSION_TTL_SECONDS,
+        });
+        markRedisOnline();
+      } catch (err) {
+        markRedisOffline(err);
+        startMemorySweeper();
+        memorySessions.set(nextSession.id, nextSession);
+        touchMemorySession(nextSession.id);
+      }
+    } else {
+      startMemorySweeper();
+      memorySessions.set(nextSession.id, nextSession);
+      touchMemorySession(nextSession.id);
+    }
+    return nextSession;
+  };
 
-  return nextSession;
+  if (redis) return doWrite();
+  return withMemoryLock(`write:${nextSession.id}`, doWrite);
 }
 
 function pruneActiveSubscriptionTokens(tokens, nowMs = Date.now()) {
@@ -394,29 +456,35 @@ async function issueSubscriptionTokenForParticipant(sessionId, userId) {
   const ttl = SESSION_TTL_SECONDS;
   const score = nowMs;
 
-  if (redis) {
-    const result = await redis.eval(
-      ATOMIC_JOIN_SCRIPT,
-      [sessionKey(sessionId), SESSION_INDEX_KEY],
-      [participantUserId, tokenHash, token, expiresAt, ttl, score, nowStr],
-    );
+  if (shouldTryRedis()) {
+    try {
+      const result = await redis.eval(
+        ATOMIC_JOIN_SCRIPT,
+        [sessionKey(sessionId), SESSION_INDEX_KEY],
+        [participantUserId, tokenHash, token, expiresAt, ttl, score, nowStr],
+      );
 
-    if (result === 'NOT_FOUND') {
-      return { error: "Session not found", status: 404 };
+      if (result === 'NOT_FOUND') {
+        markRedisOnline();
+        return { error: "Session not found", status: 404 };
+      }
+
+      const nextSession = typeof result === 'string' ? JSON.parse(result) : result;
+
+      const participantUserIds = Array.isArray(nextSession.participantUserIds)
+        ? nextSession.participantUserIds
+        : [];
+      const isNewParticipant = participantUserIds.includes(participantUserId);
+
+      markRedisOnline();
+      return {
+        session: discoverableSessionView(nextSession, { includeJoinCode: false }),
+        subscriptionToken: token,
+        isNewParticipant,
+      };
+    } catch (err) {
+      markRedisOffline(err);
     }
-
-    const nextSession = typeof result === 'string' ? JSON.parse(result) : result;
-
-    const participantUserIds = Array.isArray(nextSession.participantUserIds)
-      ? nextSession.participantUserIds
-      : [];
-    const isNewParticipant = participantUserIds.includes(participantUserId);
-
-    return {
-      session: discoverableSessionView(nextSession, { includeJoinCode: false }),
-      subscriptionToken: token,
-      isNewParticipant,
-    };
   }
 
   return withMemoryLock(sessionId, async () => {
@@ -464,19 +532,25 @@ async function leaveCollaborationSession(sessionIdentifier, userId) {
     return { error: "Authentication required", status: 401 };
   }
 
-  if (redis) {
-    const result = await redis.eval(
-      ATOMIC_LEAVE_SCRIPT,
-      [sessionKey(sessionIdentifier), SESSION_INDEX_KEY],
-      [participantUserId, SESSION_TTL_SECONDS, Date.now()],
-    );
+  if (shouldTryRedis()) {
+    try {
+      const result = await redis.eval(
+        ATOMIC_LEAVE_SCRIPT,
+        [sessionKey(sessionIdentifier), SESSION_INDEX_KEY],
+        [participantUserId, SESSION_TTL_SECONDS, Date.now()],
+      );
 
-    if (result === 'NOT_FOUND') {
-      return { error: "Session not found", status: 404 };
+      if (result === 'NOT_FOUND') {
+        markRedisOnline();
+        return { error: "Session not found", status: 404 };
+      }
+
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+      markRedisOnline();
+      return { left: parsed.found, participantCount: parsed.participantCount };
+    } catch (err) {
+      markRedisOffline(err);
     }
-
-    const parsed = typeof result === 'string' ? JSON.parse(result) : result;
-    return { left: parsed.found, participantCount: parsed.participantCount };
   }
 
   return withMemoryLock(sessionIdentifier, async () => {
@@ -517,30 +591,48 @@ async function leaveCollaborationSession(sessionIdentifier, userId) {
  * re-adding an ID whose key has already expired from the main store).
  */
 async function addToSessionIndex(sessionId, score, updateOnly = false) {
-  if (!redis) return;
-  if (updateOnly) {
-    await redis.zadd(SESSION_INDEX_KEY, { xx: true }, { score, member: sessionId });
-  } else {
-    await redis.zadd(SESSION_INDEX_KEY, { score, member: sessionId });
+  if (!shouldTryRedis()) return;
+  try {
+    if (updateOnly) {
+      await redis.zadd(SESSION_INDEX_KEY, { xx: true }, { score, member: sessionId });
+    } else {
+      await redis.zadd(SESSION_INDEX_KEY, { score, member: sessionId });
+    }
+    markRedisOnline();
+  } catch (err) {
+    markRedisOffline(err);
   }
 }
 
 async function atomicAddToSessionIndex(sessionId, score) {
-  if (redis) {
-    const sessionKeyStr = sessionKey(sessionId);
-    const sessionData = await redis.get(sessionKeyStr);
-    if (!sessionData) return;
-    await redis.eval(ATOMIC_WRITE_SCRIPT, [sessionKeyStr, SESSION_INDEX_KEY], [
-      JSON.stringify(sessionData),
-      SESSION_TTL_SECONDS,
-      score,
-    ]);
+  if (shouldTryRedis()) {
+    try {
+      const sessionKeyStr = sessionKey(sessionId);
+      const sessionData = await redis.get(sessionKeyStr);
+      if (!sessionData) {
+        markRedisOnline();
+        return;
+      }
+      await redis.eval(ATOMIC_WRITE_SCRIPT, [sessionKeyStr, SESSION_INDEX_KEY], [
+        JSON.stringify(sessionData),
+        SESSION_TTL_SECONDS,
+        score,
+      ]);
+      markRedisOnline();
+    } catch (err) {
+      markRedisOffline(err);
+    }
   }
 }
 
 async function removeFromSessionIndex(sessionIds) {
-  if (!redis || !sessionIds.length) return;
-  await redis.zrem(SESSION_INDEX_KEY, ...sessionIds);
+  if (!shouldTryRedis() || !sessionIds.length) return;
+  try {
+    await redis.zrem(SESSION_INDEX_KEY, ...sessionIds);
+    markRedisOnline();
+  } catch (err) {
+    markRedisOffline(err);
+  }
 }
 
 export async function createCollaborationSession(input = {}) {
@@ -551,14 +643,23 @@ export async function createCollaborationSession(input = {}) {
   let joinCode = null;
   for (let attempts = 0; attempts < 5; attempts += 1) {
     const candidate = createJoinCode();
-    if (redis) {
-      const reserved = await redis.set(joinCodeKey(candidate), id, {
-        ex: SESSION_TTL_SECONDS,
-        nx: true,
-      });
-      if (reserved) {
-        joinCode = candidate;
-        break;
+    if (shouldTryRedis()) {
+      try {
+        const reserved = await redis.set(joinCodeKey(candidate), id, {
+          ex: SESSION_TTL_SECONDS,
+          nx: true,
+        });
+        markRedisOnline();
+        if (reserved) {
+          joinCode = candidate;
+          break;
+        }
+      } catch (err) {
+        markRedisOffline(err);
+        if (!(await findSessionByJoinCode(candidate))) {
+          joinCode = candidate;
+          break;
+        }
       }
     } else if (!(await findSessionByJoinCode(candidate))) {
       joinCode = candidate;
@@ -603,27 +704,33 @@ export async function createCollaborationSession(input = {}) {
 export { validateCsrfOrigin };
 
 export async function backfillJoinCodeIndex() {
-  if (!redis) return { backfilled: 0 };
-  let backfilled = 0;
-  let cursor = 0;
-  do {
-    const result = await redis.scan(cursor, { match: "collab:session:*", count: 100 });
-    cursor = Number(result[0]);
-    const keys = result[1];
-    for (const key of keys) {
-      const session = await redis.get(key);
-      if (session?.joinCode) {
-        const existing = await redis.get(joinCodeKey(session.joinCode));
-        if (!existing) {
-          await redis.set(joinCodeKey(session.joinCode), session.id, {
-            ex: SESSION_TTL_SECONDS,
-          });
-          backfilled += 1;
+  if (!shouldTryRedis()) return { backfilled: 0 };
+  try {
+    let backfilled = 0;
+    let cursor = 0;
+    do {
+      const result = await redis.scan(cursor, { match: "collab:session:*", count: 100 });
+      cursor = Number(result[0]);
+      const keys = result[1];
+      for (const key of keys) {
+        const session = await redis.get(key);
+        if (session?.joinCode) {
+          const existing = await redis.get(joinCodeKey(session.joinCode));
+          if (!existing) {
+            await redis.set(joinCodeKey(session.joinCode), session.id, {
+              ex: SESSION_TTL_SECONDS,
+            });
+            backfilled += 1;
+          }
         }
       }
-    }
-  } while (cursor !== 0);
-  return { backfilled };
+    } while (cursor !== 0);
+    markRedisOnline();
+    return { backfilled };
+  } catch (err) {
+    markRedisOffline(err);
+    return { backfilled: 0 };
+  }
 }
 
 /**
@@ -658,68 +765,93 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
   const parsed = parseCursor(cursor);
   const maxScore = parsed.score;
 
-  if (redis) {
-    const sessions = [];
-    const expiredIds = [];
-    let offset = 0;
-    let skipBoundary = parsed.sessionId ? true : false;
-    const fetchSize = pageSize + MAX_EXPIRED_BUFFER;
+  if (shouldTryRedis()) {
+    try {
+      // Active garbage collection (5% chance): drops expired session IDs 
+      // from the index to prevent unbounded memory leaks for unlisted/private sessions.
+      if (Math.random() < 0.05) {
+        const cutoffMs = Date.now() - SESSION_TTL_MS;
+        await redis.zremrangebyscore(SESSION_INDEX_KEY, "-inf", cutoffMs);
+      }
 
-    while (sessions.length < pageSize) {
-      const ids = await redis.zrange(SESSION_INDEX_KEY, maxScore, "-inf", {
-        byScore: true,
-        rev: true,
-        limit: { offset, count: fetchSize },
-      });
+      const sessions = [];
+      const expiredIds = [];
+      let currentMaxScore = maxScore;
+      let lastProcessedId = parsed.sessionId || null;
+      const fetchSize = pageSize + MAX_EXPIRED_BUFFER;
 
-      if (!ids || ids.length === 0) break;
+      while (sessions.length < pageSize) {
+        const ids = await redis.zrange(SESSION_INDEX_KEY, currentMaxScore, "-inf", {
+          byScore: true,
+          rev: true,
+          limit: { offset: 0, count: fetchSize },
+        });
 
-      const values = await redis.mget(...ids.map(sessionKey));
+        if (!ids || ids.length === 0) break;
 
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        const session = values[i];
+        const values = await redis.mget(...ids.map(sessionKey));
 
-        if (skipBoundary && parsed.sessionId) {
-          const memberScore = await redis.zscore(SESSION_INDEX_KEY, id);
-          if (memberScore === parsed.score && id <= parsed.sessionId) {
+        for (let i = 0; i < ids.length; i++) {
+          const id = ids[i];
+          const session = values[i];
+
+          if (lastProcessedId) {
+            if (id === lastProcessedId) {
+              lastProcessedId = null;
+            }
             continue;
           }
-          skipBoundary = false;
+
+          if (session && session.visibility === "public") {
+            sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
+            if (sessions.length >= pageSize) break;
+          } else if (!session) {
+            expiredIds.push(id);
+          }
         }
 
-        if (session && session.visibility === "public") {
-          sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
-          if (sessions.length >= pageSize) break;
-        } else if (!session) {
-          expiredIds.push(id);
+        if (sessions.length >= pageSize) break;
+
+        // Advance cursor by the last entry's score so non-public sessions
+        // in the current score bucket do not cause public sessions to be skipped.
+        if (ids.length > 0) {
+          const lastId = ids[ids.length - 1];
+          const lastScore = await redis.zscore(SESSION_INDEX_KEY, lastId);
+          if (lastScore !== null) {
+            currentMaxScore = lastScore;
+            lastProcessedId = lastId;
+          } else {
+            break;
+          }
+        } else {
+          break;
         }
       }
 
-      if (sessions.length >= pageSize) break;
-      offset += ids.length;
-    }
-
-    if (expiredIds.length > 0) {
-      await removeFromSessionIndex(expiredIds);
-    }
-
-    let nextCursor = null;
-    if (sessions.length > 0) {
-      const sessionKeys = sessions.map((s) => sessionKey(s.id));
-      const scores = await redis.zmscore(SESSION_INDEX_KEY, ...sessionKeys);
-      const lowest = scores
-        ? scores.reduce(
-            (acc, s, idx) => (s !== null && s < acc.score ? { score: s, id: sessions[idx].id } : acc),
-            { score: Infinity, id: null },
-          )
-        : null;
-      if (lowest && Number.isFinite(lowest.score)) {
-        nextCursor = `${lowest.score}::${lowest.id}`;
+      if (expiredIds.length > 0) {
+        await removeFromSessionIndex(expiredIds);
       }
-    }
 
-    return { sessions, nextCursor };
+      let nextCursor = null;
+      if (sessions.length > 0) {
+        const sessionKeys = sessions.map((s) => sessionKey(s.id));
+        const scores = await redis.zmscore(SESSION_INDEX_KEY, ...sessionKeys);
+        const lowest = scores
+          ? scores.reduce(
+              (acc, s, idx) => (s !== null && s < acc.score ? { score: s, id: sessions[idx].id } : acc),
+              { score: Infinity, id: null },
+            )
+          : null;
+        if (lowest && Number.isFinite(lowest.score)) {
+          nextCursor = `${lowest.score}::${lowest.id}`;
+        }
+      }
+
+      markRedisOnline();
+      return { sessions, nextCursor };
+    } catch (err) {
+      markRedisOffline(err);
+    }
   }
 
   let memorySessionsList = [...memorySessions.values()]
@@ -736,7 +868,7 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
     startIndex = memorySessionsList.findIndex((s) => {
       const st = new Date(s.updatedAt).getTime();
       if (st < maxScore) return true;
-      if (st === maxScore && parsed.sessionId && s.id <= parsed.sessionId) return true;
+      if (st === maxScore && parsed.sessionId && s.id > parsed.sessionId) return true;
       return false;
     });
     if (startIndex < 0) {
@@ -790,18 +922,19 @@ export async function joinCollaborationSession(sessionIdentifier, { password, us
   return issueSubscriptionTokenForParticipant(session.id, userId);
 }
 
-export async function claimSessionPresenter(sessionId, { sessionSecret, userId } = {}) {
+export async function claimSessionPresenter(sessionId, { userId } = {}) {
   const session = await readSession(sessionId);
   if (!session) {
     return { error: "Session not found", status: 404 };
   }
 
-  if (!sessionSecret || session.sessionSecret !== sessionSecret) {
-    return { error: "Invalid session secret. Only the session creator can claim presenter.", status: 403 };
-  }
-
   if (!userId) {
     return { error: "Authentication required", status: 401 };
+  }
+
+  // Only the session creator can claim presenter privileges
+  if (session.createdBy && session.createdBy !== userId) {
+    return { error: "Only the session creator can claim presenter.", status: 403 };
   }
 
   const participantUserId = normalizeParticipantUserId(userId);
@@ -875,21 +1008,28 @@ export async function exchangeRealtimeSubscriptionToken(
     };
   };
 
-  if (redis) {
-    const result = await redis.eval(
-      ATOMIC_CONSUME_TOKEN_SCRIPT,
-      [sessionKey(sessionId), SESSION_INDEX_KEY],
-      [tokenHash, participantUserId, SESSION_TTL_SECONDS, Date.now()],
-    );
+  if (shouldTryRedis()) {
+    try {
+      const result = await redis.eval(
+        ATOMIC_CONSUME_TOKEN_SCRIPT,
+        [sessionKey(sessionId), SESSION_INDEX_KEY],
+        [tokenHash, participantUserId, SESSION_TTL_SECONDS, Date.now()],
+      );
 
-    if (result === 'NOT_FOUND') {
-      return { error: "Session not found", status: 404 };
-    }
-    if (result === 'TOKEN_INVALID') {
-      return { error: "Invalid realtime subscription token", status: 403 };
-    }
+      if (result === 'NOT_FOUND') {
+        markRedisOnline();
+        return { error: "Session not found", status: 404 };
+      }
+      if (result === 'TOKEN_INVALID') {
+        markRedisOnline();
+        return { error: "Invalid realtime subscription token", status: 403 };
+      }
 
-    return computeResult(result);
+      markRedisOnline();
+      return computeResult(result);
+    } catch (err) {
+      markRedisOffline(err);
+    }
   }
 
   // In-memory fallback with mutual exclusion

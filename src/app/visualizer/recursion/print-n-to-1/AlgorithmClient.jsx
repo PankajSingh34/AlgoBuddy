@@ -26,7 +26,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionPrintNTo1}
-          description="Mark Print N to 1 as done and view it on your dashboard"
+          description="Mark Print N to 1 as done and track your progress"
           initialDone={false}
         />
       }

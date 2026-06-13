@@ -21,7 +21,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.queueLinkedList}
-          description="Mark Queue implementation using Linked List as done and view it on your dashboard"
+          description="Mark Queue implementation using Linked List as done and track your progress"
           initialDone={false}
         />
       }

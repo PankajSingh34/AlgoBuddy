@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { 
   Settings2,
   BarChart3,
@@ -17,20 +17,28 @@ import {
   Cell
 } from 'recharts';
 import GraphCanvas from "@/app/components/models/GraphCanvas";
+import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
+import { bfsGenerator } from "@/features/algorithms/graph/bfsLogic";
+import { dfsGenerator } from "@/features/algorithms/graph/dfsLogic";
+import { dijkstraGenerator } from "@/features/algorithms/graph/dijkstraLogic";
+import { bellmanFordGenerator } from "@/features/algorithms/graph/bellmanFordLogic";
+import { floydWarshallGenerator } from "@/features/algorithms/graph/floydWarshallLogic";
+import { primGenerator } from "@/features/algorithms/graph/primLogic";
+import { kruskalGenerator } from "@/features/algorithms/graph/kruskalLogic";
+import { topologicalSortGenerator } from "@/features/algorithms/graph/topologicalSortLogic";
+import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
+import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
 import { 
-  bfsFrames, 
-  dfsFrames, 
-  dijkstraFrames, 
-  floydWarshallFrames,
-  primFrames, 
-  kruskalFrames, 
-  topologicalSortFrames,
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
 
+const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal"]);
+const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan"]);
 
 const defaultGraphs = {
   bfs: {
@@ -108,6 +116,28 @@ const defaultGraphs = {
       { from: "4", to: "0", weight: 4, directed: true },
     ]
   },
+  "bellman-ford": {
+    nodes: [
+      { id: "0", x: 100, y: 250, label: "A" },
+      { id: "1", x: 300, y: 100, label: "B" },
+      { id: "2", x: 300, y: 400, label: "C" },
+      { id: "3", x: 500, y: 100, label: "D" },
+      { id: "4", x: 500, y: 400, label: "E" },
+      { id: "5", x: 700, y: 250, label: "F" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 4, directed: true },
+      { from: "0", to: "2", weight: 2, directed: true },
+      { from: "1", to: "3", weight: 5, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "1", weight: 8, directed: true },
+      { from: "2", to: "3", weight: 10, directed: true },
+      { from: "2", to: "4", weight: 3, directed: true },
+      { from: "3", to: "5", weight: 2, directed: true },
+      { from: "4", to: "3", weight: -4, directed: true },
+      { from: "4", to: "5", weight: 6, directed: true },
+    ]
+  },
   prim: {
     nodes: [
       { id: "0", x: 400, y: 80, label: "0" },
@@ -162,6 +192,40 @@ const defaultGraphs = {
       { from: "2", to: "5", weight: 1, directed: true },
     ]
   },
+  "kosaraju": {
+    nodes: [
+      { id: "0", x: 150, y: 150, label: "0" },
+      { id: "1", x: 350, y: 100, label: "1" },
+      { id: "2", x: 250, y: 300, label: "2" },
+      { id: "3", x: 500, y: 300, label: "3" },
+      { id: "4", x: 650, y: 150, label: "4" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 1, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "0", weight: 1, directed: true },
+      { from: "1", to: "3", weight: 1, directed: true },
+      { from: "3", to: "4", weight: 1, directed: true },
+      { from: "4", to: "3", weight: 1, directed: true },
+    ]
+  },
+  "tarjan": {
+    nodes: [
+      { id: "0", x: 150, y: 150, label: "0" },
+      { id: "1", x: 350, y: 100, label: "1" },
+      { id: "2", x: 250, y: 300, label: "2" },
+      { id: "3", x: 500, y: 300, label: "3" },
+      { id: "4", x: 650, y: 150, label: "4" },
+    ],
+    edges: [
+      { from: "0", to: "1", weight: 1, directed: true },
+      { from: "1", to: "2", weight: 1, directed: true },
+      { from: "2", to: "0", weight: 1, directed: true },
+      { from: "1", to: "3", weight: 1, directed: true },
+      { from: "3", to: "4", weight: 1, directed: true },
+      { from: "4", to: "3", weight: 1, directed: true },
+    ]
+  },
   "adjacency-list": {
     nodes: [
       { id: "0", x: 100, y: 250, label: "0" },
@@ -209,6 +273,10 @@ const complexityData = {
     { name: 'Time', value: 100, label: 'O(V^3)', full: 'Time Complexity' },
     { name: 'Space', value: 90, label: 'O(V^2)', full: 'Space Complexity' },
   ],
+  "bellman-ford": [
+    { name: 'Time', value: 90, label: 'O(VE)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
   prim: [
     { name: 'Time', value: 90, label: 'O(ElogV)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
@@ -218,6 +286,14 @@ const complexityData = {
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
   "topological-sort": [
+    { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
+  "kosaraju": [
+    { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
+    { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
+  ],
+  "tarjan": [
     { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
@@ -235,41 +311,28 @@ const comparisonData = [
   { name: 'BFS', time: 80, space: 60 },
   { name: 'DFS', time: 80, space: 60 },
   { name: 'Dijkstra', time: 95, space: 65 },
+  { name: 'Bellman', time: 90, space: 60 },
   { name: 'Floyd', time: 100, space: 90 },
   { name: 'MST', time: 90, space: 60 },
+  { name: 'SCC', time: 80, space: 60 },
 ];
 
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
   const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(0);
   const [isEditing, setIsEditing] = useState(true);
 
   // Derived flags
-  const isWeighted = WEIGHTED_ALGORITHMS.includes(algorithm);
-  const isDirected = DIRECTED_ALGORITHMS.includes(algorithm);
-
-  // Handle edge weight updates from GraphCanvas
-  const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
-    setEdges((prev) =>
-      prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
-    );
-  }, []);
-
-  // When adding an edge, default weight = 1
-  const handleAddEdge = useCallback((edge) => {
-    setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
-  }, [isDirected]);
+  const isWeighted = weightedAlgorithms.has(algorithm);
+  const isDirected = directedAlgorithms.has(algorithm);
 
   const frames = useMemo(() => {
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
       if (isWeighted) {
-        adj[e.from].push({ node: e.to, weight: e.weight });
-        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight });
+        adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
+        if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
       } else {
         adj[e.from].push(e.to);
         if (!e.directed) adj[e.to].push(e.from);
@@ -277,66 +340,116 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     });
 
     const startNodeId = initialStartNode || (nodes.length > 0 ? nodes[0].id : null);
-    if (algorithm === "bfs") return bfsFrames(adj, startNodeId);
-    if (algorithm === "dfs") return dfsFrames(adj, startNodeId);
-    if (algorithm === "dijkstra") return dijkstraFrames(adj, startNodeId);
-    if (algorithm === "floyd-warshall") return floydWarshallFrames(nodes, edges);
-    if (algorithm === "prim") return primFrames(adj, startNodeId);
-    if (algorithm === "kruskal") return kruskalFrames(nodes.map(n => n.id), edges);
-    if (algorithm === "topological-sort") return topologicalSortFrames(adj, nodes.map(n => n.id));
+    if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
+    if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
+    if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId));
+    if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
+    if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
+    if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
+    if (algorithm === "kruskal") return Array.from(kruskalGenerator(nodes, edges));
+    if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
+    if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
+    if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
     if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
   }, [nodes, edges, algorithm, initialStartNode, isWeighted]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame(prev => prev + 1);
-      }, 1000 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
+  const onStep = useCallback((step) => {
+    // No specific local state needs to be updated here 
+    // since the visual representation is fully derived from `frames[engine.currentStep]`.
+  }, []);
+
+  const engine = useAnimationEngine({ steps: frames, onStep, initialSpeed: 1000 });
+
+  // Handle edge weight updates from GraphCanvas
+  const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
+    setEdges((prev) =>
+      prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
+    );
+    engine.reset();
+  }, [engine]);
+
+  // When adding an edge, default weight = 1
+  const handleAddEdge = useCallback((edge) => {
+    setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
+    engine.reset();
+  }, [isDirected, engine]);
+
+  const handleCustomGraphInput = useCallback((parsedEdges) => {
+    if (parsedEdges === null) {
+      setNodes(defaultGraphs[algorithm]?.nodes || []);
+      setEdges(defaultGraphs[algorithm]?.edges || []);
+    } else {
+      const nodeIds = Array.from(
+        new Set(parsedEdges.flatMap(e => [e.source, e.target]))
+      ).sort((a, b) => a - b);
+      
+      const centerX = 400;
+      const centerY = 250;
+      const radius = 180;
+      const numNodes = nodeIds.length;
+      
+      const newNodes = nodeIds.map((id, idx) => {
+        const angle = (idx * 2 * Math.PI) / (numNodes || 1);
+        return {
+          id: String(id),
+          x: Math.round(centerX + radius * Math.cos(angle)),
+          y: Math.round(centerY + radius * Math.sin(angle)),
+          label: !isNaN(Number(id)) ? String.fromCharCode(65 + (Number(id) % 26)) : String(id)
+        };
+      });
+
+      const newEdges = parsedEdges.map(e => ({
+        from: String(e.source),
+        to: String(e.target),
+        weight: e.weight,
+        directed: isDirected
+      }));
+
+      setNodes(newNodes);
+      setEdges(newEdges);
     }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+    engine.reset();
+  }, [algorithm, isDirected, engine]);
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) setCurrentFrame(0);
-    setIsPlaying(prev => !prev);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
     setIsEditing(false); // If they press play/pause, it shouldn't be in edit mode
   };
 
   const reset = () => {
-    setCurrentFrame(0);
-    setIsPlaying(false);
+    engine.reset();
     setIsEditing(true);
+  };
+
+  const stepForward = () => {
+    engine.stepForward();
+    setIsEditing(false);
+  };
+
+  const stepBackward = () => {
+    engine.stepBackward();
+    setIsEditing(false);
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: reset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
 
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame(prev => prev + 1);
-      setIsEditing(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame(prev => prev - 1);
-      setIsEditing(false);
-    }
-  };
-
-  const currentFrameData = frames[currentFrame] || {};
+  const currentFrameData = frames[engine.currentStep] || {};
   const showFloydMatrix = algorithm === "floyd-warshall" && currentFrameData.matrix;
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
@@ -358,47 +471,28 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         label: String.fromCharCode(65 + (counter % 26)),
       },
     ]);
-    setCurrentFrame(0);
-    setIsPlaying(false);
+    engine.reset();
   };
 
-  const addEdge = ({ from, to }) => {
-    const rawWeight = isWeighted ? window.prompt("Enter edge weight", "1") : "1";
-    if (rawWeight === null) return;
-    const weight = Number(rawWeight);
-    if (!Number.isFinite(weight)) {
-      window.alert("Please enter a valid numeric weight.");
-      return;
-    }
-
-    setEdges((current) => [
-      ...current,
-      { from, to, weight, directed: isDirected },
-    ]);
-    setCurrentFrame(0);
-    setIsPlaying(false);
-  };
   const moveNode = (id, x, y) => {
-  setNodes((current) =>
-    current.map((node) =>
-      node.id === id
-        ? { ...node, x, y }
-        : node
-    )
-  );
-};
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === id
+          ? { ...node, x, y }
+          : node
+      )
+    );
+  };
 
   const removeNode = (id) => {
     setNodes((current) => current.filter((node) => node.id !== id));
     setEdges((current) => current.filter((edge) => edge.from !== id && edge.to !== id));
-    setCurrentFrame(0);
-    setIsPlaying(false);
+    engine.reset();
   };
 
   const removeEdge = (edgeIndex) => {
     setEdges((current) => current.filter((_, index) => index !== edgeIndex));
-    setCurrentFrame(0);
-    setIsPlaying(false);
+    engine.reset();
   };
 
   const reverseEdge = (edgeIndex) => {
@@ -407,8 +501,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         index === edgeIndex ? { ...edge, from: edge.to, to: edge.from } : edge,
       ),
     );
-    setCurrentFrame(0);
-    setIsPlaying(false);
+    engine.reset();
   };
 
   return (
@@ -458,6 +551,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                     Stack: [{currentFrameData.stack.join(", ")}]
                   </div>
                 )}
+                {currentFrameData.distances && (
+                  <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-1.5 text-xs font-bold text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    Distances: {Object.entries(currentFrameData.distances)
+                      .map(([k, v]) => `${k}:${v === Infinity ? "∞" : v}`)
+                      .join(", ")}
+                  </div>
+                )}
                 {currentFrameData.intermediate && (
                   <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                     k: {nodes.find((node) => node.id === currentFrameData.intermediate)?.label || currentFrameData.intermediate}
@@ -465,7 +565,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 )}
                 {currentFrameData.result && currentFrameData.result.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-bold text-success">
-                    Order: {currentFrameData.result.join(" ??? ")}
+                    Order: {currentFrameData.result.join(" → ")}
+                  </div>
+                )}
+                {currentFrameData.sccs && currentFrameData.sccs.length > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-400">
+                    SCCs: {currentFrameData.sccs.map(scc => `[${scc.join(",")}]`).join(" ")}
                   </div>
                 )}
               </div>
@@ -474,31 +579,34 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
 
         <GraphCanvas
-  nodes={nodes}
-  edges={edges}
-  onAddNode={addNode}
-  onAddEdge={addEdge}
-  onRemoveNode={removeNode}
-  onRemoveEdge={removeEdge}
-  onReverseEdge={reverseEdge}
-  onMoveNode={moveNode}
-  animationState={!isEditing ? currentFrameData : {}}
-  interactive={isEditing}
-  isWeighted={isWeighted}
-  isDirected={isDirected}
-  className="w-full"
-/>
+          nodes={nodes}
+          edges={edges}
+          onAddNode={addNode}
+          onAddEdge={handleAddEdge}
+          onRemoveNode={removeNode}
+          onRemoveEdge={removeEdge}
+          onReverseEdge={reverseEdge}
+          onMoveNode={moveNode}
+          onUpdateEdgeWeight={handleUpdateEdgeWeight}
+          animationState={!isEditing ? currentFrameData : {}}
+          interactive={isEditing}
+          isWeighted={isWeighted}
+          isDirected={isDirected}
+          visitedSet={currentFrameData.visitedNodes}
+          currentNode={currentFrameData.currentNode}
+          className="w-full"
+        />
 
         {/* Controls Bar */}
         <PlaybackControls
-          isPaused={!isPlaying}
-          onTogglePlayPause={togglePlay}
-          speed={speed}
-          onSpeedChange={setSpeed}
+          isPlaying={engine.isPlaying}
+          onPlayPause={togglePlay}
+          speed={engine.speed / 1000}
+          onSpeedChange={(s) => engine.setSpeed(s * 1000)}
           onStepForward={stepForward}
           onStepBackward={stepBackward}
           onReset={reset}
-          progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+          progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
           disabled={frames.length === 0}
         />
       </div>
@@ -574,10 +682,17 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           </div>
         </div>
 
-        {/* Adjacency Panel — now uses the shared component */}
-        <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
+      {/* Adjacency Representation & Custom Input */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900">
           <h3 className="mb-4 text-sm font-bold text-surface-900 dark:text-white">Adjacency Representation</h3>
-          <div className="space-y-4">
+          <AdjacencyPanel
+            nodes={nodes}
+            edges={edges}
+            isDirected={isDirected}
+            isWeighted={isWeighted}
+          />
+          <div className="mt-4 space-y-4">
             {showFloydMatrix && (
               <div>
                 <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Floyd-Warshall Distance Matrix</h4>
@@ -684,6 +799,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             </div>
           </div>
         </div>
+
+        <div className="lg:col-span-1">
+          <CustomInputPanel
+            inputType="graph"
+            onApply={handleCustomGraphInput}
+            currentData={edges}
+          />
+        </div>
+      </div>
       </div>
     </div>
   );

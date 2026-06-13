@@ -1,57 +1,94 @@
 "use client";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
+import { persistence } from "@/lib/persistence";
 
-const STORAGE_KEY = "algobuddy_problem_bookmarks";
+import { supabase } from "@/lib/supabase";
+
+async function apiFetch(url, options = {}) {
+  let finalUrl = url;
+  const headers = { "Content-Type": "application/json", ...options.headers };
+
+  if (process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true") {
+    const baseUrl = process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
+    finalUrl = baseUrl + url.replace("/api/bookmarks", "/api/v1/bookmarks");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+  }
+
+  const response = await fetch(finalUrl, {
+    ...options,
+    headers,
+  });
+  
+  // Spring Boot POST/DELETE returns empty body
+  if (response.status === 200 && response.headers.get("content-length") === "0") {
+    return {};
+  }
+  
+  const text = await response.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {}
+
+  if (!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
 
 export function useProblemBookmarks() {
   const { user } = useUser();
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const syncQueueRef = useRef([]);
 
-  // Load initial bookmarks
   useEffect(() => {
     const loadBookmarks = async () => {
       setLoading(true);
-      
-      // 1. First, always load from localStorage to populate immediately or as guest fallback
+
       let localBookmarks = [];
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = await persistence.get("PROBLEM_BOOKMARKS");
         if (stored) {
-          localBookmarks = JSON.parse(stored);
+          localBookmarks = stored;
           setBookmarks(localBookmarks);
         }
       } catch (e) {
         console.error("Failed to parse local bookmarks:", e);
       }
 
-      // 2. If user is logged in, fetch from Supabase and sync
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from("problem_bookmarks")
-            .select("*")
-            .eq("user_id", user.id);
+          const data = await apiFetch("/api/bookmarks");
+          const dbBookmarks = (data || []).map((row) => ({
+            id: row.problem_id || row.problemId,
+            topicSlug: row.topic_slug || row.topicSlug,
+            createdAt: row.created_at || row.createdAt,
+          }));
 
-          if (error) {
-            console.error("Error fetching bookmarks from Supabase:", error);
-          } else if (data) {
-            // Map db records to match bookmark format
-            const dbBookmarks = data.map((row) => ({
-              id: row.problem_id,
-              topicSlug: row.topic_slug,
-              createdAt: row.created_at,
-            }));
-            
-            setBookmarks(dbBookmarks);
-            // Sync local storage with db
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dbBookmarks));
+          // DB is authoritative for logged-in users.
+          // Sync any local-only bookmarks (added offline) up to the server first.
+          const dbIds = new Set(dbBookmarks.map((b) => b.id));
+          const localOnly = localBookmarks.filter((b) => !dbIds.has(b.id));
+          for (const b of localOnly) {
+            try {
+              await apiFetch("/api/bookmarks", {
+                method: "POST",
+                body: JSON.stringify({ problemId: b.id, topicSlug: b.topicSlug }),
+              });
+            } catch (_) {}
           }
+
+          // Final state = DB items + any local-only items just synced up.
+          // Items deleted in another browser (in local but not DB) are dropped.
+          const authoritative = [...dbBookmarks, ...localOnly];
+          setBookmarks(authoritative);
+          persistence.set("PROBLEM_BOOKMARKS", authoritative);
         } catch (e) {
-          console.error("Supabase bookmark fetch failed:", e);
+          console.error("Bookmark fetch failed:", e);
         }
       }
       setLoading(false);
@@ -66,83 +103,49 @@ export function useProblemBookmarks() {
     const isBookmarkedCurrently = bookmarks.some((b) => b.id === problemId);
 
     if (isBookmarkedCurrently) {
-      // Remove bookmark
       const updated = bookmarks.filter((b) => b.id !== problemId);
       setBookmarks(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set("PROBLEM_BOOKMARKS", updated);
 
       if (user) {
         try {
-          const { error } = await supabase
-            .from("problem_bookmarks")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("problem_id", problemId);
-
-          if (error) {
-            console.error("Failed to delete bookmark from Supabase:", error);
-          } else {
-            toast.success("Bookmark removed.");
-          }
+          await apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" });
+          toast.success("Bookmark removed.");
         } catch (e) {
-          console.error("Supabase bookmark delete error:", e);
+          console.error("Failed to delete bookmark:", e);
         }
       } else {
         toast.success("Bookmark removed (local).");
       }
     } else {
-      // Add bookmark
-      const newBookmark = {
-        id: problemId,
-        topicSlug,
-        createdAt: new Date().toISOString(),
-      };
+      const newBookmark = { id: problemId, topicSlug, createdAt: new Date().toISOString() };
       const updated = [...bookmarks, newBookmark];
       setBookmarks(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      persistence.set("PROBLEM_BOOKMARKS", updated);
 
       if (user) {
         try {
-          const { error } = await supabase
-            .from("problem_bookmarks")
-            .upsert(
-              {
-                user_id: user.id,
-                problem_id: problemId,
-                topic_slug: topicSlug,
-                created_at: newBookmark.createdAt,
-              },
-              { onConflict: ["user_id", "problem_id"] }
-            );
-
-          if (error) {
-            console.error("Failed to save bookmark to Supabase:", error);
-            toast.error("Failed to sync bookmark to server.");
-          } else {
-            toast.success("Problem bookmarked successfully!");
-          }
+          await apiFetch("/api/bookmarks", {
+            method: "POST",
+            body: JSON.stringify({ problemId, topicSlug }),
+          });
+          toast.success("Problem bookmarked successfully!");
         } catch (e) {
-          console.error("Supabase bookmark save error:", e);
+          console.error("Failed to save bookmark:", e);
           toast.error("Error syncing bookmark.");
         }
       } else {
-        // For guest bookmarking, notify them that logging in will persist it on the cloud
         toast.custom((t) => (
           <div className="max-w-sm w-full bg-neutral-100 dark:bg-zinc-800 border border-[#a435f0] rounded-lg shadow-xl p-4 flex flex-col gap-2">
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
-                Problem bookmarked! 🔖
-              </span>
+              <span className="text-sm font-bold text-gray-800 dark:text-gray-100">Problem bookmarked! 🔖</span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 You are in guest mode. Login/Signup to sync your bookmarks across all your devices.
               </span>
             </div>
             <div className="flex justify-end gap-2 mt-1">
               <button
-                onClick={() => {
-                  window.location.href = "/login";
-                  toast.dismiss(t.id);
-                }}
+                onClick={() => { window.location.href = "/login"; toast.dismiss(t.id); }}
                 className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-[#a435f0] to-[#7c3aed] text-white hover:from-[#7c3aed] hover:to-[#6d28d9] transition duration-300 shadow-md"
               >
                 Login/Signup
@@ -160,9 +163,7 @@ export function useProblemBookmarks() {
     }
   };
 
-  const isBookmarked = (problemId) => {
-    return bookmarks.some((b) => b.id === problemId);
-  };
+  const isBookmarked = (problemId) => bookmarks.some((b) => b.id === problemId);
 
   return { bookmarks, loading, toggleBookmark, isBookmarked };
 }

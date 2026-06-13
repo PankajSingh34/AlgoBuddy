@@ -1,0 +1,77 @@
+import { codeOfConductSections } from "@/app/data/codeOfConductData";
+import Link from "next/link";
+
+export default function CodeOfConductContent() {
+  return (
+    <>
+      <p className="mb-8 text-gray-300 leading-relaxed text-base">
+        This Code of Conduct outlines the standards of behavior expected from
+        all users and contributors of our platform. It explains our commitment
+        to creating a respectful, inclusive, and collaborative environment,
+        along with the responsibilities, reporting process, and actions taken to
+        maintain a positive community experience.
+      </p>
+
+      <div className="space-y-6">
+        <ul>
+          {codeOfConductSections.map((item, index) => (
+            <li key={index} className="mb-4">
+              <div className="bg-[#14141A] p-6 rounded-2xl border border-[#2A2A35] transition-all duration-300 hover:border-purple-500/40">
+                <div className="flex items-start mb-3">
+                  <span className="w-7 h-7 flex-shrink-0 font-semibold bg-purple-500/15 text-purple-400 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                    {item.id}
+                  </span>
+
+                  <h3 className="text-xl font-bold text-white">{item.title}</h3>
+                </div>
+
+                {item.points && (
+                  <ul className="space-y-3 pl-10">
+                    {item.points.map((subitem, subindex) => (
+                      <li
+                        key={subindex}
+                        className="list-disc text-gray-300 leading-relaxed"
+                      >
+                        {subitem}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {item.data && (
+                  <p className="text-gray-300 pl-10 leading-relaxed">
+                    {item.data}
+                  </p>
+                )}
+
+                {item.contact && (
+                  <div className="pl-10 mt-3">
+                    <a
+                      href={`mailto:${item.contact}`}
+                      className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                    >
+                      {item.contact}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-8 pt-4 border-t border-[#2A2A35]">
+        <p className="text-sm text-gray-400">Last updated: May 17, 2025</p>
+      </div>
+
+      <div className="sticky bottom-0 bg-[#0B0B0F]/95 backdrop-blur-md border-t border-[#2A2A35] p-4 flex justify-end mt-8">
+        <Link
+          href="/"
+          className="px-6 py-3 bg-white text-black font-semibold rounded-full hover:bg-gray-200 transition-all duration-200 active:scale-95"
+        >
+          Accept & Continue
+        </Link>
+      </div>
+    </>
+  );
+}

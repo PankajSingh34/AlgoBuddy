@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getAuthenticatedUser } from "@/lib/auth";
 import {
   getPublicCollaborationSession,
   joinCollaborationSession,
@@ -7,97 +6,72 @@ import {
 } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
+import { jsonResponse, errorResponse } from "@/lib/serverApi";
 
-function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null;
+export async function GET(request, { params }) {
   try {
-    const parsed = new URL(supabaseUrl);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  } catch {
-    return null;
+    const authResult = await getAuthenticatedUser();
+
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return jsonResponse({ error: "Authentication service unavailable" }, 500);
+      }
+      return jsonResponse({ error: "Authentication required" }, 401);
+    }
+
+    const ip = getClientIp(request.headers);
+    const { allowed } = await checkRateLimit(`collab:lookup:${ip}`);
+
+    if (!allowed) {
+      return jsonResponse({ error: "Too many session lookup requests. Please try again shortly." }, 429);
+    }
+
+    const session = await getPublicCollaborationSession(params.sessionId);
+
+    if (!session) {
+      return jsonResponse({ error: "Session not found" }, 404);
+    }
+
+    return jsonResponse({ session });
+  } catch (error) {
+    return errorResponse(error);
   }
-  return { supabaseUrl, supabaseAnonKey };
-}
-
-async function getAuthenticatedUser() {
-  const config = getSupabaseConfig();
-  if (!config) {
-    // Supabase not configured (local dev without env vars) — allow through so
-    // development works without full credentials being set up.
-    return { user: null, configured: false };
-  }
-
-  const cookieStore = await cookies();
-  const client = createServerClient(config.supabaseUrl, config.supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const { data } = await client.auth.getUser();
-  return { user: data?.user ?? null, configured: true };
-}
-
-export async function GET(_request, { params }) {
-  const { user, configured } = await getAuthenticatedUser();
-
-  // When Supabase is configured, require a valid session to resolve individual
-  // session details. Unauthenticated callers receive 401, not session data.
-  if (configured && !user) {
-    return Response.json(
-      { error: "Authentication required" },
-      { status: 401 },
-    );
-  }
-
-  const session = await getPublicCollaborationSession(params.sessionId);
-  if (!session) {
-    return Response.json({ error: "Session not found" }, { status: 404 });
-  }
-
-  return Response.json({ session });
 }
 
 export async function POST(request, { params }) {
-  if (!validateCsrfOrigin(request)) {
-    return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+  try {
+    if (!validateCsrfOrigin(request)) {
+      return jsonResponse({ error: "CSRF validation failed" }, 403);
+    }
+
+    const authResult = await getAuthenticatedUser();
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return jsonResponse({ error: "Authentication service unavailable" }, 500);
+      }
+      return jsonResponse({ error: "Authentication required" }, 401);
+    }
+
+    const user = authResult.user;
+
+    const ip = getClientIp(request.headers);
+    const { allowed } = await checkRateLimit(`collab:join:${ip}:${params.sessionId}`);
+    if (!allowed) {
+      return jsonResponse({ error: "Too many join attempts. Please try again shortly." }, 429);
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const result = await joinCollaborationSession(params.sessionId, {
+      password: body.password,
+      userId: user.id,
+    });
+
+    if (result.error) {
+      return jsonResponse({ error: result.error }, result.status || 400);
+    }
+
+    return jsonResponse(result);
+  } catch (error) {
+    return errorResponse(error);
   }
-
-  const { user, configured } = await getAuthenticatedUser();
-  if (configured && !user) {
-    return Response.json(
-      { error: "Authentication required" },
-      { status: 401 },
-    );
-  }
-
-  const ip = getClientIp(request.headers);
-  const { allowed } = await checkRateLimit(`collab:join:${ip}:${params.sessionId}`);
-  if (!allowed) {
-    return Response.json(
-      { error: "Too many join attempts. Please try again shortly." },
-      { status: 429 },
-    );
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const result = await joinCollaborationSession(params.sessionId, {
-    password: body.password,
-    userId: configured ? user?.id || "" : body.createdBy || "anonymous",
-  });
-
-  if (result.error) {
-    return Response.json({ error: result.error }, { status: result.status || 400 });
-  }
-
-  return Response.json(result);
 }

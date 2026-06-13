@@ -11,7 +11,11 @@ export default function RecentlyViewed() {
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-xl font-semibold">🕓 Recently Viewed</h2>
         <button
-          onClick={clearRecentlyViewed}
+          onClick={() => {
+            if (confirm("Clear all recently viewed items?")) {
+              clearRecentlyViewed();
+            }
+          }}
           className="text-sm text-gray-500 hover:text-red-500"
         >
           Clear

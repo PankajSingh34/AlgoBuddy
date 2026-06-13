@@ -1,15 +1,12 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { Play, Pause } from "lucide-react";
-import ResetButton from "@/app/components/ui/resetButton";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import GoButton from "@/app/components/ui/goButton";
+import ResetButton from "@/app/components/ui/resetButton";
 import { saveToStorage, loadFromStorage, removeFromStorage } from "@/utils/storage";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { binarySearchGenerator } from "@/features/algorithms/array/binarySearchLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -26,62 +23,76 @@ const BinarySearch = () => {
     loadFromStorage("binary-target", "")
   );
   const [array, setArray] = useState([]);
-  const [i, setI] = useState(-1);
-  const [j, setJ] = useState(-1);
-  const [mid, setMid] = useState(-1);
-  const [foundIndex, setFoundIndex] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [targetValue, setTargetValue] = useState(null);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [stepExplanation, setStepExplanation] = useState("");
-  const [stepCount, setStepCount] = useState(0);
   const [autoSort, setAutoSort] = useState(false);
   const [showAutoSort, setShowAutoSort] = useState(false);
 
-  const {
-    isPaused,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-    checkPause,
-  } = usePlayback(() => loadFromStorage("binary-speed", 1));
-
-  const animationRef = useRef(null);
-  const resolveRef = useRef(null);
-  const isSearchingRef = useRef(false);
-  const formRef = useRef(null);
-  const elementRefs = useRef([]);
+  const [visualState, setVisualState] = useState({
+    i: -1,
+    j: -1,
+    mid: -1,
+    foundIndex: -1,
+    stepExplanation: "",
+    stepCount: 0
+  });
 
   useEffect(() => { saveToStorage("binary-array-elements", arrayElements); }, [arrayElements]);
   useEffect(() => { saveToStorage("binary-target", target); }, [target]);
-  useEffect(() => {
-    saveToStorage("binary-speed", speed);
-    speedRef.current = speed;
-  }, [speed, speedRef]);
+
+  const steps = useMemo(() => {
+    if (array.length === 0 || targetValue === null) return [];
+    return Array.from(binarySearchGenerator(array, targetValue));
+  }, [array, targetValue]);
+
+  const onStep = useCallback((step) => {
+    let explanation = "";
+    let msg = "";
+    let msgType = "";
+    
+    if (step.type === 'checking') {
+      explanation = `Step ${step.step}: low=${step.l}, high=${step.h} → mid = ⌊(${step.l} + ${step.h}) / 2⌋ = ${step.m}. Comparing arr[${step.m}] = ${step.arrM} with target ${targetValue}.`;
+    } else if (step.type === 'found') {
+      explanation = `✓ arr[${step.m}] = ${targetValue} equals target ${targetValue}. Found at index ${step.m} after ${step.step} step${step.step > 1 ? "s" : ""}!`;
+      msg = `Element ${targetValue} found at index ${step.m}!`;
+      msgType = "success";
+    } else if (step.type === 'discard_left') {
+      explanation = `arr[${step.m}] < target ${targetValue} → target is in the RIGHT half. Discard left side. New low = ${step.m + 1}.`;
+    } else if (step.type === 'discard_right') {
+      explanation = `arr[${step.m}] > target ${targetValue} → target is in the LEFT half. Discard right side. New high = ${step.m - 1}.`;
+    } else if (step.type === 'not_found') {
+      explanation = `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`;
+      msg = `Element ${targetValue} not found in the array.`;
+      msgType = "error";
+    }
+
+    setVisualState({
+      i: step.l !== undefined ? step.l : -1,
+      j: step.h !== undefined ? step.h : -1,
+      mid: step.m !== undefined ? step.m : -1,
+      foundIndex: step.type === 'found' ? step.m : -1,
+      stepExplanation: explanation,
+      stepCount: step.step || 0
+    });
+    
+    if (msg) setMessage(msg);
+    if (msgType) setMessageType(msgType);
+  }, [targetValue]);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const isAnimating = engine.isPlaying || engine.currentStep > 0;
 
   const handleReset = () => {
-    isSearchingRef.current = false;
-    clearTimeout(animationRef.current);
-    if (resolveRef.current) {
-      resolveRef.current();
-      resolveRef.current = null;
-    }
+    engine.reset();
     removeFromStorage("binary-array-elements");
     removeFromStorage("binary-target");
-    removeFromStorage("binary-speed");
-    setArray([]); setI(-1); setJ(-1); setMid(-1); setFoundIndex(-1);
-    setMessage(""); setMessageType(""); setStepExplanation(""); setStepCount(0);
-    setIsAnimating(false); 
-    setAutoSort(false);
-    setShowAutoSort(false);
-    setArrayElements(""); setTarget(""); setSpeed(1);
-    if (formRef.current) formRef.current.reset();
-    elementRefs.current.forEach((ref) => {
-      if (ref) gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0 });
-    });
+    setArray([]); setTargetValue(null);
+    setMessage(""); setMessageType(""); 
+    setVisualState({ i: -1, j: -1, mid: -1, foundIndex: -1, stepExplanation: "", stepCount: 0 });
+    setAutoSort(false); setShowAutoSort(false);
+    setArrayElements(""); setTarget("");
   };
 
   const generateRandomArray = () => {
@@ -93,157 +104,55 @@ const BinarySearch = () => {
     setArrayElements(elements.join(", "));
   };
 
-  const cancellableDelay = async (multiplier = 1) => {
-    await new Promise((resolve) => {
-      resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, (1500 / speedRef.current) * multiplier);
-    });
-    await checkPause();
-  };
-
-  const animateBinarySearch = async (processedElements, targetValue) => {
-    isSearchingRef.current = true;
-    const generator = binarySearchGenerator(processedElements, targetValue);
-
-    for (const frame of generator) {
-      if (!isSearchingRef.current) return;
-
-      if (frame.type === 'checking') {
-        setI(frame.l);
-        setJ(frame.h);
-        setMid(frame.m);
-        setStepCount(frame.step);
-        setStepExplanation(
-          `Step ${frame.step}: low=${frame.l}, high=${frame.h} → mid = ⌊(${frame.l} + ${frame.h}) / 2⌋ = ${frame.m}. Comparing arr[${frame.m}] = ${frame.arrM} with target ${targetValue}.`
-        );
-
-        elementRefs.current.forEach((ref, index) => {
-          if (!ref) return;
-          if (index === frame.m) {
-            gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0.3 });
-          } else if (index >= frame.l && index <= frame.h) {
-            gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0.3 });
-          } else {
-            gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0.3 });
-          }
-        });
-
-        await cancellableDelay(1);
-      } else if (frame.type === 'found') {
-        setFoundIndex(frame.m);
-        setMessage(`Element ${targetValue} found at index ${frame.m}!`);
-        setMessageType("success");
-        setStepExplanation(
-          `✓ arr[${frame.m}] = ${targetValue} equals target ${targetValue}. Found at index ${frame.m} after ${frame.step} step${frame.step > 1 ? "s" : ""}!`
-        );
-        setIsAnimating(false);
-        isSearchingRef.current = false;
-        gsap.to(elementRefs.current[frame.m], {
-          backgroundColor: "#22C55E",
-          borderColor: "#15803D",
-          duration: 0.3,
-        });
-        return;
-      } else if (frame.type === 'discard_left') {
-        setStepExplanation(
-          `arr[${frame.m}] = ${processedElements[frame.m]} < target ${targetValue} → target is in the RIGHT half. Discard left side. New low = ${frame.m + 1}.`
-        );
-        await cancellableDelay(0.6);
-      } else if (frame.type === 'discard_right') {
-        setStepExplanation(
-          `arr[${frame.m}] = ${processedElements[frame.m]} > target ${targetValue} → target is in the LEFT half. Discard right side. New high = ${frame.m - 1}.`
-        );
-        await cancellableDelay(0.6);
-      } else if (frame.type === 'not_found') {
-        setMessage(`Element ${targetValue} not found in the array.`);
-        setMessageType("error");
-        setStepExplanation(
-          `Search range exhausted (low > high). The element ${targetValue} does not exist in this array.`
-        );
-        setIsAnimating(false);
-        isSearchingRef.current = false;
-        return;
-      }
-    }
-  };
-
   const handleGo = (e) => {
     e.preventDefault();
-    handleReset();
+    engine.reset();
+    setMessage(""); setMessageType("");
+    setVisualState({ i: -1, j: -1, mid: -1, foundIndex: -1, stepExplanation: "", stepCount: 0 });
 
     if (!arrayElements || !target) {
-      setMessage("Please fill in all fields.");
-      setMessageType("warning");
-      return;
+      setMessage("Please fill in all fields."); setMessageType("warning"); return;
     }
-
     const rawElements = arrayElements.split(",").map((el) => el.trim());
     if (rawElements.some((el) => el.includes("."))) {
-      setMessage("Only integers are supported. Please remove decimal values.");
-      setMessageType("warning");
-      return;
+      setMessage("Only integers are supported. Please remove decimal values."); setMessageType("warning"); return;
     }
-
     const elements = rawElements.map((el) => parseInt(el));
-    const targetValue = parseInt(target);
-
-    if (elements.some(isNaN) || isNaN(targetValue)) {
-      setMessage("Invalid array elements or target.");
-      setMessageType("warning");
-      return;
+    const targetVal = parseInt(target);
+    if (elements.some(isNaN) || isNaN(targetVal)) {
+      setMessage("Invalid array elements or target."); setMessageType("warning"); return;
     }
-
-    const isSorted = elements.every(
-      (el, idx) => idx === 0 || el >= elements[idx - 1]
-    );
-
+    const isSorted = elements.every((el, idx) => idx === 0 || el >= elements[idx - 1]);
     if (!isSorted && !autoSort) {
-      setMessage("Array must be sorted in ascending order.");
-      setMessageType("warning");
-      setShowAutoSort(true);
-      return;
+      setMessage("Array must be sorted in ascending order."); setMessageType("warning");
+      setShowAutoSort(true); return;
     }
-
     let processedElements = [...elements];
-
     if (!isSorted && autoSort) {  
       processedElements.sort((a, b) => a - b);
       setArrayElements(processedElements.join(", "));
       setShowAutoSort(false);
     }
-
-    setArray(processedElements);
-    setI(0);
-    setJ(processedElements.length - 1);
-    setIsAnimating(true);
     
-    animateBinarySearch(processedElements, targetValue);
+    setTargetValue(targetVal);
+    setArray(processedElements);
+    
+    setTimeout(() => {
+        engine.play();
+    }, 50);
   };
 
-  const togglePlayPauseRef = useRef(togglePlayPause);
-  useEffect(() => { togglePlayPauseRef.current = togglePlayPause; }, [togglePlayPause]);
-
-  const isAnimatingRef = useRef(isAnimating);
-  useVisualizerReset(() => {
-    handleReset();
+  useVisualizerKeyboard({
+    onTogglePlayPause: engine.isPlaying ? engine.pause : () => {
+        if (array.length > 0) engine.play();
+    },
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    speed: engine.speed / 1000,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
   });
-  useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (
-        e.code === "Space" &&
-        isAnimatingRef.current &&
-        document.activeElement.tagName !== "INPUT" &&
-        document.activeElement.tagName !== "BUTTON"
-      ) {
-        e.preventDefault();
-        togglePlayPauseRef.current();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   const messageClass =
     messageType === "success"
@@ -258,7 +167,6 @@ const BinarySearch = () => {
         Visualize how Binary Search efficiently finds an element in a sorted array.
       </p>
       <form
-        ref={formRef}
         onSubmit={handleGo}
         className="max-w-4xl mx-auto bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8"
       >
@@ -307,32 +215,19 @@ const BinarySearch = () => {
           </div>
         </div>
         {isAnimating && (
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
-            <button
-              type="button"
-              onClick={togglePlayPause}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
-              {isPaused ? <Play size={20} /> : <Pause size={20} />}
-              {isPaused ? "Play" : "Pause"}
-            </button>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={decreaseSpeed}
-                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                disabled={speed <= 0.5}
-              >-</button>
-              <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center">
-                Speed: {speed}x
-              </span>
-              <button
-                type="button"
-                onClick={increaseSpeed}
-                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                disabled={speed >= 5}
-              >+</button>
-            </div>
+          <div className="mt-4">
+            <PlaybackControls
+                isPlaying={engine.isPlaying}
+                onPlayPause={engine.isPlaying ? engine.pause : () => engine.play()}
+                speed={engine.speed / 1000}
+                onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+                onStepForward={engine.stepForward}
+                onStepBackward={engine.stepBackward}
+                onReset={engine.reset}
+                onExplainStep={() => {}}
+                disabled={steps.length === 0}
+                progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
+            />
           </div>
         )}
       </form>
@@ -358,22 +253,22 @@ const BinarySearch = () => {
 
       {array.length > 0 && (
         <div className="max-w-4xl mx-auto space-y-6">
-          {stepExplanation && (
+          {visualState.stepExplanation && (
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="flex items-center gap-2 bg-[#a435f0]/10 dark:bg-[#a435f0]/20 px-4 py-2 border-b border-[#a435f0]/20">
                 <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
                 <span className="text-sm font-semibold text-[#a435f0] dark:text-[#c56eff] uppercase tracking-wide">
                   Step Explanation
                 </span>
-                {stepCount > 0 && (
+                {visualState.stepCount > 0 && (
                   <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                    Iteration #{stepCount}
+                    Iteration #{visualState.stepCount}
                   </span>
                 )}
               </div>
               <div className="px-4 py-3">
                 <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">
-                  {stepExplanation}
+                  {visualState.stepExplanation}
                 </p>
               </div>
               <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
@@ -391,18 +286,32 @@ const BinarySearch = () => {
             <div className="flex flex-wrap gap-4 justify-center">
               {array.map((element, index) => {
                 const labels = [];
-                if (index === i) labels.push("low");
-                if (index === mid) labels.push("mid");
-                if (index === j) labels.push("high");
+                if (index === visualState.i) labels.push("low");
+                if (index === visualState.mid) labels.push("mid");
+                if (index === visualState.j) labels.push("high");
+                
+                let bgColor = "bg-[#E5E7EB] dark:bg-gray-700";
+                let borderColor = "border-[#D1D5DB] dark:border-gray-600";
+                
+                if (index === visualState.foundIndex) {
+                    bgColor = "bg-[#22C55E]";
+                    borderColor = "border-[#15803D]";
+                } else if (index === visualState.mid) {
+                    bgColor = "bg-[#EAB308]";
+                    borderColor = "border-[#A16207]";
+                } else if (visualState.i !== -1 && visualState.j !== -1 && index >= visualState.i && index <= visualState.j) {
+                    bgColor = "bg-[#93C5FD]";
+                    borderColor = "border-[#3B82F6]";
+                }
+
                 return (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      ref={(el) => (elementRefs.current[index] = el)}
-                      className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium`}
+                      className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium ${bgColor} ${borderColor}`}
                     >
                       {element}
                     </div>
-                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-center font-mono">
+                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 text-center font-mono h-6">
                       {labels.map((label, idx) => (
                         <div
                           key={idx}

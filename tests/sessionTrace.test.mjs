@@ -3,7 +3,7 @@ import {
   applySessionEvent,
   canApplyPrivilegedSessionEvent,
   createSessionSnapshot,
-} from "../lib/collaboration/sessionTrace.js";
+} from "../src/lib/collaboration/sessionTrace.js";
 
 const presenterId = "presenter-123";
 const attendeeId = "attendee-456";

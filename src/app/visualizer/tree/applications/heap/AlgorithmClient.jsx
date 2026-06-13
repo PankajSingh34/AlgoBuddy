@@ -23,7 +23,7 @@ export default function HeapPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.heapVisualizer}
-          description="Mark Heap Visualizer as done and track it on your dashboard"
+          description="Mark Heap Visualizer as done and track your progress"
           initialDone={false}
         />
       }

@@ -1,54 +1,67 @@
-/**
- * Pure generator function for Reversing a Linked List.
- * Yields state frames representing the pointers and list state.
- */
-
 export function* reverseGenerator(list) {
   if (list.length === 0) return;
 
   const nodes = list.map((node) => ({ ...node }));
   let prevIndex = -1;
   let currentIndex = 0;
-  let nextIndex = nodes[currentIndex] && nodes[currentIndex].next !== "NULL" ? currentIndex + 1 : -1;
+  let nextIndex = currentIndex < nodes.length - 1 ? currentIndex + 1 : -1;
 
   yield {
-    type: 'start',
+    phase: 'start',
     prevIndex,
     currentIndex,
     nextIndex,
-    list: [...nodes]
+    list: [...nodes],
+    explanation: 'Starting reversal. Pointers initialized: prev = NULL, current = head, next = head.next.'
   };
 
   while (currentIndex !== -1) {
     yield {
-      type: 'step_pointers',
+      phase: 'step_pointers',
       prevIndex,
       currentIndex,
       nextIndex,
-      list: [...nodes]
+      list: [...nodes],
+      explanation: `Current node is ${nodes[currentIndex].value}. We will change its next pointer to point to the previous node.`
     };
 
-    const nextIdxHex = prevIndex === -1 ? "NULL" : `0x${(1000 + prevIndex).toString(16).padStart(4, "0")}`;
-    nodes[currentIndex].next = nextIdxHex;
+    const nextAddress = prevIndex === -1 ? "NULL" : nodes[prevIndex].address;
+    nodes[currentIndex] = { ...nodes[currentIndex], next: nextAddress };
 
     yield {
-      type: 'step_update_link',
+      phase: 'step_update_link',
       prevIndex,
       currentIndex,
       nextIndex,
-      list: [...nodes]
+      list: [...nodes],
+      explanation: `Updated ${nodes[currentIndex].value}'s next pointer to ${nextAddress}.`
     };
 
     prevIndex = currentIndex;
     currentIndex = nextIndex;
-    nextIndex = currentIndex !== -1 && nodes[currentIndex].next !== "NULL" ? currentIndex + 1 : -1;
+    nextIndex = currentIndex !== -1 && currentIndex < nodes.length - 1 ? currentIndex + 1 : -1;
+    
+    if (currentIndex !== -1) {
+        yield {
+          phase: 'advance',
+          prevIndex,
+          currentIndex,
+          nextIndex,
+          list: [...nodes],
+          explanation: `Advanced pointers. Prev is now ${nodes[prevIndex].value}, Current is ${nodes[currentIndex].value}.`
+        };
+    }
   }
 
+  // Reverse the physical array to show the new head
+  const reversedNodes = [...nodes].reverse();
+
   yield {
-    type: 'complete',
+    phase: 'complete',
     prevIndex: -1,
     currentIndex: -1,
     nextIndex: -1,
-    list: [...nodes]
+    list: reversedNodes,
+    explanation: 'Reversal complete! The list has been successfully reversed.'
   };
 }

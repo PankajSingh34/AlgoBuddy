@@ -263,6 +263,12 @@ export const algorithmRegistry = {
   },
 },
     component: dynamic(() => import('@/app/visualizer/array/slidingwindow/AlgorithmClient')),
+  },"array/twopointers": {
+    component: dynamic(() => import("@/app/visualizer/array/twopointers/AlgorithmClient")),
+    metadata: {
+      title: "Two Pointers Technique | AlgoBuddy",
+      description: "Visualize how the Two Pointers technique solves array problems like Pair Sum, Remove Duplicates, Container With Most Water, and Three Sum.",
+    },
   },
   "complexity-analyzer": {
     metadata: {

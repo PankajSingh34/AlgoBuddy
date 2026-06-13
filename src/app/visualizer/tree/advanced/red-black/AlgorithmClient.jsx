@@ -23,7 +23,7 @@ export default function RedBlackPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.redBlackTree}
-          description="Mark Red-Black Tree as done and view it on your dashboard"
+          description="Mark Red-Black Tree as done and track your progress"
           initialDone={false}
         />
       }
