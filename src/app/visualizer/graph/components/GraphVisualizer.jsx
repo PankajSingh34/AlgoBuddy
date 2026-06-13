@@ -747,56 +747,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                 </div>
               </div>
             )}
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency List</h4>
-              <div className="max-h-64 overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                {nodes.map(node => {
-                  const neighbors = edges
-                    .filter(e => e.from === node.id || (!e.directed && e.to === node.id))
-                    .map(e => {
-                      const neighbor = e.from === node.id ? e.to : e.from;
-                      const label = nodeLabelById[neighbor] || neighbor;
-                      return isWeighted ? `${label}(${e.weight})` : label;
-                    });
-                  return (
-                    <div key={node.id} className="mb-1">
-                      <span className="text-primary font-bold">{node.label}</span>: [{neighbors.join(", ")}]
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div>
-              <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Adjacency Matrix</h4>
-              <div className="overflow-auto rounded-lg bg-surface-50 p-3 font-mono text-[11px] dark:bg-surface-950">
-                <table className="w-full border-collapse text-center">
-                  <thead>
-                    <tr>
-                      <th className="p-1"></th>
-                      {nodes.map(n => <th key={n.id} className="p-1 text-primary">{n.label}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nodes.map(row => (
-                      <tr key={row.id}>
-                        <td className="p-1 font-bold text-primary">{row.label}</td>
-                        {nodes.map(col => {
-                          const edge = edges.find(e => 
-                            (e.from === row.id && e.to === col.id) || 
-                            (!e.directed && ((e.from === row.id && e.to === col.id) || (e.from === col.id && e.to === row.id)))
-                          );
-                          return (
-                            <td key={col.id} className="border border-surface-200 p-1 dark:border-surface-800">
-                              {edge ? (isWeighted ? edge.weight : 1) : 0}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <AdjacencyPanel
+              nodes={nodes}
+              edges={edges}
+              isDirected={isDirected}
+              isWeighted={isWeighted}
+            />
           </div>
         </div>
 
