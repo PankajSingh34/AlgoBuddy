@@ -37,7 +37,7 @@ public class PracticeController {
 
     @PostMapping("/progress/bulk")
     public ResponseEntity<ProgressResponse> bulkUpdateProgress(@AuthenticationPrincipal Jwt jwt,
-                                                               @RequestBody BulkProgressRequest request) {
+                                                               @Valid @RequestBody BulkProgressRequest request) {
         UUID userId = UUID.fromString(jwt.getSubject());
         ProgressResponse response = practiceService.bulkUpdateProgress(userId, request);
         return ResponseEntity.ok(response);

@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "problem_bookmarks")
+@Table(name = "problem_bookmarks", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "problem_id"})})
 @Data
 @NoArgsConstructor
 public class Bookmark {

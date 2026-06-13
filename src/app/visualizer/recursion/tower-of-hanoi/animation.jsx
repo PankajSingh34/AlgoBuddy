@@ -1,10 +1,12 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 // Helper to generate the execution states step-by-step
 import { generateHanoiFrames } from "@/features/algorithms/recursion/hanoiLogic";
@@ -62,41 +64,26 @@ const lineHighlightMap = {
 
 const HanoiAnimation = () => {
   const [nVal, setNVal] = useState("3");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedLang, setSelectedLang] = useState("javascript");
-
-  useVisualizerReset(() => {
-    setNVal("3");
-    setIsPlaying(false);
-    setSpeed(1);
-    setCurrentFrame(-1);
-    setIsVisualizing(false);
-    setErrorMsg("");
-    setSelectedLang("javascript");
-  });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];
     const n = parseInt(nVal, 10);
     if (isNaN(n) || n < 1) return [];
-    return generateHanoiFrames(n);
+    return Array.from(generateHanoiFrames(n));
   }, [nVal, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setNVal("3");
+    setIsVisualizing(false);
+    setErrorMsg("");
+    setSelectedLang("javascript");
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -110,57 +97,46 @@ const HanoiAnimation = () => {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
+    engine.reset();
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
-    }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
+      engine.play();
     }
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
 
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    pegs: { A: Array.from({ length: parseInt(nVal, 10) || 3 }, (_, i) => (parseInt(nVal, 10) || 3) - i), B: [], C: [] },
-    activeLine: "none",
-    description: "Enter N (between 1 and 5) and click Visualize Go!",
-    movingDisk: null
-  };
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        stack: [],
+        pegs: { A: Array.from({ length: parseInt(nVal, 10) || 3 }, (_, i) => (parseInt(nVal, 10) || 3) - i), B: [], C: [] },
+        activeLine: "none",
+        description: "Enter N (between 1 and 5) and click Visualize Go!",
+        movingDisk: null
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activePegs = activeFrameData.pegs || { A: [], B: [], C: [] };
@@ -214,17 +190,17 @@ const HanoiAnimation = () => {
 
         {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs font-semibold mt-2">{errorMsg}</p>}
 
-        {isVisualizing && (
+        {isVisualizing && frames.length > 0 && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>
@@ -353,7 +329,7 @@ const HanoiAnimation = () => {
                     <path
                       d={`M ${pegX} ${diskY - 15} Q ${(pegX + targetPegX) / 2} ${diskY - 45} ${targetPegX} ${diskY - 15}`}
                       fill="none"
-                      stroke="#14b8a6"
+                      stroke="#a435f0"
                       strokeWidth="2.5"
                       strokeDasharray="4,4"
                       className="animate-[dash_1s_linear_infinite]"
@@ -388,7 +364,7 @@ const HanoiAnimation = () => {
                   <div
                     key={frame.id}
                     className={`w-full max-w-[280px] p-3 rounded-lg border flex flex-col items-center transition-all duration-300 ${statusClass} ${
-                      isTop ? "ring-2 ring-primary dark:ring-primary-light ring-offset-2 dark:ring-offset-zinc-950" : ""
+                      isTop ? "ring-2 ring-[#a435f0] dark:ring-[#a435f0] ring-offset-2 dark:ring-offset-zinc-950 shadow-md" : "scale-[0.98]"
                     }`}
                   >
                     <div className="flex justify-between w-full font-mono text-[10px] font-bold">
@@ -416,7 +392,7 @@ const HanoiAnimation = () => {
                 <select
                   value={selectedLang}
                   onChange={(e) => setSelectedLang(e.target.value)}
-                  className="bg-zinc-800 text-zinc-200 text-[11px] px-2 py-0.5 rounded border border-zinc-700 outline-none cursor-pointer hover:bg-zinc-700 focus:ring-1 focus:ring-[#0d9488]/50"
+                  className="bg-zinc-800 text-zinc-200 text-[11px] px-2 py-0.5 rounded border border-zinc-700 outline-none cursor-pointer hover:bg-zinc-700 focus:ring-1 focus:ring-[#a435f0]/50"
                 >
                   <option value="javascript">JavaScript</option>
                   <option value="python">Python</option>
@@ -437,7 +413,7 @@ const HanoiAnimation = () => {
                   <div
                     key={ln.line}
                     className={`flex gap-4 px-2 py-0.5 rounded transition-colors duration-200 ${
-                      isActive ? "bg-[#0d9488]/20 border-l-4 border-[#0d9488] text-white font-bold" : "border-l-4 border-transparent"
+                      isActive ? "bg-[#a435f0]/20 border-l-4 border-[#a435f0] text-white font-bold" : "border-l-4 border-transparent"
                     }`}
                   >
                     <span className="text-zinc-600 select-none w-4 text-right">{ln.line}</span>

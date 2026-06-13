@@ -1,305 +1,206 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import React, { useMemo, useState } from "react";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { generateRandomListLogic } from "@/features/algorithms/linkedlist/traversalLogic";
 import { reverseGenerator } from "@/features/algorithms/linkedlist/reverseLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const LinkedListReverse = () => {
   const [list, setList] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [currentPointer, setCurrentPointer] = useState(-1);
-  const [prevPointer, setPrevPointer] = useState(-1);
-  const [nextPointer, setNextPointer] = useState(-1);
-  const listRefs = useRef([]);
-  const containerRef = useRef(null);
-  useVisualizerReset(() => {
-    setList([]);
-    setIsAnimating(false);
-    setCurrentPointer(-1);
-    setPrevPointer(-1);
-    setNextPointer(-1);
-  });
-  const animationTimeline = useRef(gsap.timeline());
 
-  const generateRandomList = () => {
-    const size = Math.floor(Math.random() * 3) + 3;
-    const values = Array.from({ length: size }, (_, i) => {
-      const base = Math.floor(Math.random() * 20) + 1;
-      return base + i * 5;
-    });
-    const newList = values.map((value, index) => ({
-      value,
-      id: Date.now() + index + Math.random(),
-      next:
-        index < size - 1
-          ? `0x${(1000 + index).toString(16).padStart(4, "0")}`
-          : "NULL",
-    }));
-    setList(newList);
-    setCurrentPointer(-1);
-    setPrevPointer(-1);
-    setNextPointer(-1);
+  const frames = useMemo(() => {
+    if (list.length === 0) return [];
+    return Array.from(reverseGenerator(list));
+  }, [list]);
+
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  const handleGenerate = () => {
+    if (engine.isPlaying) return;
+    setList(generateRandomListLogic());
+    engine.reset();
+  };
+
+  const startReverse = () => {
+    if (engine.isPlaying || list.length === 0) return;
+    engine.reset();
+    engine.play();
+  };
+
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
   };
 
   const handleReset = () => {
-    gsap.killTweensOf("*");
-    animationTimeline.current.clear();
     setList([]);
-    setIsAnimating(false);
-    setCurrentPointer(-1);
-    setPrevPointer(-1);
-    setNextPointer(-1);
-    listRefs.current = [];
+    engine.reset();
   };
 
-  const animateReverse = async () => {
-    if (isAnimating || list.length === 0) return;
-    setIsAnimating(true);
-    animationTimeline.current.clear();
-
-    const generator = reverseGenerator(list);
-    let step = generator.next();
-    if (step.done) {
-        setIsAnimating(false);
-        return;
+  // When animation finishes naturally
+  React.useEffect(() => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0 && !engine.isPlaying) {
+        const finalFrame = frames[frames.length - 1];
+        if (finalFrame && finalFrame.phase === 'complete') {
+            setList(finalFrame.list);
+            engine.reset();
+        }
     }
+  }, [engine.currentStep, frames, engine.isPlaying, engine]);
 
-    gsap.set(listRefs.current, {
-      backgroundColor: "#10b981",
-      scale: 1,
-      opacity: 1,
-      clearProps: "all",
-    });
+  useVisualizerKeyboard({
+    onStart: startReverse,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
-    const highlightNodes = (prevI, currI, nextI) => {
-      listRefs.current.forEach((el, idx) => {
-        if (!el) return;
-        if (idx === currI) {
-          gsap.to(el, { backgroundColor: "#2563eb", scale: 1.1, duration: 0.3 });
-        } else if (idx === prevI) {
-          gsap.to(el, { backgroundColor: "#f59e0b", scale: 1.05, duration: 0.3 });
-        } else if (idx === nextI) {
-          gsap.to(el, { backgroundColor: "#6b7280", scale: 1, duration: 0.3 });
-        } else {
-          gsap.to(el, { backgroundColor: "#10b981", scale: 1, duration: 0.3 });
-        }
-      });
-    };
-
-    const pointerContainer = document.createElement("div");
-    pointerContainer.style.position = "relative";
-    pointerContainer.style.width = "100%";
-    pointerContainer.style.height = "0px";
-    pointerContainer.style.marginBottom = "8px";
-    containerRef.current.prepend(pointerContainer);
-
-    const createPointerLabel = (color, text) => {
-      const label = document.createElement("div");
-      label.textContent = text;
-      label.style.position = "absolute";
-      label.style.top = "0px";
-      label.style.padding = "2px 6px";
-      label.style.borderRadius = "4px";
-      label.style.color = "white";
-      label.style.fontSize = "12px";
-      label.style.fontWeight = "bold";
-      label.style.backgroundColor = color;
-      label.style.pointerEvents = "none";
-      label.style.whiteSpace = "nowrap";
-      label.style.transition = "left 0.5s ease";
-      pointerContainer.appendChild(label);
-      return label;
-    };
-
-    const prevLabel = createPointerLabel("#f59e0b", "Prev");
-    const currentLabel = createPointerLabel("#2563eb", "Current");
-    const nextLabel = createPointerLabel("#6b7280", "Next");
-
-    const positionPointers = (prevI, currI, nextI) => {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const offsetTop = -30;
-
-      const setLabelPos = (label, idx) => {
-        if (idx === -1) {
-          label.style.opacity = "0";
-          return;
-        }
-        const nodeEl = listRefs.current[idx];
-        if (!nodeEl) {
-          label.style.opacity = "0";
-          return;
-        }
-        const rect = nodeEl.getBoundingClientRect();
-        const left = rect.left - containerRect.left + rect.width / 2 - label.offsetWidth / 2;
-        label.style.left = `${left}px`;
-        label.style.top = `${offsetTop}px`;
-        label.style.opacity = "1";
+  const currentFrame = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        phase: 'idle',
+        prevIndex: -1,
+        currentIndex: -1,
+        nextIndex: -1,
+        list: list,
+        explanation: list.length > 0 ? "Ready to reverse. Click 'Reverse List'." : "Click 'Generate List' to create a linked list."
       };
-
-      setLabelPos(prevLabel, prevI);
-      setLabelPos(currentLabel, currI);
-      setLabelPos(nextLabel, nextI);
-    };
-
-    while (!step.done) {
-        const state = step.value;
-        
-        setCurrentPointer(state.currentIndex);
-        setPrevPointer(state.prevIndex);
-        setNextPointer(state.nextIndex);
-        highlightNodes(state.prevIndex, state.currentIndex, state.nextIndex);
-        positionPointers(state.prevIndex, state.currentIndex, state.nextIndex);
-
-        if (state.type === 'start') {
-            // Initial state set, no delay needed
-        } else if (state.type === 'step_pointers') {
-            await new Promise((resolve) => setTimeout(resolve, 800));
-        } else if (state.type === 'step_update_link') {
-            animationTimeline.current.clear();
-            const currentNodeEl = listRefs.current[state.currentIndex];
-            if (currentNodeEl) {
-                const nextFieldEl = currentNodeEl.querySelector(".text-xs");
-                if (nextFieldEl) {
-                    await new Promise((resolve) => {
-                        gsap.to(nextFieldEl, {
-                            opacity: 0,
-                            duration: 0.3,
-                            onComplete: () => {
-                                setList(state.list);
-                                resolve();
-                            },
-                        });
-                    });
-                    await new Promise((resolve) => {
-                        gsap.to(nextFieldEl, { opacity: 1, duration: 0.3, onComplete: resolve });
-                    });
-                } else {
-                    setList(state.list);
-                }
-            } else {
-                setList(state.list);
-            }
-            await new Promise((resolve) => setTimeout(resolve, 500));
-        } else if (state.type === 'complete') {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            if (pointerContainer.parentNode) {
-                pointerContainer.parentNode.removeChild(pointerContainer);
-            }
-            setIsAnimating(false);
-            return;
-        }
-
-        step = generator.next();
-    }
-  };
-
-  useEffect(() => {
-    listRefs.current = listRefs.current.slice(0, list.length);
-  }, [list]);
 
   return (
     <VisualizerInteractiveLayout>
       <p className="text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
-        Visualize how each pointer changes while reversing a linked list step by step.
+        Visualize how reversing a linked list involves carefully updating pointers one node at a time.
       </p>
 
       <VisualizerCard>
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4">
           <button
-            onClick={generateRandomList}
-            disabled={isAnimating}
-            className="flex-1 rounded-lg bg-[#a435f0]/10 px-4 py-3 text-[#a435f0] transition hover:bg-[#a435f0]/20 border border-[#a435f0]/30 disabled:opacity-50 sm:px-6"
+            onClick={handleGenerate}
+            disabled={engine.isPlaying}
+            className="w-full rounded-lg bg-[#a435f0]/10 px-6 py-3 text-[#a435f0] transition hover:bg-[#a435f0]/20 border border-[#a435f0]/30 disabled:opacity-50"
           >
             Generate List
           </button>
-          <button
-            onClick={animateReverse}
-            disabled={isAnimating || list.length === 0}
-            className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:opacity-50 sm:px-6"
-          >
-            {isAnimating ? "Reversing..." : "Reverse List"}
-          </button>
-          <button
-            onClick={handleReset}
-            className="flex-1 rounded-lg border border-black px-4 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700 sm:px-6"
-          >
-            Reset All
-          </button>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              onClick={startReverse}
+              disabled={engine.isPlaying || list.length === 0}
+              className="flex-1 rounded-lg bg-primary px-6 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400"
+            >
+              {engine.isPlaying ? "Reversing..." : "Reverse List"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex-1 rounded-lg border border-black px-6 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700"
+            >
+              Reset
+            </button>
+          </div>
         </div>
+        
+        {frames.length > 0 && (
+          <div className="mt-6">
+            <PlaybackControls
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+              disabled={frames.length === 0}
+            />
+          </div>
+        )}
       </VisualizerCard>
 
+      <div className="w-full mb-6 max-w-4xl mx-auto p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm text-center min-h-[60px] flex items-center justify-center">
+         <p className="text-gray-800 dark:text-gray-200 font-medium">
+             {currentFrame.explanation}
+         </p>
+      </div>
+
       <VisualizerCard>
-        <div className="mb-6 flex flex-wrap justify-center gap-3 text-sm sm:gap-6 sm:text-base">
+        <div className="mb-6 flex justify-center gap-4 text-sm sm:gap-8 sm:text-base">
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-primary"></div>
-            <span>List Node</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-emerald-500"></div>
+            <span>Previous</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-primary"></div>
-            <span>Current Node</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-amber-500"></div>
+            <span>Current</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-amber-500"></div>
-            <span>Previous Node</span>
-          </div>
-          <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-gray-600"></div>
-            <span>Next Node</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-blue-500"></div>
+            <span>Next</span>
           </div>
         </div>
 
-        <div className="flex flex-col items-center">
-          <h3 className="mb-4 text-lg font-medium text-emerald-600">
-            List {currentPointer >= 0 && `(Current: ${currentPointer + 1})`}
-          </h3>
-          <div
-            ref={containerRef}
-            className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]"
-          >
-            {list.length === 0 ? (
-              <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                Generate a list to begin.
-              </div>
-            ) : (
-              <div className="flex items-center justify-center space-x-2">
-                {list.map((node, index) => (
-                  <React.Fragment key={`list-${node.id}`}>
-                    <div
-                      ref={(el) => (listRefs.current[index] = el)}
-                      className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md text-lg text-white shadow-md transition-all ${
-                        index === currentPointer
-                          ? "scale-110 bg-primary ring-4 ring-primary/40"
-                          : index === prevPointer
-                            ? "scale-105 bg-amber-500 ring-4 ring-amber-300"
-                            : index === nextPointer
-                              ? "bg-gray-600 ring-2 ring-gray-400"
-                              : "bg-primary"
-                      }`}
-                    >
-                      {node.value}
-                      <div className="mt-1 text-xs opacity-80">{node.next}</div>
+        <div className="relative flex w-full flex-col items-center justify-center overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818] min-h-[260px]">
+          {currentFrame.list.length === 0 ? (
+            <div className="w-full py-12 text-center text-gray-500">
+              No nodes generated yet.
+            </div>
+          ) : (
+            <div className="flex items-center space-x-4 sm:space-x-8">
+              {currentFrame.list.map((node, index) => {
+                const isPrev = currentFrame.prevIndex === index;
+                const isCurrent = currentFrame.currentIndex === index;
+                const isNext = currentFrame.nextIndex === index;
+                
+                let bgData = "bg-primary";
+                let scaleClass = "scale-100";
+                
+                if (isCurrent) {
+                    bgData = "bg-amber-500 shadow-lg";
+                    scaleClass = "scale-110 z-10";
+                } else if (isPrev) {
+                    bgData = "bg-emerald-500";
+                } else if (isNext) {
+                    bgData = "bg-blue-500";
+                }
+
+                // If this node is "reversed" relative to original list (which means it points to the previous index)
+                // we can show a reverse arrow. Since this is just a 1D array visualization, 
+                // we will just show standard nodes. The 'next' address text shows the reversal.
+                const nextAddress = node.next;
+
+                return (
+                  <div key={node.id} className="flex items-center">
+                    <div className={`node flex flex-col items-center transition-all duration-300 ${scaleClass}`}>
+                      <span className="text-[10px] font-mono text-gray-500 mb-1">{node.address}</span>
+                      <div className="flex">
+                          <div className={`data-part w-16 rounded-l-lg ${bgData} p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg transition-colors`}>
+                          {node.value}
+                          </div>
+                          <div className="next-part w-16 rounded-r-lg bg-[#c27cf7] p-3 text-center font-mono text-xs dark:bg-primary sm:w-20 sm:p-4 sm:text-base">
+                          {nextAddress}
+                          </div>
+                      </div>
                     </div>
-                    {index < list.length - 1 && (
-                      <svg
-                        className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
+                    {index < currentFrame.list.length - 1 && (
+                      <div className="mx-1 text-2xl sm:mx-2 sm:text-3xl text-gray-400">&rarr;</div>
                     )}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </VisualizerCard>
     </VisualizerInteractiveLayout>

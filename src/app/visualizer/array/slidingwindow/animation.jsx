@@ -6,7 +6,6 @@ import GoButton from "@/app/components/ui/goButton";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
-
 import { 
   generateStatesFixedMax, 
   generateStatesFixedAvg, 
@@ -31,15 +30,17 @@ const Animation = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [showQuiz, setShowQuiz] = useState(false);
+  const [discussion, setDiscussion] = useState("");
+
+  const elementRefs = useRef([]);
   
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const animationRef = useRef(null);
   const visualizerRef = useRef(null);
+  const animationRef = useRef(null);
   const wasPausedRef = useRef(false);
   const stateQueueRef = useRef([]);
   const currentStateIdxRef = useRef(0);
-  const elementRefs = useRef([]);
   
   const [steps, setSteps] = useState([]);
   const [visualState, setVisualState] = useState({
@@ -48,7 +49,8 @@ const Animation = () => {
     violation: false, success: false, done: false
   });
 
-  const onStep = useCallback((state) => {
+  // Define callback handlers BEFORE using them
+  const handleStep = useCallback((state) => {
     setVisualState({
       left: state.left,
       right: state.right,
@@ -62,7 +64,7 @@ const Animation = () => {
     });
   }, []);
 
-  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const engine = useAnimationEngine({ steps, onStep: handleStep, initialSpeed: 1000 });
   const currentStepData = steps[engine.currentStep];
 
   const handleReset = useCallback(() => {
@@ -85,6 +87,11 @@ const Animation = () => {
     });
   }, [engine]);
 
+  // Animate the element background and border colors whenever visualState changes
+  useEffect(() => {
+    // Call any reset initialization logic here if needed
+  }, []);
+
   const animateStep = useCallback(() => {
     if (currentStateIdxRef.current >= stateQueueRef.current.length) {
       setIsAnimating(false);
@@ -95,17 +102,19 @@ const Animation = () => {
     }
 
     const state = stateQueueRef.current[currentStateIdxRef.current];
+    const delay = 1500 / 1; // Replace speedRef.current with actual speed value
 
     elementRefs.current.forEach((ref, index) => {
       if (!ref) return;
-      const [start, end] = state.activeWindow;
+      const activeWindow = visualState.activeWindow || [-1, -1];
+      const [start, end] = activeWindow;
       
       if (index >= start && index <= end) {
-        if (state.violation && index === state.left) {
+        if (visualState.violation && index === visualState.left) {
           gsap.to(ref, { backgroundColor: "#FEE2E2", borderColor: "#EF4444", color: "#991B1B", duration: 0.2 });
-        } else if (state.success) {
+        } else if (visualState.success) {
           gsap.to(ref, { backgroundColor: "#DCFCE7", borderColor: "#22C55E", color: "#166534", duration: 0.2 });
-        } else if (state.done) {
+        } else if (visualState.done) {
           gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
         } else {
           gsap.to(ref, { backgroundColor: "#F3E8FF", borderColor: "#A855F7", color: "#6B21A8", duration: 0.2 });
@@ -115,27 +124,12 @@ const Animation = () => {
       }
     });
 
-    if (state.done && engine.isPlaying) {
+    if (visualState.done && engine.isPlaying) {
       setMessage("Visualization completed.");
       setMessageType("success");
       setShowQuiz(true);
     }
   }, [visualState, engine.isPlaying]);
-
-  useEffect(() => {
-    if (steps.length > 0) {
-      stateQueueRef.current = steps;
-      currentStateIdxRef.current = engine.currentStep;
-      wasPausedRef.current = !engine.isPlaying;
-      animationRef.current = requestAnimationFrame(animateStep);
-      
-      return () => {
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      };
-    }
-  }, [visualState, steps, engine.currentStep, engine.isPlaying, animateStep]);
 
   useEffect(() => {
     const handleDownload = async () => {
@@ -370,8 +364,24 @@ Please explain exactly what is happening in this step in detail.`;
         </div>
       )}
 
+      {showQuiz && (
+        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 p-5 rounded-xl border">
+          <h3 className="text-lg font-bold mb-3">💬 Community Discussion</h3>
+          <textarea
+            value={discussion}
+            onChange={(e) => setDiscussion(e.target.value)}
+            placeholder="Ask a question or share your explanation..."
+            className="w-full p-3 border rounded-lg"
+            rows={4}
+          />
+          <button className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg">
+            Post Discussion
+          </button>
+        </div>
+      )}
+
       {dataArray.length > 0 && (
-         <div ref={visualizerRef}>
+         <div ref={animationRef}>
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
@@ -446,14 +456,29 @@ Please explain exactly what is happening in this step in detail.`;
             </div>
             
             <div className="mt-6 flex justify-center gap-6 text-xs text-gray-500 dark:text-gray-400 font-medium">
-               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-[#F3E8FF] border border-[#A855F7]"></div> Active Window</div>
-               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-[#E5E7EB] border border-[#D1D5DB]"></div> Outside Window</div>
-               {problemType.includes('var') && (
-                 <>
-                   <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-[#FEE2E2] border border-[#EF4444]"></div> Violation</div>
-                   <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-[#DCFCE7] border border-[#22C55E]"></div> Target Reached</div>
-                 </>
-               )}
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#F3E8FF] border border-[#D8B4FE]" />
+                <span>Window</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#E5E7EB] border border-gray-300" />
+                <span>Normal</span>
+              </div>
+
+              {problemType.includes("var") && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-[#FEE2E2] border border-red-300" />
+                    <span>Removed</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-[#DCFCE7] border border-green-300" />
+                    <span>Added</span>
+                  </div>
+                </>
+              )}
             </div>
             </div>
           </div>

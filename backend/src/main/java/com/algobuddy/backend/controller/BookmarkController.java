@@ -5,6 +5,7 @@ import com.algobuddy.backend.dto.BookmarkRequestDto;
 import com.algobuddy.backend.entity.Bookmark;
 import com.algobuddy.backend.service.BookmarkService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,9 +16,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.validation.annotation.Validated;
+
 @RestController
 @RequestMapping("/api/v1/bookmarks")
 @RequiredArgsConstructor
+@Validated
 public class BookmarkController {
 
     private final BookmarkService bookmarkService;
@@ -49,7 +53,7 @@ public class BookmarkController {
 
     @DeleteMapping
     public ResponseEntity<Void> removeBookmark(@AuthenticationPrincipal Jwt jwt, 
-                                               @RequestParam String problemId) {
+                                               @NotBlank(message = "problemId cannot be empty") @RequestParam String problemId) {
         UUID userId = UUID.fromString(jwt.getSubject());
         
         bookmarkService.removeBookmark(userId, problemId);

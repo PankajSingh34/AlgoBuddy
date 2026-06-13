@@ -28,6 +28,8 @@ function getSupabaseConfig() {
   return { supabaseUrl, supabaseAnonKey };
 }
 
+const protectedRoutes = ["/arena", "/practice", "/dashboard", "/profile"];
+
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -39,10 +41,6 @@ export async function proxy(request) {
     return supabaseResponse;
   }
 
-  // A server client is created per-request so that session cookies can be
-  // refreshed when the access token is close to expiry. The setAll callback
-  // propagates the new cookies into both the outgoing request and response so
-  // that server components and client components see consistent session state.
   const supabase = createServerClient(
     supabaseConfig.supabaseUrl,
     supabaseConfig.supabaseAnonKey,
@@ -66,21 +64,19 @@ export async function proxy(request) {
 
   // Calling getUser() triggers a token refresh if the access token is expired.
   // This must not be removed — without it, sessions silently expire mid-browse.
-  // Wrapped in try/catch: a network timeout (ConnectTimeoutError) must not crash
-  // the middleware and block all downstream requests with a non-JSON error response.
-  try {
-    await supabase.auth.getUser();
-  } catch (err) {
-    console.warn("[proxy] supabase.auth.getUser() failed (network issue?):", err?.cause?.code ?? err?.message);
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Route protection — redirect unauthenticated users away from protected routes
+  const pathname = request.nextUrl.pathname;
+  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+    if (error || !user) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
 }
 
-export const config = {
-  matcher: [
-    // Run on all routes except Next.js internals and static file extensions.
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-    
-  ],
-};
+

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
@@ -346,10 +347,13 @@ export default function ArenaPage() {
                     <div className="flex flex-col items-center">
                       <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5 overflow-hidden">
                         {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
-                          <img
+                          <Image
                             src={user.user_metadata.avatar_url || user.user_metadata.picture}
                             alt="avatar"
                             className="w-full h-full object-cover"
+                            width={40}
+                            height={40}
+                            unoptimized
                           />
                         ) : (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">

@@ -1,11 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
   Info,
   RefreshCw,
   Plus
@@ -14,8 +9,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { RBTree, RBNode, RED, BLACK } from "@/features/algorithms/tree/redBlackTreeLogic";
-
-// Logic moved to src/features/algorithms/tree/redBlackTreeLogic.js
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 // Compute tree layout (x, y coordinates for each node)
 function computeLayout(tree) {
@@ -55,13 +49,6 @@ function computeLayout(tree) {
 const INITIAL_VALUES = [30, 15, 70, 10, 20, 60, 85];
 
 export default function RedBlackAnimation() {
-  const [rbTree] = useState(() => {
-    const t = new RBTree();
-    for (const v of INITIAL_VALUES) {
-      for (const step of t.insertGenerator(v)) {}
-    }
-    return t;
-  });
   const [displayTree, setDisplayTree] = useState(() => {
     const t = new RBTree();
     for (const v of INITIAL_VALUES) {
@@ -71,20 +58,10 @@ export default function RedBlackAnimation() {
   });
   const [inputValue, setInputValue] = useState("");
   const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [speed, setSpeed] = useState(1);
   const [message, setMessage] = useState("Red-Black Tree pre-loaded! Insert values to observe rotations and recoloring.");
-  const [highlighted, setHighlighted] = useState({});
+  
+  const [visualState, setVisualState] = useState(null);
 
-  const timerRef = useRef(null);
-  useVisualizerReset(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsAnimating(false);
-    setMessage("...");
-    setSteps([]);
-    setCurrentStepIdx(-1);
-  });
   const activeTreeRef = useRef(() => {
     const t = new RBTree();
     for (const v of INITIAL_VALUES) {
@@ -101,41 +78,27 @@ export default function RedBlackAnimation() {
     activeTreeRef.current = t;
   }, []);
 
-
-
-  useEffect(() => {
-    if (currentStepIdx < 0 || currentStepIdx >= steps.length) return;
-    const step = steps[currentStepIdx];
-    setDisplayTree(step.tree);
-    setHighlighted(step.highlighted || {});
+  const onStep = useCallback((step, idx) => {
+    if (idx === -1) {
+      setVisualState(null);
+      return;
+    }
+    setVisualState(step);
+    if (step.tree) setDisplayTree(step.tree);
     setMessage(step.explanation || "");
-  }, [currentStepIdx, steps]);
+  }, []);
 
-  useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
-    if (currentStepIdx >= steps.length - 1) { setIsAnimating(false); return; }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [isAnimating, currentStepIdx, steps, speed]);
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1 });
 
-  const pauseVisualizer = () => { setIsAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
-  const startVisualizer = () => {
-    if (steps.length === 0) return;
-    setIsAnimating(true);
-    const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
-    setCurrentStepIdx(nextIdx);
-  };
-  const stepForward = () => { setIsAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setIsAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
-  const resetPlayback = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
-    setHighlighted({});
-    setMessage("Playback reset.");
-  };
+  useVisualizerReset(() => {
+    engine.reset();
+    setMessage("...");
+    setSteps([]);
+    setVisualState(null);
+  });
 
   const handleReset = () => {
+    engine.reset();
     const t = new RBTree();
     for (const v of INITIAL_VALUES) {
       for (const step of t.insertGenerator(v)) {}
@@ -143,8 +106,7 @@ export default function RedBlackAnimation() {
     activeTreeRef.current = t;
     setDisplayTree(t.clone());
     setSteps([]);
-    setCurrentStepIdx(-1);
-    setHighlighted({});
+    setVisualState(null);
     setInputValue("");
     setMessage("Tree reset to default. Insert values to observe RB tree balancing.");
   };
@@ -155,34 +117,38 @@ export default function RedBlackAnimation() {
       setMessage("⚠️ Please enter a valid integer (1-999).");
       return;
     }
-    setIsAnimating(false);
     setInputValue("");
 
+    engine.reset();
     const gen = activeTreeRef.current.insertGenerator(val);
     const newSteps = Array.from(gen);
     
-    activeTreeRef.current = activeTreeRef.current; // stays same ref
-
     setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(false);
+    if (newSteps.length > 0) {
+      setVisualState(newSteps[0]);
+      setTimeout(() => {
+        engine.play();
+      }, 50);
+    }
   };
 
   useVisualizerKeyboard({
-    onStepForward: stepForward,
-    onStepBackward: stepBackward,
-    onTogglePlayPause: isAnimating ? pauseVisualizer : startVisualizer,
-    onReset: resetPlayback,
-    onSpeedChange: setSpeed,
-    speed: speed,
-    sorting: isAnimating,
-    sorted: false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onTogglePlayPause: engine.isPlaying ? engine.pause : (steps.length > 0 ? engine.play : undefined),
+    onReset: engine.reset,
+    onSpeedChange: (s) => engine.setSpeed(s * 500),
+    speed: engine.speed / 500,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep >= steps.length - 1 && steps.length > 0,
     enabled: true,
   });
 
   const { nodes, edges } = computeLayout(displayTree);
   const svgWidth = Math.max(800, nodes.length > 0 ? Math.max(...nodes.map(n => n.x)) + 100 : 800);
   const svgHeight = Math.max(380, nodes.length > 0 ? Math.max(...nodes.map(n => n.y)) + 60 : 380);
+
+  const highlighted = visualState?.highlighted || {};
 
   const getNodeStyle = (nodeId, color) => {
     const state = highlighted[nodeId];
@@ -205,10 +171,10 @@ export default function RedBlackAnimation() {
             onChange={e => setInputValue(e.target.value)}
             placeholder="Value (1-999)"
             className="w-full sm:w-36 px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-[#a435f0] transition-colors"
-            disabled={isAnimating}
+            disabled={engine.isPlaying}
             onKeyDown={e => e.key === "Enter" && triggerInsert()}
           />
-          <button onClick={triggerInsert} disabled={isAnimating}
+          <button onClick={triggerInsert} disabled={engine.isPlaying}
             className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#a435f0] hover:bg-[#8f2cd6] text-white rounded-xl transition-all shadow-md w-full sm:w-auto">
             <Plus className="w-3.5 h-3.5" /> Insert
           </button>
@@ -216,15 +182,15 @@ export default function RedBlackAnimation() {
 
         <div className="w-full xl:w-auto flex justify-center xl:justify-end">
           <PlaybackControls 
-            isPlaying={isAnimating}
-            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
-            onReset={resetPlayback}
+            isPlaying={engine.isPlaying}
+            onPlayPause={engine.isPlaying ? engine.pause : engine.play}
+            onStepForward={engine.stepForward}
+            onStepBackward={engine.stepBackward}
+            onReset={engine.reset}
             onClear={handleReset}
             clearLabel="Clear Tree"
-            speed={speed}
-            onSpeedChange={setSpeed}
+            speed={engine.speed / 500}
+            onSpeedChange={(s) => engine.setSpeed(s * 500)}
             disabled={steps.length === 0}
             showPlayPause={true}
           />
@@ -235,7 +201,7 @@ export default function RedBlackAnimation() {
       <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2">
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Info className="w-3.5 h-3.5 text-red-400" /> Insertion Step Explanation</span>
-          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}</span>
+          <span className="text-slate-500 font-bold bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-900">Step {engine.currentStep !== -1 ? engine.currentStep + 1 : 0} / {steps.length || 0}</span>
         </div>
         <div className="text-sm font-medium text-red-200/90 leading-relaxed min-h-[40px] flex items-center">{message}</div>
       </div>

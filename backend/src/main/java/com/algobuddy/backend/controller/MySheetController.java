@@ -6,6 +6,7 @@ import com.algobuddy.backend.dto.MySheetResponseDto;
 import com.algobuddy.backend.entity.MySheet;
 import com.algobuddy.backend.service.MySheetService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,9 +17,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.validation.annotation.Validated;
+
 @RestController
 @RequestMapping("/api/v1/mysheet")
 @RequiredArgsConstructor
+@Validated
 public class MySheetController {
 
     private final MySheetService mySheetService;
@@ -50,7 +54,7 @@ public class MySheetController {
 
     @DeleteMapping
     public ResponseEntity<Void> removeFromSheet(@AuthenticationPrincipal Jwt jwt,
-                                                @RequestParam String problemId) {
+                                                @NotBlank(message = "problemId cannot be empty") @RequestParam String problemId) {
         UUID userId = UUID.fromString(jwt.getSubject());
 
         mySheetService.removeFromSheet(userId, problemId);

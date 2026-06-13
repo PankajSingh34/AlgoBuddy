@@ -1,371 +1,238 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import React, { useMemo, useState } from "react";
 import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { generateRandomListLogic } from "@/features/algorithms/linkedlist/traversalLogic";
 import { mergeListsGenerator } from "@/features/algorithms/linkedlist/llMergeLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const LinkedListMerge = () => {
   const [list1, setList1] = useState([]);
   const [list2, setList2] = useState([]);
-  const [mergedList, setMergedList] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [currentPointers, setCurrentPointers] = useState({ list1: 0, list2: 0 });
-  const list1Refs = useRef([]);
-  const list2Refs = useRef([]);
-  const mergedRefs = useRef([]);
-  const arrowRefs = useRef([]);
-  const containerRef = useRef(null);
-  useVisualizerReset(() => {
-    setList1([]);
-    setList2([]);
-    setMergedList([]);
-    setIsAnimating(false);
-    setCurrentPointers({ list1: 0, list2: 0 });
-  });
-  const animationTimeline = useRef(gsap.timeline());
 
-  const generateRandomList = (setList) => {
-    const size = Math.floor(Math.random() * 3) + 3;
-    const values = Array.from({ length: size }, (_, i) => {
-      const base = Math.floor(Math.random() * 20) + 1;
-      return base + i * 5;
-    }).sort((a, b) => a - b);
+  const frames = useMemo(() => {
+    if (list1.length === 0 || list2.length === 0) return [];
+    return Array.from(mergeListsGenerator(list1, list2));
+  }, [list1, list2]);
 
-    const newList = values.map((value, index) => ({
-      value,
-      id: Date.now() + index + Math.random(),
-      next:
-        index < size - 1
-          ? `0x${(1000 + index).toString(16).padStart(4, "0")}`
-          : "NULL",
-    }));
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 
-    setList(newList);
+  const handleGenerate = () => {
+    if (engine.isPlaying) return;
+    setList1(generateRandomListLogic());
+    setList2(generateRandomListLogic());
+    engine.reset();
+  };
+
+  const startMerge = () => {
+    if (engine.isPlaying || list1.length === 0 || list2.length === 0) return;
+    engine.reset();
+    engine.play();
+  };
+
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
   };
 
   const handleReset = () => {
-    gsap.killTweensOf("*");
-    animationTimeline.current.clear();
     setList1([]);
     setList2([]);
-    setMergedList([]);
-    setIsAnimating(false);
-    setCurrentPointers({ list1: 0, list2: 0 });
-    list1Refs.current = [];
-    list2Refs.current = [];
-    mergedRefs.current = [];
-    arrowRefs.current = [];
+    engine.reset();
   };
 
-  const animateMerge = async () => {
-    if (isAnimating || list1.length === 0 || list2.length === 0) return;
+  useVisualizerKeyboard({
+    onStart: startMerge,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
-    const gen = mergeListsGenerator(list1, list2);
-    let step = gen.next().value;
+  const currentFrame = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        phase: 'idle',
+        list1Index: -1,
+        list2Index: -1,
+        mergedList: [],
+        list1: list1,
+        list2: list2,
+        explanation: list1.length > 0 ? "Ready to merge. The component will sort both lists ascendingly before merging." : "Click 'Generate Lists' to create two linked lists."
+      };
 
-    if (step?.type === 'error') return;
+  const renderList = (listData, name, activeIndex, baseColorClass) => (
+    <div className="mb-6 flex flex-col items-center">
+      <h3 className="mb-4 text-lg font-bold text-gray-700 dark:text-gray-300">
+        {name}
+      </h3>
+      <div className="relative flex w-full items-start justify-center overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818] min-h-[140px]">
+        {listData.length === 0 ? (
+          <div className="w-full py-6 text-center text-gray-500">
+            Empty
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4 sm:space-x-8">
+            {listData.map((node, index) => {
+              const isCurrent = activeIndex === index;
+              const isConsumed = activeIndex !== -1 && index < activeIndex;
+              
+              let bgData = baseColorClass;
+              let scaleClass = "scale-100";
+              let opacityClass = "opacity-100";
+              
+              if (isCurrent) {
+                  bgData = "bg-amber-500 shadow-lg";
+                  scaleClass = "scale-110 z-10";
+              } else if (isConsumed || currentFrame.phase === 'complete') {
+                  opacityClass = "opacity-40";
+              }
 
-    setIsAnimating(true);
-    animationTimeline.current.clear();
-    setMergedList([]);
-    setCurrentPointers({ list1: 0, list2: 0 });
-
-    gsap.set([...list1Refs.current, ...list2Refs.current], {
-      opacity: 1,
-      scale: 1,
-      backgroundColor: () => "#10b981",
-    });
-
-    gsap.set(arrowRefs.current, { opacity: 0.7 });
-
-    const processStep = async () => {
-      if (!step) {
-        setIsAnimating(false);
-        return;
-      }
-
-      if (step.type === 'compare') {
-        animationTimeline.current.to(
-          [
-            step.i < step.list1Len ? list1Refs.current[step.i] : null,
-            step.j < step.list2Len ? list2Refs.current[step.j] : null,
-          ].filter(Boolean),
-          {
-            scale: 1.3,
-            duration: 0.3,
-            ease: "power1.inOut",
-          },
-          "<"
-        );
-
-        await new Promise((resolve) => {
-          animationTimeline.current.call(() => {
-            setCurrentPointers({ list1: step.i, list2: step.j });
-            resolve();
-          }, null, "+=0.3");
-        });
-      } else if (step.type === 'add') {
-        const nextNode = step.nextNode;
-        const i = step.source === 'list1' ? step.currentIndex + 1 : step.currentIndex;
-        const j = step.source === 'list2' ? step.currentIndex + 1 : step.currentIndex;
-
-        const tempNode = document.createElement("div");
-        tempNode.className =
-          "node absolute flex h-16 w-20 items-center justify-center rounded-md bg-emerald-600 font-bold text-white shadow-md";
-        tempNode.textContent = nextNode.value;
-        containerRef.current.appendChild(tempNode);
-
-        const fromRect =
-          nextNode.source === "list1"
-            ? list1Refs.current[step.currentIndex]?.getBoundingClientRect()
-            : list2Refs.current[step.currentIndex]?.getBoundingClientRect();
-        const toPos = (step.mergedListSoFar.length - 1) * 80 + 40;
-
-        gsap.set(tempNode, {
-          x: fromRect?.left - containerRef.current.getBoundingClientRect().left || 0,
-          y: fromRect?.top - containerRef.current.getBoundingClientRect().top || 0,
-          opacity: 0,
-          scale: 0.5,
-        });
-
-        animationTimeline.current.to(
-          tempNode,
-          {
-            opacity: 1,
-            scale: 1.1,
-            duration: 0.4,
-            ease: "power2.out",
-          },
-          "<"
-        );
-
-        animationTimeline.current.to(tempNode, {
-          x: toPos,
-          y: 20,
-          scale: 1,
-          backgroundColor: "#2563eb",
-          duration: 0.8,
-          ease: "power3.inOut",
-        });
-
-        animationTimeline.current.call(() => {
-          setMergedList([...step.mergedListSoFar]);
-          tempNode.remove();
-        }, null, "+=0.2");
-
-        await new Promise((resolve) => {
-          animationTimeline.current.call(() => {
-            resolve();
-          }, null, "+=0.1");
-        });
-      } else if (step.type === 'complete') {
-        setIsAnimating(false);
-        return;
-      }
-
-      step = gen.next().value;
-      await new Promise((resolve) => {
-        animationTimeline.current.call(() => {
-          processStep().then(resolve);
-        }, null, "+=0.3");
-      });
-    };
-
-    await processStep();
-  };
-
-  useEffect(() => {
-    list1Refs.current = list1Refs.current.slice(0, list1.length);
-    list2Refs.current = list2Refs.current.slice(0, list2.length);
-    mergedRefs.current = mergedRefs.current.slice(0, mergedList.length);
-    arrowRefs.current = arrowRefs.current.slice(0, Math.max(0, mergedList.length - 1));
-  }, [list1, list2, mergedList]);
+              return (
+              <div key={node.id} className={`flex items-center transition-all duration-300 ${opacityClass}`}>
+                <div className={`node flex flex-col items-center transition-all duration-300 ${scaleClass}`}>
+                  <span className="text-[10px] font-mono text-gray-500 mb-1">{node.address}</span>
+                  <div className="flex">
+                      <div className={`data-part w-16 rounded-l-lg ${bgData} p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg transition-colors`}>
+                      {node.value}
+                      </div>
+                      <div className="next-part w-16 rounded-r-lg bg-[#c27cf7] p-3 text-center font-mono text-xs dark:bg-primary sm:w-20 sm:p-4 sm:text-base">
+                      {node.next}
+                      </div>
+                  </div>
+                </div>
+                {index < listData.length - 1 && (
+                  <div className="mx-1 text-2xl sm:mx-2 sm:text-3xl text-gray-400">&rarr;</div>
+                )}
+              </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <VisualizerInteractiveLayout>
       <p className="text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
-        Visualize how two sorted linked lists are merged into one ordered result.
+        Visualize the merging of two sorted linked lists into a single sorted list.
       </p>
 
       <VisualizerCard>
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4">
           <button
-            onClick={() => generateRandomList(setList1)}
-            disabled={isAnimating}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-white transition hover:bg-emerald-700 disabled:bg-gray-400 sm:px-6"
+            onClick={handleGenerate}
+            disabled={engine.isPlaying}
+            className="w-full rounded-lg bg-[#10b981]/10 px-6 py-3 text-[#10b981] transition hover:bg-[#10b981]/20 border border-[#10b981]/30 disabled:opacity-50"
           >
-            Generate List 1
+            Generate Lists
           </button>
-          <button
-            onClick={() => generateRandomList(setList2)}
-            disabled={isAnimating}
-            className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-white transition hover:bg-emerald-700 disabled:bg-gray-400 sm:px-6"
-          >
-            Generate List 2
-          </button>
-          <button
-            onClick={animateMerge}
-            disabled={isAnimating || list1.length === 0 || list2.length === 0}
-            className="flex-1 rounded-lg bg-primary px-4 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400 sm:px-6"
-          >
-            {isAnimating ? "Merging..." : "Merge Lists"}
-          </button>
-          <button
-            onClick={handleReset}
-            className="flex-1 rounded-lg border border-black px-4 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700 sm:px-6"
-          >
-            Reset All
-          </button>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              onClick={startMerge}
+              disabled={engine.isPlaying || list1.length === 0}
+              className="flex-1 rounded-lg bg-primary px-6 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400"
+            >
+              {engine.isPlaying ? "Merging..." : "Merge Lists"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="flex-1 rounded-lg border border-black px-6 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700"
+            >
+              Reset
+            </button>
+          </div>
         </div>
+        
+        {frames.length > 0 && (
+          <div className="mt-6">
+            <PlaybackControls
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+              disabled={frames.length === 0}
+            />
+          </div>
+        )}
       </VisualizerCard>
 
-      <VisualizerCard className="space-y-10">
-        <div className="flex flex-wrap justify-center gap-3 text-sm sm:gap-6 sm:text-base">
+      <div className="w-full mb-6 max-w-4xl mx-auto p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm text-center min-h-[60px] flex items-center justify-center">
+         <p className="text-gray-800 dark:text-gray-200 font-medium">
+             {currentFrame.explanation}
+         </p>
+      </div>
+
+      <VisualizerCard>
+        <div className="mb-6 flex justify-center gap-4 text-sm sm:gap-8 sm:text-base">
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-emerald-600"></div>
+            <div className="mr-2 h-4 w-4 rounded-full bg-blue-500"></div>
             <span>List 1</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-emerald-600"></div>
+            <div className="mr-2 h-4 w-4 rounded-full bg-emerald-500"></div>
             <span>List 2</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-primary"></div>
-            <span>Merged</span>
-          </div>
-          <div className="flex items-center">
-            <div className="mr-2 h-4 w-4 rounded-md bg-gray-400"></div>
-            <span>Pointer</span>
+            <div className="mr-2 h-4 w-4 rounded-full bg-amber-500"></div>
+            <span>Comparing</span>
           </div>
         </div>
 
-        <div className="space-y-10">
-          <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-emerald-600">
-              List 1 {currentPointers.list1 < list1.length && `(Current: ${currentPointers.list1 + 1})`}
-            </h3>
-            <div className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]">
-              {list1.length === 0 ? (
-                <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                  Generate List 1 to begin.
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  {list1.map((node, index) => (
-                    <React.Fragment key={`list1-${node.id}`}>
-                      <div
-                        ref={(el) => (list1Refs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-emerald-600 text-lg text-white shadow-md transition-all ${
-                          index === currentPointers.list1 && isAnimating ? "scale-110 ring-4 ring-emerald-300" : ""
-                        }`}
-                      >
-                        {node.value}
-                        <div className="mt-1 text-xs opacity-80">{node.next}</div>
-                      </div>
-                      {index < list1.length - 1 && (
-                        <svg
-                          className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {renderList(currentFrame.list1, "List 1", currentFrame.list1Index, "bg-blue-500")}
+        {renderList(currentFrame.list2, "List 2", currentFrame.list2Index, "bg-emerald-500")}
 
-          <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-emerald-600">
-              List 2 {currentPointers.list2 < list2.length && `(Current: ${currentPointers.list2 + 1})`}
-            </h3>
-            <div className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]">
-              {list2.length === 0 ? (
-                <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                  Generate List 2 to continue.
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  {list2.map((node, index) => (
-                    <React.Fragment key={`list2-${node.id}`}>
-                      <div
-                        ref={(el) => (list2Refs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-emerald-600 text-lg text-white shadow-md transition-all ${
-                          index === currentPointers.list2 && isAnimating ? "scale-110 ring-4 ring-emerald-300" : ""
-                        }`}
-                      >
-                        {node.value}
-                        <div className="mt-1 text-xs opacity-80">{node.next}</div>
+        <div className="mt-8 flex flex-col items-center border-t border-gray-200 dark:border-gray-800 pt-8">
+          <h3 className="mb-4 text-lg font-bold text-primary">
+            Merged List Result
+          </h3>
+          <div className="relative flex w-full items-start justify-center overflow-x-auto rounded-xl border-2 border-primary/20 bg-primary/5 p-4 min-h-[140px]">
+            {currentFrame.mergedList.length === 0 ? (
+              <div className="w-full py-6 text-center text-gray-500">
+                Empty Merged List
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4 sm:space-x-8">
+                {currentFrame.mergedList.map((node, index) => {
+                  const bgData = node.source === "list1" ? "bg-blue-500" : "bg-emerald-500";
+                  return (
+                  <div key={node.id} className="flex items-center">
+                    <div className="node flex flex-col items-center">
+                      <span className="text-[10px] font-mono text-gray-500 mb-1">{node.address}</span>
+                      <div className="flex">
+                          <div className={`data-part w-16 rounded-l-lg ${bgData} p-3 text-center text-base text-white sm:w-20 sm:p-4 sm:text-lg transition-colors`}>
+                          {node.value}
+                          </div>
+                          <div className="next-part w-16 rounded-r-lg bg-[#c27cf7] p-3 text-center font-mono text-xs dark:bg-primary sm:w-20 sm:p-4 sm:text-base">
+                          {node.next}
+                          </div>
                       </div>
-                      {index < list2.length - 1 && (
-                        <svg
-                          className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <h3 className="mb-3 text-lg font-medium text-primary">Merged List</h3>
-            <div
-              ref={containerRef}
-              className="relative w-full overflow-x-auto rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-4 dark:border-[#222] dark:bg-[#181818]"
-            >
-              {mergedList.length === 0 ? (
-                <div className="w-full py-8 text-center text-gray-500 dark:text-gray-400">
-                  {list1.length > 0 && list2.length > 0
-                    ? "Click 'Merge Lists' to visualize."
-                    : "Generate both lists and merge them."}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  {mergedList.map((node, index) => (
-                    <React.Fragment key={`merged-${node.id}`}>
-                      <div
-                        ref={(el) => (mergedRefs.current[index] = el)}
-                        className={`node flex h-16 w-20 flex-col items-center justify-center rounded-md bg-primary text-lg text-white shadow-md ${
-                          index === mergedList.length - 1 && isAnimating ? "animate-pulse" : ""
-                        }`}
-                      >
-                        {node.value}
-                      </div>
-                      {index < mergedList.length - 1 && (
-                        <svg
-                          ref={(el) => (arrowRefs.current[index] = el)}
-                          className="h-8 w-8 text-gray-600 opacity-70 dark:text-gray-300"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-            </div>
+                    </div>
+                    {index < currentFrame.mergedList.length - 1 && (
+                      <div className="mx-1 text-2xl sm:mx-2 sm:text-3xl text-primary">&rarr;</div>
+                    )}
+                  </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </VisualizerCard>
