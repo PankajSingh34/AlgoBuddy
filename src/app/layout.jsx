@@ -1,14 +1,13 @@
 import "./globals.css";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { UserProvider } from "@/features/user/UserContext";
+import { UserProvider } from "@/app/contexts/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
-import BackToTop from "@/app/components/ui/backtotop";
-
+import BackToTopButton from "@/app/components/BackToTopButton";
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata = {
-  metadataBase: new URL("https://www.algobuddy.me"),
+  metadataBase: new URL("https://algobuddy.in"),
   title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
   description:
     "Master Data Structures and Algorithms with interactive visualizations. Perfect for students, beginners, and interview prep. Visualize Stack, Queue, Tree, Graph, Sorting & more.",
@@ -36,7 +35,7 @@ export const metadata = {
     title: "AlgoBuddy | Visualize & Learn DSA the Smart Way",
     description:
       "Interactive platform to visualize and learn DSA concepts easily. Great for students and interview preparation.",
-    url: "https://www.algobuddy.me/",
+    url: "https://algobuddy.in/",
     siteName: "AlgoBuddy",
     images: [
       {
@@ -66,7 +65,7 @@ export default async function RootLayout({ children }) {
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />
-        <link rel="icon" href="/favicon.ico?v=3" />
+        <link rel="icon" href="/favicon.ico?v=2" />
 
         {/* Prevent flash: apply saved theme before React hydrates */}
         <Script
@@ -83,13 +82,6 @@ export default async function RootLayout({ children }) {
               })();
             `,
           }}
-        />
-        {/* Google AdSense Script */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5588131730389378"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
 
         {/* Google Analytics Script */}
@@ -124,8 +116,8 @@ export default async function RootLayout({ children }) {
             <div id="main-content">{children}</div>
           </ClientLayoutWrapper>
         </UserProvider>
-      <BackToTop />
         <SpeedInsights />
+        <BackToTopButton />
       </body>
     </html>
   );
