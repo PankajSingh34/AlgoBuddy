@@ -73,24 +73,8 @@ public class PracticeService {
 
     @Transactional
     public ProgressResponse updateProgress(UUID userId, ProgressRequest request) {
-        // 1. Update Problem Progress
-        Optional<UserProgress> existingProgress = progressRepository.findByUserIdAndProblemId(userId, request.getProblemId());
-        
-        if (existingProgress.isPresent()) {
-            UserProgress progress = existingProgress.get();
-            progress.setStatus(request.getStatus());
-            progress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(progress);
-        } else {
-            UserProgress newProgress = new UserProgress();
-            newProgress.setUserId(userId);
-            newProgress.setProblemId(request.getProblemId());
-            newProgress.setStatus(request.getStatus());
-            newProgress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(newProgress);
-        }
+        upsertProgress(userId, request.getProblemId(), request.getStatus());
 
-        // 2. Update Daily Streak
         if ("Completed".equals(request.getStatus())) {
             self.updateStreakWithRetry(userId);
         }
@@ -104,46 +88,19 @@ public class PracticeService {
             return getUserProgress(userId);
         }
 
-        List<String> problemIds = request.getItems().stream()
-                .map(BulkProgressRequest.Item::getProblemId)
-                .filter(id -> id != null && !id.trim().isEmpty())
-                .collect(Collectors.toList());
-
-        if (problemIds.isEmpty()) {
-            return getUserProgress(userId);
-        }
-
-        List<UserProgress> existingProgresses = progressRepository.findByUserIdAndProblemIdIn(userId, problemIds);
-        Map<String, UserProgress> existingMap = existingProgresses.stream()
-                .collect(Collectors.toMap(UserProgress::getProblemId, p -> p));
-
         boolean anyCompleted = false;
-        OffsetDateTime now = OffsetDateTime.now();
-        
+
         for (BulkProgressRequest.Item item : request.getItems()) {
             if (item.getProblemId() == null || item.getProblemId().trim().isEmpty() || item.getStatus() == null) {
                 continue;
             }
 
-            UserProgress progress = existingMap.get(item.getProblemId());
-            if (progress != null) {
-                progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
-            } else {
-                progress = new UserProgress();
-                progress.setUserId(userId);
-                progress.setProblemId(item.getProblemId());
-                progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
-                existingMap.put(item.getProblemId(), progress); // Ensure we save the new ones too
-            }
+            upsertProgress(userId, item.getProblemId(), item.getStatus());
 
             if ("Completed".equals(item.getStatus())) {
                 anyCompleted = true;
             }
         }
-
-        progressRepository.saveAll(existingMap.values());
 
         // Only update streak once even if multiple problems were completed
         if (anyCompleted) {
@@ -167,6 +124,10 @@ public class PracticeService {
                 log.warn("Optimistic lock failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
             }
         }
+    }
+
+    private void upsertProgress(UUID userId, String problemId, String status) {
+        progressRepository.upsertProgress(userId, problemId, status);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
