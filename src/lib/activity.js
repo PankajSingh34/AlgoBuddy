@@ -1,4 +1,4 @@
-const trackActivity = async (userId, type = "site_visit") => {
+const trackActivity = async (type = "site_visit") => {
   try {
     await fetch("/api/activity", {
       method: "POST",
@@ -50,22 +50,15 @@ const computeStreak = (activities) => {
 const getStreakData = async (userId, days = 30) => {
   if (!userId) return { streak: 0, activities: [] };
 
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-  const sinceStr = since.toISOString();
-
   try {
-    const { data, error } = await supabase
-      .from("user_activity")
-      .select("activity_date, created_at")
-      .eq("user_id", userId)
-      .gte("created_at", sinceStr)
-      .order("created_at", { ascending: false });
+    const response = await fetch(`/api/activity?days=${encodeURIComponent(days)}`);
 
-    if (error) {
-      console.error("getStreakData error:", error);
+    if (!response.ok) {
+      console.error("getStreakData error:", await response.text());
       return { streak: 0, activities: [] };
     }
+
+    const data = await response.json();
 
     return {
       streak: computeStreak(data || []),
