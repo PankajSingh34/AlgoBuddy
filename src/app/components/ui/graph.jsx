@@ -16,6 +16,7 @@ const ComplexityGraph = ({
   bestCase = null,
   averageCase = null,
   worstCase = null,
+  comparisonAlgorithms = [],
   maxN = 100,
   title = "Time Complexity Analysis"
 }) => {
@@ -192,6 +193,34 @@ const ComplexityGraph = ({
           )}
         </LineChart>
       </ResponsiveContainer>
+
+      {comparisonAlgorithms.length > 0 && (
+  <div className="mt-4 overflow-x-auto">
+    <h3 className="text-center font-bold mb-2">
+      Algorithm Complexity Comparison
+    </h3>
+
+    <table className="w-full text-sm border">
+      <thead>
+        <tr className="bg-gray-100 dark:bg-gray-800">
+          <th className="p-2">Algorithm</th>
+          <th className="p-2">Time Complexity</th>
+          <th className="p-2">Space Complexity</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {comparisonAlgorithms.map((algo, index) => (
+          <tr key={index}>
+            <td className="p-2">{algo.name}</td>
+            <td className="p-2">{algo.time}</td>
+            <td className="p-2">{algo.space}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
       
       <Legend content={renderLegend} />
     </div>

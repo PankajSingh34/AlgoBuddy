@@ -1,77 +1,41 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { claimSessionPresenter, validateCsrfOrigin } from "@/lib/collaboration/sessionStore";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
-
-function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-  try {
-    const parsed = new URL(supabaseUrl);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  } catch {
-    return null;
-  }
-  return { supabaseUrl, supabaseAnonKey };
-}
-
-async function getAuthenticatedUser() {
-  const config = getSupabaseConfig();
-  if (!config) {
-    return { user: null, configured: false };
-  }
-
-  const cookieStore = await cookies();
-  const client = createServerClient(config.supabaseUrl, config.supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const { data } = await client.auth.getUser();
-  return { user: data?.user ?? null, configured: true };
-}
+import { jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function POST(request, { params }) {
-  if (!validateCsrfOrigin(request)) {
-    return Response.json({ error: "CSRF validation failed" }, { status: 403 });
+  try {
+    if (!validateCsrfOrigin(request)) {
+      return jsonResponse({ error: "CSRF validation failed" }, 403);
+    }
+
+    const authResult = await getAuthenticatedUser();
+    if (!authResult.success) {
+      if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
+        return jsonResponse({ error: "Authentication service unavailable" }, 500);
+      }
+      return jsonResponse({ error: "Authentication required" }, 401);
+    }
+
+    const user = authResult.user;
+
+    const ip = getClientIp(request.headers);
+    const { allowed } = await checkRateLimit(`collab:presenter:${ip}:${params.sessionId}`);
+    if (!allowed) {
+      return jsonResponse({ error: "Too many presenter updates. Please try again shortly." }, 403);
+    }
+
+    const result = await claimSessionPresenter(params.sessionId, {
+      userId: user.id,
+    });
+
+    if (result.error) {
+      return jsonResponse({ error: result.error }, result.status || 400);
+    }
+
+    return jsonResponse(result);
+  } catch (error) {
+    return errorResponse(error);
   }
-
-  const { user, configured } = await getAuthenticatedUser();
-  if (configured && !user) {
-    return Response.json(
-      { error: "Authentication required" },
-      { status: 401 },
-    );
-  }
-
-  const ip = getClientIp(request.headers);
-  const { allowed } = await checkRateLimit(`collab:presenter:${ip}:${params.sessionId}`);
-  if (!allowed) {
-    return Response.json(
-      { error: "Too many presenter updates. Please try again shortly." },
-      { status: 403 },
-    );
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const result = await claimSessionPresenter(params.sessionId, {
-    userId: configured ? user?.id || "" : body.presenterId || "anonymous",
-    sessionSecret: body.sessionSecret,
-  });
-
-  if (result.error) {
-    return Response.json({ error: result.error }, { status: result.status || 400 });
-  }
-
-  return Response.json(result);
 }

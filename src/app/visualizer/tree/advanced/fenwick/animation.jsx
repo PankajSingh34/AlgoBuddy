@@ -11,21 +11,9 @@ import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { buildBIT, updateGenerator, queryGenerator } from "@/features/algorithms/tree/fenwickTreeLogic";
 
 const DEFAULT_ARRAY = [0, 5, 3, 7, 2, 6, 4, 8, 1]; // 1-indexed, index 0 unused
-
-function buildBIT(arr) {
-  const n = arr.length - 1;
-  const bit = new Array(n + 1).fill(0);
-  for (let i = 1; i <= n; i++) {
-    let j = i;
-    while (j <= n) {
-      bit[j] += arr[i];
-      j += j & -j;
-    }
-  }
-  return bit;
-}
 
 export default function FenwickAnimation() {
   const [baseArray, setBaseArray] = useState([...DEFAULT_ARRAY]);
@@ -124,61 +112,25 @@ export default function FenwickAnimation() {
   const triggerUpdate = () => {
     const idx = parseInt(inputIndex);
     const delta = parseInt(inputValue);
-    if (isNaN(idx) || idx < 1 || idx > n || isNaN(delta)) {
-      setMessage(`⚠️ Please enter a valid index (1-${n}) and a numeric delta value.`);
-      return;
-    }
-
+    
     setIsAnimating(false);
     setResultBox(null);
 
-    const newBase = [...baseArray];
-    newBase[idx] += delta;
-    const newBit = buildBIT(newBase.slice(1).reduce((acc, v, i) => { acc[i + 1] = v; return acc; }, [0, ...newBase.slice(1)]));
-
+    const gen = updateGenerator(idx, delta, baseArray, bit, n);
     const newSteps = [];
-    let i = idx;
-    const tempBit = [...bit];
-
-    newSteps.push({
-      highlightedBIT: { [idx]: "visiting" },
-      highlightedBase: { [idx]: "visiting" },
-      explanation: `Point Update: Add delta=${delta} to index ${idx}. Binary: ${idx.toString(2).padStart(4, '0')}. Start updating BIT[${idx}].`,
-      result: undefined
-    });
-
-    while (i <= n) {
-      const lsb = i & -i;
-      const prevVal = tempBit[i];
-      tempBit[i] += delta;
-
-      newSteps.push({
-        highlightedBIT: { [i]: "active" },
-        highlightedBase: { [idx]: "active" },
-        explanation: `BIT[${i}] (binary: ${i.toString(2).padStart(4,'0')}) += ${delta}. LSB(${i}) = ${lsb}. New BIT[${i}] = ${tempBit[i]}. Next: i = ${i} + ${lsb} = ${i + lsb}.`,
-        result: undefined
-      });
-
-      i += lsb;
-      if (i <= n) {
-        newSteps.push({
-          highlightedBIT: { [i]: "visiting" },
-          highlightedBase: { [idx]: "active" },
-          explanation: `Move to BIT[${i}] (binary: ${i.toString(2).padStart(4, '0')}). LSB propagates up the implicit tree.`,
-          result: undefined
-        });
+    
+    for (const step of gen) {
+      if (step.type === 'error') {
+        setMessage(step.message);
+        return;
+      }
+      newSteps.push(step);
+      if (step.type === 'complete') {
+        setBaseArray(step.newBase);
+        setBit(step.newBit);
       }
     }
 
-    newSteps.push({
-      highlightedBIT: {},
-      highlightedBase: { [idx]: "matched" },
-      explanation: `✅ Point Update complete! Index ${idx} in the source array now has value ${newBase[idx]} (was ${baseArray[idx]}). All affected BIT nodes updated.`,
-      result: `Updated index ${idx}: ${baseArray[idx]} → ${newBase[idx]}`
-    });
-
-    setBaseArray(newBase);
-    setBit(newBit);
     setInputIndex(""); setInputValue("");
     setSteps(newSteps);
     setCurrentStepIdx(0);
@@ -189,73 +141,20 @@ export default function FenwickAnimation() {
   const triggerQuery = () => {
     const l = parseInt(queryL);
     const r = parseInt(queryR);
-    if (isNaN(l) || isNaN(r) || l < 1 || r > n || l > r) {
-      setMessage(`⚠️ Please enter a valid range (1 ≤ L ≤ R ≤ ${n}).`);
-      return;
-    }
-
+    
     setIsAnimating(false);
     setResultBox(null);
 
-    const prefixSum = (endIdx) => {
-      let sum = 0;
-      let i = endIdx;
-      const trace = [];
-      while (i > 0) {
-        trace.push({ i, val: bit[i], lsb: i & -i });
-        sum += bit[i];
-        i -= i & -i;
-      }
-      return { sum, trace };
-    };
-
-    const { sum: sumR, trace: traceR } = prefixSum(r);
-    const { sum: sumL1, trace: traceL1 } = prefixSum(l - 1);
-    const result = sumR - sumL1;
-
+    const gen = queryGenerator(l, r, bit, n);
     const newSteps = [];
-
-    newSteps.push({
-      highlightedBIT: {},
-      highlightedBase: Object.fromEntries(Array.from({ length: r - l + 1 }, (_, i) => [l + i, "visiting"])),
-      explanation: `Range Sum Query [${l}, ${r}]: Compute prefix(${r}) - prefix(${l - 1}). Two prefix sums are needed.`,
-      result: undefined
-    });
-
-    // Trace prefix(r)
-    for (const { i, val, lsb } of traceR) {
-      newSteps.push({
-        highlightedBIT: { [i]: "active" },
-        highlightedBase: Object.fromEntries(Array.from({ length: r - l + 1 }, (_, k) => [l + k, "active"])),
-        explanation: `prefix(${r}) step: BIT[${i}] = ${val}. LSB(${i}) = ${lsb}. Binary: ${i.toString(2).padStart(4, '0')}. Accumulate → next: i = ${i} - ${lsb} = ${i - lsb}.`,
-        result: undefined
-      });
-    }
-
-    newSteps.push({
-      highlightedBIT: {},
-      highlightedBase: Object.fromEntries(Array.from({ length: r - l + 1 }, (_, i) => [l + i, "active"])),
-      explanation: `prefix(${r}) = ${sumR}. Now compute prefix(${l - 1}) to subtract.`,
-      result: undefined
-    });
-
-    if (l - 1 > 0) {
-      for (const { i, val, lsb } of traceL1) {
-        newSteps.push({
-          highlightedBIT: { [i]: "visiting" },
-          highlightedBase: Object.fromEntries(Array.from({ length: r - l + 1 }, (_, k) => [l + k, "active"])),
-          explanation: `prefix(${l - 1}) step: BIT[${i}] = ${val}. LSB(${i}) = ${lsb}. Binary: ${i.toString(2).padStart(4, '0')}. Accumulate → next: i = ${i} - ${lsb} = ${i - lsb}.`,
-          result: undefined
-        });
+    
+    for (const step of gen) {
+      if (step.type === 'error') {
+        setMessage(step.message);
+        return;
       }
+      newSteps.push(step);
     }
-
-    newSteps.push({
-      highlightedBIT: {},
-      highlightedBase: Object.fromEntries(Array.from({ length: r - l + 1 }, (_, i) => [l + i, "matched"])),
-      explanation: `✅ Range Sum [${l}, ${r}] = prefix(${r}) - prefix(${l - 1}) = ${sumR} - ${sumL1} = ${result}.`,
-      result: `Sum[${l}..${r}] = ${result}`
-    });
 
     setQueryL(""); setQueryR("");
     setSteps(newSteps);

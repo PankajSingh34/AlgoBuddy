@@ -1,106 +1,33 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause } from "lucide-react";
+import React, { useState, useMemo } from "react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
-import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { minmaxGenerator } from "@/features/algorithms/ai/minmaxLogic";
 
 const MinMax = () => {
   const [arrayElements, setArrayElements] = useState("3, 5, 2, 9, 12, 5, 23, 23");
-  const [treeNodes, setTreeNodes] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [inputNodes, setInputNodes] = useState([]);
   const [message, setMessage] = useState("Enter 8 comma-separated numbers for leaf nodes.");
-  const [stepExplanation, setStepExplanation] = useState("");
-  const [currentNodeClass, setCurrentNodeClass] = useState({});
 
-  const {
-    isPaused,
-    isPausedRef,
-    speed,
-    speedRef,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-  } = usePlayback(() => 1);
+  const frames = useMemo(() => {
+    if (inputNodes.length === 0) return [];
+    return Array.from(minmaxGenerator(inputNodes));
+  }, [inputNodes]);
 
-  const animationRef = useRef(null);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 
   const handleReset = () => {
-    setIsAnimating(false);
     setMessage("Enter 8 comma-separated numbers for leaf nodes.");
-    setStepExplanation("");
-    setCurrentNodeClass({});
-    setTreeNodes([]);
-  };
-
-  const delay = (ms) => {
-    return new Promise((resolve) => {
-      const checkPause = () => {
-        if (!isPausedRef.current) {
-          setTimeout(resolve, ms / speedRef.current);
-        } else {
-          setTimeout(checkPause, 100);
-        }
-      };
-      checkPause();
-    });
-  };
-
-  const runMinMax = async (nodes) => {
-    setMessage("Running Min Max Algorithm...");
-    let newClasses = { ...currentNodeClass };
-    
-    // We have 15 nodes in total: 0 to 6 are internal, 7 to 14 are leaves.
-    // Level 3: leaves (indices 7-14), max depth
-    // Level 2: max nodes (indices 3-6)
-    // Level 1: min nodes (indices 1-2)
-    // Level 0: max node (index 0)
-    
-    const evaluate = async (nodeIndex, depth, isMax) => {
-      if (depth === 3) {
-        newClasses[nodeIndex] = "bg-green-500 text-white border-green-700";
-        setCurrentNodeClass({...newClasses});
-        setStepExplanation(`Evaluating leaf node at distance ${nodeIndex - 7}, value: ${nodes[nodeIndex].val}`);
-        await delay(1000);
-        return nodes[nodeIndex].val;
-      }
-      
-      newClasses[nodeIndex] = "bg-yellow-300 text-black border-yellow-500";
-      setCurrentNodeClass({...newClasses});
-      setStepExplanation(`Visiting ${isMax ? "Max" : "Min"} node.`);
-      await delay(1000);
-      
-      const leftChild = 2 * nodeIndex + 1;
-      const rightChild = 2 * nodeIndex + 2;
-      
-      const leftVal = await evaluate(leftChild, depth + 1, !isMax);
-      const rightVal = await evaluate(rightChild, depth + 1, !isMax);
-      
-      const bestVal = isMax ? Math.max(leftVal, rightVal) : Math.min(leftVal, rightVal);
-      
-      nodes[nodeIndex].val = bestVal;
-      setTreeNodes([...nodes]);
-      
-      newClasses[leftChild] = "bg-gray-300 text-black border-gray-400";
-      newClasses[rightChild] = "bg-gray-300 text-black border-gray-400";
-      newClasses[nodeIndex] = "bg-blue-500 text-white border-blue-700";
-      setCurrentNodeClass({...newClasses});
-      
-      setStepExplanation(`${isMax ? "Max" : "Min"} node completed. Chose ${bestVal} from (${leftVal}, ${rightVal}).`);
-      await delay(1000);
-      
-      return bestVal;
-    };
-    
-    const rootVal = await evaluate(0, 0, true);
-    setStepExplanation(`Algorithm finished. Optimal value is ${rootVal}.`);
-    setMessage(`Finished! Optimal value: ${rootVal}`);
-    setIsAnimating(false);
+    setInputNodes([]);
+    engine.reset();
   };
 
   const handleGo = (e) => {
     e.preventDefault();
-    if (isAnimating) return;
+    if (engine.isPlaying) return;
 
     if (!arrayElements.trim()) {
       setMessage("Please enter array elements.");
@@ -118,31 +45,49 @@ const MinMax = () => {
       id: i,
     }));
     
-    setTreeNodes(initNodes);
-    setCurrentNodeClass({});
-    setIsAnimating(true);
-    
-    setTimeout(() => {
-        runMinMax(initNodes);
-    }, 1000);
+    setInputNodes(initNodes);
+    setMessage("Running Min Max Algorithm...");
+    engine.reset();
+    engine.play();
   };
 
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
+  };
+
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
+
+  const currentFrame = frames[engine.currentStep] || {
+    treeNodes: inputNodes.length > 0 ? inputNodes : [],
+    currentNodeClass: {},
+    stepExplanation: "",
+  };
+
+  const displayMessage = currentFrame.message || message;
+
   const renderTree = () => {
-    if (treeNodes.length === 0) return null;
+    if (currentFrame.treeNodes.length === 0) return null;
     
     const getPos = (index) => {
-      // Very basic tree positioning
-      // Level 0: y: 40, x: 400
-      // Level 1: y: 120, x: 200, 600
-      // Level 2: y: 200, x: 100, 300, 500, 700
-      // Level 3: y: 280, x: 50, 150, 250, 350, 450, 550, 650, 750
-      
       let x = 0, y = 0;
       if (index === 0) { x = 400; y = 40; }
       else if (index >= 1 && index <= 2) { y = 120; x = 400 + (index - 1.5) * 400; }
       else if (index >= 3 && index <= 6) { y = 200; x = 400 + (index - 4.5) * 200; }
       else if (index >= 7 && index <= 14) { y = 280; x = 50 + (index - 7) * 100; }
-      
       return { x, y };
     };
 
@@ -156,7 +101,7 @@ const MinMax = () => {
     }
 
     return (
-      <div className="relative w-full max-w-4xl mx-auto overflow-x-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-8">
+      <div className="relative w-full max-w-4xl mx-auto overflow-x-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mt-8 mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
             Game Tree Visualization
         </h2>
@@ -165,10 +110,10 @@ const MinMax = () => {
             {edges}
           </svg>
           
-          {treeNodes.map((node, i) => {
+          {currentFrame.treeNodes.map((node, i) => {
             const pos = getPos(i);
             const r = 20;
-            const styleClass = currentNodeClass[i] || "bg-white text-gray-800 border-gray-400";
+            const styleClass = currentFrame.currentNodeClass[i] || "bg-white text-gray-800 border-gray-400";
             return (
               <div
                 key={i}
@@ -214,53 +159,35 @@ const MinMax = () => {
               onChange={(e) => setArrayElements(e.target.value)}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-gray-800 dark:text-gray-200 font-mono"
               placeholder="e.g., 3, 5, 2, 9, 12, 5, 23, 23"
-              disabled={isAnimating}
+              disabled={engine.isPlaying}
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2 self-end sm:w-auto w-full">
-            <GoButton onClick={handleGo} isAnimating={isAnimating} disabled={isAnimating} />
-            <ResetButton onReset={handleReset} isAnimating={isAnimating} />
+            <GoButton onClick={handleGo} isAnimating={engine.isPlaying} disabled={engine.isPlaying} />
+            <ResetButton onReset={handleReset} isAnimating={engine.isPlaying} />
           </div>
         </div>
 
-        {isAnimating && (
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
-            <button
-              type="button"
-              onClick={togglePlayPause}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-            >
-              {isPaused ? <Play size={20} /> : <Pause size={20} />}
-              {isPaused ? "Play" : "Pause"}
-            </button>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={decreaseSpeed}
-                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                disabled={speed <= 0.5}
-              >-</button>
-              <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center">
-                Speed: {speed}x
-              </span>
-              <button
-                type="button"
-                onClick={increaseSpeed}
-                className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                disabled={speed >= 5}
-              >+</button>
-            </div>
-          </div>
-        )}
+        <PlaybackControls
+          isPlaying={engine.isPlaying}
+          onPlayPause={togglePlay}
+          speed={engine.speed / 1000}
+          onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+          onStepForward={engine.stepForward}
+          onStepBackward={engine.stepBackward}
+          onReset={engine.reset}
+          progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+          disabled={frames.length === 0}
+        />
       </form>
 
-      {message && (
+      {displayMessage && (
         <div className="max-w-3xl mx-auto mb-8 p-4 rounded-lg bg-blue-50 dark:bg-gray-800 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-gray-700">
-          <p className="text-center font-medium">{message}</p>
+          <p className="text-center font-medium">{displayMessage}</p>
         </div>
       )}
 
-      {stepExplanation && (
+      {currentFrame.stepExplanation && (
         <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
           <div className="flex items-center gap-2 bg-[#a435f0]/10 dark:bg-[#a435f0]/20 px-4 py-2 border-b border-[#a435f0]/20">
             <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
@@ -270,7 +197,7 @@ const MinMax = () => {
           </div>
           <div className="px-4 py-3">
             <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">
-              {stepExplanation}
+              {currentFrame.stepExplanation}
             </p>
           </div>
         </div>

@@ -1,142 +1,98 @@
 "use client";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Play, Pause } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
-import usePlayback from "@/app/hooks/usePlayback";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { saveToStorage, loadFromStorage } from "@/utils/storage";
-
-// Basic tree structure for demonstration
-const makeInitialTree = () => {
-  return new Array(15).fill(null).map((_, i) => ({
-    id: i,
-    visits: 0,
-    wins: 0,
-    children: i <= 6 ? [2 * i + 1, 2 * i + 2] : [],
-  }));
-};
-
-const randOutcome = () => (Math.random() < 0.5 ? 1 : 0);
-
-const uct = (node, parentVisits, c = 1.4) => {
-  if (node.visits === 0) return Infinity;
-  const exploitation = node.wins / node.visits;
-  const exploration = c * Math.sqrt(Math.log(parentVisits) / node.visits);
-  return exploitation + exploration;
-};
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import { mctsGenerator, makeInitialTree } from "@/features/algorithms/ai/mctsLogic";
 
 const MCTSAnim = () => {
-  const [tree, setTree] = useState(() => makeInitialTree());
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
   const [exploreC, setExploreC] = useState(() => loadFromStorage("mcts-explore-c", 1.4));
   const [simSize, setSimSize] = useState(() => loadFromStorage("mcts-sim-size", 10));
-  const [highlightPath, setHighlightPath] = useState([]);
-  const [stepExplanation, setStepExplanation] = useState("");
-  const [stepCount, setStepCount] = useState(0);
-
-  const {
-    isPaused,
-    isPausedRef,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-  } = usePlayback(() => loadFromStorage("mcts-speed", 1));
-
-  const animationRef = useRef(null);
-  const runningRef = useRef(false);
+  
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [sessionHistory, setSessionHistory] = useState([]);
 
   useEffect(() => { saveToStorage("mcts-explore-c", exploreC); }, [exploreC]);
   useEffect(() => { saveToStorage("mcts-sim-size", simSize); }, [simSize]);
-  useEffect(() => { saveToStorage("mcts-speed", speed); }, [speed]);
+  useEffect(() => {
+    const savedSessions = JSON.parse(
+      localStorage.getItem("mcts-session-history") || "[]"
+    );
+    setSessionHistory(savedSessions);
+  }, []);
+
+  const saveSession = (stepCount) => {
+    const session = {
+      timestamp: new Date().toLocaleString(),
+      stepCount,
+      exploreC,
+      simSize,
+      bookmarked: false
+    };
+
+    const updatedSessions = [
+      session,
+      ...sessionHistory,
+    ].slice(0, 10);
+
+    localStorage.setItem(
+      "mcts-session-history",
+      JSON.stringify(updatedSessions)
+    );
+
+    setSessionHistory(updatedSessions);
+  };
+
+  const frames = useMemo(() => {
+    return Array.from(mctsGenerator(makeInitialTree(), exploreC, simSize, 50));
+  }, [exploreC, simSize]);
+
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 
   const reset = useCallback(() => {
-    runningRef.current = false;
-    clearTimeout(animationRef.current);
-    setIsAnimating(false);
-    setTree(makeInitialTree());
-    setMessage("");
-    setMessageType("");
-    setHighlightPath([]);
-    setStepExplanation("");
-    setStepCount(0);
-  }, []);
+    if (engine.currentStep > 0) {
+      saveSession(engine.currentStep);
+    }
+    engine.reset();
+    setMessage("Visualizer reset.");
+    setMessageType("warning");
+  }, [engine, exploreC, simSize, sessionHistory]);
 
   useVisualizerReset(reset);
 
-  const select = useCallback((nodes) => {
-    let path = [0];
-    let cur = nodes[0];
-    while (cur.children && cur.children.length > 0) {
-      const parentVisits = cur.visits || 1;
-      const childNodes = cur.children.map((id) => nodes[id]);
-      let best = childNodes[0];
-      for (const ch of childNodes) {
-        if (uct(ch, parentVisits, exploreC) > uct(best, parentVisits, exploreC)) {
-          best = ch;
-        }
-      }
-      path.push(best.id);
-      cur = best;
-    }
-    return path;
-  }, [exploreC]);
-
-  const runTick = useCallback(() => {
-    const nodes = tree.map((n) => ({ ...n }));
-    const count = stepCount + 1;
-    let lastPath = [];
-    
-    for (let s = 0; s < simSize; s++) {
-      const path = select(nodes);
-      const outcome = randOutcome();
-      // Backpropagate
-      for (const id of path) {
-        nodes[id].visits += 1;
-        nodes[id].wins += outcome;
-      }
-      lastPath = path;
-    }
-
-    setTree(nodes);
-    setHighlightPath(lastPath);
-    setStepCount(count);
-    setStepExplanation(
-      `Iteration #${count}: Performed ${simSize} simulations. The last path selected via UCT was: ${lastPath.join(" → ")}.`
-    );
-  }, [tree, simSize, stepCount, select]);
-
-  useEffect(() => {
-    if (isAnimating && !isPaused) {
-      const delay = 1000 / speedRef.current;
-      animationRef.current = setTimeout(() => {
-        runTick();
-      }, delay);
-    }
-    return () => clearTimeout(animationRef.current);
-  }, [isAnimating, isPaused, runTick, speedRef]);
-
   const handleGo = (e) => {
     e.preventDefault();
-    if (isAnimating) return;
-    setIsAnimating(true);
-    runningRef.current = true;
+    if (engine.isPlaying) return;
     setMessage("Running MCTS simulations...");
     setMessageType("success");
-    runTick();
+    engine.play();
   };
 
-  const handleReset = () => {
-    reset();
-    setMessage("Visualizer reset.");
-    setMessageType("warning");
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      setTimeout(() => engine.play(), 50);
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
   };
 
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: reset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+  });
 
   const getPos = (index) => {
     let x = 0, y = 0;
@@ -163,6 +119,18 @@ const MCTSAnim = () => {
       ? "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
       : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200";
 
+  const replaySession = (session) => {
+    setExploreC(session.exploreC);
+    setSimSize(session.simSize);
+    setMessage(`Loaded session from ${session.timestamp}`);
+    setMessageType("success");
+    engine.reset();
+  };
+
+  const currentFrame = engine.currentStep >= 0 && engine.currentStep < frames.length 
+    ? frames[engine.currentStep] 
+    : { tree: makeInitialTree(), highlightPath: [], stepCount: 0, stepExplanation: "" };
+
   return (
     <main className="container mx-auto">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto font-sans">
@@ -185,8 +153,8 @@ const MCTSAnim = () => {
               max="3"
               step="0.1"
               value={exploreC}
-              onChange={(e) => setExploreC(parseFloat(e.target.value))}
-              disabled={isAnimating}
+              onChange={(e) => { engine.reset(); setExploreC(parseFloat(e.target.value)); }}
+              disabled={engine.isPlaying}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-gray-400 mt-2">
@@ -204,8 +172,8 @@ const MCTSAnim = () => {
               min="1"
               max="100"
               value={simSize}
-              onChange={(e) => setSimSize(parseInt(e.target.value))}
-              disabled={isAnimating}
+              onChange={(e) => { engine.reset(); setSimSize(parseInt(e.target.value)); }}
+              disabled={engine.isPlaying}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="text-[10px] text-gray-400 mt-2 text-right">Batch Playouts</div>
@@ -214,39 +182,23 @@ const MCTSAnim = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-t border-gray-100 dark:border-gray-800 pt-6">
           <div className="flex gap-2">
-            <GoButton onClick={handleGo} isAnimating={isAnimating} disabled={isAnimating} />
-            <ResetButton onReset={handleReset} isAnimating={isAnimating} />
+            <GoButton onClick={handleGo} isAnimating={engine.isPlaying} disabled={engine.isPlaying} />
+            <ResetButton onReset={reset} isAnimating={engine.isPlaying} />
           </div>
 
-          {isAnimating && (
-            <div className="flex flex-1 items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 gap-4">
-              <button
-                type="button"
-                onClick={togglePlayPause}
-                className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto justify-center"
-              >
-                {isPaused ? <Play size={20} /> : <Pause size={20} />}
-                {isPaused ? "Play" : "Pause"}
-              </button>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={decreaseSpeed}
-                  className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                  disabled={speed <= 0.5}
-                >-</button>
-                <span className="text-gray-700 dark:text-gray-300 font-medium min-w-[80px] text-center text-sm">
-                  {speed}x speed
-                </span>
-                <button
-                  type="button"
-                  onClick={increaseSpeed}
-                  className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg transition-colors shadow-sm"
-                  disabled={speed >= 5}
-                >+</button>
-              </div>
-            </div>
-          )}
+          <div className="flex-1">
+            <PlaybackControls
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={reset}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+              disabled={frames.length === 0}
+            />
+          </div>
         </div>
       </form>
 
@@ -256,9 +208,9 @@ const MCTSAnim = () => {
         </div>
       )}
 
-      {(isAnimating || tree[0].visits > 0) && (
+      {(engine.isPlaying || currentFrame.tree[0].visits > 0 || engine.currentStep > 0) && (
         <div className="max-w-4xl mx-auto space-y-6">
-          {stepExplanation && (
+          {currentFrame.stepExplanation && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
               <div className="flex items-center gap-2 bg-[#a435f0]/10 dark:bg-[#a435f0]/20 px-4 py-2 border-b border-[#a435f0]/20">
                 <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
@@ -266,12 +218,12 @@ const MCTSAnim = () => {
                   Step Explanation
                 </span>
                 <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                  Cycle #{stepCount}
+                  Cycle #{currentFrame.stepCount}
                 </span>
               </div>
               <div className="px-4 py-4">
                 <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed font-mono">
-                  {stepExplanation}
+                  {currentFrame.stepExplanation}
                 </p>
               </div>
               <div className="px-4 py-2 bg-gray-50 dark:bg-neutral-950 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-4 text-[10px] text-gray-500 uppercase font-bold tracking-tight">
@@ -287,13 +239,58 @@ const MCTSAnim = () => {
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-10 text-center uppercase tracking-[0.2em]">
               Search Tree Visualization
             </h2>
+
+            <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-md mb-8">
+              <h3 className="text-lg font-bold mb-4">
+                Session History
+              </h3>
+
+              {sessionHistory.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  No saved sessions yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {sessionHistory.map((session, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {session.timestamp}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Steps: {session.stepCount}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Explore C: {session.exploreC}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Simulations: {session.simSize}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => replaySession(session)}
+                        className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        Replay
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="min-w-[800px] h-[360px] relative mx-auto">
               <svg className="absolute w-full h-full left-0 top-0 pointer-events-none opacity-30">{edges}</svg>
-              {tree.map((node, i) => {
+              {currentFrame.tree.map((node, i) => {
                 const pos = getPos(i);
                 const r = 32;
                 const winRate = node.visits === 0 ? 0 : Math.round((node.wins / node.visits) * 100);
-                const isHighlighted = highlightPath.includes(i);
+                const isHighlighted = currentFrame.highlightPath.includes(i);
                 const bgClass = isHighlighted 
                   ? "bg-blue-600 border-blue-700 text-white translate-y-[-2px] shadow-lg shadow-blue-500/20" 
                   : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-300 shadow-sm";
@@ -320,5 +317,3 @@ const MCTSAnim = () => {
 };
 
 export default MCTSAnim;
-
-

@@ -23,7 +23,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.binarySearch}
-          description="Mark binary search as done and view it on your dashboard"
+          description="Mark binary search as done and track your progress"
           initialDone={false}
         />
       }

@@ -23,7 +23,7 @@ export default function SerializationAlgorithmPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.serialization}
-          description="Mark Serialize/Deserialize as done and view it on your dashboard"
+          description="Mark Serialize/Deserialize as done and track your progress"
           initialDone={false}
         />
       }

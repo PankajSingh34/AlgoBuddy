@@ -6,6 +6,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { addNodeGenerator } from "@/features/algorithms/linkedlist/singlyLinkedListLogic";
 
 const SinglyLinkedListVisualizer = () => {
   const [inputValue, setInputValue] = useState('');
@@ -32,49 +33,33 @@ const SinglyLinkedListVisualizer = () => {
     'Node added successfully.'
   ];
 
-  // Generate random memory addresses for visualization
-  const generateMemoryAddress = () => {
-    return '0x' + Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
-  };
-
   const addNode = () => {
     if (!inputValue || isAnimating) return;
 
     setIsAnimating(true);
-    setCurrentStep(0);
-    setExplanation(explanations[0]);
+    const gen = addNodeGenerator(list, inputValue, nodeIdCounter.current);
 
-    let step = 0;
     const animateStep = () => {
       if (!isMounted.current) return;
 
-      setCurrentStep(step);
-      setExplanation(explanations[step]);
-      step++;
+      const { value, done } = gen.next();
 
-      if (step < steps.length) {
-        animationRef.current = setTimeout(animateStep, 0);
-      } else {
-        // Animation complete - add the node
-        const newNode = {
-          value: inputValue,
-          id: nodeIdCounter.current++,
-          address: generateMemoryAddress(),
-          next: null
-        };
+      if (done) return;
 
-        setList(prev => {
-          if (prev.length > 0) {
-            // Update previous node's next pointer
-            const updatedList = [...prev];
-            updatedList[updatedList.length - 1].next = newNode.address;
-            return [...updatedList, newNode];
-          }
-          return [newNode];
-        });
+      if (value.type === 'error') {
+        setIsAnimating(false);
+        return;
+      }
 
+      setCurrentStep(value.step);
+      setExplanation(value.message);
+
+      if (value.type === 'step') {
+        animationRef.current = setTimeout(animateStep, 500); // 500ms delay between conceptual steps
+      } else if (value.type === 'complete') {
+        setList(value.list);
+        nodeIdCounter.current++;
         setInputValue('');
-        setExplanation(explanations[explanations.length - 1]);
         setIsAnimating(false);
       }
     };

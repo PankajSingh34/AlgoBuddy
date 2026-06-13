@@ -4,6 +4,7 @@ import { gsap } from "gsap";
 import usePlayback from "@/app/hooks/usePlayback";
 import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { pushGenerator, popGenerator, peekGenerator, checkEmptyGenerator } from "@/features/algorithms/stack/stackIsEmptyLogic";
 
 const StackVisualizer = () => {
   /* ---------- state ---------- */
@@ -49,22 +50,22 @@ const StackVisualizer = () => {
 
   /* ---------- push ---------- */
   const push = () => {
-    if (capacity && stack.length >= capacity) {
-      setMessage(`Stack Overflow! Cannot push. top (${stack.length - 1}) >= size - 1 (${capacity - 1})`);
+    const gen = pushGenerator(stack, inputValue, capacity);
+    const startState = gen.next().value;
+    
+    if (startState.type === 'error') {
+      setMessage(startState.message);
       return;
     }
-    const val = inputValue.trim();
-    if (!val) {
-      setMessage("Please enter a value to push");
-      return;
-    }
+    
     setIsAnimating(true);
-    setOperation(`Pushing "${val}"…`);
+    setOperation(startState.operation);
     setMessage("");
     setPeekedItem(null);
     setIsEmptyStatus(null);
 
-    setStack((prev) => [val, ...prev]);
+    const completeState = gen.next().value;
+    setStack(completeState.stack);
 
     setTimeout(() => {
       const el = itemRefs.current[0];
@@ -73,7 +74,7 @@ const StackVisualizer = () => {
         .timeline({ onComplete: () => setIsAnimating(false) })
         .to(el, { y: 0, scale: 1, opacity: 1, duration: 0.4 / speed, ease: "back.out(1.7)" })
         .to(el, { boxShadow: "0 0 10px #3b82f6", duration: 0.2 / speed, yoyo: true, repeat: 1 }, "-=0.2")
-        .call(() => setMessage(`"${val}" pushed to stack!`));
+        .call(() => setMessage(completeState.message));
     }, 10);
 
     setInputValue("");
@@ -81,60 +82,75 @@ const StackVisualizer = () => {
 
   /* ---------- pop ---------- */
   const pop = () => {
-    if (stack.length === 0) {
-      setMessage("Stack is empty!");
-      setIsEmptyStatus(true);
+    const gen = popGenerator(stack);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
+      setIsEmptyStatus(startState.isEmpty);
       return;
     }
+    
     setIsAnimating(true);
-    const val = stack[0];
-    setOperation(`Popping "${val}"…`);
+    setOperation(startState.operation);
     setMessage("");
     setPeekedItem(null);
     setIsEmptyStatus(null);
 
+    const completeState = gen.next().value;
     const el = itemRefs.current[0];
+    
     gsap
       .timeline({ onComplete: () => {
-        setStack((prev) => prev.slice(1));
+        setStack(completeState.stack);
         setIsAnimating(false);
-        setMessage(`"${val}" popped from stack!`);
+        setMessage(completeState.message);
       } })
       .to(el, { scale: 0.5, rotation: 15, y: 80, opacity: 0, duration: 0.5 / speed, ease: "power2.in" });
   };
 
   /* ---------- peek ---------- */
   const peek = () => {
-    if (stack.length === 0) {
-      setMessage("Stack is empty!");
-      setIsEmptyStatus(true);
+    const gen = peekGenerator(stack);
+    const startState = gen.next().value;
+
+    if (startState.type === 'error') {
+      setMessage(startState.message);
+      setIsEmptyStatus(startState.isEmpty);
       return;
     }
+    
     setIsAnimating(true);
-    setOperation("Peeking at top element…");
-    setPeekedItem(stack[0]);
+    setOperation(startState.operation);
+    setPeekedItem(startState.peekedItem);
     setIsEmptyStatus(false);
 
+    const completeState = gen.next().value;
     const el = itemRefs.current[0];
+    
     gsap
       .timeline({ onComplete: () => setIsAnimating(false) })
       .to(el, { y: -6, boxShadow: "0 0 15px #a855f7", duration: 0.25 / speed })
       .to(el, { y: 0, boxShadow: "0 0 0px transparent", duration: 0.25 / speed })
       .to(el, { y: -6, duration: 0.25 / speed })
       .to(el, { y: 0, duration: 0.25 / speed })
-      .call(() => setMessage(`Top element is "${stack[0]}"`));
+      .call(() => setMessage(completeState.message));
   };
 
   /* ---------- isEmpty ---------- */
   const checkEmpty = () => {
+    const gen = checkEmptyGenerator(stack);
+    const startState = gen.next().value;
+    
     setIsAnimating(true);
-    setOperation("Checking if stack is empty…");
+    setOperation(startState.operation);
     setPeekedItem(null);
+    
     setTimeout(() => {
-      const empty = stack.length === 0;
-      setIsEmptyStatus(empty);
+      const completeState = gen.next().value;
+      setIsEmptyStatus(completeState.isEmpty);
       setOperation(null);
-      setMessage(empty ? "Stack is empty!" : "Stack is not empty");
+      setMessage(completeState.message);
       setIsAnimating(false);
     }, 1000 / speed);
   };

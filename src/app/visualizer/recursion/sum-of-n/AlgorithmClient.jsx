@@ -26,7 +26,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionSum}
-          description="Mark Sum of First N Numbers as done and view it on your dashboard"
+          description="Mark Sum of First N Numbers as done and track your progress"
           initialDone={false}
         />
       }

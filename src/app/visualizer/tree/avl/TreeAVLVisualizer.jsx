@@ -3,8 +3,11 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Footer from "@/app/components/footer";
 import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
+import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import { insertAVL, deleteAVL } from "./avlUtils";
 import { Info, Layers, AlertCircle } from "lucide-react";
+import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 
 const nodeRadius = 21;
 
@@ -80,6 +83,23 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
     setInputValue("");
     setMessage("AVL tree cleared.");
   }, [resetPlayback]);
+
+  const handleCustomTreeInput = useCallback((parsedArray) => {
+    if (parsedArray === null) {
+      clearTree();
+    } else {
+      resetPlayback();
+      let newRoot = null;
+      parsedArray.forEach(val => {
+        const nextSteps = [];
+        const result = insertAVL(newRoot, val, nextSteps);
+        newRoot = result.root;
+      });
+      setRoot(newRoot);
+      setTargetTreeRoot(newRoot);
+      setMessage(`Generated custom AVL tree with ${parsedArray.length} nodes.`);
+    }
+  }, [clearTree, resetPlayback]);
 
   const applySteps = useCallback((nextRoot, nextSteps, label) => {
     if (!nextSteps || nextSteps.length === 0) {
@@ -265,40 +285,43 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
   const isSwapPhase = currentStep?.stepType === "swap-values" || currentStep?.stepType === "delete-successor";
 
   return (
-    <div className="min-h-screen bg-[#080b16] text-white">
+    <div className="min-h-screen bg-white dark:bg-[#1c1d1f] text-slate-900 dark:text-slate-100">
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-24 flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="w-full">
+          <Breadcrumbs paths={createVisualizerPaths("Tree", "AVL", "AVL Tree")} />
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-900/50">
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40 px-3 py-1 rounded-full w-fit border border-indigo-100 dark:border-indigo-900/50">
               <Layers className="w-3.5 h-3.5" /> AVL Interactive Operations
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-indigo-600 to-indigo-400 dark:from-white dark:via-indigo-200 dark:to-indigo-400">
               AVL Tree
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xl">
               Insert and delete operations keep the tree height-balanced with rotations.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300 font-semibold">
+            <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-slate-900 border border-gray-300 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-300 font-semibold">
               {operationLabel}
             </span>
           </div>
         </div>
 
-        <div className="bg-[#111] backdrop-blur-xl border border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
+        <div className="bg-white dark:bg-[#111] backdrop-blur-xl border border-gray-200 dark:border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-lg shadow-black/20">
           <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
             <button
               onClick={handleInsert}
               disabled={isAnimating}
-              className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
+              className="px-4 py-2 text-xs font-bold bg-gray-900 hover:bg-slate-800 dark:bg-[#1a1a1a] dark:hover:bg-[#2a2a2a] text-white rounded-xl transition-all border border-gray-200 dark:border-[#333] disabled:opacity-40"
             >
               Insert
             </button>
             <button
               onClick={handleDelete}
               disabled={isAnimating}
-              className="px-4 py-2 text-xs font-bold bg-[#1a1a1a] hover:bg-[#2a2a2a] text-slate-200 rounded-xl transition-all border border-[#333] disabled:opacity-40"
+              className="px-4 py-2 text-xs font-bold bg-gray-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 rounded-xl transition-all border border-gray-200 dark:border-slate-700 disabled:opacity-40"
             >
               Delete
             </button>
@@ -307,7 +330,7 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Enter value"
-              className="w-full sm:w-32 px-3 py-2 text-xs bg-[#1a1a1a] border border-[#333] rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full sm:w-32 px-3 py-2 text-xs bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               disabled={isAnimating}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -333,173 +356,182 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
           />
         </div>
 
-        <div className="bg-[#111] border border-[#222] rounded-2xl p-4 flex flex-col gap-2">
+        <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl p-4 flex flex-col gap-2">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+            <span className="text-slate-600 dark:text-slate-400 font-semibold flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-indigo-400" /> Action Explanation
             </span>
-            <span className="text-slate-400 font-bold bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-[#333]">
+            <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-[#1a1a1a] px-2.5 py-0.5 rounded-full border border-gray-300 dark:border-[#333]">
               Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
             </span>
           </div>
           <div
-            className="text-[14px] leading-relaxed min-h-[24px] text-center"
-            style={{ color: "var(--color-muted)" }}
+            className="text-[14px] leading-relaxed min-h-[24px] text-center text-slate-600 dark:text-slate-400"
           >
             {message}
           </div>
         </div>
 
-        <div className="bg-[#111] border border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
-          {showBanner && (
-            <div
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-4xl w-[calc(100%-2rem)] border rounded-2xl px-4 py-3 shadow-lg shadow-black/30"
-              style={bannerStyle}
-            >
-              <div className="text-[11px] uppercase tracking-[0.2em] font-bold mb-1">AVL Balance Update</div>
-              <div className="text-sm font-semibold leading-relaxed">{currentStep?.explanation}</div>
-            </div>
-          )}
-
-          {!activeTree ? (
-            <div className="flex flex-col items-center gap-2.5 text-slate-500 py-12">
-              <AlertCircle className="w-10 h-10 text-slate-700" />
-              <span className="text-sm font-semibold">Workspace Empty</span>
-              <span className="text-xs max-w-xs text-center text-slate-600">
-                Enter a value and click Insert or Delete to begin.
-              </span>
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 800 520"
-                className="overflow-visible"
-                style={{ minHeight: "440px" }}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+            {showBanner && (
+              <div
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-4xl w-[calc(100%-2rem)] border rounded-2xl px-4 py-3 shadow-lg shadow-black/30"
+                style={bannerStyle}
               >
-                <defs>
-                  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.35" />
-                  </filter>
-                </defs>
+                <div className="text-[11px] uppercase tracking-[0.2em] font-bold mb-1">AVL Balance Update</div>
+                <div className="text-sm font-semibold leading-relaxed">{currentStep?.explanation}</div>
+              </div>
+            )}
 
-                {renderEdges.map((edge, idx) => (
-                  <line
-                    key={`edge-${idx}`}
-                    x1={edge.x1}
-                    y1={edge.y1}
-                    x2={edge.x2}
-                    y2={edge.y2}
-                    stroke="#334155"
-                    strokeWidth="2.5"
-                    className="transition-all duration-300"
-                  />
-                ))}
+            {!activeTree ? (
+              <div className="flex flex-col items-center gap-2.5 text-slate-400 dark:text-slate-500 py-12">
+                <AlertCircle className="w-10 h-10 text-slate-400 dark:text-slate-600" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workspace Empty</span>
+                <span className="text-xs max-w-xs text-center text-slate-500 dark:text-slate-400">
+                  Enter a value and click Insert or Delete to begin.
+                </span>
+              </div>
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <svg
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 800 520"
+                  className="overflow-visible"
+                  style={{ minHeight: "440px" }}
+                >
+                  <defs>
+                    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.35" />
+                    </filter>
+                  </defs>
 
-                {renderNodes.map((node, idx) => {
-                  const { fillHex, strokeHex } = getNodeColors(node);
-                  const displayValue = swapValues && isSwapPhase
-                    ? (node.value === swapValues.targetValue
-                        ? swapValues.successorValue
-                        : node.value === swapValues.successorValue
-                          ? swapValues.targetValue
-                          : node.value)
-                    : node.value;
-                  const bfAbs = Math.abs(node.balanceFactor || 0);
-                  const bfFill = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-700)";
-                  const bfStroke = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-500)";
-                  const bfText = bfAbs > 1 || bfAbs === 1 ? "var(--color-neutral-950)" : "var(--color-neutral-50)";
+                  {renderEdges.map((edge, idx) => (
+                    <line
+                      key={`edge-${idx}`}
+                      x1={edge.x1}
+                      y1={edge.y1}
+                      x2={edge.x2}
+                      y2={edge.y2}
+                      stroke="#334155"
+                      strokeWidth="2.5"
+                      className="transition-all duration-300"
+                    />
+                  ))}
 
-                  return (
-                    <g key={`node-${idx}`} className="transition-all duration-300">
-                      {(node.state === "visiting" || node.state === "found" || node.state === "inserted" || node.state === "deleted" || node.state === "predecessor") && (
+                  {renderNodes.map((node, idx) => {
+                    const { fillHex, strokeHex } = getNodeColors(node);
+                    const displayValue = swapValues && isSwapPhase
+                      ? (node.value === swapValues.targetValue
+                          ? swapValues.successorValue
+                          : node.value === swapValues.successorValue
+                            ? swapValues.targetValue
+                            : node.value)
+                      : node.value;
+                    const bfAbs = Math.abs(node.balanceFactor || 0);
+                    const bfFill = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-700)";
+                    const bfStroke = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-500)";
+                    const bfText = bfAbs > 1 || bfAbs === 1 ? "var(--color-neutral-950)" : "var(--color-neutral-50)";
+
+                    return (
+                      <g key={`node-${idx}`} className="transition-all duration-300">
+                        {(node.state === "visiting" || node.state === "found" || node.state === "inserted" || node.state === "deleted" || node.state === "predecessor") && (
+                          <circle
+                            cx={node.x}
+                            cy={node.y}
+                            r="28"
+                            fill="none"
+                            stroke={strokeHex}
+                            strokeWidth="1.5"
+                            strokeDasharray="4,2"
+                            className="opacity-60"
+                          />
+                        )}
+
+                        <g transform={`translate(${node.x - 18}, ${node.y - 44})`}>
+                          <rect width="36" height="18" rx="6" fill={bfFill} stroke={bfStroke} strokeWidth="1" />
+                          <text x="18" y="12.5" fill={bfText} fontSize="9" fontWeight="700" textAnchor="middle">
+                            BF {node.balanceFactor}
+                          </text>
+                        </g>
+
                         <circle
                           cx={node.x}
                           cy={node.y}
-                          r="28"
-                          fill="none"
+                          r="21"
+                          fill={fillHex}
                           stroke={strokeHex}
-                          strokeWidth="1.5"
-                          strokeDasharray="4,2"
-                          className="opacity-60"
+                          strokeWidth="2.5"
+                          filter="url(#shadow)"
+                          className="transition-all duration-300"
                         />
-                      )}
 
-                      <g transform={`translate(${node.x - 18}, ${node.y - 44})`}>
-                        <rect width="36" height="18" rx="6" fill={bfFill} stroke={bfStroke} strokeWidth="1" />
-                        <text x="18" y="12.5" fill={bfText} fontSize="9" fontWeight="700" textAnchor="middle">
-                          BF {node.balanceFactor}
+                        <text
+                          x={node.x}
+                          y={node.y + 4.5}
+                          textAnchor="middle"
+                          fill="#ffffff"
+                          fontSize="12"
+                          fontWeight="bold"
+                        >
+                          {displayValue}
+                        </text>
+
+                        <text
+                          x={node.x}
+                          y={node.y + 39}
+                          textAnchor="middle"
+                          fill="#94a3b8"
+                          fontSize="9"
+                          fontWeight="700"
+                        >
+                          h {node.height}
                         </text>
                       </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            )}
+          </div>
 
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r="21"
-                        fill={fillHex}
-                        stroke={strokeHex}
-                        strokeWidth="2.5"
-                        filter="url(#shadow)"
-                        className="transition-all duration-300"
-                      />
-
-                      <text
-                        x={node.x}
-                        y={node.y + 4.5}
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        fontSize="12"
-                        fontWeight="bold"
-                      >
-                        {displayValue}
-                      </text>
-
-                      <text
-                        x={node.x}
-                        y={node.y + 39}
-                        textAnchor="middle"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        fontWeight="700"
-                      >
-                        h {node.height}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-          )}
+          <div className="lg:col-span-1">
+            <CustomInputPanel
+              inputType="array"
+              onApply={handleCustomTreeInput}
+              currentData={[]}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+          <div className="bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-slate-200">Time Complexity</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Time Complexity</h3>
               </div>
               <span className="px-2 py-0.5 text-xs font-bold rounded bg-emerald-950/40 text-emerald-400 border border-emerald-900/50">
                 O(log N)
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
               AVL rebalancing keeps the height logarithmic after insertions and deletions.
             </p>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
+          <div className="bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800/80 rounded-2xl p-5 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm font-semibold text-slate-200">Space Complexity</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Space Complexity</h3>
               </div>
               <span className="px-2 py-0.5 text-xs font-bold rounded bg-purple-950/40 text-purple-400 border border-purple-900/50">
                 O(log N)
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
               Recursive operations use the call stack proportional to the tree height.
             </p>
           </div>

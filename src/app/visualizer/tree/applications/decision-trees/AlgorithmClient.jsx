@@ -23,7 +23,7 @@ export default function DecisionTreesPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.decisionTrees}
-          description="Mark Decision Trees as done and view it on your dashboard"
+          description="Mark Decision Trees as done and track your progress"
           initialDone={false}
         />
       }

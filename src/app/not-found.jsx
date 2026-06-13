@@ -51,7 +51,7 @@ const NotFoundPage = () => {
                 <div className="absolute w-10 h-2 bg-red-400 rounded-full -rotate-45"></div>
             </div>
             </div>
-          <Zap className="absolute top-4 left-1/2 w-8 h-8 text-yellow-400 transform -translate-x-1/2 animate-pulse opacity-0" />
+          <Zap className="absolute top-4 left-1/2 w-8 h-8 text-yellow-400 transform -translate-x-1/2 animate-zap-pulse opacity-0" />
         </div>
 
         {/* Content */}

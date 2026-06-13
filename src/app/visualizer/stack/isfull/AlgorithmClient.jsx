@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.isFull}
-          description="Mark Stack : isFull as done and view it on your dashboard"
+          description="Mark Stack : isFull as done and track your progress"
           initialDone={false}
         />
       }
