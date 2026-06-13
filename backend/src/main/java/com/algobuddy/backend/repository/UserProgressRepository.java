@@ -1,6 +1,7 @@
 package com.algobuddy.backend.repository;
 
 import com.algobuddy.backend.entity.UserProgress;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +20,20 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
 
     List<UserProgress> findByUserIdAndProblemIdIn(UUID userId, List<String> problemIds);
 
-    @Query(value = "SELECT COUNT(*) FROM user_progress WHERE user_id = :userId AND status = 'Completed' AND updated_at >= :startTime", nativeQuery = true)
+    @Modifying
+    @Query(value = """
+        INSERT INTO user_progress (user_id, problem_id, status, updated_at)
+        VALUES (:userId, :problemId, :status, NOW())
+        ON CONFLICT (user_id, problem_id)
+        DO UPDATE SET
+            status = EXCLUDED.status,
+            updated_at = NOW()
+        """, nativeQuery = true)
+    void upsertProgress(@Param("userId") UUID userId,
+                        @Param("problemId") String problemId,
+                        @Param("status") String status);
+
+    @Query("SELECT COUNT(u) FROM UserProgress u WHERE u.userId = :userId AND u.status = 'Completed' AND u.updatedAt >= :startTime")
     int countCompletedSince(@Param("userId") UUID userId, @Param("startTime") OffsetDateTime startTime);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

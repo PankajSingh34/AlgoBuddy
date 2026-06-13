@@ -125,7 +125,6 @@ public class PracticeService {
         }
 
         progressRepository.saveAll(toSave);
-
         if (anyCompleted) {
             self.updateStreakWithRetry(userId);
         }
@@ -147,6 +146,10 @@ public class PracticeService {
                 log.warn("Lock/constraint failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
             }
         }
+    }
+
+    private void upsertProgress(UUID userId, String problemId, String status) {
+        progressRepository.upsertProgress(userId, problemId, status);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
