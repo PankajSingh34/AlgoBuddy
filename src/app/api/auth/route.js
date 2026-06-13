@@ -42,6 +42,8 @@ const AUTH_RATE_LIMIT_PREFIX = "auth";
 const LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60; // 15 minutes
 const LOGIN_FAILURE_THRESHOLD = 5; // lock after 5 failed attempts
 const LOGIN_LOCK_SECONDS = 15 * 60; // 15 minutes lockout
+const MAX_MEMORY_FAILURE_ENTRIES = Number.parseInt(process.env.AUTH_MAX_MEMORY_FAILURE_ENTRIES || "5000", 10);
+const MAX_MEMORY_LOCKOUT_ENTRIES = Number.parseInt(process.env.AUTH_MAX_MEMORY_LOCKOUT_ENTRIES || "5000", 10);
 
 // In-memory fallback for local dev (single instance). Not suitable for serverless scaling.
 const memoryLockouts = new Map(); // email -> until timestamp
@@ -127,6 +129,43 @@ function failKey(email) {
   return `${AUTH_RATE_LIMIT_PREFIX}:fail:${email}`;
 }
 
+function getBoundedMax(value, fallback) {
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function trimOldestEntries(map, maxEntries) {
+  while (map.size > maxEntries) {
+    const oldestKey = map.keys().next().value;
+    if (!oldestKey) break;
+    map.delete(oldestKey);
+  }
+}
+
+function setMemoryEntry(map, key, value, maxEntries) {
+  if (map.has(key)) {
+    map.delete(key);
+  }
+  map.set(key, value);
+  trimOldestEntries(map, maxEntries);
+}
+
+function cleanupMemoryAuthState(now = Date.now()) {
+  for (const [key, until] of memoryLockouts.entries()) {
+    if (until <= now) {
+      memoryLockouts.delete(key);
+    }
+  }
+
+  for (const [key, bucket] of memoryFailures.entries()) {
+    if (bucket.resetAt <= now) {
+      memoryFailures.delete(key);
+    }
+  }
+
+  trimOldestEntries(memoryLockouts, getBoundedMax(MAX_MEMORY_LOCKOUT_ENTRIES, 5000));
+  trimOldestEntries(memoryFailures, getBoundedMax(MAX_MEMORY_FAILURE_ENTRIES, 5000));
+}
+
 async function isEmailLocked(email) {
   if (!email) return false;
 
@@ -140,8 +179,7 @@ async function isEmailLocked(email) {
     }
   }
 
-  const lockKeyMem = `auth:lock:${email}`;
-  const acquired = await acquireMemoryLock(lockKeyMem);
+  const acquired = await acquireMemoryLock(`auth:lock:${email}`);
   if (!acquired) return false;
   try {
     const until = memoryLockouts.get(email);
@@ -152,9 +190,8 @@ async function isEmailLocked(email) {
     }
     return true;
   } finally {
-    releaseMemoryLock(lockKeyMem);
+    releaseMemoryLock(`auth:lock:${email}`);
   }
-}
 
 async function recordLoginFailure(email) {
   if (!email) return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD };
@@ -179,28 +216,20 @@ async function recordLoginFailure(email) {
     }
   }
 
-  const lockKeyMem = `auth:fail:${email}`;
-  const acquired = await acquireMemoryLock(lockKeyMem);
-  if (!acquired) return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD };
-
-  try {
-    const now = Date.now();
-    const bucket = memoryFailures.get(email);
-    if (!bucket || bucket.resetAt <= now) {
-      memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
-      return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD - 1 };
-    }
-    bucket.count += 1;
-    const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - bucket.count);
-    if (bucket.count >= LOGIN_FAILURE_THRESHOLD) {
-      memoryFailures.delete(email);
-      memoryLockouts.set(email, now + LOGIN_LOCK_SECONDS * 1000);
-      return { locked: true, remaining: 0 };
-    }
-    return { locked: false, remaining };
-  } finally {
-    releaseMemoryLock(lockKeyMem);
+  const now = Date.now();
+  const bucket = memoryFailures.get(email);
+  if (!bucket || bucket.resetAt <= now) {
+    memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
+    return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD - 1 };
   }
+  bucket.count += 1;
+  const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - bucket.count);
+  if (bucket.count >= LOGIN_FAILURE_THRESHOLD) {
+    memoryFailures.delete(email);
+    memoryLockouts.set(email, now + LOGIN_LOCK_SECONDS * 1000);
+    return { locked: true, remaining: 0 };
+  }
+  return { locked: false, remaining };
 }
 
 async function clearLoginFailures(email) {
