@@ -34,9 +34,12 @@ export async function GET(request) {
     }
   }
 
-  // Return the user to an error page with some instructions
-  const errorUrl = request.nextUrl.clone();
-  errorUrl.pathname = '/login';
-  errorUrl.search = '?error=auth_callback_failed';
-  return NextResponse.redirect(errorUrl);
+  // Return the user to the most relevant error page with some instructions
+  const origin = request.nextUrl.origin;
+  const errorTarget =
+    next === "/reset-password"
+      ? `${origin}/reset-password?error=auth_callback_failed`
+      : `${origin}/login?error=auth_callback_failed`;
+
+  return NextResponse.redirect(errorTarget);
 }

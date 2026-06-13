@@ -209,6 +209,17 @@ export default function AuthForm({ isLogin = true }) {
               />
             </div>
 
+            {isLogin && (
+              <div className="flex justify-end">
+                <Link
+                  href="/reset-password"
+                  className="text-sm text-udemy-purple dark:text-udemy-purple-light hover:underline font-medium"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            )}
+
             {!isLogin && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
