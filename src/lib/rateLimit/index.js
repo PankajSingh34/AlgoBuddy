@@ -3,17 +3,40 @@ import { jwtVerify } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
 const RATE_LIMIT_KEY_PREFIX = "rl:";
+const MAX_RATE_LIMIT_ENTRIES = Number.parseInt(process.env.RATE_LIMIT_MAX_MEMORY_ENTRIES || "10000", 10);
 const store = new Map();
 
-function gc() {
-  if (Math.random() < 0.05) {
-    const now = Date.now();
-    for (const [key, bucket] of store.entries()) {
-      if (bucket.resetAt <= now) {
-        store.delete(key);
-      }
+function enforceStoreLimit() {
+  const maxEntries = Number.isFinite(MAX_RATE_LIMIT_ENTRIES) && MAX_RATE_LIMIT_ENTRIES > 0
+    ? MAX_RATE_LIMIT_ENTRIES
+    : 10000;
+
+  while (store.size > maxEntries) {
+    const oldestKey = store.keys().next().value;
+    if (!oldestKey) break;
+    store.delete(oldestKey);
+  }
+}
+
+function gc(force = false) {
+  if (!force && Math.random() >= 0.05) return;
+
+  const now = Date.now();
+  for (const [key, bucket] of store.entries()) {
+    if (bucket.resetAt <= now) {
+      store.delete(key);
     }
   }
+
+  enforceStoreLimit();
+}
+
+function setStoreBucket(key, bucket) {
+  if (store.has(key)) {
+    store.delete(key);
+  }
+  store.set(key, bucket);
+  enforceStoreLimit();
 }
 
 const redis =
@@ -115,7 +138,7 @@ export function createRateLimiter(options) {
     const bucket = store.get(key);
     if (!bucket || bucket.resetAt <= now) {
       const resetAt = now + windowMs;
-      store.set(key, { count: 1, resetAt });
+      setStoreBucket(key, { count: 1, resetAt });
       return { allowed: true, remaining: limit - 1, retryAfter: 0, resetAt };
     }
     if (bucket.count >= limit) {
@@ -123,6 +146,7 @@ export function createRateLimiter(options) {
       return { allowed: false, remaining: 0, retryAfter: Math.max(1, retryAfter), resetAt: bucket.resetAt };
     }
     bucket.count += 1;
+    setStoreBucket(key, bucket);
     return { allowed: true, remaining: limit - bucket.count, retryAfter: 0, resetAt: bucket.resetAt };
   }
 
@@ -201,6 +225,10 @@ export async function resetAll() {
     }
   }
   store.clear();
+}
+
+export function __getRateLimitFallbackStoreSize() {
+  return store.size;
 }
 
 let localSmtpCounter = 0;
