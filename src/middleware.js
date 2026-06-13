@@ -30,7 +30,7 @@ function getSupabaseConfig() {
 
 const protectedRoutes = ["/arena", "/practice", "/dashboard", "/profile"];
 
-export async function proxy(request) {
+export async function middleware(request) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabaseConfig = getSupabaseConfig();
@@ -79,4 +79,6 @@ export async function proxy(request) {
   return supabaseResponse;
 }
 
-
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+};
