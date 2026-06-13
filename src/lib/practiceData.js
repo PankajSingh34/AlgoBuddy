@@ -16,7 +16,7 @@ export const practiceData = [
             name: "Linear Search",
             difficulty: "Easy",
             companies: ["tcs", "infosys", "wipro", "accenture", "amazon", "google"],
-            practiceUrl: "https://leetcode.com/problems/check-if-n-and-its-double-exist/",
+            practiceUrl: "https://leetcode.com/problems/find-numbers-with-even-number-of-digits/",
             visualizerUrl: "/visualizer/array/linearsearch",
             theory: {
               summary: "A simple algorithm that checks every element in the array sequentially until the target is found.",
