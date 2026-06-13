@@ -26,10 +26,8 @@ export async function POST(request, { params }) {
       return jsonResponse({ error: "Too many presenter updates. Please try again shortly." }, 403);
     }
 
-    const body = await request.json().catch(() => ({}));
     const result = await claimSessionPresenter(params.sessionId, {
       userId: user.id,
-      sessionSecret: body.sessionSecret,
     });
 
     if (result.error) {

@@ -1,17 +1,19 @@
-/**
- * Pure generator functions for Queue IsFull operation.
- * Yields frames representing the state of the operation.
- */
-
 export function* checkFullGenerator(queue, capacity) {
-  yield { type: 'start', operation: 'Checking if queue is full …' };
+  yield { 
+      phase: 'start', 
+      action: 'check',
+      queue: [...queue],
+      explanation: `Checking if queue is full... We compare length (${queue.length}) with capacity (${capacity}).` 
+  };
   
   const full = queue.length >= capacity;
   
   yield { 
-    type: 'complete', 
+    phase: 'complete', 
+    action: 'check',
+    queue: [...queue],
     isFull: full, 
-    message: full ? 'Queue is FULL' : 'Queue is NOT full' 
+    explanation: full ? `Length is ${queue.length} >= ${capacity}. The Queue is FULL.` : `Length is ${queue.length} < ${capacity}. The Queue is NOT full.` 
   };
 }
 
@@ -27,11 +29,23 @@ export function* enqueueGenerator(currentQueue, value, capacity) {
     return;
   }
 
-  yield { type: 'start', operation: `Enqueuing “${val}” …` };
+  yield { 
+      phase: 'start', 
+      action: 'enqueue',
+      queue: [...currentQueue],
+      newValue: val,
+      explanation: `Enqueuing "${val}"...` 
+  };
   
-  const nextQueue = [...currentQueue, val];
+  const nextQueue = [...currentQueue, { id: Date.now(), value: val }];
   
-  yield { type: 'complete', queue: nextQueue, message: `“${val}” added to rear` };
+  yield { 
+      phase: 'complete', 
+      action: 'enqueue',
+      queue: nextQueue, 
+      newValue: null,
+      explanation: `"${val}" added to rear.` 
+  };
 }
 
 export function* dequeueGenerator(currentQueue) {
@@ -40,10 +54,22 @@ export function* dequeueGenerator(currentQueue) {
     return;
   }
 
-  const val = currentQueue[0];
-  yield { type: 'start', operation: `Dequeuing “${val}” …` };
+  const dequeuedNode = currentQueue[0];
+  yield { 
+      phase: 'start', 
+      action: 'dequeue',
+      queue: [...currentQueue],
+      dequeuedNode: dequeuedNode,
+      explanation: `Dequeuing "${dequeuedNode.value}" from the front...` 
+  };
 
   const nextQueue = currentQueue.slice(1);
   
-  yield { type: 'complete', queue: nextQueue, message: `“${val}” removed from front` };
+  yield { 
+      phase: 'complete', 
+      action: 'dequeue',
+      queue: nextQueue, 
+      dequeuedNode: null,
+      explanation: `"${dequeuedNode.value}" removed from front.` 
+  };
 }

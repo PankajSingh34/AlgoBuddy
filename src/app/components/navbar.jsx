@@ -2,10 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -47,6 +47,7 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
+ 
   const { user, setUser } = useUser();
   const userRef = useRef(null);
 
@@ -139,10 +140,12 @@ export default function Navbar() {
       localStorage.removeItem("PROBLEM_BOOKMARKS");
     }
     router.push("/");
+     window.location.href = "/";
     setMenuOpen(false);
   };
 
   const isActive = (href) => {
+     if (!pathname) return false; 
     if (href.startsWith("http")) return false;
 
     if (href.startsWith("/#")) {
@@ -152,6 +155,8 @@ export default function Navbar() {
     return (
       pathname === href ||
       pathname.startsWith(href + "/")
+
+
     );
   };
 
@@ -174,7 +179,7 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -197,6 +202,20 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              className="flex items-center gap-2.5 h-[38px] px-3.5 rounded-full border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-udemy-dark-surface hover:border-primary dark:hover:border-primary transition-all duration-150 focus-ring cursor-pointer group"
+              aria-label="Search site (Ctrl+K)"
+            >
+              <Search className="w-4 h-4 text-surface-500 group-hover:text-primary transition-colors" />
+              <span className="text-[13px] text-surface-500 dark:text-surface-400 font-medium group-hover:text-surface-700 dark:group-hover:text-white transition-colors">
+                Search...
+              </span>
+              <kbd className="inline-flex items-center gap-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-600 bg-white dark:bg-neutral-800 text-surface-400 dark:text-surface-500 select-none group-hover:border-primary/50 group-hover:text-primary transition-colors">
+                ⌘K
+              </kbd>
+            </button>
+
             {user ? (
               <div
                 ref={userRef}
@@ -288,21 +307,30 @@ export default function Navbar() {
             </button>
           </div>
 
-          <button
-            onClick={() =>
-              setMenuOpen((o) => !o)
-            }
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            className="md:hidden w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
-          >
-            {menuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 md:hidden">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              aria-label="Search site"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() =>
+                setMenuOpen((o) => !o)
+              }
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              {menuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -314,7 +342,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link

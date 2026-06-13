@@ -11,17 +11,27 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
   const lastFrameTime = useRef(0);
   const onStepRef = useRef(onStep);
   const stepsLength = steps?.length ?? 0;
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     onStepRef.current = onStep;
   }, [onStep]);
 
-  const play = useCallback(() => {
-    if (currentStep >= stepsLength - 1) {
-      setCurrentStep(0);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (isPlaying && stepsLength > 0 && currentStep >= stepsLength - 1) {
+      setIsPlaying(false);
     }
+  }, [isPlaying, currentStep, stepsLength]);
+
+  const play = useCallback(() => {
+    setCurrentStep((s) => (s >= stepsLength - 1 ? 0 : s));
+    lastFrameTime.current = 0;
     setIsPlaying(true);
-  }, [currentStep, stepsLength]);
+  }, [stepsLength]);
 
   const pause = useCallback(() => {
     setIsPlaying(false);
@@ -38,6 +48,7 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
       rafRef.current = null;
     }
     setCurrentStep(0);
+    lastFrameTime.current = 0;
   }, []);
 
   const stepForward = useCallback(() => {
@@ -59,17 +70,20 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
     if (!isPlaying || stepsLength === 0) return;
 
     const animate = (timestamp) => {
-      if (timestamp - lastFrameTime.current >= speed) {
-        setCurrentStep((s) => {
-          if (s >= stepsLength - 1) {
-            setIsPlaying(false);
-            return s;
-          }
-          return s + 1;
-        });
+      if (!isPlayingRef.current) return;
+
+      if (lastFrameTime.current === 0) {
         lastFrameTime.current = timestamp;
       }
-      rafRef.current = requestAnimationFrame(animate);
+
+      if (timestamp - lastFrameTime.current >= speed) {
+        setCurrentStep((s) => (s < stepsLength - 1 ? s + 1 : s));
+        lastFrameTime.current = timestamp;
+      }
+
+      if (isPlayingRef.current) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
     };
 
     rafRef.current = requestAnimationFrame(animate);
@@ -82,10 +96,10 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
   }, [isPlaying, speed, stepsLength]);
 
   useEffect(() => {
-    if (steps && steps[currentStep]) {
+    if (steps && currentStep >= 0 && currentStep < stepsLength) {
       onStepRef.current?.(steps[currentStep], currentStep);
     }
-  }, [currentStep, steps]);
+  }, [currentStep, steps, stepsLength]);
 
   useEffect(() => {
     return () => {

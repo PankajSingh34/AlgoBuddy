@@ -40,10 +40,18 @@ function apiBase() {
 async function fetchMySheetFromServer() {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
-    if (!headers.Authorization) return null;
+    if (!headers.Authorization) {
+      console.warn("[useMySheet] fetch skipped: No authorization token");
+      return null;
+    }
+    console.log("[useMySheet] Fetching sheet from Spring Boot:", `${apiBase()}/api/v1/mysheet`);
     const res = await fetch(`${apiBase()}/api/v1/mysheet`, { headers });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[useMySheet] fetch failed with status:", res.status);
+      return null;
+    }
     const data = await res.json();
+    console.log("[useMySheet] fetch succeeded with data:", data);
     // Expect: { items: [ { problemId, addedAt, note } ] }
     const map = {};
     (data.items || []).forEach((item) => {
@@ -53,8 +61,12 @@ async function fetchMySheetFromServer() {
   }
 
   // Supabase path via Next.js API route
+  console.log("[useMySheet] Fetching sheet from NextJS API");
   const res = await fetch("/api/mysheet");
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[useMySheet] fetch from NextJS failed with status:", res.status);
+    return null;
+  }
   const data = await res.json();
   return data.sheet || null;
 }
@@ -63,11 +75,13 @@ async function addToSheetOnServer(problemId, note = "") {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    await fetch(`${apiBase()}/api/v1/mysheet`, {
+    console.log("[useMySheet] Adding problem to Spring Boot sheet:", problemId);
+    const res = await fetch(`${apiBase()}/api/v1/mysheet`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ problemId, note }),
     });
+    console.log("[useMySheet] Add problem response status:", res.status);
     return;
   }
 
@@ -82,10 +96,12 @@ async function removeFromSheetOnServer(problemId) {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    await fetch(`${apiBase()}/api/v1/mysheet?problemId=${problemId}`, {
+    console.log("[useMySheet] Removing problem from Spring Boot sheet:", problemId);
+    const res = await fetch(`${apiBase()}/api/v1/mysheet?problemId=${problemId}`, {
       method: "DELETE",
       headers,
     });
+    console.log("[useMySheet] Remove problem response status:", res.status);
     return;
   }
 
@@ -134,17 +150,8 @@ export function useMySheet() {
         if (cancelled) return;
 
         if (serverSheet) {
-          // Merge: server wins (by addedAt timestamp)
-          const merged = { ...local };
-          Object.entries(serverSheet).forEach(([id, entry]) => {
-            const localTs = local[id]?.addedAt ? new Date(local[id].addedAt).getTime() : 0;
-            const serverTs = entry.addedAt ? new Date(entry.addedAt).getTime() : 0;
-            if (serverTs >= localTs) merged[id] = entry;
-          });
-          writeLocal(merged);
-          if (!cancelled) setSheet(merged);
-
-          // Bulk-sync local items that aren't on server
+          // DB is authoritative for logged-in users.
+          // 1. Find local-only items (added offline/before login) → sync them up
           const toSync = Object.entries(local)
             .filter(([id]) => !serverSheet[id])
             .map(([id, entry]) => ({ problemId: id, note: entry.note || "" }));
@@ -152,6 +159,17 @@ export function useMySheet() {
           for (const item of toSync) {
             await addToSheetOnServer(item.problemId, item.note).catch(() => {});
           }
+
+          // 2. After syncing local-only items up, build the authoritative state:
+          //    server data + local-only items that were just synced.
+          //    Items deleted in another browser (exist in local but not server) are dropped.
+          const authoritative = { ...serverSheet };
+          toSync.forEach(({ problemId }) => {
+            if (local[problemId]) authoritative[problemId] = local[problemId];
+          });
+
+          writeLocal(authoritative);
+          if (!cancelled) setSheet(authoritative);
         }
       } catch (err) {
         console.error("[useMySheet] sync failed:", err);

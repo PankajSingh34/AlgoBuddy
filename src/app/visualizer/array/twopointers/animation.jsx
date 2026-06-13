@@ -1,11 +1,10 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { gsap } from "gsap";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import usePlayback from "@/app/hooks/usePlayback";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import {
   generateStatesPairSum,
   generateStatesRemoveDuplicates,
@@ -24,235 +23,117 @@ const Animation = () => {
   const [problemType, setProblemType] = useState(PROBLEMS.PAIR_SUM);
   const [inputData, setInputData] = useState("1, 2, 3, 4, 6");
   const [targetValue, setTargetValue] = useState("6");
-
+  
   const [dataArray, setDataArray] = useState([]);
-  const [leftPointer, setLeftPointer] = useState(-1);
-  const [rightPointer, setRightPointer] = useState(-1);
-  const [fixedIndex, setFixedIndex] = useState(-1);
-  const [bestResult, setBestResult] = useState(null);
-  const [currentResult, setCurrentResult] = useState(null);
-  const [stepExplanation, setStepExplanation] = useState("");
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [targetNum, setTargetNum] = useState(0);
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [pendingStart, setPendingStart] = useState(false);
 
-  const {
-    isPaused,
-    isPausedRef,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-  } = usePlayback(() => 1);
+  const [visualState, setVisualState] = useState({
+    leftPointer: -1,
+    rightPointer: -1,
+    fixedIndex: -1,
+    bestResult: null,
+    currentResult: null,
+    stepExplanation: "",
+    success: false,
+    violation: false,
+    done: false
+  });
 
-  const animationRef = useRef(null);
-  const wasPausedRef = useRef(false);
-  const stateQueueRef = useRef([]);
-  const currentStateIdxRef = useRef(0);
-  const elementRefs = useRef([]);
+  const steps = useMemo(() => {
+    if (dataArray.length === 0) return [];
+    if (problemType === PROBLEMS.PAIR_SUM) {
+      return Array.from(generateStatesPairSum(dataArray, targetNum));
+    } else if (problemType === PROBLEMS.REMOVE_DUPLICATES) {
+      return Array.from(generateStatesRemoveDuplicates(dataArray));
+    } else if (problemType === PROBLEMS.CONTAINER_WATER) {
+      return Array.from(generateStatesContainerWater(dataArray));
+    } else if (problemType === PROBLEMS.THREE_SUM) {
+      return Array.from(generateStatesThreeSum(dataArray));
+    }
+    return [];
+  }, [dataArray, targetNum, problemType]);
+
+  const onStep = useCallback((step) => {
+    setVisualState({
+      leftPointer: step.left,
+      rightPointer: step.right,
+      fixedIndex: step.fixedIndex ?? -1,
+      currentResult: step.current,
+      bestResult: step.best,
+      stepExplanation: step.explanation,
+      success: step.success || false,
+      violation: step.violation || false,
+      done: step.done || false
+    });
+    
+    if (step.done) {
+        setMessage("Visualization completed.");
+        setMessageType("success");
+    } else {
+        setMessage("");
+        setMessageType("");
+    }
+  }, []);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1500 });
+  const isAnimating = engine.isPlaying || engine.currentStep > 0;
 
   const handleReset = () => {
-    clearTimeout(animationRef.current);
+    engine.reset();
     setDataArray([]);
-    setLeftPointer(-1);
-    setRightPointer(-1);
-    setFixedIndex(-1);
-    setBestResult(null);
-    setCurrentResult(null);
-    setStepExplanation("");
-    setIsAnimating(false);
-    setMessage("");
-    setMessageType("");
-    setPendingStart(false);
-    isPausedRef.current = false;
-    wasPausedRef.current = false;
-    stateQueueRef.current = [];
-    currentStateIdxRef.current = 0;
-    setSpeed(1);
-
-    elementRefs.current.forEach((ref) => {
-      if (ref) {
-        gsap.to(ref, {
-          backgroundColor: "#E5E7EB",
-          borderColor: "#D1D5DB",
-          color: "#1F2937",
-          duration: 0,
-        });
-      }
+    setVisualState({
+      leftPointer: -1, rightPointer: -1, fixedIndex: -1,
+      bestResult: null, currentResult: null, stepExplanation: "",
+      success: false, violation: false, done: false
     });
+    setMessage(""); setMessageType("");
   };
 
-  useVisualizerReset(handleReset);
-
-  const animateStep = useCallback(() => {
-    if (currentStateIdxRef.current >= stateQueueRef.current.length) {
-      setIsAnimating(false);
-      setMessage("Visualization completed.");
-      setMessageType("success");
-      return;
-    }
-
-    const state = stateQueueRef.current[currentStateIdxRef.current];
-    const delay = 1500 / speedRef.current;
-
-    setLeftPointer(state.left);
-    setRightPointer(state.right);
-    setFixedIndex(state.fixedIndex ?? -1);
-    setCurrentResult(state.current);
-    setBestResult(state.best);
-    setStepExplanation(state.explanation);
-
-    // GSAP highlighting
-    elementRefs.current.forEach((ref, index) => {
-      if (!ref) return;
-
-      const isLeft = index === state.left;
-      const isRight = index === state.right;
-      const isFixed = index === state.fixedIndex;
-      const isActive = isLeft || isRight || isFixed;
-
-      if (isFixed) {
-        // Fixed pointer: teal
-        gsap.to(ref, {
-          backgroundColor: "#CCFBF1",
-          borderColor: "#14B8A6",
-          color: "#0F766E",
-          duration: 0.3,
-        });
-      } else if (isActive && state.success) {
-        // Found / match: green
-        gsap.to(ref, {
-          backgroundColor: "#DCFCE7",
-          borderColor: "#22C55E",
-          color: "#166534",
-          duration: 0.3,
-        });
-      } else if (isActive && state.violation) {
-        // Duplicate / violation: red
-        gsap.to(ref, {
-          backgroundColor: "#FEE2E2",
-          borderColor: "#EF4444",
-          color: "#991B1B",
-          duration: 0.3,
-        });
-      } else if (isLeft) {
-        // Left pointer: purple
-        gsap.to(ref, {
-          backgroundColor: "#F3E8FF",
-          borderColor: "#A855F7",
-          color: "#6B21A8",
-          duration: 0.3,
-        });
-      } else if (isRight) {
-        // Right pointer: indigo
-        gsap.to(ref, {
-          backgroundColor: "#E0E7FF",
-          borderColor: "#6366F1",
-          color: "#3730A3",
-          duration: 0.3,
-        });
-      } else if (state.done && isActive) {
-        gsap.to(ref, {
-          backgroundColor: "#F3E8FF",
-          borderColor: "#A855F7",
-          color: "#6B21A8",
-          duration: 0.3,
-        });
-      } else {
-        // Default: gray
-        gsap.to(ref, {
-          backgroundColor: "#E5E7EB",
-          borderColor: "#D1D5DB",
-          color: "#4B5563",
-          duration: 0.3,
-        });
-      }
-    });
-
-    currentStateIdxRef.current++;
-
-    if (!state.done) {
-      animationRef.current = setTimeout(() => {
-        if (!isPausedRef.current) animateStep();
-      }, delay);
-    } else {
-      setIsAnimating(false);
-      setMessage("Visualization completed.");
-      setMessageType("success");
-    }
-  }, [speedRef, isPausedRef]);
-
-  const needsTarget =
-    problemType === PROBLEMS.PAIR_SUM || problemType === PROBLEMS.THREE_SUM;
+  const needsTarget = problemType === PROBLEMS.PAIR_SUM || problemType === PROBLEMS.THREE_SUM;
 
   const handleGo = (e) => {
     e.preventDefault();
     handleReset();
 
     if (!inputData) {
-      setMessage("Please provide input data.");
-      setMessageType("warning");
-      return;
+      setMessage("Please provide input data."); setMessageType("warning"); return;
     }
 
-    const parsedArray = inputData
-      .split(",")
-      .map((s) => parseInt(s.trim()));
-
+    const parsedArray = inputData.split(",").map((s) => parseInt(s.trim()));
     if (parsedArray.some(isNaN)) {
-      setMessage("Invalid input. Please provide comma-separated integers.");
-      setMessageType("warning");
-      return;
+      setMessage("Invalid input. Please provide comma-separated integers."); setMessageType("warning"); return;
     }
 
-    let targetNum = 0;
+    let tNum = 0;
     if (needsTarget) {
-      targetNum = parseInt(targetValue);
-      if (isNaN(targetNum)) {
-        setMessage("Please provide a valid integer target.");
-        setMessageType("warning");
-        return;
+      tNum = parseInt(targetValue);
+      if (isNaN(tNum)) {
+        setMessage("Please provide a valid integer target."); setMessageType("warning"); return;
       }
     }
 
+    setTargetNum(tNum);
     setDataArray(parsedArray);
 
-    let states = [];
-    if (problemType === PROBLEMS.PAIR_SUM) {
-      states = Array.from(generateStatesPairSum(parsedArray, targetNum));
-    } else if (problemType === PROBLEMS.REMOVE_DUPLICATES) {
-      states = Array.from(generateStatesRemoveDuplicates(parsedArray));
-    } else if (problemType === PROBLEMS.CONTAINER_WATER) {
-      states = Array.from(generateStatesContainerWater(parsedArray));
-    } else if (problemType === PROBLEMS.THREE_SUM) {
-      states = Array.from(generateStatesThreeSum(parsedArray));
-    }
-
-    stateQueueRef.current = states;
-    currentStateIdxRef.current = 0;
-    setIsAnimating(true);
-    setPendingStart(true);
+    setTimeout(() => {
+        engine.play();
+    }, 50);
   };
 
-  useEffect(() => {
-    if (pendingStart && dataArray.length > 0 && stateQueueRef.current.length > 0) {
-      setPendingStart(false);
-      animateStep();
-    }
-  }, [pendingStart, dataArray, animateStep]);
-
-  useEffect(() => {
-    if (isPaused) {
-      wasPausedRef.current = true;
-    } else if (wasPausedRef.current && isAnimating) {
-      wasPausedRef.current = false;
-      clearTimeout(animationRef.current);
-      animateStep();
-    }
-  }, [isPaused, isAnimating, animateStep]);
+  useVisualizerKeyboard({
+    onTogglePlayPause: engine.isPlaying ? engine.pause : () => {
+        if (dataArray.length > 0) engine.play();
+    },
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    speed: engine.speed / 1000,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
+  });
 
   const getFontSize = (value) => {
     const len = String(value).length;
@@ -363,11 +244,16 @@ const Animation = () => {
         {isAnimating && (
           <div className="mt-6 border-t border-gray-100 dark:border-gray-800 pt-6">
             <PlaybackControls
-              isPaused={isPaused}
-              speed={speed}
-              togglePlayPause={togglePlayPause}
-              decreaseSpeed={decreaseSpeed}
-              increaseSpeed={increaseSpeed}
+                isPlaying={engine.isPlaying}
+                onPlayPause={engine.isPlaying ? engine.pause : () => engine.play()}
+                speed={engine.speed / 1000}
+                onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+                onStepForward={engine.stepForward}
+                onStepBackward={engine.stepBackward}
+                onReset={engine.reset}
+                onExplainStep={() => {}}
+                disabled={steps.length === 0}
+                progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
             />
           </div>
         )}
@@ -381,7 +267,6 @@ const Animation = () => {
 
       {dataArray.length > 0 && (
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* Step info cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-3">
@@ -391,7 +276,7 @@ const Animation = () => {
                 </span>
               </div>
               <p className="text-gray-700 dark:text-gray-200 text-base leading-relaxed font-mono min-h-[3rem]">
-                {stepExplanation || "Ready to begin..."}
+                {visualState.stepExplanation || "Ready to begin..."}
               </p>
             </div>
 
@@ -401,7 +286,7 @@ const Animation = () => {
                   Current State
                 </h4>
                 <div className="text-xl font-bold text-gray-800 dark:text-gray-100 font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                  {currentResult !== null ? currentResult : "-"}
+                  {visualState.currentResult !== null ? visualState.currentResult : "-"}
                 </div>
               </div>
               <div>
@@ -409,13 +294,12 @@ const Animation = () => {
                   Best Result
                 </h4>
                 <div className="text-xl font-bold text-[#a435f0] dark:text-[#c56eff] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                  {bestResult !== null ? bestResult : "-"}
+                  {visualState.bestResult !== null ? visualState.bestResult : "-"}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Array visualization */}
           <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md overflow-x-auto border border-gray-100 dark:border-gray-700">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-10 text-center">
               Two Pointers Visualization
@@ -423,16 +307,33 @@ const Animation = () => {
 
             <div className="flex gap-2 justify-center min-w-max pb-10 px-4">
               {dataArray.map((element, index) => {
-                const isLeft = index === leftPointer;
-                const isRight = index === rightPointer;
-                const isFixed = index === fixedIndex;
+                const isLeft = index === visualState.leftPointer;
+                const isRight = index === visualState.rightPointer;
+                const isFixed = index === visualState.fixedIndex;
+                const isActive = isLeft || isRight || isFixed;
+
+                let bgColor = "bg-[#E5E7EB]";
+                let borderColor = "border-[#D1D5DB]";
+                let textColor = "text-[#4B5563]";
+
+                if (isFixed) {
+                    bgColor = "bg-[#CCFBF1]"; borderColor = "border-[#14B8A6]"; textColor = "text-[#0F766E]";
+                } else if (isActive && visualState.success) {
+                    bgColor = "bg-[#DCFCE7]"; borderColor = "border-[#22C55E]"; textColor = "text-[#166534]";
+                } else if (isActive && visualState.violation) {
+                    bgColor = "bg-[#FEE2E2]"; borderColor = "border-[#EF4444]"; textColor = "text-[#991B1B]";
+                } else if (isLeft) {
+                    bgColor = "bg-[#F3E8FF]"; borderColor = "border-[#A855F7]"; textColor = "text-[#6B21A8]";
+                } else if (isRight) {
+                    bgColor = "bg-[#E0E7FF]"; borderColor = "border-[#6366F1]"; textColor = "text-[#3730A3]";
+                } else if (visualState.done && isActive) {
+                    bgColor = "bg-[#F3E8FF]"; borderColor = "border-[#A855F7]"; textColor = "text-[#6B21A8]";
+                }
 
                 return (
                   <div key={index} className="flex flex-col items-center relative">
                     <div
-                      ref={(el) => (elementRefs.current[index] = el)}
-                      className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg border-2 transition-colors duration-200 ${getFontSize(element)} shadow-sm`}
-                      style={{ backgroundColor: "#E5E7EB", borderColor: "#D1D5DB" }}
+                      className={`w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg border-2 transition-colors duration-200 ${getFontSize(element)} shadow-sm ${bgColor} ${borderColor} ${textColor}`}
                     >
                       {element}
                     </div>
@@ -441,7 +342,6 @@ const Animation = () => {
                       {index}
                     </div>
 
-                    {/* Pointer labels */}
                     <div className="absolute -bottom-10 flex flex-col items-center gap-1 w-full">
                       {isFixed && (
                         <div className="text-teal-600 font-bold text-xs bg-teal-50 px-2 py-0.5 rounded shadow-sm border border-teal-300">
@@ -467,7 +367,6 @@ const Animation = () => {
               })}
             </div>
 
-            {/* Legend */}
             <div className="mt-6 flex flex-wrap justify-center gap-6 text-xs text-gray-500 dark:text-gray-400 font-medium">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-[#F3E8FF] border border-[#A855F7]"></div>

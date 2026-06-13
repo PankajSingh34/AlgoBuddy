@@ -3,18 +3,26 @@ spring:
     name: backend
 
   datasource:
-    # IMPORTANT: Use environment variables to keep your secrets safe!
-    # Example: export DB_URL="jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
-    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      data-source-properties:
+        prepareThreshold: 0
+        preparedStatementCacheQueries: 0
 
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  port: 8080
+
+server:
+  port: ${PORT:8080}
+
+supabase:
+  url: ${SUPABASE_URL:https://your-project-id.supabase.co}
+
+app:
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,https://algobuddy.vercel.app,https://algobuddy.me,https://www.algobuddy.me}

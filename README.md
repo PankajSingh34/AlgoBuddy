@@ -453,6 +453,10 @@ GEMINI_API_KEY=your-gemini-api-key
 # ──────────── Rate Limiting (Production) ────────────
 UPSTASH_REDIS_REST_URL=your-upstash-url
 UPSTASH_REDIS_REST_TOKEN=your-upstash-token
+
+# ──────────── Spring Boot Backend CORS (Optional in dev, required in prod) ────────────
+ALLOWED_ORIGINS=http://localhost:3000
+APP_ENV=dev
 ```
 
 > **💡 Tip:** See [`EnvExample.txt`](EnvExample.txt) for a complete reference of all environment variables.

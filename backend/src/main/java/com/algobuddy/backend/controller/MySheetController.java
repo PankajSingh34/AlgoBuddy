@@ -4,7 +4,9 @@ import com.algobuddy.backend.dto.MySheetDto;
 import com.algobuddy.backend.dto.MySheetRequestDto;
 import com.algobuddy.backend.dto.MySheetResponseDto;
 import com.algobuddy.backend.entity.MySheet;
-import com.algobuddy.backend.repository.MySheetRepository;
+import com.algobuddy.backend.service.MySheetService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,21 +14,23 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/v1/mysheet")
 @RequiredArgsConstructor
+@Validated
 public class MySheetController {
 
-    private final MySheetRepository mySheetRepository;
+    private final MySheetService mySheetService;
 
     @GetMapping
     public ResponseEntity<MySheetResponseDto> getMySheet(@AuthenticationPrincipal Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
-        List<MySheet> items = mySheetRepository.findByUserId(userId);
+        List<MySheet> items = mySheetService.getMySheet(userId);
 
         List<MySheetDto> dtos = items.stream()
                 .map(item -> MySheetDto.builder()
@@ -41,34 +45,19 @@ public class MySheetController {
 
     @PostMapping
     public ResponseEntity<Void> addToSheet(@AuthenticationPrincipal Jwt jwt,
-                                           @RequestBody MySheetRequestDto request) {
+                                           @Valid @RequestBody MySheetRequestDto request) {
         UUID userId = UUID.fromString(jwt.getSubject());
-
-        Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(userId, request.getProblemId());
-        if (existing.isPresent()) {
-            MySheet item = existing.get();
-            item.setNote(request.getNote());
-            // Added at is updated on client or not, but let's keep added_at intact or updated.
-            mySheetRepository.save(item);
-        } else {
-            MySheet item = new MySheet();
-            item.setUserId(userId);
-            item.setProblemId(request.getProblemId());
-            item.setNote(request.getNote());
-            // added_at is defaulted by database (DEFAULT now())
-            mySheetRepository.save(item);
-        }
+        mySheetService.addToSheet(userId, request.getProblemId(), request.getNote());
 
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping
     public ResponseEntity<Void> removeFromSheet(@AuthenticationPrincipal Jwt jwt,
-                                                @RequestParam String problemId) {
+                                                @NotBlank(message = "problemId cannot be empty") @RequestParam String problemId) {
         UUID userId = UUID.fromString(jwt.getSubject());
 
-        mySheetRepository.findByUserIdAndProblemId(userId, problemId)
-                .ifPresent(mySheetRepository::delete);
+        mySheetService.removeFromSheet(userId, problemId);
 
         return ResponseEntity.ok().build();
     }

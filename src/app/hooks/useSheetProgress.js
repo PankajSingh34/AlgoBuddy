@@ -227,12 +227,7 @@ export function useSheetProgress() {
           serverMap[id] = normalizeEntry(val);
         });
 
-        // 3. Merge server wins over local (by timestamp)
-        const merged = mergeProgress(local, serverMap);
-        writeLocal(merged);
-        if (!cancelled) setProgress(merged);
-
-        // 4. Find items in local but not on server → bulk sync them
+        // 3. Find items in local but not on server → bulk sync them up first
         const toSync = [];
         Object.entries(local).forEach(([id, entry]) => {
           const e = normalizeEntry(entry);
@@ -242,17 +237,30 @@ export function useSheetProgress() {
         });
         if (toSync.length > 0) {
           const bulkResult = await bulkSyncToServer(toSync);
-          // If Spring Boot returned fresh data, apply it
-          if (bulkResult?.progress && !cancelled) {
-            const freshMap = {};
+          // If Spring Boot returned fresh data after bulk sync, use it
+          if (bulkResult?.progress) {
             Object.entries(bulkResult.progress).forEach(([id, val]) => {
-              freshMap[id] = normalizeEntry(val);
+              serverMap[id] = normalizeEntry(val);
             });
-            const reMerged = mergeProgress(merged, freshMap);
-            writeLocal(reMerged);
-            setProgress(reMerged);
           }
         }
+
+        // 4. DB is authoritative: build final state from serverMap only.
+        //    - Server entries are used as-is.
+        //    - Local-only entries that were just bulk-synced are also included.
+        //    - Local entries that don't exist on server AND weren't synced up
+        //      (e.g. "Not Started") are dropped — they reflect deletions from
+        //      another browser/device.
+        const syncedIds = new Set(toSync.map((i) => i.problemId));
+        const authoritative = { ...serverMap };
+        // Keep local entries that were just synced (they are now on server)
+        syncedIds.forEach((id) => {
+          if (!authoritative[id] && local[id]) {
+            authoritative[id] = normalizeEntry(local[id]);
+          }
+        });
+        writeLocal(authoritative);
+        if (!cancelled) setProgress(authoritative);
 
         // 5. Update streak state
         if (!cancelled) {

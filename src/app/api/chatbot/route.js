@@ -226,14 +226,8 @@ function toGeminiContents(messages) {
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(request) {
-  const authResult = await getAuthenticatedUser();
-
-  if (!authResult.success) {
-    if (authResult.type === "CONFIG_ERROR" || authResult.type === "AUTH_PROVIDER_ERROR") {
-      return jsonResponse({ error: "Authentication service unavailable" }, 500);
-    }
-    return jsonResponse({ error: "Authentication required" }, 401);
-  }
+  // Chatbot is open to guest/unauthenticated users as well, so we don't return 401.
+  const authResult = await getAuthenticatedUser().catch(() => ({ success: false }));
 
   const ip = getClientIp(request.headers);
   const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);

@@ -82,7 +82,16 @@ export async function getAuthenticatedUser() {
       },
     });
 
-    const { data, error } = await client.auth.getUser();
+    // Race getUser() against a 5-second timeout so that network issues
+    // (ConnectTimeoutError to Supabase) fail fast instead of blocking
+    // every API route for the full 10-second fetch timeout.
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Auth check timed out")), 5000)
+    );
+    const { data, error } = await Promise.race([
+      client.auth.getUser(),
+      timeoutPromise,
+    ]);
 
     if (error) {
       console.error("[Authentication Helper] Auth provider error during getUser:", error.message || error);
@@ -96,6 +105,12 @@ export async function getAuthenticatedUser() {
 
     return { success: true, user: data.user };
   } catch (err) {
+    // Swallow timeout and network errors — return UNAUTHENTICATED so the
+    // caller gets a 401 quickly rather than a 500 after a long hang.
+    if (err.message === "Auth check timed out" || err?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
+      console.warn("[Authentication Helper] Auth check timed out — treating as unauthenticated.");
+      return { success: false, type: "UNAUTHENTICATED" };
+    }
     console.error("[Authentication Helper] Critical exception during authentication verification:", err.message || err);
     return { success: false, type: "AUTH_PROVIDER_ERROR" };
   }
