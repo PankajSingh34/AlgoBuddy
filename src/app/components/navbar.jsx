@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, Bell } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 
 function getStoredTheme() {
@@ -44,6 +44,15 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const notifications = [
+    "🔥 7 Day Streak Achieved",
+    "🎯 Goal Completed",
+    "📚 New Blog Available",
+    "🏆 Achievement Unlocked",
+    "📝 Daily Practice Challenge"
+  ];
 
   const pathname = usePathname();
   const router = useRouter();
@@ -140,12 +149,12 @@ export default function Navbar() {
       localStorage.removeItem("PROBLEM_BOOKMARKS");
     }
     router.push("/");
-     window.location.href = "/";
+    window.location.href = "/";
     setMenuOpen(false);
   };
 
   const isActive = (href) => {
-     if (!pathname) return false; 
+    if (!pathname) return false;
     if (href.startsWith("http")) return false;
 
     if (href.startsWith("/#")) {
@@ -155,8 +164,6 @@ export default function Navbar() {
     return (
       pathname === href ||
       pathname.startsWith(href + "/")
-
-
     );
   };
 
@@ -202,19 +209,35 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
-              className="flex items-center gap-2.5 h-[38px] px-3.5 rounded-full border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-udemy-dark-surface hover:border-primary dark:hover:border-primary transition-all duration-150 focus-ring cursor-pointer group"
-              aria-label="Search site (Ctrl+K)"
-            >
-              <Search className="w-4 h-4 text-surface-500 group-hover:text-primary transition-colors" />
-              <span className="text-[13px] text-surface-500 dark:text-surface-400 font-medium group-hover:text-surface-700 dark:group-hover:text-white transition-colors">
-                Search...
-              </span>
-              <kbd className="inline-flex items-center gap-0.5 text-[9px] font-mono px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-600 bg-white dark:bg-neutral-800 text-surface-400 dark:text-surface-500 select-none group-hover:border-primary/50 group-hover:text-primary transition-colors">
-                ⌘K
-              </kbd>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-udemy-dark-surface"
+              >
+                <Bell className="w-5 h-5" />
+
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1">
+                  {notifications.length}
+                </span>
+              </button>
+
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-udemy-dark-surface border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-[9999]">
+                  <div className="p-3 font-semibold border-b">
+                    Notifications
+                  </div>
+
+                  {notifications.map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-3 text-sm border-b last:border-b-0"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {user ? (
               <div
