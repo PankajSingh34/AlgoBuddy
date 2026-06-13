@@ -284,7 +284,7 @@ onMouseLeave={handleMouseUp}
                 x2={ex}
                 y2={ey}
                 weight={edge.weight ?? 1}
-                onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
+                onWeightChange={(newWeight) => onUpdateEdgeWeight?.(idx, newWeight)}
               />
             )}
           </g>

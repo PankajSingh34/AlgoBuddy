@@ -1,33 +1,42 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-
-async function apiFetch(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
-}
+import { useEffect } from "react";
+import {
+  PROGRESS_UNAVAILABLE_MESSAGE,
+  getModuleProgress,
+  saveModuleProgress,
+} from "@/lib/userProgress";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
-  
+
   useEffect(() => {
     const fetchUserProgress = async () => {
       if (!user) return;
-      try {
-        const data = await apiFetch(`/api/progress?moduleId=${encodeURIComponent(moduleId)}`);
-        setIsDone(data?.is_done ?? false);
-      } catch (e) {
-        console.error("Error fetching user progress:", e);
+
+      const { data, error, unavailable } = await getModuleProgress(
+        user.id,
+        moduleId
+      );
+
+      if (unavailable) {
+        setIsDone(false);
+        return;
       }
+
+      if (error) {
+        console.error("Error fetching user progress:", error);
+        return;
+      }
+
+      setIsDone(data?.is_done ?? false);
     };
+
+
     fetchUserProgress();
   }, [user, moduleId]);
 
@@ -63,4 +72,57 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       return;
     }
 
-  }}
+<<<<<<< HEAD
+    try {
+      const nextDone = !isDone;
+      const { error, unavailable } = await saveModuleProgress({
+        userId: user.id,
+        moduleId,
+        isDone: nextDone,
+      });
+
+      if (unavailable) {
+        toast.error(PROGRESS_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
+      if (error) {
+        console.error("Error updating progress:", error.message, error.details);
+        toast.error("Failed to update progress. Please try again.");
+        return;
+      }
+
+      setIsDone(nextDone);
+      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
+    } catch (err) {
+      console.error("Unexpected error during progress update:", err);
+      toast.error("Unexpected error. Please try again.");
+    }
+  }
+
+  return (
+    <div
+      className={`border border-surface-200 dark:border-surface-700 max-w-4xl mx-auto rounded-lg p-4 shadow-lg flex flex-col justify-between ${
+        isDone ? "bg-green-50 dark:bg-green-900/30" : "bg-white dark:bg-surface-900"
+      }`}
+    >
+      <div className="my-4 px-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-surface-800 dark:text-surface-200">
+            Done With the Learning
+          </h1>
+          <p className="text-sm text-surface-500 dark:text-surface-400">{description}</p>
+        </div>
+        <input
+          type="checkbox"
+          checked={isDone}
+          onChange={toggleCompletion}
+          className={`w-6 h-6 rounded cursor-pointer transition duration-300 ${
+            isDone ? "accent-green-500 ring-2 ring-green-500" : "accent-[#a435f0]"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+

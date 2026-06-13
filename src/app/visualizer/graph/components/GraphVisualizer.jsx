@@ -322,9 +322,20 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
   const [isEditing, setIsEditing] = useState(true);
 
-  // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
   const isDirected = directedAlgorithms.has(algorithm);
+
+  // Handle edge weight updates from GraphCanvas
+  const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
+    setEdges((prev) =>
+      prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
+    );
+  }, []);
+
+  // When adding an edge, default weight = 1
+  const handleAddEdge = useCallback((edge) => {
+    setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
+  }, [isDirected]);
 
   const frames = useMemo(() => {
     const adj = {};
@@ -353,7 +364,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
-  }, [nodes, edges, algorithm, initialStartNode, isWeighted]);
+  }, [nodes, edges, algorithm, initialStartNode]);
 
   const onStep = useCallback((step) => {
     // No specific local state needs to be updated here 
