@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
 import Chatbot from "@/app/components/ui/Chatbot";
 import Navbar from "@/app/components/navbar";
+import { CommandPalette } from "@/app/components/CommandPalette";
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -14,6 +15,7 @@ export default function ClientLayoutWrapper({ children }) {
       {!isAuthPage && <Navbar />}
       {children}
       {!isAuthPage && <Chatbot />}
+      {!isAuthPage && <CommandPalette />}
     </>
   );
 }

@@ -13,8 +13,17 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[420px] items-center justify-center bg-slate-950 font-mono text-sm text-slate-400">
+      Loading Editor...
+    </div>
+  ),
+});
 import { useUser } from "@/features/user/UserContext";
 import { useGlobalCollaboration } from "@/app/components/ui/CollaborationProvider";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
@@ -731,18 +740,39 @@ export default function DryRunClient() {
                 </button>
               </div>
             </div>
-            <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <SlidersHorizontal className="h-4 w-4" />
-              Speed
-              <input
-                type="range"
-                min="250"
-                max="1400"
-                step="50"
-                value={speed}
-                onChange={(event) => setSpeed(Number(event.target.value))}
-                className="w-full accent-violet-600"
-              />
+            <label className="mt-4 flex flex-col gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Speed (Delay Interval)</span>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full">
+                {/* Explicit Left Bound Indicator */}
+                <span className="text-xs text-slate-500 font-medium select-none min-w-[50px] text-right">
+                  Fast (250ms)
+                </span>
+                
+                <input
+                  type="range"
+                  min="250"
+                  max="1400"
+                  step="50"
+                  value={speed}
+                  onChange={(event) => setSpeed(Number(event.target.value))}
+                  className="w-full accent-violet-600 cursor-pointer"
+                  aria-label="Execution Speed Delay Slider"
+                />
+                
+                {/* Explicit Right Bound Indicator */}
+                <span className="text-xs text-slate-500 font-medium select-none min-w-[60px]">
+                  Slow (1400ms)
+                </span>
+                
+                {/* Currently Selected Active Value Display */}
+                <span className="text-xs font-bold text-violet-600 dark:text-violet-400 min-w-[45px] text-right">
+                  {speed}ms
+                </span>
+              </div>
             </label>
           </div>
 

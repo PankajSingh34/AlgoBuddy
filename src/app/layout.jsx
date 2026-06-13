@@ -4,6 +4,30 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
+import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const sourceSans3 = Source_Sans_3({
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-source-sans-3",
+  display: "swap",
+});
+
+const sourceSerif4 = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-source-serif-4",
+  display: "swap",
+});
+
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
@@ -62,7 +86,7 @@ export default async function RootLayout({ children }) {
   // auth is handled client-side via UserContext (Supabase)
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${sourceSans3.variable} ${sourceSerif4.variable}`}>
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />

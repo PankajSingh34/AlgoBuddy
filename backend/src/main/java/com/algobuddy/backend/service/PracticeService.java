@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -73,28 +74,12 @@ public class PracticeService {
 
     @Transactional
     public ProgressResponse updateProgress(UUID userId, ProgressRequest request) {
-        // 1. Update Problem Progress
-        Optional<UserProgress> existingProgress = progressRepository.findByUserIdAndProblemId(userId, request.getProblemId());
-        
-        if (existingProgress.isPresent()) {
-            UserProgress progress = existingProgress.get();
-            progress.setStatus(request.getStatus());
-            progress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(progress);
-        } else {
-            UserProgress newProgress = new UserProgress();
-            newProgress.setUserId(userId);
-            newProgress.setProblemId(request.getProblemId());
-            newProgress.setStatus(request.getStatus());
-            newProgress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(newProgress);
-        }
+        progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
-        // 2. Update Daily Streak
         if ("Completed".equals(request.getStatus())) {
             self.updateStreakWithRetry(userId);
         }
-        
+
         return getUserProgress(userId);
     }
 
@@ -104,48 +89,16 @@ public class PracticeService {
             return getUserProgress(userId);
         }
 
-        List<String> problemIds = request.getItems().stream()
-                .map(BulkProgressRequest.Item::getProblemId)
-                .filter(id -> id != null && !id.trim().isEmpty())
-                .collect(Collectors.toList());
-
-        if (problemIds.isEmpty()) {
-            return getUserProgress(userId);
-        }
-
-        List<UserProgress> existingProgresses = progressRepository.findByUserIdAndProblemIdIn(userId, problemIds);
-        Map<String, UserProgress> existingMap = existingProgresses.stream()
-                .collect(Collectors.toMap(UserProgress::getProblemId, p -> p));
-
         boolean anyCompleted = false;
-        OffsetDateTime now = OffsetDateTime.now();
-        
+
         for (BulkProgressRequest.Item item : request.getItems()) {
-            if (item.getProblemId() == null || item.getProblemId().trim().isEmpty() || item.getStatus() == null) {
-                continue;
-            }
-
-            UserProgress progress = existingMap.get(item.getProblemId());
-            if (progress != null) {
-                progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
-            } else {
-                progress = new UserProgress();
-                progress.setUserId(userId);
-                progress.setProblemId(item.getProblemId());
-                progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
-                existingMap.put(item.getProblemId(), progress); // Ensure we save the new ones too
-            }
-
+            if (item.getProblemId() == null || item.getProblemId().trim().isEmpty() || item.getStatus() == null) continue;
+            progressRepository.upsertProgress(userId, item.getProblemId(), item.getStatus());
             if ("Completed".equals(item.getStatus())) {
                 anyCompleted = true;
             }
         }
 
-        progressRepository.saveAll(existingMap.values());
-
-        // Only update streak once even if multiple problems were completed
         if (anyCompleted) {
             self.updateStreakWithRetry(userId);
         }
@@ -159,12 +112,12 @@ public class PracticeService {
             try {
                 self.updateStreak(userId);
                 return;
-            } catch (ObjectOptimisticLockingFailureException e) {
+            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
                 if (attempt == MAX_RETRIES) {
                     log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
                     throw e;
                 }
-                log.warn("Optimistic lock failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
+                log.warn("Lock/constraint failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
             }
         }
     }

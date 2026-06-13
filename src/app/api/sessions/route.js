@@ -78,7 +78,6 @@ export async function POST(request) {
 
     return jsonResponse({
       session: result.session,
-      sessionSecret: result.sessionSecret,
       joinUrl: `/visualizer/dry-run?session=${result.session.joinCode}`,
     });
   } catch (error) {
