@@ -5,6 +5,11 @@ We welcome and appreciate contributions from the community to help make this pro
 
 ---
 
+**Join our community**
+**Discord Server : https://discord.gg/Gv2N4U3KAc**
+
+---
+
 ## ↪️ Table of Contents
 
 * [Contribution Areas](#contribution-areas)
@@ -23,14 +28,14 @@ We accept contributions in the following areas:
 
 | Area                   | Description                                       |
 | ---------------------- | ------------------------------------------------- |
-| **Bug Fixes**          | Resolve existing bugs and issues                  |
+| **Bug Fixes**          | Resolve existing bugs and issues ([Bug Report](.github/ISSUE_TEMPLATE/bug_report.yml)) |
 | **UI/UX Improvements** | Enhance responsiveness, accessibility, and design |
 | **New Visualizers**    | Add new DSA visualizers and animations            |
 | **Documentation**      | Improve guides, README, and contributor docs      |
 | **Performance**        | Optimize application performance and efficiency   |
 | **Theme Enhancements** | Improve dark/light mode experience                |
 
-Feel free to suggest new contribution ideas by opening an issue first.
+Feel free to suggest new contribution ideas by opening a [Feature Request](.github/ISSUE_TEMPLATE/feature_request.yml) first.
 
 ---
 
@@ -164,41 +169,6 @@ After pushing your changes:
 2. Click **Compare & Pull Request**
 3. Add a clear title and description
 4. Submit the pull request
-
----
-
-# ↪️ Issue Assignment Process
-
-To keep issue assignment smooth and organized, AlgoBuddy uses an auto-assign workflow for contributors.
-
-## How to Get an Issue Assigned
-
-1. Find any open issue you would like to work on
-2. Comment `.take` or `/assign` on that issue
-3. The bot will automatically assign the issue to you within a few seconds
-
-### Example
-
-```bash
-.take
-```
-
-or
-
-```bash
-/assign
-```
-
-## Important Notes
-
-* Please avoid working on issues that are already assigned
-* Wait for assignment confirmation before starting work
-* If the issue remains unassigned for a while, feel free to tag a maintainer
-* One contributor will be assigned per issue to avoid conflicts
-
----
-
-🚨 To claim any issue, simply comment `.take` or `/assign` below the issue. The bot will automatically assign it to you!
 
 ---
 

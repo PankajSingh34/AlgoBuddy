@@ -1,0 +1,17 @@
+gssoc:approved:
+  - ".*"
+
+mentor:PankajSingh34:
+  - ".*"
+
+level:beginner:
+  - ".*beginner.*"
+
+type:bug:
+  - ".*bug.*"
+
+type:feature:
+  - ".*feature.*"
+
+type:docs:
+  - ".*docs.*"
