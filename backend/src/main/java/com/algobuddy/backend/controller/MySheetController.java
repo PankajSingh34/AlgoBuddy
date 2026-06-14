@@ -61,4 +61,26 @@ public class MySheetController {
 
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/shared/{userId}")
+    public ResponseEntity<MySheetResponseDto> getSharedSheet(@PathVariable UUID userId) {
+        List<MySheet> items = mySheetService.getMySheet(userId);
+
+        List<MySheetDto> dtos = items.stream()
+                .map(item -> MySheetDto.builder()
+                        .problemId(item.getProblemId())
+                        .note(item.getNote())
+                        .addedAt(item.getAddedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(MySheetResponseDto.builder().items(dtos).build());
+    }
+
+    @PostMapping("/clone/{sharedUserId}")
+    public ResponseEntity<Void> cloneSharedSheet(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID sharedUserId) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        mySheetService.cloneSheet(sharedUserId, userId);
+        return ResponseEntity.ok().build();
+    }
 }

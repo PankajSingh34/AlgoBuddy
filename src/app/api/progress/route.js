@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 // GET /api/progress
 // Returns all problem progress for the authenticated user as a flat array
@@ -12,7 +13,8 @@ export async function GET(request) {
         authResult.type === "CONFIG_ERROR" ? 500 : 401
       );
     }
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { data, error } = await supabase
       .from("user_progress")
       .select("problem_id, status, updated_at")
@@ -60,7 +62,8 @@ export async function POST(request) {
       return jsonResponse({ error: `status must be one of: ${validStatuses.join(", ")}` }, 400);
     }
 
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase.from("user_progress").upsert(
       {
         user_id: authResult.user.id,

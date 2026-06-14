@@ -13,9 +13,9 @@ export default function RecentlyViewedPage() {
         
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border mb-6"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all font-semibold text-sm text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]"
         >
-          ← Return Home
+          ← Back to Home
         </Link>
         
       </div>

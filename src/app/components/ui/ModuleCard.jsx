@@ -63,41 +63,4 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       return;
     }
 
-    try {
-      await apiFetch("/api/progress", {
-        method: "POST",
-        body: JSON.stringify({ moduleId, isDone: !isDone }),
-      });
-      setIsDone(!isDone);
-      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
-    } catch (err) {
-      console.error("Error updating progress:", err);
-      toast.error("Failed to update progress. Please try again.");
-    }
-  }
-
-  return (
-    <div
-      className={`border border-surface-200 dark:border-surface-700 max-w-4xl mx-auto rounded-lg p-4 shadow-lg flex flex-col justify-between ${
-        isDone ? "bg-green-50 dark:bg-green-900/30" : "bg-white dark:bg-surface-900"
-      }`}
-    >
-      <div className="my-4 px-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-surface-800 dark:text-surface-200">
-            Done With the Learning
-          </h1>
-          <p className="text-sm text-surface-500 dark:text-surface-400">{description}</p>
-        </div>
-        <input
-          type="checkbox"
-          checked={isDone}
-          onChange={toggleCompletion}
-          className={`w-6 h-6 rounded cursor-pointer transition duration-300 ${
-            isDone ? "accent-green-500 ring-2 ring-green-500" : "accent-[#a435f0]"
-          }`}
-        />
-      </div>
-    </div>
-  );
-}
+  }}

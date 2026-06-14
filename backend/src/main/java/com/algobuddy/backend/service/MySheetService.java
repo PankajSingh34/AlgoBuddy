@@ -45,4 +45,19 @@ public class MySheetService {
         mySheetRepository.findByUserIdAndProblemId(userId, problemId)
                 .ifPresent(mySheetRepository::delete);
     }
+
+    @Transactional
+    public void cloneSheet(UUID sharedUserId, UUID targetUserId) {
+        List<MySheet> sharedItems = mySheetRepository.findByUserId(sharedUserId);
+        for (MySheet sharedItem : sharedItems) {
+            Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(targetUserId, sharedItem.getProblemId());
+            if (existing.isEmpty()) {
+                MySheet newItem = new MySheet();
+                newItem.setUserId(targetUserId);
+                newItem.setProblemId(sharedItem.getProblemId());
+                newItem.setNote(sharedItem.getNote() == null ? "" : sharedItem.getNote());
+                mySheetRepository.save(newItem);
+            }
+        }
+    }
 }

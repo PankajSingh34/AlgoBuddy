@@ -26,6 +26,7 @@ export default function InOrderVisualizer() {
   const [highlightedNodes, setHighlightedNodes] = useState([]);
   const [traversalResult, setTraversalResult] = useState([]);
   const [steps, setSteps] = useState(0);
+  const [theme, setTheme] = useState("default");
   const animationRef = useRef(null);
   useVisualizerReset(() => {
     if (animationRef.current) clearTimeout(animationRef.current);
@@ -222,6 +223,23 @@ export default function InOrderVisualizer() {
   return (
     <VisualizerInteractiveLayout>
       <VisualizerCard>
+        <div className="mb-4">
+  <label className="block mb-2 font-medium">
+    Select Theme
+  </label>
+
+  <select
+    value={theme}
+    onChange={(e) => setTheme(e.target.value)}
+    className="w-full rounded-lg border p-2"
+  >
+    <option value="default">Default Dark</option>
+    <option value="amoled">AMOLED Dark</option>
+    <option value="ocean">Ocean Blue</option>
+    <option value="forest">Forest Green</option>
+    <option value="sepia">Sepia</option>
+  </select>
+</div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <button
@@ -300,7 +318,19 @@ export default function InOrderVisualizer() {
       </VisualizerCard>
 
       <VisualizerCard>
-        <h2 className="mb-3 text-lg font-semibold">Tree Visualization</h2>
+       <VisualizerCard
+  className={
+    theme === "amoled"
+      ? "bg-black text-white"
+      : theme === "ocean"
+      ? "bg-blue-950 text-blue-100"
+      : theme === "forest"
+      ? "bg-green-950 text-green-100"
+      : theme === "sepia"
+      ? "bg-amber-100 text-amber-900"
+      : ""
+  }
+>Tree Visualization</h2>
         <div className="flex min-h-[400px] justify-center overflow-auto py-4">
           {nodes.length > 0 ? (
             <div className="relative" style={{ minWidth: `${svgDimensions.width}px` }}>
@@ -328,8 +358,29 @@ export default function InOrderVisualizer() {
                       cx={node.x}
                       cy={node.y}
                       r="22"
-                      fill={node.highlighted ? "#a435f0" : "#d38cff"}
-                      stroke={node.highlighted ? "#8710d8" : "#a435f0"}
+                      fill={
+  theme === "amoled"
+    ? (node.highlighted ? "#ffffff" : "#444444")
+    : theme === "ocean"
+    ? (node.highlighted ? "#2563eb" : "#93c5fd")
+    : theme === "forest"
+    ? (node.highlighted ? "#15803d" : "#86efac")
+    : theme === "sepia"
+    ? (node.highlighted ? "#92400e" : "#fcd34d")
+    : (node.highlighted ? "#a435f0" : "#d38cff")
+}
+
+stroke={
+  theme === "amoled"
+    ? "#ffffff"
+    : theme === "ocean"
+    ? "#1d4ed8"
+    : theme === "forest"
+    ? "#166534"
+    : theme === "sepia"
+    ? "#78350f"
+    : "#a435f0"
+}
                       strokeWidth="2"
                       className={`transition-colors ${node.highlighted ? "animate-pulse" : ""}`}
                     />

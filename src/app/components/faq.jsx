@@ -289,13 +289,13 @@ const FAQSection = () => {
                     </div>
                     <span className="font-semibold">Contact Support</span>
                   </Link>
-                  <Link href="https://github.com/Prakitesh28/AlgoBuddy/issues" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
+                  <Link href="https://github.com/PankajSingh34/AlgoBuddy/issues" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                       <FiGithub className="w-5 h-5" />
                     </div>
                     <span className="font-semibold">GitHub Issues</span>
                   </Link>
-                  <Link href="#" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
+                  <Link href="https://discord.gg/Gv2N4U3KAc" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                       <FiMessageCircle className="w-5 h-5" />
                     </div>

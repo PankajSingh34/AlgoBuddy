@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
@@ -27,6 +28,8 @@ import {
   TrendingUp,
   Target
 } from "lucide-react";
+import { useArenaProfile } from "@/app/hooks/useArenaProfile";
+import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 
 // Mock recent battle data
 const RECENT_BATTLES = [
@@ -123,8 +126,9 @@ function getInitials(name) {
 export default function ArenaPage() {
   const { user, loading } = useUser();
   const router = useRouter();
+  const { profile, leaderboard, matchHistory, dailyChallenge, loadingProfile, loadingLeaderboard } = useArenaProfile(user);
+  const { streakData } = useSheetProgress();
 
- 
 
   const ensureLoggedIn = () => {
     if (!user) {
@@ -156,28 +160,29 @@ export default function ArenaPage() {
 
   const [currentUserStats, setCurrentUserStats] = useState({
     name: "Pankaj Singh",
-    level: 17,
-    rating: 1620,
-    xp: 4200,
-    rank: 28,
+    level: 1,
+    rating: 1200,
+    xp: 0,
+    rank: 1,
   });
 
   useEffect(() => {
     if (!loading && user) {
       setCurrentUserStats({
+        userId: user.id,
         name: user.user_metadata?.name || user.email.split("@")[0],
-        level: user.user_metadata?.level || 17,
-        rating: user.user_metadata?.rating || 1620,
-        xp: user.user_metadata?.xp || 4200,
-        rank: user.user_metadata?.rank || 28,
+        level: profile?.level || 1,
+        rating: profile?.rating || 1200,
+        xp: profile?.xp || 0,
+        rank: profile?.rank || 1,
       });
     }
-  }, [user, loading]);
+  }, [user, loading, profile]);
 
   const handleMatchFound = (opponent) => {
     setSelectedOpponent(opponent);
     setMatchmakingOpen(false);
-    setActiveDuelProblem("Reverse Linked List");
+    setActiveDuelProblem("Two Sum");
     setDuelSimulatorOpen(true);
   };
 
@@ -343,24 +348,22 @@ export default function ArenaPage() {
                   {/* Top 3 Avatars Podium Graphic */}
                   <div className="flex gap-4 items-end pr-2 select-none">
                     {/* 2nd Place (Logged in User) */}
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center mt-6">
                       <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5 overflow-hidden">
-                        {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
-                          <img
-                            src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                            alt="avatar"
-                            className="w-full h-full object-cover"
-                          />
+                        {leaderboard[1] ? (
+                          <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
+                            {getInitials(leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`)}
+                          </div>
                         ) : (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
-                            {getInitials(currentUserStats.name || user?.email)}
+                            {(currentUserStats.name || "Pankaj").split(" ")[0].substring(0,2).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <span className="text-[10px] text-slate-300 block font-semibold mb-1 truncate max-w-[64px]">
-                        {(currentUserStats.name || "Pankaj").split(" ")[0]}
+                        {leaderboard[1] ? (leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`) : (currentUserStats.name || "Pankaj").split(" ")[0]}
                       </span>
-                      <span className="text-[9px] text-slate-400 block mb-2">{currentUserStats.xp || 2320} XP</span>
+                      <span className="text-[9px] text-slate-400 block mb-2">{leaderboard[1] ? leaderboard[1].xp : currentUserStats.xp || 2320} XP</span>
                       <div className="w-14 h-12 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
                         2
                       </div>
@@ -368,23 +371,35 @@ export default function ArenaPage() {
 
                     {/* 1st Place */}
                     <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center font-bold text-sm shadow-md border-2 border-amber-400 mb-1.5">
-                        AY
+                      <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center font-bold text-sm shadow-md border-2 border-amber-400 mb-1.5 overflow-hidden">
+                        {leaderboard[0] ? (
+                           <div className="w-full h-full text-white flex items-center justify-center text-sm font-bold">
+                             {getInitials(leaderboard[0]?.name || `User ${leaderboard[0]?.userId.substring(0,4)}`)}
+                           </div>
+                        ) : (
+                           <span className="text-white">AY</span>
+                        )}
                       </div>
-                      <span className="text-[10px] text-slate-200 block font-bold mb-1">Aryan</span>
-                      <span className="text-[9px] text-amber-300 block mb-2">2450 XP</span>
+                      <span className="text-[10px] text-slate-200 block font-bold mb-1">{leaderboard[0] ? (leaderboard[0]?.name || `User ${leaderboard[0]?.userId.substring(0,4)}`) : "Aryan"}</span>
+                      <span className="text-[9px] text-amber-300 block mb-2">{leaderboard[0] ? leaderboard[0].xp : 2450} XP</span>
                       <div className="w-16 h-20 bg-primary border-t border-primary-light rounded-t-lg flex items-center justify-center font-extrabold text-white shadow-lg text-2xl">
                         1
                       </div>
                     </div>
 
                     {/* 3rd Place */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs shadow border-2 border-purple-500 mb-1.5">
-                        AD
+                    <div className="flex flex-col items-center mt-8">
+                      <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs shadow border-2 border-purple-500 mb-1.5 overflow-hidden">
+                        {leaderboard[2] ? (
+                           <div className="w-full h-full text-white flex items-center justify-center text-xs font-bold">
+                             {getInitials(leaderboard[2]?.name || `User ${leaderboard[2]?.userId.substring(0,4)}`)}
+                           </div>
+                        ) : (
+                           <span className="text-white">AD</span>
+                        )}
                       </div>
-                      <span className="text-[10px] text-slate-300 block font-semibold mb-1">Aditya</span>
-                      <span className="text-[9px] text-slate-400 block mb-2">2200 XP</span>
+                      <span className="text-[10px] text-slate-300 block font-semibold mb-1">{leaderboard[2] ? (leaderboard[2]?.name || `User ${leaderboard[2]?.userId.substring(0,4)}`) : "Aditya"}</span>
+                      <span className="text-[9px] text-slate-400 block mb-2">{leaderboard[2] ? leaderboard[2].xp : 2200} XP</span>
                       <div className="w-14 h-12 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
                         3
                       </div>
@@ -460,17 +475,21 @@ export default function ArenaPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
-                              Reverse Linked List
+                              {dailyChallenge ? dailyChallenge.title : "Reverse Linked List"}
                             </h4>
-                            <span className="px-2 py-0.5 rounded bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 text-[9px] font-bold">
-                              Easy
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
+                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                              "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                            }`}>
+                              {dailyChallenge ? dailyChallenge.difficulty : "Easy"}
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
-                            Reverse a singly linked list.
+                            {dailyChallenge ? dailyChallenge.description : "Reverse a singly linked list."}
                           </p>
                           <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
-                            Reward: +50 XP
+                            Reward: +{dailyChallenge ? dailyChallenge.xpAward : 50} XP
                           </div>
                         </div>
                       </div>
@@ -500,18 +519,22 @@ export default function ArenaPage() {
                     </div>
 
                     <div className="space-y-2.5">
-                      {LEADERBOARD_ROWS.map((row) => (
-                        <div key={row.rank} className="flex items-center justify-between text-xs px-2 py-1.5 border-b border-slate-50 dark:border-neutral-800 last:border-0">
-                          <div className="flex items-center gap-3">
-                            <span className={`w-5 text-center font-bold ${row.rank === 1 ? "text-amber-500" : row.rank === 2 ? "text-slate-400" : "text-slate-500"
-                              }`}>
-                              {row.rank}
-                            </span>
-                            <span className="font-semibold text-slate-850 dark:text-neutral-200">{row.name}</span>
+                      {(leaderboard.length > 0 ? leaderboard : LEADERBOARD_ROWS).map((row, idx) => {
+                        const rank = row.rank || idx + 1;
+                        const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
+                        return (
+                          <div key={rank} className="flex items-center justify-between text-xs px-2 py-1.5 border-b border-slate-50 dark:border-neutral-800 last:border-0">
+                            <div className="flex items-center gap-3">
+                              <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
+                                }`}>
+                                {rank}
+                              </span>
+                              <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                            </div>
+                            <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
                           </div>
-                          <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -532,37 +555,46 @@ export default function ArenaPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {RECENT_BATTLES.map((b) => (
+                    {(matchHistory?.length > 0 ? matchHistory : RECENT_BATTLES).map((b) => {
+                      const isMock = !b.id || typeof b.id === 'string' && !b.id.includes('-'); // Rough check for UUID vs mock id
+                      const opponentName = isMock ? b.opponent : b.opponentName;
+                      const topic = isMock ? b.topic : b.topic;
+                      const date = isMock ? b.date : new Date(b.startTime).toLocaleDateString();
+                      const result = isMock ? b.result : b.result;
+                      const xpAwarded = isMock ? b.xp : `+${b.xpAwarded} XP`;
+                      const ratingChange = isMock ? b.rating : (b.ratingChange >= 0 ? `+${b.ratingChange} Rating` : `${b.ratingChange} Rating`);
+
+                      return (
                       <div key={b.id} className="flex items-center justify-between p-3.5 border border-slate-100 dark:border-neutral-900/60 bg-slate-50/20 dark:bg-neutral-900/20 rounded-xl gap-4 text-xs">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-bold text-slate-700 dark:text-neutral-300 truncate">
-                              You vs {b.opponent}
+                              You vs {opponentName}
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${b.result === "Victory"
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${result === "Victory"
                                 ? "bg-emerald-500/10 text-emerald-500"
-                                : "bg-red-500/10 text-red-500"
+                                : result === "Defeat" ? "bg-red-500/10 text-red-500" : "bg-slate-500/10 text-slate-500"
                               }`}>
-                              {b.result}
+                              {result}
                             </span>
                           </div>
                           <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-neutral-500">
-                            <span>Topic: {b.topic}</span>
-                            <span>{b.date}</span>
+                            <span>Topic: {topic}</span>
+                            <span>{date}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-4">
                           <div className="text-right shrink-0">
-                            <span className="font-semibold text-primary dark:text-purple-400 block">{b.xp}</span>
-                            <span className={`text-[10px] font-bold ${b.rating.startsWith("+") ? "text-emerald-500" : "text-red-500"}`}>
-                              {b.rating}
+                            <span className="font-semibold text-primary dark:text-purple-400 block">{xpAwarded}</span>
+                            <span className={`text-[10px] font-bold ${ratingChange.startsWith("+") ? "text-emerald-500" : "text-red-500"}`}>
+                              {ratingChange}
                             </span>
                           </div>
                           <button
                             onClick={() => {
                               if (!ensureLoggedIn()) return;
-                              handleWatchLive("You", b.opponent, b.topic);
+                              handleWatchLive("You", opponentName, topic);
                             }}
                             className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-neutral-900 dark:hover:bg-neutral-850 border border-slate-200 dark:border-neutral-800 rounded-xl font-bold transition shrink-0"
                           >
@@ -570,7 +602,7 @@ export default function ArenaPage() {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               </>
@@ -625,12 +657,16 @@ export default function ArenaPage() {
 
                 {activeTab === "leaderboard" && (
                   <div className="w-full max-w-md space-y-2 text-left">
-                    {LEADERBOARD_ROWS.map((row) => (
-                      <div key={row.rank} className="flex justify-between p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
-                        <span className="font-semibold">{row.rank}. {row.name}</span>
-                        <span className="font-bold text-primary">{row.rating} Rating</span>
-                      </div>
-                    ))}
+                    {(leaderboard.length > 0 ? leaderboard : LEADERBOARD_ROWS).map((row, idx) => {
+                      const rank = row.rank || idx + 1;
+                      const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
+                      return (
+                        <div key={rank} className="flex justify-between p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
+                          <span className="font-semibold">{rank}. {name}</span>
+                          <span className="font-bold text-primary">{row.rating} Rating</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -644,29 +680,37 @@ export default function ArenaPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Daily Streak</h3>
                 <span className="text-[11px] text-slate-400 dark:text-neutral-500 font-semibold cursor-default">
-                  Milestone: 20d
+                  Milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)}d
                 </span>
               </div>
 
               <div className="flex items-center gap-3 bg-amber-500/10 p-3.5 border border-amber-500/20 rounded-xl mb-4 text-amber-500">
-                <Flame size={28} className="animate-pulse" />
+                <Flame size={28} className={(streakData?.current || 0) > 0 ? "animate-pulse" : "opacity-50"} />
                 <div>
-                  <div className="text-xl font-black leading-none">17 Days</div>
+                  <div className="text-xl font-black leading-none">{streakData?.current || 0} Days</div>
                   <span className="text-[10px] text-slate-500 dark:text-amber-500/80 block mt-1 font-semibold">
-                    Keep it up! Next milestone: 20 days
+                    Keep it up! Next milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)} days
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center text-center gap-1 mb-4 border-b border-slate-100 dark:border-neutral-800/60 pb-4">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => {
-                  const isActive = idx !== 4; // Mock Friday off
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => {
+                  const today = new Date();
+                  const currentDay = today.getDay();
+                  const diff = idx - currentDay;
+                  const dateToCheck = new Date();
+                  dateToCheck.setDate(today.getDate() + diff);
+                  
+                  const isFuture = diff > 0;
+                  const isActive = !isFuture && streakData?.isActive && streakData.isActive(dateToCheck);
+                  
                   return (
                     <div key={day} className="flex flex-col items-center">
-                      <span className="text-[9px] text-slate-400 dark:text-neutral-500 block mb-1 font-semibold">{day[0]}</span>
+                      <span className={`text-[9px] block mb-1 font-semibold ${diff === 0 ? "text-amber-500 dark:text-amber-400" : "text-slate-400 dark:text-neutral-500"}`}>{day[0]}</span>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive
                           ? "bg-amber-500 text-white shadow-sm"
-                          : "bg-slate-100 dark:bg-neutral-900 text-slate-400 dark:text-neutral-600"
+                          : isFuture ? "bg-slate-50 dark:bg-neutral-900/50 text-slate-300 dark:text-neutral-700" : "bg-slate-100 dark:bg-neutral-900 text-slate-400 dark:text-neutral-600"
                         }`}>
                         {isActive ? "🔥" : "•"}
                       </div>
@@ -677,7 +721,7 @@ export default function ArenaPage() {
 
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
                 <span>Longest Streak</span>
-                <span className="font-bold text-slate-800 dark:text-neutral-200">43 Days</span>
+                <span className="font-bold text-slate-800 dark:text-neutral-200">{streakData?.best || 0} Days</span>
               </div>
               <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
   <div className="flex items-center justify-between">
@@ -685,12 +729,12 @@ export default function ArenaPage() {
       📊 Consistency Score
     </span>
     <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-      85%
+      {streakData?.consistencyScore || 0}%
     </span>
   </div>
 
   <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-1">
-    Active on 26 of the last 30 days.
+    Active on {Math.round(((streakData?.consistencyScore || 0) / 100) * 30)} of the last 30 days.
   </p>
 </div>
             </div>
@@ -700,10 +744,10 @@ export default function ArenaPage() {
               <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 mb-4">Your Stats</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Battles Won", value: "124", icon: Swords, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-                  { label: "Win Rate", value: "67%", icon: TrendingUp, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
-                  { label: "Problems Solved", value: "486", icon: Target, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
-                  { label: "Current Rating", value: "1620", icon: Trophy, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" }
+                  { label: "Battles Won", value: profile?.battlesWon || 0, icon: Swords, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+                  { label: "Win Rate", value: profile?.battlesWon && (profile?.battlesWon + profile?.battlesLost) > 0 ? `${Math.round((profile.battlesWon / (profile.battlesWon + profile.battlesLost)) * 100)}%` : "0%", icon: TrendingUp, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+                  { label: "Problems Solved", value: profile?.totalProblemsSolved || 0, icon: Target, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
+                  { label: "Current Rating", value: profile?.rating || 1200, icon: Trophy, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" }
                 ].map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -740,172 +784,20 @@ export default function ArenaPage() {
 
     <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
       <div
-        className="bg-primary h-full rounded-full"
-        style={{ width: "84%" }}
+        className="bg-primary h-full rounded-full transition-all duration-500"
+        style={{ width: `${(currentUserStats.xp % 1000) / 10}%` }}
       />
     </div>
 
     <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
-      <span>{currentUserStats.xp}/5000 XP</span>
+      <span>{currentUserStats.xp % 1000} / 1000 XP</span>
       <span className="font-semibold text-slate-700 dark:text-neutral-300">
-        Next Reward: Level 18 🎁
+        Next Reward: Level {currentUserStats.level + 1} 🎁
       </span>
     </div>
   </div>
 )}
 
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
-      📈 Learning Timeline
-    </h3>
-
-    <span className="text-[10px] text-slate-400">
-      DSA Journey
-    </span>
-  </div>
-
-  <div className="space-y-4">
-    {LEARNING_TIMELINE.map((item, index) => (
-      <div key={index} className="relative pl-5 border-l-2 border-slate-200">
-        <div
-          className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ${item.color}`}
-        />
-        <p className="text-xs font-semibold">
-          {item.title}
-        </p>
-        <p className="text-[10px] text-slate-500">
-          {item.date}
-        </p>
-      </div>
-    ))}
-  </div>
-</div>
-
-{/* Learning Goal Tracker */}
-<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-sm font-bold">
-      🎯 Learning Goals
-    </h3>
-    <span className="text-[10px] text-slate-400">
-      Weekly & Monthly
-    </span>
-  </div>
-
-  <div className="space-y-4">
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span>Weekly Goal</span>
-        <span>8 / 10 Problems</span>
-      </div>
-      <div className="w-full bg-slate-200 rounded-full h-2">
-        <div className="bg-green-500 h-2 rounded-full w-[80%]" />
-      </div>
-    </div>
-
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span>Monthly Goal</span>
-        <span>32 / 50 Problems</span>
-      </div>
-      <div className="w-full bg-slate-200 rounded-full h-2">
-        <div className="bg-blue-500 h-2 rounded-full w-[64%]" />
-      </div>
-    </div>
-
-    <div className="p-3 rounded-xl bg-yellow-50 border border-yellow-200">
-      <p className="text-xs font-semibold">
-        🏅 Next Milestone Badge
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Complete 50 monthly problems to unlock Goal Crusher Badge
-      </p>
-    </div>
-  </div>
-</div>
-
-            {/* Smart Revision Planner */}
-<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
-      📚 Revision Planner
-    </h3>
-    <span className="text-[10px] text-slate-400">
-      Weekly Plan
-    </span>
-  </div>
-
-  <div className="space-y-3">
-    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-      <p className="text-xs font-semibold">
-        Binary Search
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Last revised 14 days ago • High Priority
-      </p>
-    </div>
-
-    <div className="p-3 rounded-xl bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800">
-      <p className="text-xs font-semibold">
-        Linked List
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Revision due in 2 days
-      </p>
-    </div>
-
-    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-      <p className="text-xs font-semibold">
-        Arrays
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Recently revised
-      </p>
-    </div>
-  </div>
-</div>
-
-{/* Personalized Learning Recommendations */}
-<div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
-      🎯 Recommended For You
-    </h3>
-    <span className="text-[10px] text-slate-400">
-      Based on Progress
-    </span>
-  </div>
-
-  <div className="space-y-3">
-    <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
-      <p className="text-xs font-semibold">
-        Binary Search Tree
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Recommended after mastering Binary Search
-      </p>
-    </div>
-
-    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-      <p className="text-xs font-semibold">
-        Graph Traversal (BFS)
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Next logical step after Tree Traversal
-      </p>
-    </div>
-
-    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-      <p className="text-xs font-semibold">
-        Dynamic Programming Basics
-      </p>
-      <p className="text-[10px] text-slate-500">
-        Suggested from your recent activity
-      </p>
-    </div>
-  </div>
-</div>
 
             {/* Badges Grid */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">

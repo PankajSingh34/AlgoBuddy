@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function POST(request) {
   try {
@@ -11,7 +12,8 @@ export async function POST(request) {
     const { type } = body;
     const today = new Date();
     const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase
       .from("user_activity")
       .upsert(
@@ -36,7 +38,8 @@ export async function GET(request) {
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { data, error } = await supabase
       .from("user_activity")
       .select("activity_date, created_at")

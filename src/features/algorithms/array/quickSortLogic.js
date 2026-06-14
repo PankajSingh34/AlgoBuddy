@@ -1,23 +1,21 @@
 /**
  * Pure generator function for Quick Sort algorithm.
  * Yields frames representing the state of the sort.
- * 
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
+ *
  * @param {number[]} initialArray - The array to sort.
  * @returns {Generator<{type: string, payload: any}, void, unknown>}
  */
 export function* quickSortGenerator(initialArray) {
-  let arr = [...initialArray];
-  let n = arr.length;
+  const arr = [...initialArray];
+  const n = arr.length;
   let comparisons = 0;
   let swaps = 0;
   let step = 0;
   const totalSteps = Math.floor((n * (n - 1)) / 2);
 
-  let stack = [];
-  let low = 0;
-  let high = arr.length - 1;
-
-  stack.push({ low, high });
+  const stack = [];
+  stack.push({ low: 0, high: arr.length - 1 });
   let partitions = [];
 
   yield { type: 'init', payload: { totalSteps } };
@@ -52,13 +50,12 @@ export function* quickSortGenerator(initialArray) {
 
         if (arr[j] < pivot) {
           i++;
-          
+
           yield {
             type: 'swap_needed',
             payload: { i, j, pivot, low, high, stack: [...stack], partitions: [...partitions], arr: [...arr], comparisons, swaps, step, totalSteps }
           };
 
-          // Perform the actual array swap in memory
           [arr[i], arr[j]] = [arr[j], arr[i]];
           swaps++;
 

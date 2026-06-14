@@ -43,6 +43,28 @@ export default function PracticeSidebar({
   const dailyGoalPercentage = Math.min(100, Math.round((dailySolved / dailyGoal) * 100) || 0);
   const weeklyGoalPercentage = Math.min(100, Math.round((weeklySolved / weeklyGoal) * 100) || 0);
   const monthlyGoalPercentage = Math.min(100, Math.round((monthlySolved / monthlyGoal) * 100) || 0);
+  const achievementBadges = [
+  {
+    name: "7 Day Streak",
+    icon: "🔥",
+    unlocked: streakDays >= 7,
+  },
+  {
+    name: "30 Day Streak",
+    icon: "🏆",
+    unlocked: streakDays >= 30,
+  },
+  {
+    name: "50 Problems",
+    icon: "🎯",
+    unlocked: solvedCount >= 50,
+  },
+  {
+    name: "100 Problems",
+    icon: "🚀",
+    unlocked: solvedCount >= 100,
+  },
+];
 
   return (
     <aside className="w-full lg:w-[260px] flex-shrink-0 flex flex-col gap-6 select-none">
@@ -89,6 +111,42 @@ export default function PracticeSidebar({
 
       {/* Widgets Column */}
       <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
+        {/* Achievement Badges */}
+<div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+  <h3 className="text-sm font-black text-slate-800 dark:text-white mb-4">
+    Achievement Badges
+  </h3>
+
+  <div className="space-y-3">
+    {achievementBadges.map((badge) => (
+      <div
+        key={badge.name}
+        className={`flex items-center justify-between p-3 rounded-xl ${
+          badge.unlocked
+            ? "bg-green-50 dark:bg-green-900/20"
+            : "bg-slate-50 dark:bg-neutral-800"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl">{badge.icon}</span>
+          <span className="text-xs font-bold">
+            {badge.name}
+          </span>
+        </div>
+
+        <span
+          className={`text-[10px] font-black px-2 py-1 rounded-full ${
+            badge.unlocked
+              ? "bg-green-500 text-white"
+              : "bg-slate-300 text-slate-600"
+          }`}
+        >
+          {badge.unlocked ? "Unlocked" : "Locked"}
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
         {/* Daily Goal Card */}
         <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-4.5">

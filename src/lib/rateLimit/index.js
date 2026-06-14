@@ -234,7 +234,7 @@ export async function checkGlobalSmtpQuota(maxPerDay = 500) {
   }
 
   return {
-    allowed: localSmtpCounter <= limit,
-    remaining: Math.max(0, limit - localSmtpCounter),
+    allowed: count <= maxPerDay,
+    remaining: Math.max(0, maxPerDay - count),
   };
 }
