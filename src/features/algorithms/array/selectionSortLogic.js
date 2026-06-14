@@ -1,13 +1,14 @@
 /**
  * Pure generator function for Selection Sort algorithm.
  * Yields frames representing the state of the sort.
- * 
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
+ *
  * @param {number[]} initialArray - The array to sort.
  * @returns {Generator<{type: string, payload: any}, void, unknown>}
  */
 export function* selectionSortGenerator(initialArray) {
-  let arr = [...initialArray];
-  let n = arr.length;
+  const arr = [...initialArray];
+  const n = arr.length;
   let comparisons = 0;
   let swaps = 0;
   let step = 0;
@@ -50,7 +51,6 @@ export function* selectionSortGenerator(initialArray) {
         payload: { i, minIndex, arr: [...arr], comparisons, swaps, step, totalSteps }
       };
 
-      // Perform the actual array swap in memory
       [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
       swaps++;
 

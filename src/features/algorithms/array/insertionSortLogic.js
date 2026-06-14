@@ -1,13 +1,14 @@
 /**
  * Pure generator function for Insertion Sort algorithm.
  * Yields frames representing the state of the sort.
- * 
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
+ *
  * @param {number[]} initialArray - The array to sort.
  * @returns {Generator<{type: string, payload: any}, void, unknown>}
  */
 export function* insertionSortGenerator(initialArray) {
-  let arr = [...initialArray];
-  let n = arr.length;
+  const arr = [...initialArray];
+  const n = arr.length;
   let comparisons = 0;
   let shifts = 0;
   let step = 0;
@@ -19,7 +20,7 @@ export function* insertionSortGenerator(initialArray) {
   };
 
   for (let i = 1; i < n; i++) {
-    let current = arr[i];
+    const current = arr[i];
     let j = i - 1;
 
     yield {
@@ -37,7 +38,6 @@ export function* insertionSortGenerator(initialArray) {
       };
 
       if (arr[j] > current) {
-        // Shift arr[j] to the right
         arr[j + 1] = arr[j];
         shifts++;
 
@@ -57,7 +57,6 @@ export function* insertionSortGenerator(initialArray) {
       payload: { i, j, current, arr: [...arr], comparisons, shifts, step, totalSteps }
     };
 
-    // Insert current element at its correct position
     arr[j + 1] = current;
 
     yield {
