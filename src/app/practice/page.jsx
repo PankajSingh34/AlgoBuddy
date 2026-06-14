@@ -317,6 +317,18 @@ export default function PracticePage() {
     return user.user_metadata?.name || user.email?.split("@")[0] || "Guest User";
   }, [user]);
 
+  const dailyChallenge = useMemo(() => {
+  const unsolvedProblems = allProblems.filter(
+    (problem) => getStatus(problem.id) !== "Completed"
+  );
+
+  if (unsolvedProblems.length === 0) return null;
+
+  const today = new Date().getDate();
+
+  return unsolvedProblems[today % unsolvedProblems.length];
+}, [allProblems, progress]);
+
   // Seed values if not loaded
   if (!mounted) return null;
 
@@ -536,6 +548,31 @@ export default function PracticePage() {
                 duration={stats.estimatedTime}
                 onBackToSessions={() => toast.success("You are at the main problem list dashboard.")}
               />
+
+              {dailyChallenge && (
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg">
+                    <h3 className="text-lg font-black">
+                      🎯 Challenge of the Day
+                    </h3>
+
+                    <p className="mt-2 font-semibold">
+                      {dailyChallenge.name}
+                    </p>
+
+                    <p className="text-sm opacity-90">
+                      Difficulty: {dailyChallenge.difficulty}
+                    </p>
+
+                    <a
+                      href={dailyChallenge.practiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 px-4 py-2 bg-white text-purple-600 rounded-lg font-bold"
+                    >
+                      Solve Challenge
+                    </a>
+                  </div>
+                )}
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
@@ -888,6 +925,17 @@ export default function PracticePage() {
           ) : activeView === "topic-wise" ? (
             /* Accordion View (Dynamic Topic-wise Roadmap) */
             <section className="space-y-5">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-5 rounded-2xl">
+  <h3 className="font-black text-lg">
+    Suggested Next Step
+  </h3>
+
+  <p className="text-sm mt-2">
+    {nextProblem
+      ? `Continue with "${nextProblem.name}"`
+      : "Congratulations! You completed all roadmap problems 🎉"}
+  </p>
+</div>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
@@ -917,9 +965,43 @@ export default function PracticePage() {
                 </div>
               </div>
 
+              <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border p-5">
+  <h3 className="font-black mb-3">
+    Overall Roadmap Progress
+  </h3>
+
+  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+    <div
+      className="h-full bg-green-500"
+      style={{
+        width: `${Math.round(
+          (stats.solved / stats.total) * 100
+        )}%`
+      }}
+    />
+  </div>
+
+  <p className="mt-2 text-sm">
+    {stats.solved}/{stats.total} Problems Completed
+  </p>
+</div>
+
               <div className="space-y-4">
                 {practiceData.map((topic) => {
-                  const isExpanded = !!expandedTopics[topic.slug];
+
+  const topicProblems = topic.subsections.flatMap(
+    (sub) => sub.items
+  );
+
+  const completedProblems = topicProblems.filter(
+    (item) => getStatus(item.id) === "Completed"
+  ).length;
+
+  const progressPercentage = Math.round(
+    (completedProblems / topicProblems.length) * 100
+  );
+
+  const isExpanded = !!expandedTopics[topic.slug];
                   return (
                     <div 
                       key={topic.slug}
@@ -930,9 +1012,29 @@ export default function PracticePage() {
                         onClick={() => toggleAccordion(topic.slug)}
                         className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-neutral-850 select-none"
                       >
-                        <h3 className="text-sm font-black text-slate-850 dark:text-white">
-                          {topic.title}
-                        </h3>
+                        <div className="flex flex-col gap-2">
+  <h3 className="text-sm font-black text-slate-850 dark:text-white">
+    {topic.title}
+  </h3>
+
+  <div className="w-48">
+    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+      <div
+        className="h-full bg-purple-600"
+        style={{
+          width: `${progressPercentage}%`
+        }}
+      />
+    </div>
+
+    <span className="text-[10px] text-slate-500">
+      {progressPercentage}% Completed
+    </span>
+  </div>
+</div>
+<div className="text-[10px] text-green-600 font-bold">
+  {completedProblems}/{topicProblems.length} Solved
+</div>
                         <ChevronDown 
                           size={18} 
                           className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`} 
@@ -950,10 +1052,11 @@ export default function PracticePage() {
                                 <th className="py-3.5 px-5 text-center">Companies</th>
                                 <th className="py-3.5 px-5 text-center">Actions</th>
                                 <th className="py-3.5 px-5 text-center">Status</th>
+                                <th className="py-3.5 px-5 text-center">Access</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {topic.subsections.flatMap((sub) => sub.items).map((item) => {
+                              {topic.subsections.flatMap((sub) => sub.items).map((item, index, arr) => {
                                 const status = getStatus(item.id);
                                 const isCompleted = status === "Completed";
                                 return (
