@@ -37,7 +37,6 @@ function getInitials(name) {
   return parts[0].slice(0, 2).toUpperCase();
 }
 
-
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -47,7 +46,6 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
- 
   const { user, setUser } = useUser();
   const userRef = useRef(null);
 
@@ -116,7 +114,6 @@ export default function Navbar() {
       );
   }, []);
 
-  // FIX: Prevent background scrolling when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
@@ -140,12 +137,27 @@ export default function Navbar() {
       localStorage.removeItem("PROBLEM_BOOKMARKS");
     }
     router.push("/");
-     window.location.href = "/";
+    window.location.href = "/";
+    setMenuOpen(false);
+  };
+
+  const handleSmoothNavigation = (href) => {
+    if (href.startsWith("http")) {
+      window.location.href = href;
+      return;
+    }
+
+    if (href === "/") {
+      router.push(href);
+      return;
+    }
+
+    router.push(href);
     setMenuOpen(false);
   };
 
   const isActive = (href) => {
-     if (!pathname) return false; 
+    if (!pathname) return false;
     if (href.startsWith("http")) return false;
 
     if (href.startsWith("/#")) {
@@ -155,8 +167,6 @@ export default function Navbar() {
     return (
       pathname === href ||
       pathname.startsWith(href + "/")
-
-
     );
   };
 
@@ -185,6 +195,7 @@ export default function Navbar() {
                 <Link
                   key={l.href}
                   href={dynamicHref}
+                  onClick={() => handleSmoothNavigation(l.href)}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
                   className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
@@ -349,7 +360,7 @@ export default function Navbar() {
                   key={l.href}
                   href={dynamicHref}
                   onClick={() =>
-                    setMenuOpen(false)
+                    handleSmoothNavigation(l.href)
                   }
                   aria-current={
                     isActive(l.href)
