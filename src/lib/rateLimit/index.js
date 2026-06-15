@@ -174,7 +174,10 @@ export async function resetKey(key) {
   store.delete(key);
 }
 
-export async function resetAll() {
+export async function resetAll({ scope = "rate-limit" } = {}) {
+  if (scope !== "rate-limit") {
+    throw new Error("Invalid scope for resetAll");
+  }
   isRedisOffline = false;
   redisOfflineUntil = 0;
   if (shouldTryRedis()) {
