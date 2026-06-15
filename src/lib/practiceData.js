@@ -207,7 +207,28 @@ export const practiceData = [
               pitfalls: "Failing to handle empty lists as inputs or forgetting to advance list pointers, which creates infinite loops.",
               tip: "Using a dummy head node completely bypasses complex null pointer checks during initialization."
             }
-          }
+          },
+         {
+            id: "remove-nth-node",
+            name: "Remove Nth Node from End of List",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft", "google", "meta"],
+            practiceUrl: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+            visualizerUrl: null,
+            theory: {
+              summary: "Remove the Nth node from the end of a linked list in one pass using two pointers.",
+              steps: [
+                "Initialize two pointers: fast and slow, both at head.",
+                "Move fast pointer N steps ahead.",
+                "Move both fast and slow together until fast reaches the last node.",
+                "slow.next now points to the node to be removed.",
+                "Set slow.next = slow.next.next to skip and delete the target node."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Not handling edge case when the head node itself needs to be removed.",
+              tip: "Two pointer technique with a gap of N between fast and slow solves this in a single pass."
+            }
+          },
         ]
       },
       {
@@ -236,7 +257,8 @@ export const practiceData = [
             }
           }
         ]
-      }
+      },
+
     ]
   },
   {
