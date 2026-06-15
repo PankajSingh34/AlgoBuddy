@@ -1,4 +1,6 @@
-const trackActivity = async (userId, type = "site_visit") => {
+import { supabase } from "@/lib/supabase";
+
+const trackActivity = async (type = "site_visit") => {
   try {
     await fetch("/api/activity", {
       method: "POST",

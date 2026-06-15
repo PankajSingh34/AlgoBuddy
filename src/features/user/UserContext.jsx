@@ -33,7 +33,7 @@ export const UserProvider = ({ children }) => {
   // Track daily activity when user is authenticated
   useEffect(() => {
     if (user) {
-      trackActivity(user.id);
+      trackActivity();
     }
   }, [user]);
 
