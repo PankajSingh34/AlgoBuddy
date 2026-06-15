@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function GET(request) {
   try {
@@ -7,7 +8,8 @@ export async function GET(request) {
     if (!authResult.success) {
       return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
     }
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { data, error } = await supabase
       .from("problem_bookmarks")
       .select("*")
@@ -34,7 +36,8 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const { problemId, topicSlug } = body;
     if (!problemId || !topicSlug) return jsonResponse({ error: "problemId and topicSlug are required" }, 400);
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase.from("problem_bookmarks").upsert(
       { user_id: authResult.user.id, problem_id: problemId, topic_slug: topicSlug, created_at: new Date().toISOString() },
       { onConflict: ["user_id", "problem_id"] }
@@ -58,7 +61,8 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const problemId = searchParams.get("problemId");
     if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
-    const supabase = getSupabaseAdmin();
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase
       .from("problem_bookmarks")
       .delete()

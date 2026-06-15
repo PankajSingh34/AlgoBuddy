@@ -68,6 +68,13 @@ export default function PracticePage() {
   // Authentication check & mount
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get("view");
+      if (view) {
+        setActiveView(view);
+      }
+    }
   }, []);
 
   const ensureLoggedIn = () => {
@@ -271,6 +278,18 @@ export default function PracticePage() {
 
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
 
+  const handleShareSheet = () => {
+    if (!user) return;
+    const shareUrl = `${window.location.origin}/practice/shared/${user.id}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        toast.success("Share link copied to clipboard! 📋");
+      })
+      .catch(() => {
+        toast.error("Failed to copy link. Please copy manually.");
+      });
+  };
+
   // Solve random unsolved problem
   const handleSolveRandom = () => {
     if (!ensureLoggedIn()) return;
@@ -297,6 +316,18 @@ export default function PracticePage() {
     if (!user) return "Guest User";
     return user.user_metadata?.name || user.email?.split("@")[0] || "Guest User";
   }, [user]);
+
+  const dailyChallenge = useMemo(() => {
+  const unsolvedProblems = allProblems.filter(
+    (problem) => getStatus(problem.id) !== "Completed"
+  );
+
+  if (unsolvedProblems.length === 0) return null;
+
+  const today = new Date().getDate();
+
+  return unsolvedProblems[today % unsolvedProblems.length];
+}, [allProblems, progress]);
 
   // Seed values if not loaded
   if (!mounted) return null;
@@ -349,7 +380,19 @@ export default function PracticePage() {
                       </div>
                       <span className="text-xs font-black uppercase tracking-widest text-purple-200">Personal Practice List</span>
                     </div>
-                    <h2 className="text-2xl font-black">My Sheet</h2>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-black">My Sheet</h2>
+                      {user && (
+                        <button
+                          onClick={handleShareSheet}
+                          className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10"
+                          title="Share your sheet with others"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                          <span>Share</span>
+                        </button>
+                      )}
+                    </div>
                     <p className="text-sm text-purple-200 mt-1">
                       {sheetCount > 0
                         ? `${sheetCount} problem${sheetCount !== 1 ? 's' : ''} curated · ${Object.values(sheet).filter((_,i) => getStatus(Object.keys(sheet)[i]) === 'Completed').length} solved`
@@ -505,6 +548,31 @@ export default function PracticePage() {
                 duration={stats.estimatedTime}
                 onBackToSessions={() => toast.success("You are at the main problem list dashboard.")}
               />
+
+              {dailyChallenge && (
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg">
+                    <h3 className="text-lg font-black">
+                      🎯 Challenge of the Day
+                    </h3>
+
+                    <p className="mt-2 font-semibold">
+                      {dailyChallenge.name}
+                    </p>
+
+                    <p className="text-sm opacity-90">
+                      Difficulty: {dailyChallenge.difficulty}
+                    </p>
+
+                    <a
+                      href={dailyChallenge.practiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 px-4 py-2 bg-white text-purple-600 rounded-lg font-bold"
+                    >
+                      Solve Challenge
+                    </a>
+                  </div>
+                )}
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
@@ -857,6 +925,17 @@ export default function PracticePage() {
           ) : activeView === "topic-wise" ? (
             /* Accordion View (Dynamic Topic-wise Roadmap) */
             <section className="space-y-5">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-5 rounded-2xl">
+  <h3 className="font-black text-lg">
+    Suggested Next Step
+  </h3>
+
+  <p className="text-sm mt-2">
+    {nextProblem
+      ? `Continue with "${nextProblem.name}"`
+      : "Congratulations! You completed all roadmap problems 🎉"}
+  </p>
+</div>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
@@ -886,9 +965,43 @@ export default function PracticePage() {
                 </div>
               </div>
 
+              <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border p-5">
+  <h3 className="font-black mb-3">
+    Overall Roadmap Progress
+  </h3>
+
+  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+    <div
+      className="h-full bg-green-500"
+      style={{
+        width: `${Math.round(
+          (stats.solved / stats.total) * 100
+        )}%`
+      }}
+    />
+  </div>
+
+  <p className="mt-2 text-sm">
+    {stats.solved}/{stats.total} Problems Completed
+  </p>
+</div>
+
               <div className="space-y-4">
                 {practiceData.map((topic) => {
-                  const isExpanded = !!expandedTopics[topic.slug];
+
+  const topicProblems = topic.subsections.flatMap(
+    (sub) => sub.items
+  );
+
+  const completedProblems = topicProblems.filter(
+    (item) => getStatus(item.id) === "Completed"
+  ).length;
+
+  const progressPercentage = Math.round(
+    (completedProblems / topicProblems.length) * 100
+  );
+
+  const isExpanded = !!expandedTopics[topic.slug];
                   return (
                     <div 
                       key={topic.slug}
@@ -899,9 +1012,29 @@ export default function PracticePage() {
                         onClick={() => toggleAccordion(topic.slug)}
                         className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-neutral-850 select-none"
                       >
-                        <h3 className="text-sm font-black text-slate-850 dark:text-white">
-                          {topic.title}
-                        </h3>
+                        <div className="flex flex-col gap-2">
+  <h3 className="text-sm font-black text-slate-850 dark:text-white">
+    {topic.title}
+  </h3>
+
+  <div className="w-48">
+    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+      <div
+        className="h-full bg-purple-600"
+        style={{
+          width: `${progressPercentage}%`
+        }}
+      />
+    </div>
+
+    <span className="text-[10px] text-slate-500">
+      {progressPercentage}% Completed
+    </span>
+  </div>
+</div>
+<div className="text-[10px] text-green-600 font-bold">
+  {completedProblems}/{topicProblems.length} Solved
+</div>
                         <ChevronDown 
                           size={18} 
                           className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`} 
@@ -919,10 +1052,11 @@ export default function PracticePage() {
                                 <th className="py-3.5 px-5 text-center">Companies</th>
                                 <th className="py-3.5 px-5 text-center">Actions</th>
                                 <th className="py-3.5 px-5 text-center">Status</th>
+                                <th className="py-3.5 px-5 text-center">Access</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {topic.subsections.flatMap((sub) => sub.items).map((item) => {
+                              {topic.subsections.flatMap((sub) => sub.items).map((item, index, arr) => {
                                 const status = getStatus(item.id);
                                 const isCompleted = status === "Completed";
                                 return (

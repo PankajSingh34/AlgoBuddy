@@ -13,14 +13,8 @@ import {
 } from 'react-icons/fa6'
 
 
-import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
-import CookiePolicyModal from '@/app/components/cookie'
-
 
 const Footer = () => {
-  
-  const [showTermsModal, setShowTermsModal] = useState(false)
-  const [showCookieModal, setShowCookieModal] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
 
@@ -268,18 +262,15 @@ const Footer = () => {
                 >
                   Privacy Policy
                 </Link>
-                <button
-                  onClick={() => setShowTermsModal(true)}
-                  className={footerLink}
-                >
-                  Terms of Service
-                </button>
-                <button
-                  onClick={() => setShowCookieModal(true)}
-                  className={footerLink}
-                >
-                  Cookies Policy
-                </button>
+                
+                  <Link href="/terms" className={footerLink}>
+  Terms of Service
+</Link>
+<Link href="/cookie" className={footerLink}>
+  Cookies Policy
+</Link>
+
+
                 <Link href="/code-of-conduct"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
@@ -299,16 +290,6 @@ const Footer = () => {
           </div>
         </div>
       </footer>
-
-      
-      <TermsOfServiceModal
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-      />
-      <CookiePolicyModal
-        isOpen={showCookieModal}
-        onClose={() => setShowCookieModal(false)}
-      />
       
     </>
   )

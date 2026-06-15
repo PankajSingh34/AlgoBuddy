@@ -922,18 +922,19 @@ export async function joinCollaborationSession(sessionIdentifier, { password, us
   return issueSubscriptionTokenForParticipant(session.id, userId);
 }
 
-export async function claimSessionPresenter(sessionId, { sessionSecret, userId } = {}) {
+export async function claimSessionPresenter(sessionId, { userId } = {}) {
   const session = await readSession(sessionId);
   if (!session) {
     return { error: "Session not found", status: 404 };
   }
 
-  if (!sessionSecret || session.sessionSecret !== sessionSecret) {
-    return { error: "Invalid session secret. Only the session creator can claim presenter.", status: 403 };
-  }
-
   if (!userId) {
     return { error: "Authentication required", status: 401 };
+  }
+
+  // Only the session creator can claim presenter privileges
+  if (session.createdBy && session.createdBy !== userId) {
+    return { error: "Only the session creator can claim presenter.", status: 403 };
   }
 
   const participantUserId = normalizeParticipantUserId(userId);

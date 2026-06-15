@@ -9,15 +9,6 @@ async function executeCode(code) {
   const outputLines = [];
 
   const memoryBefore = process.memoryUsage().heapUsed;
-  if (memoryBefore > MEMORY_LIMIT_BYTES) {
-    return {
-      status: EXECUTION_STATUS.MLE,
-      output: "",
-      error: `Server memory exceeded before execution. Try again later.`,
-      executionTime: 0,
-      memoryUsed: memoryBefore,
-    };
-  }
 
   try {
     const sandbox = Object.create(null);

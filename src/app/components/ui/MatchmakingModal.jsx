@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Award, Shield, Zap } from "lucide-react";
+import { io } from "socket.io-client";
 
+// MOCK fallback just in case
 const MOCK_OPPONENTS = [
   { name: "Aryan", rating: 2450, level: 17, avatar: "A", title: "Binary Search Master" },
   { name: "Aditya", rating: 2200, level: 16, avatar: "AD", title: "Speed Demon" },
@@ -15,7 +17,7 @@ const SEARCH_STATUSES = [
   "Searching for developer...",
   "Matching based on rating...",
   "Analyzing queue activity...",
-  "Opponent found! Establishing connection...",
+  "Expanding search criteria...",
 ];
 
 export default function MatchmakingModal({ isOpen, onClose, onMatchFound, currentUserStats }) {
@@ -41,9 +43,47 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       setStatusIdx((prev) => (prev < SEARCH_STATUSES.length - 1 ? prev + 1 : prev));
     }, 1800);
 
-    // Simulate match found after 5 seconds
-    const matchTimer = setTimeout(() => {
-      const opponent = MOCK_OPPONENTS[Math.floor(Math.random() * MOCK_OPPONENTS.length)];
+    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:4000"
+      : "https://algobuddy-socket-server.onrender.com";
+
+    // Establish Socket connection
+    const socket = io(socketUrl, {
+      transports: ["websocket", "polling"]
+    });
+
+    socket.on("connect_error", (err) => {
+      console.log("Socket Connection Error (Safe to ignore in dev):", err.message);
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected to Arena Socket Server:", socket.id);
+      socket.emit("join_matchmaking", {
+        userId: currentUserStats?.userId || "user-" + Math.random(),
+        name: currentUserStats?.name || "Player",
+        rating: currentUserStats?.rating || 1200,
+        level: currentUserStats?.level || 1,
+        topic: "Arrays", // In the future, this could be selectable
+        difficulty: "Easy"
+      });
+    });
+
+    socket.on("match_found", (matchDetails) => {
+      console.log("Match found!", matchDetails);
+      // Find the opponent from the matchDetails.players array
+      const opponentData = matchDetails.players.find(p => p.socketId !== socket.id) || matchDetails.players[0];
+      
+      const opponent = {
+        userId: opponentData.userId,
+        name: opponentData.name,
+        rating: opponentData.rating || 1200,
+        level: opponentData.level || 1,
+        avatar: opponentData.name.slice(0, 2).toUpperCase(),
+        title: "Challenger",
+        matchId: matchDetails.matchId,
+        topic: matchDetails.topic
+      };
+
       setMatchedOpponent(opponent);
       setMatchState("matched");
       clearInterval(timer);
@@ -51,16 +91,17 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
 
       // Auto-start duel after 3 seconds of matched display
       setTimeout(() => {
-        onMatchFound(opponent);
+        onMatchFound({ ...opponent, matchId: matchDetails.matchId });
       }, 3000);
-    }, 5500);
+    });
 
     return () => {
       clearInterval(timer);
       clearInterval(statusTimer);
-      clearTimeout(matchTimer);
+      socket.emit("leave_matchmaking");
+      socket.disconnect();
     };
-  }, [isOpen, onMatchFound]);
+  }, [isOpen, onMatchFound, currentUserStats]);
 
   if (!isOpen) return null;
 

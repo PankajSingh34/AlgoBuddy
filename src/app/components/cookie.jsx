@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { FiX } from "react-icons/fi";
 
-const cookieSections = [
+export const cookieSections = [
   {
     id: "1",
     title: "What Are Cookies",

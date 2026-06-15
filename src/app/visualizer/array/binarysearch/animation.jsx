@@ -214,19 +214,20 @@ const BinarySearch = () => {
             </div>
           </div>
         </div>
+
         {isAnimating && (
           <div className="mt-4">
             <PlaybackControls
-                isPlaying={engine.isPlaying}
-                onPlayPause={engine.isPlaying ? engine.pause : () => engine.play()}
-                speed={engine.speed / 1000}
-                onSpeedChange={(s) => engine.setSpeed(s * 1000)}
-                onStepForward={engine.stepForward}
-                onStepBackward={engine.stepBackward}
-                onReset={engine.reset}
-                onExplainStep={() => {}}
-                disabled={steps.length === 0}
-                progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={engine.isPlaying ? engine.pause : () => engine.play()}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={engine.reset}
+              onExplainStep={() => {}}
+              disabled={steps.length === 0}
+              progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
             />
           </div>
         )}
@@ -235,7 +236,6 @@ const BinarySearch = () => {
       {message && (
         <div className={`max-w-3xl mx-auto mb-8 p-4 rounded-lg ${messageClass}`}>
           <p className="text-center font-medium">{message}</p>
-
           {showAutoSort && (
             <div className="mt-3 flex justify-center">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -294,14 +294,14 @@ const BinarySearch = () => {
                 let borderColor = "border-[#D1D5DB] dark:border-gray-600";
                 
                 if (index === visualState.foundIndex) {
-                    bgColor = "bg-[#22C55E]";
-                    borderColor = "border-[#15803D]";
+                  bgColor = "bg-[#22C55E]";
+                  borderColor = "border-[#15803D]";
                 } else if (index === visualState.mid) {
-                    bgColor = "bg-[#EAB308]";
-                    borderColor = "border-[#A16207]";
+                  bgColor = "bg-[#EAB308]";
+                  borderColor = "border-[#A16207]";
                 } else if (visualState.i !== -1 && visualState.j !== -1 && index >= visualState.i && index <= visualState.j) {
-                    bgColor = "bg-[#93C5FD]";
-                    borderColor = "border-[#3B82F6]";
+                  bgColor = "bg-[#93C5FD]";
+                  borderColor = "border-[#3B82F6]";
                 }
 
                 return (
