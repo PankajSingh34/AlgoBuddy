@@ -26,5 +26,9 @@ CREATE TABLE IF NOT EXISTS public.arena_matches (
     rating_change_p1 INTEGER,
     rating_change_p2 INTEGER,
     xp_awarded_p1 INTEGER,
-    xp_awarded_p2 INTEGER
+    xp_awarded_p2 INTEGER,
+    match_id VARCHAR(255)
 );
+
+CREATE INDEX IF NOT EXISTS idx_arena_rating_xp ON public.user_arena_profiles (rating DESC, xp DESC);
+CREATE INDEX IF NOT EXISTS idx_arena_matches_match_id ON public.arena_matches (match_id);

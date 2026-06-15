@@ -7,6 +7,7 @@ import com.algobuddy.backend.entity.UserArenaProfile;
 import com.algobuddy.backend.repository.ArenaMatchRepository;
 import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class ArenaService {
     private final ArenaMatchRepository matchRepository;
 
     @Transactional
+    @Cacheable(value = "arenaProfile", key = "#userId", unless = "#result == null")
     public ArenaProfileResponse getProfile(UUID userId) {
         UserArenaProfile profile = profileRepository.findById(userId)
                 .orElseGet(() -> createDefaultProfile(userId));
@@ -33,17 +35,16 @@ public class ArenaService {
     }
     
     @Transactional(readOnly = true)
+    @Cacheable(value = "arenaLeaderboard", unless = "#result == null")
     public List<ArenaProfileResponse> getLeaderboard() {
-        List<UserArenaProfile> topPlayers = profileRepository.findTopPlayers();
+        List<UserArenaProfile> topPlayers = profileRepository.findTopPlayers(PageRequest.of(0, 50));
         
-        // Return top 50, assigning ranks 1 to 50
-        return topPlayers.stream()
-                .limit(50)
-                .map(profile -> {
-                    int rank = topPlayers.indexOf(profile) + 1;
-                    return mapToResponse(profile, rank);
-                })
-                .collect(Collectors.toList());
+        int rank = 1;
+        List<ArenaProfileResponse> result = new java.util.ArrayList<>();
+        for (UserArenaProfile profile : topPlayers) {
+            result.add(mapToResponse(profile, rank++));
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -69,14 +70,8 @@ public class ArenaService {
     }
     
     private Integer calculateRank(UUID userId) {
-        // Simple rank calculation: find position in the ordered list
-        List<UserArenaProfile> allPlayers = profileRepository.findTopPlayers();
-        for (int i = 0; i < allPlayers.size(); i++) {
-            if (allPlayers.get(i).getUserId().equals(userId)) {
-                return i + 1; // 1-indexed rank
-            }
-        }
-        return allPlayers.size() + 1; // If not found, rank is last
+        Integer rank = profileRepository.findRankByUserId(userId);
+        return rank != null ? rank : profileRepository.findTopPlayers(PageRequest.of(0, 1)).size() + 1;
     }
 
     private ArenaProfileResponse mapToResponse(UserArenaProfile profile, Integer rank) {
