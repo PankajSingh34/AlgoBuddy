@@ -61,8 +61,9 @@ export default function AuthForm({ isLogin = true }) {
         });
         if (!data.success) throw new Error(data.message || "Login failed");
 
-        // The API route set the session as cookies.
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user || null);
         router.push("/arena");
       } else {
@@ -95,10 +96,18 @@ export default function AuthForm({ isLogin = true }) {
     if (error) setError(error.message);
   };
 
+  const handleForgotPassword = () => {
+    if (!email || emailError) {
+      toast.error("Please enter a valid email address first");
+      return;
+    }
+    router.push(`/auth/forgot-password?email=${encodeURIComponent(email)}`);
+  };
+
   // Safe Turnstile sitekey fallback for testing/dev environments
   const turnstileSiteKey =
-    (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
-      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key")
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key"
       ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
       : "1x00000000000000000000AA";
 
@@ -112,18 +121,14 @@ export default function AuthForm({ isLogin = true }) {
         {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
           <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
-            <Link href="/">
-              ← Back To Home
-            </Link>
+            <Link href="/">← Back To Home</Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold font-sans">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-purple-200 text-sm mt-1">
-              {isLogin
-                ? "Sign in to access Arena"
-                : "Join us to get started"}
+              {isLogin ? "Sign in to access Arena" : "Join us to get started"}
             </p>
           </div>
         </div>
@@ -169,10 +174,14 @@ export default function AuthForm({ isLogin = true }) {
 
           {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
+            {/* Email Field */}
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 w-10 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-gray-400 dark:text-gray-500" />
+                  <Mail
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
                 </div>
                 <input
                   type="email"
@@ -194,6 +203,7 @@ export default function AuthForm({ isLogin = true }) {
               )}
             </div>
 
+            {/* Password Field */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock size={18} className="text-gray-400 dark:text-gray-500" />
@@ -209,10 +219,27 @@ export default function AuthForm({ isLogin = true }) {
               />
             </div>
 
+            {/* Forgot Password Link - Only shown on Login */}
+            {isLogin && (
+              <div className="text-right -mt-2">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-udemy-purple dark:text-udemy-purple-light hover:underline font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            {/* Name Field - Only for Signup */}
             {!isLogin && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User size={18} className="text-gray-400 dark:text-gray-500" />
+                  <User
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
                 </div>
                 <input
                   type="text"
@@ -226,7 +253,7 @@ export default function AuthForm({ isLogin = true }) {
               </div>
             )}
 
-            {/* Turnstile for both login and signup */}
+            {/* Turnstile */}
             <div className="flex justify-center">
               <Turnstile
                 siteKey={turnstileSiteKey}
@@ -234,13 +261,15 @@ export default function AuthForm({ isLogin = true }) {
               />
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !captchaToken || (email && emailError)}
-              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${loading || !captchaToken || (email && emailError)
+              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
+                loading || !captchaToken || (email && emailError)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
-                }`}
+              }`}
             >
               {loading ? (
                 <>
@@ -259,7 +288,7 @@ export default function AuthForm({ isLogin = true }) {
             </button>
           </form>
 
-          {/* Switch forms */}
+          {/* Switch between Login / Signup */}
           <div className="text-center text-sm text-udemy-muted dark:text-udemy-dark-muted">
             {isLogin ? (
               <p>
