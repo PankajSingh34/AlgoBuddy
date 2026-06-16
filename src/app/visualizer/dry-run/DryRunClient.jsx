@@ -438,9 +438,12 @@ export default function DryRunClient() {
   const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId, registerHandler, unregisterHandler } = collaboration;
 
   useEffect(() => {
-    registerHandler("dryRun", handleRemoteStateDelta);
-    return () => unregisterHandler("dryRun");
-  }, [registerHandler, unregisterHandler, handleRemoteStateDelta]);
+  registerHandler("dryRun", handleRemoteStateDelta);
+
+  return () => unregisterHandler("dryRun");
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registerHandler, unregisterHandler]);
 
   collaborationRef.current = collaboration;
 
