@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
+import Footer from '@/app/components/footer';
 import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
 const inter = Inter({
@@ -148,6 +149,7 @@ export default async function RootLayout({ children }) {
             <div id="main-content">{children}</div>
           </ClientLayoutWrapper>
         </UserProvider>
+      <Footer/>
       <BackToTop />
         <SpeedInsights />
       </body>
