@@ -111,6 +111,10 @@ const sections = [
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
           },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
+          },
         ],
       },
     ],
