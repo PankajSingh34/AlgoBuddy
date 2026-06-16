@@ -12,9 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,22 +136,31 @@ public class PracticeService {
     }
 
     public void updateStreakWithRetry(UUID userId) {
-        final int MAX_RETRIES = 3;
+        final int MAX_RETRIES = 5;
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
                 self.updateStreak(userId);
                 return;
-            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
+            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException | CannotAcquireLockException e) {
                 if (attempt == MAX_RETRIES) {
                     log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
                     throw e;
                 }
-                log.warn("Lock/constraint failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
+                log.warn("Concurrent streak update for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
+                sleepBeforeRetry(attempt);
             }
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(Math.min(25L * attempt, 100L));
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
     public void updateStreak(UUID userId) {
         UserPracticeStats stats = statsRepository.findById(userId)
                 .orElse(new UserPracticeStats(userId, 0, 0, null, 0, 0));
