@@ -72,61 +72,7 @@ export const metadata = {
 
 
 const sections = [
-  {
-  title: "Performance Dashboard",
-  slug: "performance-dashboard",
-  desc: "Compare algorithm execution time, space complexity, and analyze performance with interactive metrics",
-  icon: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 3v18h18M7 14l3-3 3 2 4-6"
-      />
-    </svg>
-  ),
-
-  info: {
-    About:
-      "Analyze and compare algorithm performance using execution time, time complexity, space complexity, input size impact, and historical benchmarks.",
-    Representation: null,
-  },
-
-  subsections: [
-    {
-      title: "Performance Metrics",
-      items: [
-        {
-          name: "Execution Time Comparison",
-          path: "/visualizer/performance/execution-time",
-        },
-        {
-          name: "Time Complexity Analysis",
-          path: "/visualizer/performance/time-complexity",
-        },
-        {
-          name: "Space Complexity Analysis",
-          path: "/visualizer/performance/space-complexity",
-        },
-        {
-          name: "Input Size Impact",
-          path: "/visualizer/performance/input-size",
-        },
-        {
-          name: "Historical Benchmark Data",
-          path: "/visualizer/performance/history",
-        },
-      ],
-    },
-  ],
-},
+  
   {
     title: "Code Lab",
     slug: "code-lab",
