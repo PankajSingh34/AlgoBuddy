@@ -5,8 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, Bell } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
+import NotificationDropdown from "./notifications/NotificationDropdown";
 
 function getStoredTheme() {
   if (typeof window === "undefined") return "light";
@@ -44,16 +45,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const notifications = [
-    "🔥 7 Day Streak Achieved",
-    "🎯 Goal Completed",
-    "📚 New Blog Available",
-    "🏆 Achievement Unlocked",
-    "📝 Daily Practice Challenge"
-  ];
-
   const pathname = usePathname();
   const router = useRouter();
  
@@ -125,6 +116,26 @@ export default function Navbar() {
       );
   }, []);
 
+  useEffect(() => {
+    const handleToggleNotifications = () => {
+      setNotificationsOpen(prev => !prev);
+    };
+    
+    const handleGlobalEscape = () => {
+      setNotificationsOpen(false);
+      setUserMenuOpen(false);
+      setMenuOpen(false);
+    };
+
+    window.addEventListener("toggle-notifications", handleToggleNotifications);
+    window.addEventListener("global-escape", handleGlobalEscape);
+
+    return () => {
+      window.removeEventListener("toggle-notifications", handleToggleNotifications);
+      window.removeEventListener("global-escape", handleGlobalEscape);
+    }
+  }, []);
+
   // FIX: Prevent background scrolling when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
@@ -194,9 +205,9 @@ export default function Navbar() {
                   href={dynamicHref}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
-                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
-                      ? "text-primary dark:text-primary font-semibold"
-                      : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
+                  className={`relative pb-2 text-[15px] flex flex-col items-center justify-center border-b-2 transition-colors duration-150 focus-ring ${isActive(l.href)
+                      ? "border-primary text-primary dark:text-primary font-semibold"
+                      : "border-transparent text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white hover:border-surface-300 dark:hover:border-surface-600"
                     }`}
                 >
                   {l.label}
@@ -209,35 +220,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <div className="relative">
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-udemy-dark-surface"
-              >
-                <Bell className="w-5 h-5" />
-
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1">
-                  {notifications.length}
-                </span>
-              </button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-udemy-dark-surface border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-[9999]">
-                  <div className="p-3 font-semibold border-b">
-                    Notifications
-                  </div>
-
-                  {notifications.map((item, index) => (
-                    <div
-                      key={index}
-                      className="p-3 text-sm border-b last:border-b-0"
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <NotificationDropdown />
 
             {user ? (
               <div
@@ -275,6 +258,19 @@ export default function Navbar() {
                         {user.email}
                       </p>
                     </div>
+
+                    <ProfileProgress compact={true} />
+
+                    <Link
+                      href="/profile"
+                      onClick={() =>
+                        setUserMenuOpen(false)
+                      }
+                      className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring border-b border-surface-100 dark:border-udemy-dark-border"
+                    >
+                      <User className="w-4 h-4 text-surface-500" />
+                      Profile
+                    </Link>
 
                     <Link
                       href="/arena"

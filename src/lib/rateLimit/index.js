@@ -54,8 +54,10 @@ async function resolveIdentityKey(request) {
     const authHeader = request.headers.get("authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (token) {
-      const secret = new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET);
-      const { payload } = await jwtVerify(token, secret);
+      const jwksUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/jwks";
+      const { createRemoteJWKSet } = await import("jose");
+      const JWKS = createRemoteJWKSet(new URL(jwksUrl));
+      const { payload } = await jwtVerify(token, JWKS);
       if (payload && payload.sub) {
         return `user:${payload.sub}`;
       }
@@ -174,7 +176,10 @@ export async function resetKey(key) {
   store.delete(key);
 }
 
-export async function resetAll() {
+export async function resetAll({ scope = "rate-limit" } = {}) {
+  if (scope !== "rate-limit") {
+    throw new Error("Invalid scope for resetAll");
+  }
   isRedisOffline = false;
   redisOfflineUntil = 0;
   if (shouldTryRedis()) {
@@ -209,32 +214,42 @@ let localSmtpDate = new Date().toISOString().split("T")[0];
 export async function checkGlobalSmtpQuota(maxPerDay = 500) {
   const today = new Date().toISOString().split("T")[0];
 
-  let count;
+  let currentCount;
 
   if (!redis) {
     if (localSmtpDate !== today) {
       localSmtpCounter = 0;
       localSmtpDate = today;
     }
-    localSmtpCounter += 1;
-    count = localSmtpCounter;
+    currentCount = localSmtpCounter;
   } else {
     const dailyKey = `smtp:quota:${today}`;
-    count = await redis.incr(dailyKey);
-    if (count === 1) {
+    currentCount = await redis.get(dailyKey) || 0;
+  }
+
+  if (currentCount >= maxPerDay) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  if (!redis) {
+    localSmtpCounter += 1;
+  } else {
+    const dailyKey = `smtp:quota:${today}`;
+    const newCount = await redis.incr(dailyKey);
+    if (newCount === 1) {
       await redis.expire(dailyKey, 86400);
     }
   }
 
-  const usagePercent = (count / maxPerDay) * 100;
+  const usagePercent = ((currentCount + 1) / maxPerDay) * 100;
   if (usagePercent >= 80) {
     console.warn(
-      `[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${count}/${maxPerDay}) consumed`,
+      `[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${currentCount + 1}/${maxPerDay}) consumed`,
     );
   }
 
   return {
-    allowed: count <= maxPerDay,
-    remaining: Math.max(0, maxPerDay - count),
+    allowed: true,
+    remaining: Math.max(0, maxPerDay - currentCount - 1),
   };
 }

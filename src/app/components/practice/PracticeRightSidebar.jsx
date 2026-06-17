@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { 
   Clock, 
   Building2, 
@@ -101,10 +102,13 @@ export default function PracticeRightSidebar({
           </div>
         </div>
 
-        <button className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-purple-500/5 hover:bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:hover:bg-purple-950/30 rounded-xl text-xs font-black transition border border-purple-500/10">
+        <Link 
+          href="/arena" 
+          className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-purple-500/5 hover:bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:hover:bg-purple-950/30 rounded-xl text-xs font-black transition border border-purple-500/10"
+        >
           <span>View Detailed Progress</span>
           <ArrowRight size={14} />
-        </button>
+        </Link>
       </div>
 
       {/* Session Stats Card */}

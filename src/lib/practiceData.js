@@ -16,7 +16,7 @@ export const practiceData = [
             name: "Linear Search",
             difficulty: "Easy",
             companies: ["tcs", "infosys", "wipro", "accenture", "amazon", "google"],
-            practiceUrl: "https://leetcode.com/problems/check-if-n-and-its-double-exist/",
+            practiceUrl: "https://leetcode.com/problems/find-numbers-with-even-number-of-digits/",
             visualizerUrl: "/visualizer/array/linearsearch",
             theory: {
               summary: "A simple algorithm that checks every element in the array sequentially until the target is found.",
@@ -140,6 +140,65 @@ export const practiceData = [
         title: "Beginner",
         items: [
           {
+            id: "middle-of-linked-list",
+            name: "Middle of the Linked List",
+            difficulty: "Easy",
+            companies: ["amazon", "google"],
+            practiceUrl: "https://leetcode.com/problems/middle-of-the-linked-list/",
+            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            theory: {
+              summary: "Find the middle node of a singly linked list.",
+              steps: [
+                "Initialize two pointers, slow and fast, pointing to the head.",
+                "Move slow by one step and fast by two steps.",
+                "When fast reaches the end, slow will be at the middle."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Not correctly handling the condition for even length lists.",
+              tip: "The Tortoise and Hare algorithm is standard for finding the middle node."
+            }
+          },
+          {
+            id: "intersection-of-two-linked-lists",
+            name: "Intersection of Two Linked Lists",
+            difficulty: "Easy",
+            companies: ["amazon", "google"],
+            practiceUrl: "https://leetcode.com/problems/intersection-of-two-linked-lists/",
+            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            theory: {
+              summary: "Find the node at which the intersection of two singly linked lists begins.",
+              steps: [
+                "Initialize two pointers, pA and pB, at the heads of the two lists.",
+                "Traverse both lists. When pA reaches the end, redirect it to the head of list B.",
+                "When pB reaches the end, redirect it to the head of list A.",
+                "If they intersect, they will meet at the intersection node. Otherwise, they will meet at null."
+              ],
+              complexity: { time: "O(N+M)", space: "O(1)" },
+              pitfalls: "Creating infinite loops if the redirect condition is not handled correctly.",
+              tip: "By swapping heads, both pointers travel the exact same distance (lengthA + lengthB)."
+            }
+          },
+          {
+            id: "palindrome-linked-list",
+            name: "Palindrome Linked List",
+            difficulty: "Easy",
+            companies: ["amazon", "google"],
+            practiceUrl: "https://leetcode.com/problems/palindrome-linked-list/",
+            visualizerUrl: "/visualizer/linkedlist/operations/reverse",
+            theory: {
+              summary: "Given the head of a singly linked list, return true if it is a palindrome.",
+              steps: [
+                "Find the middle of the linked list.",
+                "Reverse the second half of the linked list.",
+                "Compare the first half and the reversed second half.",
+                "Restore the list (optional) and return the result."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Forgetting to handle odd vs even number of nodes when splitting the list.",
+              tip: "Combine the 'Middle of Linked List' and 'Reverse Linked List' algorithms."
+            }
+          },
+          {
             id: "list-traversal",
             name: "Singly Linked List Traversal",
             difficulty: "Easy",
@@ -157,12 +216,134 @@ export const practiceData = [
               pitfalls: "Attempting to read properties of null (e.g. curr.next when curr is already null).",
               tip: "Always check if the list head is null before starting any linked list operations."
             }
-          }
+          },
+
+          {
+  id: "palindrome-linked-list",
+  name: "Palindrome Linked List",
+  difficulty: "Easy",
+  companies: ["amazon", "microsoft", "google", "meta", "adobe"],
+  practiceUrl: "https://leetcode.com/problems/palindrome-linked-list/",
+  visualizerUrl: null,
+  theory: {
+    summary: "Check if a singly linked list is a palindrome by finding the middle, reversing the second half, and comparing both halves.",
+    steps: [
+      "Find the middle of the linked list using slow and fast pointers.",
+      "Reverse the second half of the list starting from slow pointer.",
+      "Compare values of first half and reversed second half node by node.",
+      "If all values match, return true. Otherwise return false."
+    ],
+    complexity: { time: "O(N)", space: "O(1)" },
+    pitfalls: "Not handling edge cases like empty list or single node list.",
+    tip: "This problem combines two important concepts: finding middle using two pointers and in-place reversal."
+  }
+},
+          
         ]
       },
       {
         title: "Intermediate",
         items: [
+          {
+            id: "remove-nth-node",
+            name: "Remove Nth Node From End of List",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft"],
+            practiceUrl: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+            visualizerUrl: "/visualizer/linkedlist/operations/deletion",
+            theory: {
+              summary: "Remove the nth node from the end of the list and return its head.",
+              steps: [
+                "Use a dummy head pointing to the actual head to handle edge cases like removing the head.",
+                "Use two pointers, fast and slow.",
+                "Advance fast pointer by n+1 steps.",
+                "Move both pointers one step at a time until fast reaches null.",
+                "Slow pointer will now be just before the node to remove.",
+                "Bypass the target node by setting slow.next = slow.next.next."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Failing to handle the case where the head itself needs to be removed.",
+              tip: "A dummy head is standard practice when the head node might be modified or removed."
+            }
+          },
+          {
+            id: "lru-cache",
+            name: "LRU Cache",
+            difficulty: "Medium",
+            companies: ["amazon", "google", "microsoft"],
+            practiceUrl: "https://leetcode.com/problems/lru-cache/",
+            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            theory: {
+              summary: "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.",
+              steps: [
+                "Use a hash map to store key-node pairs for O(1) access.",
+                "Use a doubly linked list to maintain usage order (most recently used at head, least at tail).",
+                "On get(), move the accessed node to the head.",
+                "On put(), if capacity is reached, remove the tail node and delete from hash map."
+              ],
+              complexity: { time: "O(1) for get and put", space: "O(capacity)" },
+              pitfalls: "Incorrectly updating the prev and next pointers in the doubly linked list.",
+              tip: "Dummy head and tail nodes make adding and removing nodes much easier."
+            }
+          },
+          {
+            id: "copy-list-random-pointer",
+            name: "Copy List with Random Pointer",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft"],
+            practiceUrl: "https://leetcode.com/problems/copy-list-with-random-pointer/",
+            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            theory: {
+              summary: "Construct a deep copy of a linked list where nodes also have a random pointer.",
+              steps: [
+                "Iterate the list to create a copy of each node, interleaving them with the originals.",
+                "Iterate again to assign the random pointers of the copied nodes.",
+                "Iterate a third time to separate the original and copied lists."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Modifying the original list permanently without restoring it.",
+              tip: "Interleaving the copied nodes saves O(N) space that a hash map would otherwise consume."
+            }
+          },
+          {
+            id: "add-two-numbers",
+            name: "Add Two Numbers (LL)",
+            difficulty: "Medium",
+            companies: ["amazon", "google"],
+            practiceUrl: "https://leetcode.com/problems/add-two-numbers/",
+            visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+            theory: {
+              summary: "Add two numbers represented by linked lists (digits stored in reverse order).",
+              steps: [
+                "Initialize a dummy head for the result list and a carry variable to 0.",
+                "Traverse both lists, summing the values along with the carry.",
+                "Create a new node with the sum % 10, and update carry to sum / 10.",
+                "If carry remains after traversal, append a new node with its value."
+              ],
+              complexity: { time: "O(max(N,M))", space: "O(max(N,M))" },
+              pitfalls: "Forgetting to add the final carry if it's non-zero at the end.",
+              tip: "Use a dummy head to easily return the result list."
+            }
+          },
+          {
+            id: "sort-list",
+            name: "Sort List (Merge Sort on LL)",
+            difficulty: "Medium",
+            companies: ["google", "microsoft"],
+            practiceUrl: "https://leetcode.com/problems/sort-list/",
+            visualizerUrl: "/visualizer/linkedlist/operations/merge",
+            theory: {
+              summary: "Sort a linked list in O(n log n) time and O(1) memory (using bottom-up merge sort).",
+              steps: [
+                "Find the middle of the list using slow and fast pointers.",
+                "Recursively sort the left and right halves.",
+                "Merge the two sorted halves back together."
+              ],
+              complexity: { time: "O(N log N)", space: "O(1) for bottom-up, O(log N) for top-down" },
+              pitfalls: "Failing to break the link between the two halves before recursion.",
+              tip: "Merge sort is the standard algorithm for sorting linked lists because it requires no random access."
+            }
+          },
           {
             id: "reverse-list",
             name: "Reverse Linked List",
@@ -207,12 +388,52 @@ export const practiceData = [
               pitfalls: "Failing to handle empty lists as inputs or forgetting to advance list pointers, which creates infinite loops.",
               tip: "Using a dummy head node completely bypasses complex null pointer checks during initialization."
             }
-          }
+          },
+         {
+            id: "remove-nth-node",
+            name: "Remove Nth Node from End of List",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft", "google", "meta"],
+            practiceUrl: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
+            visualizerUrl: null,
+            theory: {
+              summary: "Remove the Nth node from the end of a linked list in one pass using two pointers.",
+              steps: [
+                "Initialize two pointers: fast and slow, both at head.",
+                "Move fast pointer N steps ahead.",
+                "Move both fast and slow together until fast reaches the last node.",
+                "slow.next now points to the node to be removed.",
+                "Set slow.next = slow.next.next to skip and delete the target node."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Not handling edge case when the head node itself needs to be removed.",
+              tip: "Two pointer technique with a gap of N between fast and slow solves this in a single pass."
+            }
+          },
         ]
       },
       {
         title: "Advanced",
         items: [
+          {
+            id: "merge-k-sorted-lists",
+            name: "Merge K Sorted Lists",
+            difficulty: "Hard",
+            companies: ["google", "amazon"],
+            practiceUrl: "https://leetcode.com/problems/merge-k-sorted-lists/",
+            visualizerUrl: "/visualizer/linkedlist/operations/merge",
+            theory: {
+              summary: "Merge an array of k sorted linked lists into one sorted linked list.",
+              steps: [
+                "Use a min-heap (priority queue) to keep track of the smallest current node among the k lists.",
+                "Extract the minimum node, append it to the result list, and push its next node into the heap.",
+                "Alternatively, repeatedly merge lists in pairs (Divide and Conquer)."
+              ],
+              complexity: { time: "O(N log K)", space: "O(K) for heap" },
+              pitfalls: "Pushing null nodes into the priority queue, causing crashes.",
+              tip: "Divide and Conquer merges pairs of lists until only one remains, achieving the same time complexity without a heap."
+            }
+          },
           {
             id: "list-cycle",
             name: "Linked List Cycle Detection",
@@ -236,7 +457,8 @@ export const practiceData = [
             }
           }
         ]
-      }
+      },
+
     ]
   },
   {
