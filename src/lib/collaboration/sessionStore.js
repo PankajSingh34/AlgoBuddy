@@ -173,6 +173,8 @@ let memorySweepTimer = null;
 let reconciliationTimer = null;
 const RECONCILIATION_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 let memoryWriteCount = 0;
+let memoryEvictionCount = 0;
+let lastBackfillTimestamp = null;
 const MEMORY_WRITE_WARN_THRESHOLD = 50;
 
 const redis =
@@ -208,7 +210,14 @@ async function backfillMemorySessionsToRedis() {
         if (!ttl || ttl <= Date.now()) continue;
         const existing = await redis.get(sessionKey(id));
         if (!existing) {
-          await redis.set(sessionKey(id), session, { ex: SESSION_TTL_SECONDS });
+          const sessionStr = typeof session === 'string' ? session : JSON.stringify(session);
+          const sessionObj = typeof session === 'string' ? JSON.parse(session) : session;
+          await redis.eval(ATOMIC_WRITE_SCRIPT, [sessionKey(id), SESSION_INDEX_KEY, SESSION_PUBLIC_INDEX_KEY], [
+            sessionStr,
+            SESSION_TTL_SECONDS,
+            Date.now(),
+            sessionObj.visibility || "public",
+          ]);
           migrated++;
           memorySessions.delete(id);
           memorySessionTtls.delete(id);
@@ -219,6 +228,7 @@ async function backfillMemorySessionsToRedis() {
       }
       await new Promise(resolve => setImmediate(resolve));
     }
+    lastBackfillTimestamp = new Date().toISOString();
     if (migrated > 0) {
       console.log(`[sessionStore] Migrated ${migrated} sessions from memory to Redis. Memory sessions remaining: ${memorySessions.size}`);
     } else if (memorySessions.size > 0) {
@@ -307,11 +317,13 @@ function enforceMemorySessionCapacity() {
   const sorted = [...memorySessionTtls.entries()].sort((a, b) => a[1] - b[1]);
   const evictCount = Math.max(1, Math.floor(MAX_MEMORY_SESSIONS * 0.2));
   const toEvict = sorted.slice(0, Math.min(evictCount, sorted.length));
+  const evictedIds = toEvict.map(([key]) => key).join(', ');
   for (const [key] of toEvict) {
     memorySessions.delete(key);
     memorySessionTtls.delete(key);
   }
-  console.warn(`[sessionStore] Evicted ${toEvict.length} oldest sessions. Current size: ${memorySessions.size}`);
+  memoryEvictionCount += toEvict.length;
+  console.warn(`[sessionStore] Evicted ${toEvict.length} oldest sessions: [${evictedIds}]. Current size: ${memorySessions.size}, total evicted: ${memoryEvictionCount}`);
 }
 
 const TRUSTED_ORIGINS = (() => {
@@ -1245,18 +1257,32 @@ export async function updateCollaborationSession(sessionId, patch = {}) {
 
 export { leaveCollaborationSession };
 
-// Crash-recovery: on graceful shutdown, dump memory sessions to temp file
+export function getSessionStoreStats() {
+  return {
+    memorySessionCount: memorySessions.size,
+    totalMemoryWrites: memoryWriteCount,
+    totalEvictions: memoryEvictionCount,
+    lastBackfillTimestamp,
+    maxMemorySessions: MAX_MEMORY_SESSIONS,
+    isRedisConfigured: redis !== null,
+    isRedisOffline,
+    redisOfflineUntil: isRedisOffline ? redisOfflineUntil : null,
+    backfillInProgress,
+  };
+}
+
+// Crash-recovery: on graceful shutdown, dump memory sessions to file
+const DUMP_PATH = process.env.SESSION_STORE_DUMP_PATH || './data/session_dump.json';
 if (typeof process !== "undefined" && process.on) {
 
   function dumpMemorySessions() {
     if (memorySessions.size === 0) return;
-    const enabled = process.env.SESSION_STORE_DUMP_ENABLED === 'true';
-    if (!enabled) {
-      console.log(`[sessionStore] Crash dump disabled via SESSION_STORE_DUMP_ENABLED. ${memorySessions.size} sessions not dumped.`);
+    const enabled = process.env.SESSION_STORE_DUMP_ENABLED;
+    if (enabled === 'false') {
+      console.log(`[sessionStore] Crash dump disabled via SESSION_STORE_DUMP_ENABLED=false. ${memorySessions.size} sessions not dumped.`);
       return;
     }
-    const dumpDir = process.env.TEMP_DIR || "/tmp";
-    const dumpPath = path.join(dumpDir, `algobuddy-session-store-dump-${Date.now()}.json`);
+    const dumpDir = path.dirname(DUMP_PATH);
     try {
       const maxDumpSessions = 1000;
       const sessionsToDump = memorySessions.size > maxDumpSessions
@@ -1271,8 +1297,8 @@ if (typeof process !== "undefined" && process.on) {
       if (!fs.existsSync(dumpDir)) {
         fs.mkdirSync(dumpDir, { recursive: true });
       }
-      fs.writeFileSync(dumpPath, JSON.stringify(dump, null, 2));
-      console.log(`[sessionStore] Dumped ${Math.min(memorySessions.size, maxDumpSessions)}/${memorySessions.size} memory sessions to ${dumpPath}`);
+      fs.writeFileSync(DUMP_PATH, JSON.stringify(dump, null, 2));
+      console.log(`[sessionStore] Dumped ${Math.min(memorySessions.size, maxDumpSessions)}/${memorySessions.size} memory sessions to ${DUMP_PATH}`);
     } catch (err) {
       console.error("[sessionStore] Failed to dump memory sessions:", err.message || err);
     }
