@@ -182,7 +182,7 @@ export default function ArenaPage() {
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
-  // Fix for browser back button from Create Custom Lobby panel (Issue #1342)
+  // Fix for browser back button from Create Duel modal (Issue #1336)
   useEffect(() => {
     const handlePopState = (e) => {
       if (matchmakingOpen) {

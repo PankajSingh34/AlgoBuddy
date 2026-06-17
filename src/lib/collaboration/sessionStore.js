@@ -913,34 +913,76 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
         await redis.zremrangebyscore(SESSION_PUBLIC_INDEX_KEY, "-inf", cutoffMs);
       }
 
-      const fetchSize = pageSize + MAX_EXPIRED_BUFFER;
-      const ids = await redis.zrange(SESSION_PUBLIC_INDEX_KEY, maxScore, "-inf", {
-        byScore: true,
-        rev: true,
-        limit: { offset, count: fetchSize },
-      });
-
-      if (!ids || ids.length === 0) {
-        markRedisOnline();
-        return { sessions: [], nextCursor: null };
-      }
-
-      const values = await redis.mget(...ids.map(sessionKey));
       const sessions = [];
       const expiredIds = [];
+      let currentMaxScore = maxScore;
+      let currentOffset = offset;
+      let lastProcessedScore = null;
+      let processedCountAtLastScore = 0;
+      let hasMore = false;
 
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        const session = values[i];
+      while (sessions.length < pageSize) {
+        const fetchSize = pageSize - sessions.length + MAX_EXPIRED_BUFFER;
+        const ids = await redis.zrange(SESSION_PUBLIC_INDEX_KEY, currentMaxScore, "-inf", {
+          byScore: true,
+          rev: true,
+          limit: { offset: currentOffset, count: fetchSize },
+        });
 
-        if (session && session.visibility === "public") {
-          sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
-          if (sessions.length >= pageSize) break;
-        } else if (!session) {
-          expiredIds.push(id);
-        } else if (session && session.visibility !== "public") {
-          await redis.zrem(SESSION_PUBLIC_INDEX_KEY, id);
+        if (!ids || ids.length === 0) {
+          hasMore = false;
+          break;
         }
+
+        const values = await redis.mget(...ids.map(sessionKey));
+        const scores = await redis.zmscore(SESSION_PUBLIC_INDEX_KEY, ...ids);
+
+        for (let i = 0; i < ids.length; i++) {
+          const id = ids[i];
+          const session = values[i];
+          let score = scores[i];
+          
+          if (score === null) score = lastProcessedScore || currentMaxScore;
+
+          if (score === lastProcessedScore) {
+            processedCountAtLastScore++;
+          } else {
+            lastProcessedScore = score;
+            processedCountAtLastScore = 1;
+            if (lastProcessedScore === currentMaxScore) {
+               processedCountAtLastScore += currentOffset;
+            }
+          }
+
+          if (session && session.visibility === "public") {
+            sessions.push(discoverableSessionView(session, { includeJoinCode: false }));
+          } else if (!session) {
+            expiredIds.push(id);
+          } else if (session && session.visibility !== "public") {
+            await redis.zrem(SESSION_PUBLIC_INDEX_KEY, id);
+          }
+
+          if (sessions.length >= pageSize) {
+            if (i < ids.length - 1 || ids.length === fetchSize) {
+              hasMore = true;
+            } else {
+              hasMore = false;
+            }
+            break;
+          }
+        }
+
+        if (sessions.length >= pageSize) {
+          break;
+        }
+
+        if (ids.length < fetchSize) {
+          hasMore = false;
+          break;
+        }
+
+        currentMaxScore = lastProcessedScore;
+        currentOffset = processedCountAtLastScore;
       }
 
       if (expiredIds.length > 0) {
@@ -948,24 +990,8 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
       }
 
       let nextCursor = null;
-      if (sessions.length > 0) {
-        const sessionKeys = sessions.map((s) => sessionKey(s.id));
-        const scores = await redis.zmscore(SESSION_PUBLIC_INDEX_KEY, ...sessionKeys);
-        
-        const lastScore = scores[scores.length - 1];
-        if (lastScore !== null) {
-          let scoreCount = 0;
-          for (let i = scores.length - 1; i >= 0; i--) {
-            if (scores[i] === lastScore) scoreCount++;
-            else break;
-          }
-          
-          let nextOffset = scoreCount;
-          if (lastScore === maxScore) {
-             nextOffset = offset + scoreCount;
-          }
-          nextCursor = `${lastScore}::${nextOffset}`;
-        }
+      if (hasMore && lastProcessedScore !== null) {
+        nextCursor = `${lastProcessedScore}::${processedCountAtLastScore}`;
       }
 
       markRedisOnline();
