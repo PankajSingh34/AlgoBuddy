@@ -6,9 +6,6 @@ import com.algobuddy.backend.entity.ArenaMatch;
 import com.algobuddy.backend.entity.UserArenaProfile;
 import com.algobuddy.backend.repository.ArenaMatchRepository;
 import com.algobuddy.backend.repository.UserArenaProfileRepository;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.ConsumptionProbe;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +18,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 
-import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,20 +32,10 @@ public class ArenaService {
     private final UserArenaProfileRepository profileRepository;
     private final ArenaMatchRepository matchRepository;
 
-    private final Map<UUID, Bucket> matchResultRateLimitCache = new ConcurrentHashMap<>();
-
-    private Bucket newMatchResultBucket() {
-        Bandwidth limit = Bandwidth.builder()
-                .capacity(3)
-                .refillGreedy(3, Duration.ofMinutes(1))
-                .build();
-        return Bucket.builder().addLimit(limit).build();
-    }
-
     private void checkMatchResultRateLimit(UUID userId) {
-        Bucket bucket = matchResultRateLimitCache.computeIfAbsent(userId, k -> newMatchResultBucket());
-        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-        if (!probe.isConsumed()) {
+        LocalDateTime since = LocalDateTime.now().minusMinutes(1);
+        long recentCount = matchRepository.countRecentMatchResultsByUserId(userId, since);
+        if (recentCount >= 3) {
             throw new IllegalStateException("Rate limit exceeded. Max 3 match results per minute.");
         }
     }

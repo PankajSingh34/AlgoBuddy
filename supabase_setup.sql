@@ -127,3 +127,20 @@ CREATE POLICY "Service role can read pending_messages" ON pending_messages
 CREATE POLICY "Service role can update pending_messages" ON pending_messages
   FOR UPDATE
   USING (true);
+
+-- ====================================================================
+-- newsletter_subscriptions table for Footer Newsletter
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  subscribed_at TIMESTAMPTZ DEFAULT now(),
+  status TEXT DEFAULT 'active'
+);
+
+ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Allow the service role to manage subscriptions
+CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
+  USING (true) WITH CHECK (true);
+

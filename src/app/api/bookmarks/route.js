@@ -2,77 +2,94 @@ import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
-export async function GET(request) {
-  try {
-    const authResult = await getAuthenticatedUser();
-    if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
-    }
-    const cookieStore = await cookies();
-    const supabase = getSupabaseServerClient(cookieStore);
-    const { data, error } = await supabase
-      .from("problem_bookmarks")
-      .select("*")
-      .eq("user_id", authResult.user.id);
-    if (error) {
-      // Log server-side for debugging; always return [] so the UI degrades
-      // gracefully (local storage handles the fallback) instead of showing 500.
-      console.error("[/api/bookmarks GET] Supabase error:", error.message, error.code);
-      return jsonResponse([]);
-    }
-    return jsonResponse(data || []);
-  } catch (error) {
-    console.error("[/api/bookmarks GET] Unexpected error:", error.message);
-    return jsonResponse([]);
-  }
-}
-
 export async function POST(request) {
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
+      return jsonResponse({ error: "Authentication required" }, 401);
     }
+
     const body = await request.json().catch(() => ({}));
-    const { problemId, topicSlug } = body;
-    if (!problemId || !topicSlug) return jsonResponse({ error: "problemId and topicSlug are required" }, 400);
+    const { jobId } = body;
+
+    if (!jobId) {
+      return jsonResponse({ error: "jobId is required" }, 400);
+    }
+
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase.from("problem_bookmarks").upsert(
-      { user_id: authResult.user.id, problem_id: problemId, topic_slug: topicSlug, created_at: new Date().toISOString() },
-      { onConflict: ["user_id", "problem_id"] }
-    );
-    if (error) {
-      console.error("[/api/bookmarks POST] Supabase error:", error.message, error.code);
-      return jsonResponse({ error: error.message }, 500);
+
+    const { data: existing } = await supabase
+      .from("bookmarks")
+      .select("id")
+      .eq("student_id", authResult.user.id)
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error: deleteError } = await supabase
+        .from("bookmarks")
+        .delete()
+        .eq("id", existing.id);
+
+      if (deleteError) {
+        console.error("[/api/bookmarks POST] Supabase delete error:", deleteError.message);
+        return jsonResponse({ error: deleteError.message }, 500);
+      }
+
+      return jsonResponse({ bookmarked: false });
     }
-    return jsonResponse({ success: true });
+
+    const { error: insertError } = await supabase
+      .from("bookmarks")
+      .insert({ student_id: authResult.user.id, job_id: jobId });
+
+    if (insertError) {
+      console.error("[/api/bookmarks POST] Supabase insert error:", insertError.message);
+      return jsonResponse({ error: insertError.message }, 500);
+    }
+
+    return jsonResponse({ bookmarked: true });
   } catch (error) {
     return errorResponse(error);
   }
 }
 
-export async function DELETE(request) {
+export async function GET(request) {
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
+      return jsonResponse({ error: "Authentication required" }, 401);
     }
+
     const { searchParams } = new URL(request.url);
-    const problemId = searchParams.get("problemId");
-    if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 20;
+    const skip = (page - 1) * limit;
+
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase
-      .from("problem_bookmarks")
-      .delete()
-      .eq("user_id", authResult.user.id)
-      .eq("problem_id", problemId);
+
+    const { data: jobs, error, count } = await supabase
+      .from("bookmarks")
+      .select("id, created_at, job:job_id(*)", { count: "exact" })
+      .eq("student_id", authResult.user.id)
+      .order("created_at", { ascending: false })
+      .range(skip, skip + limit - 1);
+
     if (error) {
-      console.error("[/api/bookmarks DELETE] Supabase error:", error.message, error.code);
-      return jsonResponse({ error: error.message }, 500);
+      console.error("[/api/bookmarks GET] Supabase error:", error.message);
+      return jsonResponse({ jobs: [], bookmarkedIds: [], totalPages: 0, currentPage: page });
     }
-    return jsonResponse({ success: true });
+
+    const bookmarkedIds = (jobs || []).map((b) => b.job?.id).filter(Boolean);
+
+    return jsonResponse({
+      jobs: (jobs || []).map((b) => b.job).filter(Boolean),
+      bookmarkedIds,
+      totalPages: Math.ceil((count || 0) / limit),
+      currentPage: page,
+    });
   } catch (error) {
     return errorResponse(error);
   }

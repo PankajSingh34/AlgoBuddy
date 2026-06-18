@@ -180,6 +180,46 @@ export default function ArenaPage() {
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
+
+  // Fix for browser back button from Matchmaking modal (Issue #1333)
+  // Fix for browser back button from Create Duel modal (Issue #1336)
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (matchmakingOpen) {
+        setMatchmakingOpen(false);
+      } else if (createDuelOpen) {
+        setCreateDuelOpen(false);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [matchmakingOpen, createDuelOpen]);
+
+  const openMatchmakingModal = () => {
+    if (!ensureLoggedIn()) return;
+    window.history.pushState({ modal: "matchmaking" }, "", window.location.href);
+    setMatchmakingOpen(true);
+  };
+
+  const closeMatchmakingModal = () => {
+    setMatchmakingOpen(false);
+    if (window.history.state?.modal === "matchmaking") {
+      window.history.back();
+    }
+  };
+
+  const openCreateDuelModal = () => {
+    if (!ensureLoggedIn()) return;
+    window.history.pushState({ modal: "createDuel" }, "", window.location.href);
+    setCreateDuelOpen(true);
+  };
+
+  const closeCreateDuelModal = () => {
+    setCreateDuelOpen(false);
+    if (window.history.state?.modal === "createDuel") {
+      window.history.back();
+    }
+  };
   const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState(null);
   const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
@@ -217,7 +257,7 @@ export default function ArenaPage() {
 
   const handleMatchFound = (opponent) => {
     setSelectedOpponent(opponent);
-    setMatchmakingOpen(false);
+    closeMatchmakingModal();
     setActiveDuelProblem("Two Sum");
     setDuelSimulatorOpen(true);
   };
@@ -326,8 +366,7 @@ export default function ArenaPage() {
 
               <button
                 onClick={() => {
-                  if (!ensureLoggedIn()) return;
-                  setMatchmakingOpen(true);
+                  openMatchmakingModal();
                 }}
                 className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10"
               >
@@ -355,8 +394,7 @@ export default function ArenaPage() {
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                       <button
                         onClick={() => {
-                          if (!ensureLoggedIn()) return;
-                          setMatchmakingOpen(true);
+                          openMatchmakingModal();
                         }}
                         className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
@@ -364,10 +402,7 @@ export default function ArenaPage() {
                         Find Match
                       </button>
                       <button
-                        onClick={() => {
-                          if (!ensureLoggedIn()) return;
-                          setCreateDuelOpen(true);
-                        }}
+                        onClick={openCreateDuelModal}
                         className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Swords size={14} />
@@ -540,7 +575,15 @@ export default function ArenaPage() {
                   {/* Leaderboard Table */}
                   <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Global Leaderboard</h3>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
+                          🏆 Global Learning Leaderboard
+                        </h3>
+
+                        <p className="text-xs text-slate-400 dark:text-neutral-500">
+                          Compete with top learners and improve your rank.
+                        </p>
+                      </div>
                       <span
                         onClick={() => handleTabChange("leaderboard")}
                         className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
@@ -553,8 +596,20 @@ export default function ArenaPage() {
                       {(leaderboard.length > 0 ? leaderboard : LEADERBOARD_ROWS).map((row, idx) => {
                         const rank = row.rank || idx + 1;
                         const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
+                        const isCurrentUser = name === currentUserStats.name;
                         return (
-                          <div key={rank} className="flex items-center justify-between text-xs px-2 py-1.5 border-b border-slate-50 dark:border-neutral-800 last:border-0">
+                          <div
+                            key={rank}
+                            className={`flex items-center justify-between 
+                            text-xs px-3 py-3 rounded-xl mb-2 transition
+
+                            ${
+                              isCurrentUser
+                              ? "bg-purple-100 dark:bg-purple-900/30 border border-purple-400"
+                              : "hover:bg-slate-50 dark:hover:bg-neutral-900"
+                            }
+                            `}
+                            >
                             <div className="flex items-center gap-3">
                               <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
                                 }`}>
@@ -670,7 +725,7 @@ export default function ArenaPage() {
 
                 {activeTab === "ranked" && (
                   <button
-                    onClick={() => setMatchmakingOpen(true)}
+                    onClick={() => openMatchmakingModal()}
                     className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition"
                   >
                     Launch Ranked Matchmaking
@@ -679,7 +734,7 @@ export default function ArenaPage() {
 
                 {activeTab === "friend" && (
                   <button
-                    onClick={() => setCreateDuelOpen(true)}
+                    onClick={openCreateDuelModal}
                     className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition"
                   >
                     Create Custom Lobby
@@ -866,7 +921,7 @@ export default function ArenaPage() {
       {/* ─── Interactive Modals ────────────────────────────────────────────── */}
       <MatchmakingModal
         isOpen={matchmakingOpen}
-        onClose={() => setMatchmakingOpen(false)}
+        onClose={() => closeMatchmakingModal()}
         onMatchFound={handleMatchFound}
         currentUserStats={currentUserStats}
       />
@@ -881,7 +936,7 @@ export default function ArenaPage() {
 
       <CreateDuelModal
         isOpen={createDuelOpen}
-        onClose={() => setCreateDuelOpen(false)}
+        onClose={closeCreateDuelModal}
         onCreateMatch={handleCreateMatchLaunch}
       />
     </section>

@@ -126,6 +126,7 @@ const LANGUAGES = [
   { id: 'java', name: 'Java' },
   { id: 'c', name: 'C' },
   { id: 'cpp', name: 'C++' },
+  { id: 'go', name: 'Go' },
 ];
 
 const TrafficDot = ({ color, hoverTitle }) => {
@@ -166,11 +167,22 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
     if (!code) {
       if (selectedLanguage === 'c') {
         code = codeExamples?.cpp || codeExamples?.c_cpp || codeExamples?.cppCode;
-      } else if (selectedLanguage === 'cpp') {
+      } 
+      else if (selectedLanguage === 'cpp') {
         code = codeExamples?.c || codeExamples?.cCode;
+      } 
+      else if (selectedLanguage === 'go') {
+        code = codeExamples?.golang || codeExamples?.goCode;
       }
+
       if (!code) {
-        code = codeExamples?.javascript || codeExamples?.js || codeExamples?.python || codeExamples?.java || '';
+        code =
+          codeExamples?.javascript ||
+          codeExamples?.js ||
+          codeExamples?.python ||
+          codeExamples?.java ||
+          codeExamples?.cpp ||
+          '';
       }
     }
     return code;
@@ -240,7 +252,8 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     python: 'solution.py',
                     java: 'Solution.java',
                     c: 'solution.c',
-                    cpp: 'solution.cpp'
+                    cpp: 'solution.cpp',
+                    go: 'solution.go'
                   }[selectedLanguage] ?? 'solution.txt')}
             </span>
 
