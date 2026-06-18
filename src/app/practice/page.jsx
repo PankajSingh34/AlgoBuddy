@@ -329,6 +329,33 @@ export default function PracticePage() {
   return unsolvedProblems[today % unsolvedProblems.length];
 }, [allProblems, progress]);
 
+const nextProblem = useMemo(() => {
+  return allProblems.find(
+    (problem) => getStatus(problem.id) !== "Completed"
+  );
+}, [allProblems, progress, getStatus]);
+
+const weeklyChallenges = [
+  {
+    title: "Array Mastery Week",
+    difficulty: "Easy",
+    progress: "3/5 Completed",
+    reward: "🏆 50 XP"
+  },
+  {
+    title: "Linked List Challenge",
+    difficulty: "Medium",
+    progress: "2/4 Completed",
+    reward: "🔥 80 XP"
+  },
+  {
+    title: "Dynamic Programming Sprint",
+    difficulty: "Hard",
+    progress: "0/3 Completed",
+    reward: "👑 150 XP"
+  }
+];
+
   // Seed values if not loaded
   if (!mounted) return null;
 
@@ -576,6 +603,64 @@ export default function PracticePage() {
                   </div>
                 )}
 
+                {/* Weekly Learning Challenges */}
+<div className="bg-white dark:bg-[#1a1b1e] rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-neutral-800">
+  
+  <div className="flex items-center justify-between mb-5">
+    <div>
+      <h2 className="text-xl font-black text-slate-800 dark:text-white">
+        🚀 Weekly Learning Challenges
+      </h2>
+      <p className="text-sm text-slate-500 dark:text-neutral-400">
+        Complete weekly tasks and earn rewards.
+      </p>
+    </div>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    {weeklyChallenges.map((challenge, index) => (
+      <div
+        key={index}
+        className="rounded-2xl p-5 bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg"
+      >
+
+        <h3 className="text-lg font-bold">
+          {challenge.title}
+        </h3>
+
+        <p className="mt-2 text-sm">
+          Difficulty: {challenge.difficulty}
+        </p>
+
+        <p className="mt-1 text-sm">
+          Progress: {challenge.progress}
+        </p>
+
+        <div className="mt-4 bg-white/20 rounded-full h-2">
+          <div
+            className="bg-white h-2 rounded-full"
+            style={{
+              width:
+                challenge.progress === "3/5 Completed"
+                  ? "60%"
+                  : challenge.progress === "2/4 Completed"
+                  ? "50%"
+                  : "0%"
+            }}
+          />
+        </div>
+
+        <button className="mt-5 px-4 py-2 bg-white text-purple-600 rounded-lg font-bold text-sm">
+          {challenge.reward}
+        </button>
+
+      </div>
+    ))}
+
+  </div>
+</div>
+
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
                 {[
@@ -668,7 +753,7 @@ export default function PracticePage() {
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="8" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="9" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -1054,7 +1139,6 @@ export default function PracticePage() {
                                 <th className="py-3.5 px-5 text-center">Companies</th>
                                 <th className="py-3.5 px-5 text-center">Actions</th>
                                 <th className="py-3.5 px-5 text-center">Status</th>
-                                <th className="py-3.5 px-5 text-center">Access</th>
                               </tr>
                             </thead>
                             <tbody>

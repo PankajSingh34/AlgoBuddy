@@ -11,7 +11,4 @@ import java.util.UUID;
 
 @Repository
 public interface UserPracticeStatsRepository extends JpaRepository<UserPracticeStats, UUID> {
-    
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<UserPracticeStats> findById(UUID id);
 }

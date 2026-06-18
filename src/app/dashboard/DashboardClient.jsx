@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Bookmark,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   LayoutDashboard,
   Layers3,
@@ -51,6 +52,42 @@ function groupBy(items, getKey) {
     name,
     items: groupItems,
   }));
+}
+
+function buildProfileCompletion(user) {
+  const metadata = user?.user_metadata || {};
+  const checks = [
+    {
+      label: "Display name",
+      complete: Boolean(metadata.name || metadata.display_name || metadata.full_name),
+    },
+    {
+      label: "Email address",
+      complete: Boolean(user?.email),
+    },
+    {
+      label: "Avatar",
+      complete: Boolean(metadata.avatar_url || metadata.picture),
+    },
+    {
+      label: "Learning goal",
+      complete: Boolean(metadata.learning_goal || metadata.goal),
+    },
+    {
+      label: "Skill level",
+      complete: Boolean(metadata.skill_level || metadata.level),
+    },
+  ];
+
+  const completed = checks.filter((item) => item.complete).length;
+  const percentage = Math.round((completed / checks.length) * 100);
+
+  return {
+    checks,
+    completed,
+    percentage,
+    missing: checks.filter((item) => !item.complete).map((item) => item.label),
+  };
 }
 
 export default function DashboardClient() {
@@ -105,8 +142,14 @@ export default function DashboardClient() {
   ];
   const displayName =
     user?.user_metadata?.name ||
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
     "Guest";
+  const profileCompletion = useMemo(
+    () => buildProfileCompletion(user),
+    [user]
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-neutral-950 text-slate-900 dark:text-neutral-100">
@@ -171,6 +214,45 @@ export default function DashboardClient() {
               Recently Viewed
             </Link>
           </div>
+
+          {user && (
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-neutral-300">
+                      Profile completion
+                    </h2>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-neutral-400">
+                    {profileCompletion.missing.length > 0
+                      ? `Add ${profileCompletion.missing.join(", ")} to improve your profile.`
+                      : "Your profile has the core details needed for personalized guidance."}
+                  </p>
+                </div>
+
+                <div className="min-w-full md:min-w-[240px]">
+                  <div className="flex items-center justify-between text-sm font-bold text-slate-700 dark:text-neutral-300">
+                    <span>{profileCompletion.completed} of {profileCompletion.checks.length} items</span>
+                    <span>{profileCompletion.percentage}%</span>
+                  </div>
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${profileCompletion.percentage}%` }}
+                    />
+                  </div>
+                  <Link
+                    href="/profile"
+                    className="mt-3 inline-flex text-sm font-bold text-primary hover:underline"
+                  >
+                    Complete profile
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

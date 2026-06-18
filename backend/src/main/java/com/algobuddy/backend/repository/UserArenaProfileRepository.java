@@ -26,7 +26,4 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
             ) ranked WHERE user_id = :userId
             """, nativeQuery = true)
     Integer findRankByUserId(@Param("userId") UUID userId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<UserArenaProfile> findById(UUID id);
 }
