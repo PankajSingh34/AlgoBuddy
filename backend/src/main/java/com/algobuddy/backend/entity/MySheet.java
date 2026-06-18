@@ -27,4 +27,7 @@ public class MySheet {
 
     @Column(name = "added_at", insertable = false, updatable = false)
     private OffsetDateTime addedAt;
+
+    @Column(name = "is_public")
+    private Boolean isPublic = false;
 }

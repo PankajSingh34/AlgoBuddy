@@ -14,4 +14,5 @@ public class MySheetDto {
     private String problemId;
     private String note;
     private OffsetDateTime addedAt;
+    private Boolean isPublic;
 }

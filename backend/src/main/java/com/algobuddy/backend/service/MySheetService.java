@@ -28,21 +28,30 @@ public class MySheetService {
         return mySheetRepository.findByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
+    public List<MySheet> getSharedSheet(UUID userId) {
+        return mySheetRepository.findByUserIdAndIsPublicTrue(userId);
+    }
+
     @Transactional
-    public void addToSheet(UUID userId, String problemId, String note) {
+    public void addToSheet(UUID userId, String problemId, String note, Boolean isPublic) {
         Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(userId, problemId);
         if (existing.isPresent()) {
             MySheet item = existing.get();
             // Only update the note if a non-null note was provided
             if (note != null) {
                 item.setNote(note);
-                mySheetRepository.save(item);
             }
+            if (isPublic != null) {
+                item.setIsPublic(isPublic);
+            }
+            mySheetRepository.save(item);
         } else {
             MySheet item = new MySheet();
             item.setUserId(userId);
             item.setProblemId(problemId);
             item.setNote(note == null ? "" : note);
+            item.setIsPublic(isPublic != null ? isPublic : false);
             mySheetRepository.save(item);
         }
     }
@@ -55,7 +64,7 @@ public class MySheetService {
 
     @Transactional
     public void cloneSheet(UUID sharedUserId, UUID targetUserId) {
-        List<MySheet> sharedItems = mySheetRepository.findByUserId(sharedUserId);
+        List<MySheet> sharedItems = mySheetRepository.findByUserIdAndIsPublicTrue(sharedUserId);
         for (MySheet sharedItem : sharedItems) {
             Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(targetUserId, sharedItem.getProblemId());
             if (existing.isEmpty()) {
@@ -63,6 +72,7 @@ public class MySheetService {
                 newItem.setUserId(targetUserId);
                 newItem.setProblemId(sharedItem.getProblemId());
                 newItem.setNote(sharedItem.getNote() == null ? "" : sharedItem.getNote());
+                newItem.setIsPublic(false); // Cloned items are private by default
                 mySheetRepository.save(newItem);
             }
         }
