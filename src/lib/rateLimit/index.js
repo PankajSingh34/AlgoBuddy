@@ -211,45 +211,66 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
 let localSmtpCounter = 0;
 let localSmtpDate = new Date().toISOString().split("T")[0];
 
+const ATOMIC_SMTP_QUOTA_SCRIPT = `
+  local dailyKey = KEYS[1]
+  local maxPerDay = tonumber(ARGV[1])
+  local current = redis.call('GET', dailyKey)
+  if current and tonumber(current) >= maxPerDay then
+    return 0
+  end
+  local newCount = redis.call('INCR', dailyKey)
+  if newCount == 1 then
+    redis.call('EXPIRE', dailyKey, 86400)
+  end
+  return newCount
+`;
+
 export async function checkGlobalSmtpQuota(maxPerDay = 500) {
-  const today = new Date().toISOString().split("T")[0];
-
-  let currentCount;
-
   if (!redis) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[smtp-quota] Redis unavailable in production — SMTP quota not enforced across instances");
+    }
+    const today = new Date().toISOString().split("T")[0];
     if (localSmtpDate !== today) {
       localSmtpCounter = 0;
       localSmtpDate = today;
     }
-    currentCount = localSmtpCounter;
-  } else {
-    const dailyKey = `smtp:quota:${today}`;
-    currentCount = await redis.get(dailyKey) || 0;
-  }
-
-  if (currentCount >= maxPerDay) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  if (!redis) {
-    localSmtpCounter += 1;
-  } else {
-    const dailyKey = `smtp:quota:${today}`;
-    const newCount = await redis.incr(dailyKey);
-    if (newCount === 1) {
-      await redis.expire(dailyKey, 86400);
+    if (localSmtpCounter >= maxPerDay) {
+      return { allowed: false, remaining: 0 };
     }
+    localSmtpCounter += 1;
+    const usagePercent = (localSmtpCounter / maxPerDay) * 100;
+    if (usagePercent >= 80) {
+      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${localSmtpCounter}/${maxPerDay}) consumed`);
+    }
+    return {
+      allowed: true,
+      remaining: Math.max(0, maxPerDay - localSmtpCounter),
+    };
   }
 
-  const usagePercent = ((currentCount + 1) / maxPerDay) * 100;
-  if (usagePercent >= 80) {
-    console.warn(
-      `[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${currentCount + 1}/${maxPerDay}) consumed`,
-    );
-  }
+  const today = new Date().toISOString().split("T")[0];
+  const dailyKey = `smtp:quota:${today}`;
 
-  return {
-    allowed: true,
-    remaining: Math.max(0, maxPerDay - currentCount - 1),
-  };
+  try {
+    const result = await redis.eval(ATOMIC_SMTP_QUOTA_SCRIPT, [dailyKey], [maxPerDay]);
+
+    if (result === 0) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    const newCount = Number(result);
+    const usagePercent = (newCount / maxPerDay) * 100;
+    if (usagePercent >= 80) {
+      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${newCount}/${maxPerDay}) consumed`);
+    }
+
+    return {
+      allowed: true,
+      remaining: Math.max(0, maxPerDay - newCount),
+    };
+  } catch (err) {
+    console.error("[smtp-quota] Redis error, failing open:", err.message);
+    return { allowed: true, remaining: 1, warning: "Redis error, quota not enforced" };
+  }
 }

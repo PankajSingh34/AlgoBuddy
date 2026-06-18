@@ -124,6 +124,37 @@ setInterval(() => {
   }
 }, CONNECTION_ATTEMPT_WINDOW_MS);
 
+// Periodic queue health checker to remove stale entries from matchmaking queues
+setInterval(async () => {
+  try {
+    const queueKeys = await redisClient.keys('queue:*');
+    for (const key of queueKeys) {
+      const elements = await redisClient.lrange(key, 0, -1);
+      let changed = false;
+      for (const el of elements) {
+        const parsed = JSON.parse(el);
+        // Remove expired entries
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          await redisClient.lrem(key, 0, el);
+          changed = true;
+          continue;
+        }
+        // Remove entries where socket is no longer connected
+        const socket = io.sockets.sockets.get(parsed.socketId);
+        if (!socket || !socket.connected) {
+          await redisClient.lrem(key, 0, el);
+          changed = true;
+        }
+      }
+      if (changed && elements.length === 0) {
+        await redisClient.expire(key, 60);
+      }
+    }
+  } catch (err) {
+    console.error('[queue-health] Error cleaning stale entries:', err.message);
+  }
+}, 30000);
+
 // Rate Limiting Config (Redis-backed token bucket)
 const MAX_TOKENS = 10;
 const REFILL_RATE_MS = 200;
@@ -222,9 +253,21 @@ io.on("connection", async (socket) => {
         }
         
         const opponent = JSON.parse(opponentStr);
+
+        // Discard expired entries
+        if (opponent.expiresAt && Date.now() > opponent.expiresAt) {
+          continue;
+        }
+
         if (opponent.userId === socket.data.userId) {
           skippedOpponents.push(opponentStr);
           continue; 
+        }
+
+        // Verify opponent socket is still connected
+        const opponentSocket = io.sockets.sockets.get(opponent.socketId);
+        if (!opponentSocket || !opponentSocket.connected) {
+          continue;
         }
         
         matchFound = true;
@@ -262,7 +305,15 @@ io.on("connection", async (socket) => {
       }
 
       if (!matchFound) {
-        const queueData = JSON.stringify({ ...data, userId: socket.data.userId, topic: targetTopic, difficulty: targetDifficulty, socketId: socket.id });
+        const queueData = JSON.stringify({
+          ...data,
+          userId: socket.data.userId,
+          topic: targetTopic,
+          difficulty: targetDifficulty,
+          socketId: socket.id,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + 60000,
+        });
         await redisClient.rpush(queueKey, queueData);
         await redisClient.hset(`socket:${socket.id}`, "queueKey", queueKey);
         console.log(`Added to queue ${queueKey}`);
