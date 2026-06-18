@@ -1,14 +1,13 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { parsePaginationParams } from "@/lib/pagination";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
+    const { page, limit, skip } = parsePaginationParams(searchParams);
     const search = searchParams.get("search") || "";
-    const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);

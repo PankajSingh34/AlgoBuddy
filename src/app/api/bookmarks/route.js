@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { parsePaginationParams } from "@/lib/pagination";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function POST(request) {
@@ -63,9 +64,7 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePaginationParams(searchParams);
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
