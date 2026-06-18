@@ -10,24 +10,26 @@ const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://algobuddy.vercel.app",
+  "https://www.algobuddy.me",
+  "https://algobuddy.me"
+];
+
+function isOriginAllowed(origin, callback) {
+  // Allow requests with no origin (Render health checks, server-to-server)
+  if (!origin) return callback(null, true);
+  if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith(".vercel.app")) {
+    callback(null, true);
+  } else {
+    callback(new Error("Not allowed by CORS"));
+  }
+}
+
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(new Error("Not allowed by CORS"));
-    }
-    const allowed = [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "https://algobuddy.vercel.app",
-      "https://www.algobuddy.me",
-      "https://algobuddy.me"
-    ];
-    if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: isOriginAllowed,
   methods: ["GET", "POST"],
 }));
 
@@ -40,23 +42,7 @@ const redisClient = pubClient.duplicate();
 
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin) {
-        return callback(new Error("Not allowed by CORS"));
-      }
-      const allowed = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://algobuddy.vercel.app",
-        "https://www.algobuddy.me",
-        "https://algobuddy.me"
-      ];
-      if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: isOriginAllowed,
     methods: ["GET", "POST"],
   },
   adapter: createAdapter(pubClient, subClient)
