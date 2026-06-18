@@ -121,32 +121,46 @@ const AboutSection = () => {
         {/* OUR STORY SECTION */}
         <section aria-label="Our Story" className="py-20 px-6 relative z-10 bg-white/50 dark:bg-udemy-dark-surface/50 border-y border-udemy-border/50 dark:border-udemy-dark-border/50">
           <div className="container mx-auto max-w-5xl">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text">
-                  The Story Behind AlgoBuddy
-                </h2>
-                <div className="w-20 h-1 bg-udemy-purple rounded-full"></div>
-                <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg">
-                  Learning Data Structures and Algorithms has traditionally been a daunting task. Students often find themselves staring at dense textbooks and static code blocks, struggling to mentally simulate how variables change and pointers move.
-                </p>
-                <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg">
-                  We created AlgoBuddy because we believe there is a better way. By replacing static text with <strong className="text-udemy-purple dark:text-udemy-purple-light font-semibold">dynamic, interactive visualizers</strong>, we transform abstract logic into tangible animations. Seeing an algorithm unfold step-by-step builds an intuitive understanding that rote memorization simply cannot achieve.
-                </p>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-udemy-purple to-pink-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-                <div className="relative bg-white dark:bg-udemy-dark-surface p-8 rounded-3xl border border-udemy-border dark:border-udemy-dark-border shadow-xl">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-udemy-bg dark:bg-udemy-dark-bg p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3">
-                      <BookMarked className="w-8 h-8 text-udemy-muted" />
-                      <span className="text-sm font-medium text-udemy-muted">Traditional Learning</span>
-                    </div>
-                    <div className="bg-udemy-purple/10 dark:bg-udemy-purple/20 p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-3 border border-udemy-purple/30">
-                      <Zap className="w-8 h-8 text-udemy-purple" />
-                      <span className="text-sm font-medium text-udemy-purple">Visual Learning</span>
-                    </div>
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold font-serif text-udemy-text dark:text-udemy-dark-text mb-4">
+                The Story Behind AlgoBuddy
+              </h2>
+              <div className="w-20 h-1 bg-udemy-purple rounded-full mx-auto mb-6"></div>
+              <p className="text-lg text-udemy-muted dark:text-udemy-dark-muted">
+                AlgoBuddy was founded by a passionate community of educators and developers who realized that traditional computer science education is fundamentally disconnected from how our brains actually process information.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 items-stretch">
+              {/* The Problem Card */}
+              <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-3xl flex flex-col justify-between">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 mb-6">
+                    <BrainCircuit className="w-6 h-6" />
                   </div>
+                  <h3 className="text-2xl font-bold text-udemy-text dark:text-udemy-dark-text mb-4">The Challenge with DSA</h3>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed mb-4">
+                    Data Structures and Algorithms are abstract concepts. Staring at dense academic textbooks or dry, static code blocks makes it incredibly difficult to mentally track complex pointer movements, memory allocations, and recursion trees. 
+                  </p>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
+                    Students often end up trying to memorize algorithm patterns for interviews instead of developing genuine problem-solving intuition, leading to systemic frustration.
+                  </p>
+                </div>
+              </div>
+
+              {/* The Solution Card */}
+              <div className="bg-udemy-purple/5 border border-udemy-purple/20 p-8 rounded-3xl flex flex-col justify-between">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-udemy-purple/10 flex items-center justify-center text-udemy-purple mb-6">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-udemy-text dark:text-udemy-dark-text mb-4">The AlgoBuddy Blueprint</h3>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed mb-4">
+                    We replace cognitive friction with dynamic visual simulation. By mapping out variables, sorting sweeps, and graph traversals into beautiful step-by-step animations, we unlock instantaneous comprehension.
+                  </p>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed">
+                    Our platform allows learners to physically interact with algorithms—changing inputs on the fly, handling edge cases, and watching code execute live in real-time.
+                  </p>
                 </div>
               </div>
             </div>
@@ -167,8 +181,11 @@ const AboutSection = () => {
                     <Target className="w-7 h-7 text-udemy-purple group-hover:text-white transition-colors" />
                   </div>
                   <h2 className="text-3xl font-bold text-udemy-text dark:text-udemy-dark-text mb-6">Our Mission</h2>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg mb-4">
+                    Our mission is to lower the barrier to entering the world of computer science. We break down elite concepts into accessible tools, ensuring that high-quality computational education is free, interactive, and available to every aspiring programmer on earth.
+                  </p>
                   <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg">
-                    To make data structures and algorithms accessible, intuitive, and engaging for everyone. We believe that seeing concepts in action is the key to true mastery, moving beyond rote memorization to <strong className="text-udemy-text dark:text-udemy-dark-text">profound practical understanding</strong>.
+                    We bypass rote memorization entirely, reinforcing practical engineering skills by turning abstract data mechanics into a concrete, playful learning laboratory.
                   </p>
                 </div>
               </div>
@@ -183,8 +200,11 @@ const AboutSection = () => {
                     <Rocket className="w-7 h-7 text-udemy-purple group-hover:text-white transition-colors" />
                   </div>
                   <h2 className="text-3xl font-bold text-udemy-text dark:text-udemy-dark-text mb-6">Our Vision</h2>
+                  <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg mb-4">
+                    We envision building the definitive open-source standard for algorithmic comprehension—a global ecosystem where code visualization seamlessly integrates directly with technical interview training, continuous documentation, and peer coding clubs.
+                  </p>
                   <p className="text-udemy-muted dark:text-udemy-dark-muted leading-relaxed text-lg">
-                    To become the global standard platform for algorithmic education. We envision a future where every developer, regardless of their background, can <strong className="text-udemy-text dark:text-udemy-dark-text">confidently tackle complex computational problems</strong> with an algorithmic mindset.
+                    Ultimately, we aim to eliminate tech interview anxiety, nurturing an inclusive global generation of analytical thinkers who approach any architectural challenge with clarity.
                   </p>
                 </div>
               </div>
