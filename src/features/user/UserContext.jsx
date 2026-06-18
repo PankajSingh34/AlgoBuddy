@@ -3,7 +3,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { trackActivity } from "@/lib/activity";
 
-const UserContext = createContext();
+const UserContext = createContext({
+  user: null,
+  setUser: () => {},
+  loading: true,
+});
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -44,4 +48,13 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  return (
+    context ?? {
+      user: null,
+      setUser: () => {},
+      loading: true,
+    }
+  );
+};
