@@ -47,7 +47,7 @@ public class MySheetController {
     @ApiResponse(responseCode = "200", description = "Successfully added to sheet")
     public ResponseEntity<Void> addToSheet(@CurrentUserId UUID userId,
                                            @Valid @RequestBody MySheetRequestDto request) {
-        mySheetService.addToSheet(userId, request.getProblemId(), request.getNote());
+        mySheetService.addToSheet(userId, request.getProblemId(), request.getNote(), request.getIsPublic());
         return ResponseEntity.ok().build();
     }
 
@@ -64,7 +64,7 @@ public class MySheetController {
     @Operation(summary = "Get shared sheet", description = "Retrieves the public sheet items for a given user ID.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved shared sheet items")
     public ResponseEntity<MySheetResponseDto> getSharedSheet(@PathVariable UUID userId) {
-        List<MySheet> items = mySheetService.getMySheet(userId);
+        List<MySheet> items = mySheetService.getSharedSheet(userId);
         List<MySheetDto> dtos = items.stream()
                 .map(mySheetMapper::toDto)
                 .collect(Collectors.toList());
