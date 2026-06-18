@@ -181,6 +181,11 @@ public class ArenaService {
             throw new IllegalArgumentException("Match result has already been recorded");
         }
 
+        long durationSeconds = java.time.Duration.between(existingMatch.getStartTime(), java.time.LocalDateTime.now()).getSeconds();
+        if (durationSeconds < 10) {
+            throw new IllegalArgumentException("Match duration too short to be valid");
+        }
+
         boolean isWinner = request.isWinner();
 
         final int MAX_RETRIES = 3;
