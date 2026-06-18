@@ -5,6 +5,7 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -12,9 +13,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
@@ -22,6 +26,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final Pattern IP_PATTERN = Pattern.compile(
             "^(\\d{1,3}\\.){3}\\d{1,3}$"
     );
+
+    @Value("${app.trusted-proxies:127.0.0.1,::1,10.0.0.1}")
+    private String trustedProxiesConfig;
+
+    private Set<String> trustedProxies;
 
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
@@ -37,15 +46,37 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         return cache.computeIfAbsent(key, k -> newBucket());
     }
 
+    private Set<String> getTrustedProxies() {
+        if (trustedProxies == null) {
+            trustedProxies = Arrays.stream(trustedProxiesConfig.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+        }
+        return trustedProxies;
+    }
+
     private String extractClientIp(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            String firstIp = xForwardedFor.split(",")[0].trim();
-            if (isValidIp(firstIp)) {
-                return firstIp;
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && isFromTrustedProxy(request)) {
+            String[] hops = xForwardedFor.split(",");
+            for (int i = hops.length - 1; i >= 0; i--) {
+                String ip = hops[i].trim();
+                if (isValidIp(ip) && !isPrivateIp(ip)) {
+                    return ip;
+                }
             }
         }
         return request.getRemoteAddr();
+    }
+
+    private boolean isFromTrustedProxy(HttpServletRequest request) {
+        return getTrustedProxies().contains(request.getRemoteAddr());
+    }
+
+    private boolean isPrivateIp(String ip) {
+        return ip.startsWith("10.") || ip.startsWith("172.16.") || ip.startsWith("192.168.")
+            || ip.startsWith("127.") || ip.equals("::1") || ip.startsWith("fc") || ip.startsWith("fd");
     }
 
     private boolean isValidIp(String ip) {

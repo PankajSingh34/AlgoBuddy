@@ -218,26 +218,6 @@ export const practiceData = [
             }
           },
 
-          {
-  id: "palindrome-linked-list",
-  name: "Palindrome Linked List",
-  difficulty: "Easy",
-  companies: ["amazon", "microsoft", "google", "meta", "adobe"],
-  practiceUrl: "https://leetcode.com/problems/palindrome-linked-list/",
-  visualizerUrl: null,
-  theory: {
-    summary: "Check if a singly linked list is a palindrome by finding the middle, reversing the second half, and comparing both halves.",
-    steps: [
-      "Find the middle of the linked list using slow and fast pointers.",
-      "Reverse the second half of the list starting from slow pointer.",
-      "Compare values of first half and reversed second half node by node.",
-      "If all values match, return true. Otherwise return false."
-    ],
-    complexity: { time: "O(N)", space: "O(1)" },
-    pitfalls: "Not handling edge cases like empty list or single node list.",
-    tip: "This problem combines two important concepts: finding middle using two pointers and in-place reversal."
-  }
-},
           
         ]
       },
@@ -387,27 +367,6 @@ export const practiceData = [
               complexity: { time: "O(N + M)", space: "O(1)" },
               pitfalls: "Failing to handle empty lists as inputs or forgetting to advance list pointers, which creates infinite loops.",
               tip: "Using a dummy head node completely bypasses complex null pointer checks during initialization."
-            }
-          },
-         {
-            id: "remove-nth-node",
-            name: "Remove Nth Node from End of List",
-            difficulty: "Medium",
-            companies: ["amazon", "microsoft", "google", "meta"],
-            practiceUrl: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
-            visualizerUrl: null,
-            theory: {
-              summary: "Remove the Nth node from the end of a linked list in one pass using two pointers.",
-              steps: [
-                "Initialize two pointers: fast and slow, both at head.",
-                "Move fast pointer N steps ahead.",
-                "Move both fast and slow together until fast reaches the last node.",
-                "slow.next now points to the node to be removed.",
-                "Set slow.next = slow.next.next to skip and delete the target node."
-              ],
-              complexity: { time: "O(N)", space: "O(1)" },
-              pitfalls: "Not handling edge case when the head node itself needs to be removed.",
-              tip: "Two pointer technique with a gap of N between fast and slow solves this in a single pass."
             }
           },
         ]

@@ -51,7 +51,7 @@ export default function UpcomingTournament() {
   }, []);
 
   return (
-    <div className="card-surface p-5 bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm transition-all duration-300">
+    <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Upcoming Tournament</h3>
         <Link

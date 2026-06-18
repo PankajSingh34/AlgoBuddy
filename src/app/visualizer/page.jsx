@@ -10,6 +10,7 @@ import GraphModal from "@/app/components/models/GraphModal";
 import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
 import BookmarkSection from "@/app/components/ui/BookmarkSection";
+import KeyboardShortcuts from "@/app/components/KeyboardShortcuts";
 
 export const metadata = {
   title: "Algorithm Visualizer | AlgoBuddy",
@@ -69,7 +70,10 @@ export const metadata = {
   },
 };
 
+
+
 const sections = [
+  
   {
     title: "Code Lab",
     slug: "code-lab",
@@ -106,6 +110,10 @@ const sections = [
           {
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
+          },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
           },
         ],
       },
@@ -712,7 +720,53 @@ const sections = [
       },
     ],
   },
+
+    {
+    title: "Quiz Mode",
+    slug: "quiz",
+    desc: "Test your knowledge with algorithm comparison challenges",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 3a9 9 0 100 18 9 9 0 000-18z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Interactive quizzes that help learners choose the best algorithm or data structure for different problem scenarios.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Practice",
+        items: [
+          {
+            name: "Algorithm Comparison Quiz",
+            path: "/visualizer/quiz",
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+
 
 const Visualizer = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
@@ -729,9 +783,12 @@ const Visualizer = () => {
       style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
     >
       <TutorialOverlay />
+
+      <KeyboardShortcuts />
+
       <VisualizerClient initialSections={clientSections} />
+
       <div className="w-full relative">
-        
         <BookmarkSection />
         <BackToTop />
         <Footer />
