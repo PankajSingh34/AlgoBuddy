@@ -192,6 +192,7 @@ async function isEmailLocked(email) {
   } finally {
     releaseMemoryLock(`auth:lock:${email}`);
   }
+}
 
 async function recordLoginFailure(email) {
   if (!email) return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD };
