@@ -53,6 +53,7 @@ export default function PracticePage() {
 
   // Accordion Topic-wise state
   const [expandedTopics, setExpandedTopics] = useState({});
+  const [focusedTopicSlug, setFocusedTopicSlug] = useState("all");
 
   // Unified progress hook (replaces all inline progress/streak logic)
   const { progress, getStatus, updateProgress, streakData } = useSheetProgress();
@@ -75,6 +76,14 @@ export default function PracticePage() {
   useEffect(() => {
     const view = searchParams.get("view") || "problem-list";
     setActiveView(view);
+
+    const topicSlug = searchParams.get("topic");
+    if (view === "topic-wise" && topicSlug) {
+      setFocusedTopicSlug(topicSlug);
+      setExpandedTopics((prev) => ({ ...prev, [topicSlug]: true }));
+    } else if (view !== "topic-wise") {
+      setFocusedTopicSlug("all");
+    }
   }, [searchParams]);
 
   const ensureLoggedIn = () => {
@@ -311,6 +320,26 @@ export default function PracticePage() {
     }));
   };
 
+  const handleTopicFocus = (slug) => {
+    const nextSlug = slug === "all" ? "all" : slug;
+    setFocusedTopicSlug(nextSlug);
+
+    if (nextSlug === "all") {
+      router.push("/practice?view=topic-wise");
+      return;
+    }
+
+    setExpandedTopics((prev) => ({ ...prev, [nextSlug]: true }));
+    router.push(`/practice?view=topic-wise&topic=${encodeURIComponent(nextSlug)}`);
+  };
+
+  const openProblemListForTopic = (topicTitle) => {
+    setSelectedTopic(topicTitle);
+    setCurrentPage(1);
+    router.push("/practice?view=problem-list");
+    toast.success(`Showing problems for ${topicTitle}`);
+  };
+
   // Get current user display name
   const userName = useMemo(() => {
     if (!user) return "Guest User";
@@ -330,10 +359,21 @@ export default function PracticePage() {
 }, [allProblems, progress]);
 
 const nextProblem = useMemo(() => {
-  return allProblems.find(
-    (problem) => getStatus(problem.id) !== "Completed"
-  );
-}, [allProblems, progress, getStatus]);
+  for (const topic of practiceData) {
+    for (const subsection of topic.subsections) {
+      for (const item of subsection.items) {
+        if (getStatus(item.id) !== "Completed") {
+          return {
+            ...item,
+            topic: topic.title,
+            topicSlug: topic.slug,
+          };
+        }
+      }
+    }
+  }
+  return null;
+}, [progress, getStatus]);
 
 const weeklyChallenges = [
   {
@@ -1013,16 +1053,37 @@ const weeklyChallenges = [
             /* Accordion View (Dynamic Topic-wise Roadmap) */
             <section className="space-y-5">
               <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-5 rounded-2xl">
-  <h3 className="font-black text-lg">
-    Suggested Next Step
-  </h3>
+                <h3 className="font-black text-lg">
+                  Suggested Next Step
+                </h3>
 
-  <p className="text-sm mt-2">
-    {nextProblem
-      ? `Continue with "${nextProblem.name}"`
-      : "Congratulations! You completed all roadmap problems 🎉"}
-  </p>
-</div>
+                <p className="text-sm mt-2">
+                  {nextProblem
+                    ? `Continue with "${nextProblem.name}" in ${nextProblem.topic}`
+                    : "Congratulations! You completed all roadmap problems 🎉"}
+                </p>
+
+                {nextProblem && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <a
+                      href={nextProblem.practiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black text-purple-600 transition hover:bg-purple-50"
+                    >
+                      Solve Next Problem
+                      <ExternalLink size={12} />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleTopicFocus(nextProblem.topicSlug)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-xs font-black text-white transition hover:bg-white/10"
+                    >
+                      Focus Topic
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
@@ -1052,6 +1113,39 @@ const weeklyChallenges = [
                 </div>
               </div>
 
+              <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border border-slate-100 dark:border-neutral-800/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-neutral-500 mb-3">
+                  Filter by topic
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTopicFocus("all")}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                      focusedTopicSlug === "all"
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                    }`}
+                  >
+                    All Topics
+                  </button>
+                  {practiceData.map((topic) => (
+                    <button
+                      key={topic.slug}
+                      type="button"
+                      onClick={() => handleTopicFocus(topic.slug)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                        focusedTopicSlug === topic.slug
+                          ? "bg-primary text-white shadow-sm"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                      }`}
+                    >
+                      {topic.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border p-5">
   <h3 className="font-black mb-3">
     Overall Roadmap Progress
@@ -1074,7 +1168,9 @@ const weeklyChallenges = [
 </div>
 
               <div className="space-y-4">
-                {practiceData.map((topic) => {
+                {practiceData
+                  .filter((topic) => focusedTopicSlug === "all" || topic.slug === focusedTopicSlug)
+                  .map((topic) => {
 
   const topicProblems = topic.subsections.flatMap(
     (sub) => sub.items
@@ -1119,13 +1215,25 @@ const weeklyChallenges = [
     </span>
   </div>
 </div>
-<div className="text-[10px] text-green-600 font-bold">
-  {completedProblems}/{topicProblems.length} Solved
-</div>
-                        <ChevronDown 
-                          size={18} 
-                          className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`} 
-                        />
+                        <div className="flex items-center gap-3">
+                          <div className="text-[10px] text-green-600 font-bold">
+                            {completedProblems}/{topicProblems.length} Solved
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openProblemListForTopic(topic.title);
+                            }}
+                            className="rounded-lg border border-slate-200 px-2.5 py-1 text-[10px] font-black text-primary transition hover:bg-primary/5 dark:border-neutral-700 dark:text-purple-400"
+                          >
+                            View in List
+                          </button>
+                          <ChevronDown
+                            size={18}
+                            className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`}
+                          />
+                        </div>
                       </div>
 
                       {/* Content Table */}
@@ -1249,8 +1357,8 @@ const weeklyChallenges = [
                     key={comp.name}
                     onClick={() => {
                       setSelectedCompanyFilter(comp.name);
-                      setActiveView("problem-list");
                       setCurrentPage(1);
+                      router.push("/practice?view=problem-list");
                       toast.success(`Filtering problems by: ${comp.name}`);
                     }}
                     className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 shadow-sm hover:border-primary dark:hover:border-purple-500 transition duration-300 text-center select-none"
