@@ -7,6 +7,9 @@ export default function KeyboardShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      const tag = event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
       // Play / Pause
       if (event.code === "Space") {
         event.preventDefault();
