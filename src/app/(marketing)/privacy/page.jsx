@@ -1,6 +1,8 @@
 "use client";
 import PrivacyPolicyContent from "@/app/components/PrivacyPolicyContent";
 import Link from "next/link";
+import Footer from "@/app/components/footer";
+
 
 export default function PrivacyPage() {
   return (
@@ -15,6 +17,7 @@ export default function PrivacyPage() {
 
         <PrivacyPolicyContent />
       </div>
+      <Footer/>
     </main>
   );
 }
