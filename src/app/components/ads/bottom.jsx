@@ -83,12 +83,14 @@ const BottomAd = () => {
           Ad minimized — click ▲ to reopen
         </div>
       ) : (
-        <ins
-          className="adsbygoogle"
-          style={{ display: "inline-block", width: "728px", height: "90px" }}
-          data-ad-client="ca-pub-4311738896428559"
-          data-ad-slot="3858222679"
-        ></ins>
+        <div style={{ maxWidth: "100%", overflow: "hidden" }}>
+          <ins
+            className="adsbygoogle"
+            style={{ display: "inline-block", width: "728px", maxWidth: "100%", height: "90px" }}
+            data-ad-client="ca-pub-4311738896428559"
+            data-ad-slot="3858222679"
+          ></ins>
+        </div>
       )}
     </div>
   );

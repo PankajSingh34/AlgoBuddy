@@ -47,23 +47,31 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       ? "http://127.0.0.1:4000"
       : "https://algobuddy-socket-server.onrender.com";
 
-    // Establish Socket connection
+    // Establish Socket connection with auth token
     const socket = io(socketUrl, {
-      transports: ["websocket", "polling"]
+      transports: ["websocket", "polling"],
+      auth: async (cb) => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data: sessionData } = await supabase.auth.getSession();
+          cb({ token: sessionData?.session?.access_token || null });
+        } catch {
+          cb({ token: null });
+        }
+      }
     });
 
     socket.on("connect_error", (err) => {
-      console.log("Socket Connection Error (Safe to ignore in dev):", err.message);
+      console.log("Socket Connection Error:", err.message);
     });
 
     socket.on("connect", () => {
       console.log("Connected to Arena Socket Server:", socket.id);
       socket.emit("join_matchmaking", {
-        userId: currentUserStats?.userId || "user-" + Math.random(),
         name: currentUserStats?.name || "Player",
         rating: currentUserStats?.rating || 1200,
         level: currentUserStats?.level || 1,
-        topic: "Arrays", // In the future, this could be selectable
+        topic: "Arrays",
         difficulty: "Easy"
       });
     });

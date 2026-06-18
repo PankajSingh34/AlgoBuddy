@@ -34,7 +34,7 @@ export default function PracticeSessionBanner({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden select-none">
+    <div className="w-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden select-none">
       
       {/* Content Side */}
       <div className="flex-1 space-y-4">
@@ -49,7 +49,7 @@ export default function PracticeSessionBanner({
 
         {/* Title */}
         <div className="flex items-center gap-3.5">
-          <h1 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white leading-tight">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-800 dark:text-white leading-tight">
             {title}
           </h1>
         </div>
@@ -74,11 +74,41 @@ export default function PracticeSessionBanner({
         </div>
 
         {/* Description */}
-        <p className="text-xs md:text-sm text-slate-400 dark:text-neutral-500 font-medium leading-relaxed max-w-xl">
+        <p className="text-xs md:text-sm text-slate-600 dark:text-neutral-300 font-medium leading-relaxed max-w-xl">
           {description}
         </p>
 
       </div>
+
+      {/* Action Buttons */}
+<div className="flex flex-wrap items-center gap-3 pt-2">
+  <button
+    onClick={onStartSession}
+    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:opacity-90 transition"
+  >
+    <Play size={16} />
+    Start Practice
+  </button>
+
+  <button
+    onClick={onGroupStudy}
+    className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
+  >
+    <Users size={16} />
+    Group Study
+  </button>
+
+  <button
+    onClick={handleSaveToggle}
+    className="p-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
+  >
+    {saved ? (
+      <BookmarkCheck size={18} className="text-primary" />
+    ) : (
+      <Bookmark size={18} />
+    )}
+  </button>
+</div>
 
       {/* Vector Illustration Side */}
       <div className="w-full md:w-auto flex justify-center md:justify-end flex-shrink-0">

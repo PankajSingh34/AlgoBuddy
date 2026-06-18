@@ -53,14 +53,23 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       : "https://algobuddy-socket-server.onrender.com";
 
     const newSocket = io(socketUrl, {
-      transports: ["websocket", "polling"]
+      transports: ["websocket", "polling"],
+      auth: async (cb) => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data: sessionData } = await supabase.auth.getSession();
+          cb({ token: sessionData?.session?.access_token || null });
+        } catch {
+          cb({ token: null });
+        }
+      }
     });
     setSocket(newSocket);
 
     // Join room when connected
     newSocket.on("connect", async () => {
       if (opponent?.matchId) {
-         newSocket.emit("join_match", { matchId: opponent.matchId, userId: currentUserStats?.userId });
+         newSocket.emit("join_match", { matchId: opponent.matchId });
 
          const { supabase } = await import('@/lib/supabase');
          const { data: sessionData } = await supabase.auth.getSession();
@@ -125,7 +134,6 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     if (socket && opponent?.matchId) {
       socket.emit("code_update", {
         matchId: opponent.matchId,
-        userId: currentUserStats?.userId,
         code: value
       });
     }
@@ -168,8 +176,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     
     if (socket && opponent?.matchId) {
       socket.emit("test_submit", {
-        matchId: opponent.matchId,
-        userId: currentUserStats?.userId
+        matchId: opponent.matchId
       });
       addLog("You started executing code.");
     }
@@ -192,7 +199,6 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       if (socket && opponent?.matchId) {
         socket.emit("test_result", {
           matchId: opponent.matchId,
-          userId: currentUserStats?.userId,
           status: data.status,
           passed: (data.status === 3 || data.status === "SUCCESS") ? 1 : 0,
           total: 1
@@ -200,8 +206,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
 
         if (data.status === 3 || data.status === "SUCCESS") {
           socket.emit("match_complete", {
-            matchId: opponent.matchId,
-            winnerId: currentUserStats?.userId
+            matchId: opponent.matchId
           });
           setBattleFinished(true);
           setVictoryState("victory");

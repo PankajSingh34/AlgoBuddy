@@ -84,10 +84,14 @@ async function executeCode(code) {
       };
     }
 
+    let errorMessage = err.message ?? String(err);
+    if (err.name && err.name !== "Error" && !errorMessage.startsWith(err.name)) {
+      errorMessage = `${err.name}: ${errorMessage}`;
+    }
     return {
       status: EXECUTION_STATUS.RUNTIME_ERROR,
       output: outputLines.join("\n"),
-      error: err.message ?? String(err),
+      error: errorMessage,
       executionTime: elapsed,
       memoryUsed: 0,
     };

@@ -149,6 +149,43 @@ test("listCollaborationSessions cursor-based pagination covers all public sessio
   );
 });
 
+test("listCollaborationSessions does not skip public sessions interleaved with non-public sessions", async () => {
+  const store = await loadStore();
+
+  const publicA = await createSessions(store, 1, "public");
+  await createSessions(store, 1, "private");
+  const publicB = await createSessions(store, 1, "public");
+  await createSessions(store, 1, "unlisted");
+  const publicC = await createSessions(store, 1, "public");
+
+  const expectedPublicIds = new Set([
+    publicA[0].id,
+    publicB[0].id,
+    publicC[0].id,
+  ]);
+  const collectedPublicIds = new Set();
+  let cursor;
+  let iterations = 0;
+
+  do {
+    const result = await store.listCollaborationSessions({ limit: 1, cursor });
+    for (const session of result.sessions) {
+      if (expectedPublicIds.has(session.id)) {
+        collectedPublicIds.add(session.id);
+      }
+    }
+    cursor = result.nextCursor;
+    iterations++;
+    if (iterations > 20) break;
+  } while (cursor !== null);
+
+  assert.deepEqual(
+    [...collectedPublicIds].sort(),
+    [...expectedPublicIds].sort(),
+    "all public sessions must appear even when private/unlisted sessions are interleaved",
+  );
+});
+
 test("listCollaborationSessions default limit is 50 and must handle gracefully", async () => {
   const store = await loadStore();
 

@@ -34,9 +34,6 @@ public class PracticeService {
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
 
-    @Autowired
-    @Lazy
-    private PracticeService self;
 
     @Transactional(readOnly = true)
     public ProgressResponse getUserProgress(UUID userId) {
@@ -76,7 +73,7 @@ public class PracticeService {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            self.updateStreakWithRetry(userId);
+            updateStreak(userId);
         }
 
         return getUserProgress(userId);
@@ -127,29 +124,13 @@ public class PracticeService {
         progressRepository.saveAll(toSave);
 
         if (anyCompleted) {
-            self.updateStreakWithRetry(userId);
+            updateStreak(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    public void updateStreakWithRetry(UUID userId) {
-        final int MAX_RETRIES = 3;
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                self.updateStreak(userId);
-                return;
-            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
-                if (attempt == MAX_RETRIES) {
-                    log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
-                    throw e;
-                }
-                log.warn("Lock/constraint failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void updateStreak(UUID userId) {
         UserPracticeStats stats = statsRepository.findById(userId)
                 .orElse(new UserPracticeStats(userId, 0, 0, null, 0, 0));
