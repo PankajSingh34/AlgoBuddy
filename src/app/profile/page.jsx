@@ -102,7 +102,7 @@ export default function ProfilePage() {
                       className="w-full h-full object-cover" 
                     />
                   ) : (
-                    formData.name ? formData.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()
+                    formData.name ? formData.name.charAt(0).toUpperCase() : (user.email || "?").charAt(0).toUpperCase()
                   )}
                 </div>
                 <h3 className="font-semibold text-lg text-surface-900 dark:text-white">{formData.name || "Student"}</h3>
