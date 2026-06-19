@@ -31,6 +31,14 @@ const BackToTop = () => {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           onClick={scrollToTop}
           aria-label="Back to top"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              scrollToTop();
+            }
+          }}
           className="fixed bottom-20 right-3 sm:bottom-28 sm:right-7 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#a435f0] text-white shadow-lg flex items-center justify-center hover:bg-[#8f2cd6] group"
         >
           {/* Tooltip */}
