@@ -34,6 +34,12 @@ export async function PATCH(request, { params }) {
       return jsonResponse({ error: `Application is already ${status}` }, 400);
     }
 
+    // Prevent students from updating their own application status
+    const userRole = authResult.user.user_metadata?.role;
+    if (authResult.user.id === application.student_id && userRole !== "admin") {
+      return jsonResponse({ error: "Not authorized to update this application" }, 403);
+    }
+
     const oldStatus = application.status;
     const adminClient = getSupabaseAdmin();
 
