@@ -159,9 +159,14 @@ export function createRateLimiter(options) {
 export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
 export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
 export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
+export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
 
 export async function checkRateLimit(key) {
   return apiLimiter.check(key);
+}
+
+export async function checkChatbotRateLimit(key) {
+  return chatbotLimiter.check(key);
 }
 
 export async function resetKey(key) {
