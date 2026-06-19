@@ -84,6 +84,25 @@ export default function AlgorithmQuiz() {
 
   const question = questions[current];
 
+  // Guard: if questions array is empty or the current index is out of range,
+  // show a friendly fallback instead of crashing on question.question etc.
+  if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="max-w-md text-center p-8 bg-white dark:bg-neutral-900 rounded-2xl shadow-lg">
+          <p className="text-4xl mb-4">🔧</p>
+          <h2 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">
+            Quiz Unavailable
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-neutral-400">
+            No quiz questions are available right now. Please check back later or
+            explore the visualizer while we fix this.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
   const handleAnswer = (option) => {
     if (selected) return;
