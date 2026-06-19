@@ -8,8 +8,16 @@ import com.algobuddy.backend.entity.UserProgress;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -23,10 +31,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PracticeService {
 
+    private static final Logger log = LoggerFactory.getLogger(PracticeService.class);
 
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
 
+    @Autowired
+    @Lazy
+    private PracticeService self;
 
     @Transactional(readOnly = true)
     public ProgressResponse getUserProgress(UUID userId) {
@@ -66,7 +78,7 @@ public class PracticeService {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            updateStreak(userId);
+            self.updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
@@ -117,13 +129,38 @@ public class PracticeService {
         progressRepository.saveAll(toSave);
 
         if (anyCompleted) {
-            updateStreak(userId);
+            self.updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    @Transactional
+    public void updateStreakWithRetry(UUID userId) {
+        final int MAX_RETRIES = 5;
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                self.updateStreak(userId);
+                return;
+            } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException | CannotAcquireLockException e) {
+                if (attempt == MAX_RETRIES) {
+                    log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
+                    throw e;
+                }
+                log.warn("Concurrent streak update for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
+                sleepBeforeRetry(attempt);
+            }
+        }
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(Math.min(25L * attempt, 100L));
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
     public void updateStreak(UUID userId) {
         UserPracticeStats stats = statsRepository.findById(userId)
                 .orElse(new UserPracticeStats(userId, 0, 0, null, 0));
