@@ -1,7 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { FaGithub, FaLinkedin, FaTwitter, FaDev } from "react-icons/fa6";
+import Link from "next/link";
+import { FaGithub, FaLinkedin, FaTwitter, FaDev, FaExternalLinkAlt } from "react-icons/fa6";
 
 export default function UserProfileCard() {
   const displayName = "Pankaj Singh";
@@ -133,9 +134,14 @@ export default function UserProfileCard() {
         </div>
 
         {/* View Full Profile Button */}
-        <button className="w-full py-2.5 px-4 rounded-xl border border-purple-250 dark:border-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-200">
-          View Full Profile
-        </button>
+        <Link
+          href="https://github.com/PankajSingh34"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-2.5 px-4 rounded-xl border border-purple-250 dark:border-purple-900/30 text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          View Full Profile <FaExternalLinkAlt className="w-3 h-3" />
+        </Link>
       </div>
     </motion.div>
   );
