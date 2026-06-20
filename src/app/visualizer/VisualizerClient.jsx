@@ -99,6 +99,18 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "Dynamic Programming": {
+    color: "#0ea5e9",
+    bg: "#f0f9ff",
+    border: "#bae6fd",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </svg>
+    ),
+  },
 };
 
 const getTheme = (t) =>
@@ -336,6 +348,23 @@ function AIAlgorithmsMiniViz({ color }) {
   );
 }
 
+function DPMiniViz({ color }) {
+  return (
+    <div className="flex flex-col gap-1 items-center justify-center h-[48px] w-full">
+      <div className="flex gap-1">
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "40" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "80" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color }}></div>
+      </div>
+      <div className="flex gap-1">
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "80" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "40" }}></div>
+      </div>
+    </div>
+  );
+}
+
 
 const MINI_VIZ = {
   Array: ArrayMiniViz,
@@ -348,6 +377,7 @@ const MINI_VIZ = {
   Recursion: RecursionMiniViz,
   "Code Lab": CustomCodeMiniViz,
   "AI Algorithms": AIAlgorithmsMiniViz,
+  "Dynamic Programming": DPMiniViz,
 };
 
 /* ═══════════════════════════════════════
@@ -557,6 +587,7 @@ initialSections
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
         .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-card="Dynamic Programming"] { background: #082f49 !important; border-color: #0284c7 !important; }
         .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
@@ -567,6 +598,7 @@ initialSections
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
         .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-header="Dynamic Programming"] { background: #0c4a6e !important; border-color: #0284c7 !important; }
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] .mini-viz-inactive { background: #1e3a8a !important; color: #93c5fd !important; }
         .dark [data-theme-card="Queue"] .mini-viz-inactive { background: #166534 !important; color: #86efac !important; }

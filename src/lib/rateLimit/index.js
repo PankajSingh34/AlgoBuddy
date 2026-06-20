@@ -3,17 +3,39 @@ import { jwtVerify } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
 const RATE_LIMIT_KEY_PREFIX = "rl:";
+const MAX_IN_MEMORY_ENTRIES = 10000;
+const MEMORY_SWEEP_INTERVAL_MS = 60000;
 const store = new Map();
 
-function gc() {
-  if (Math.random() < 0.05) {
+// Periodic sweeper to clean expired entries — avoids O(N) scan on every request
+// and ensures FIFO eviction doesn't silently reset active rate-limit windows.
+let memorySweepTimer = null;
+function startMemorySweeper() {
+  if (memorySweepTimer) return;
+  memorySweepTimer = setInterval(() => {
     const now = Date.now();
+    let expired = 0;
     for (const [key, bucket] of store.entries()) {
       if (bucket.resetAt <= now) {
         store.delete(key);
+        expired++;
       }
     }
-  }
+    // Size-based forced eviction only under extreme overflow, not as primary strategy.
+    if (store.size > MAX_IN_MEMORY_ENTRIES) {
+      const toEvict = store.size - MAX_IN_MEMORY_ENTRIES;
+      const iter = store.keys();
+      for (let i = 0; i < toEvict; i++) {
+        const k = iter.next().value;
+        if (k !== undefined) store.delete(k);
+      }
+      console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
+    }
+    if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
+      console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
+    }
+  }, MEMORY_SWEEP_INTERVAL_MS);
+  if (memorySweepTimer.unref) memorySweepTimer.unref();
 }
 
 const redis =
@@ -54,8 +76,10 @@ async function resolveIdentityKey(request) {
     const authHeader = request.headers.get("authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (token) {
-      const secret = new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET);
-      const { payload } = await jwtVerify(token, secret);
+      const jwksUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/jwks";
+      const { createRemoteJWKSet } = await import("jose");
+      const JWKS = createRemoteJWKSet(new URL(jwksUrl));
+      const { payload } = await jwtVerify(token, JWKS);
       if (payload && payload.sub) {
         return `user:${payload.sub}`;
       }
@@ -107,7 +131,7 @@ export function createRateLimiter(options) {
       console.warn("Critical: Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are not configured in production. Using in-memory fallback.");
     }
 
-    gc();
+    startMemorySweeper();
 
     const isOutage = redis && (isRedisOffline || Date.now() < redisOfflineUntil);
     const limit = isOutage ? Math.max(1, Math.floor(maxRequests * 0.5)) : maxRequests;
@@ -157,9 +181,14 @@ export function createRateLimiter(options) {
 export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
 export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
 export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
+export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
 
 export async function checkRateLimit(key) {
   return apiLimiter.check(key);
+}
+
+export async function checkChatbotRateLimit(key) {
+  return chatbotLimiter.check(key);
 }
 
 export async function resetKey(key) {
@@ -209,45 +238,66 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
 let localSmtpCounter = 0;
 let localSmtpDate = new Date().toISOString().split("T")[0];
 
+const ATOMIC_SMTP_QUOTA_SCRIPT = `
+  local dailyKey = KEYS[1]
+  local maxPerDay = tonumber(ARGV[1])
+  local current = redis.call('GET', dailyKey)
+  if current and tonumber(current) >= maxPerDay then
+    return 0
+  end
+  local newCount = redis.call('INCR', dailyKey)
+  if newCount == 1 then
+    redis.call('EXPIRE', dailyKey, 86400)
+  end
+  return newCount
+`;
+
 export async function checkGlobalSmtpQuota(maxPerDay = 500) {
-  const today = new Date().toISOString().split("T")[0];
-
-  let currentCount;
-
   if (!redis) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[smtp-quota] Redis unavailable in production — SMTP quota not enforced across instances");
+    }
+    const today = new Date().toISOString().split("T")[0];
     if (localSmtpDate !== today) {
       localSmtpCounter = 0;
       localSmtpDate = today;
     }
-    currentCount = localSmtpCounter;
-  } else {
-    const dailyKey = `smtp:quota:${today}`;
-    currentCount = await redis.get(dailyKey) || 0;
-  }
-
-  if (currentCount >= maxPerDay) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  if (!redis) {
-    localSmtpCounter += 1;
-  } else {
-    const dailyKey = `smtp:quota:${today}`;
-    const newCount = await redis.incr(dailyKey);
-    if (newCount === 1) {
-      await redis.expire(dailyKey, 86400);
+    if (localSmtpCounter >= maxPerDay) {
+      return { allowed: false, remaining: 0 };
     }
+    localSmtpCounter += 1;
+    const usagePercent = (localSmtpCounter / maxPerDay) * 100;
+    if (usagePercent >= 80) {
+      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${localSmtpCounter}/${maxPerDay}) consumed`);
+    }
+    return {
+      allowed: true,
+      remaining: Math.max(0, maxPerDay - localSmtpCounter),
+    };
   }
 
-  const usagePercent = ((currentCount + 1) / maxPerDay) * 100;
-  if (usagePercent >= 80) {
-    console.warn(
-      `[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${currentCount + 1}/${maxPerDay}) consumed`,
-    );
-  }
+  const today = new Date().toISOString().split("T")[0];
+  const dailyKey = `smtp:quota:${today}`;
 
-  return {
-    allowed: true,
-    remaining: Math.max(0, maxPerDay - currentCount - 1),
-  };
+  try {
+    const result = await redis.eval(ATOMIC_SMTP_QUOTA_SCRIPT, [dailyKey], [maxPerDay]);
+
+    if (result === 0) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    const newCount = Number(result);
+    const usagePercent = (newCount / maxPerDay) * 100;
+    if (usagePercent >= 80) {
+      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${newCount}/${maxPerDay}) consumed`);
+    }
+
+    return {
+      allowed: true,
+      remaining: Math.max(0, maxPerDay - newCount),
+    };
+  } catch (err) {
+    console.error("[smtp-quota] Redis error, failing open:", err.message);
+    return { allowed: true, remaining: 1, warning: "Redis error, quota not enforced" };
+  }
 }

@@ -2,8 +2,10 @@ import "./globals.css";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
+import { NotificationProvider } from "@/features/notifications/NotificationContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
+import VoiceAgent from "@/app/components/VoiceAgent";
 import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
 const inter = Inter({
@@ -144,11 +146,14 @@ export default async function RootLayout({ children }) {
           Skip to content
         </a>
         <UserProvider>
-          <ClientLayoutWrapper>
-            <div id="main-content">{children}</div>
-          </ClientLayoutWrapper>
+          <NotificationProvider>
+            <ClientLayoutWrapper>
+              <div id="main-content">{children}</div>
+            </ClientLayoutWrapper>
+          </NotificationProvider>
         </UserProvider>
       <BackToTop />
+      <VoiceAgent />
         <SpeedInsights />
       </body>
     </html>

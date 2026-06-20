@@ -3,7 +3,8 @@ import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Bot } from "lucide-r
 
 export default function PlaybackControls({
   isPaused: pausedProp,
-  onTogglePlayPause: toggleProp,
+  onTogglePlayPause: toggleProp, currentStep,
+  totalSteps, onTimelineChange,
   isPlaying: playingProp,
   onPlayPause: playPauseProp,
   speed,
@@ -124,12 +125,52 @@ export default function PlaybackControls({
         </span>
       </div>
 
-      {progressText && (
+            {progressText && (
         <div className="hidden lg:block text-right bg-slate-950/40 px-3 py-1.5 rounded-lg border border-slate-800">
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">PROGRESS</div>
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            PROGRESS
+          </div>
           <div className="text-sm font-bold text-slate-200">
             {progressText}
           </div>
+        </div>
+      )}
+
+      {/* Playback Timeline */}
+      {totalSteps !== undefined && (
+        <div className="w-full mt-4 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+          
+          <div className="flex justify-between text-xs text-slate-400 mb-2">
+            <span>Step {currentStep}</span>
+            <span>Total {totalSteps} Steps</span>
+          </div>
+
+          <input
+            type="range"
+            min="0"
+            max={totalSteps}
+            value={currentStep}
+            onChange={(e) =>
+              onTimelineChange &&
+              onTimelineChange(Number(e.target.value))
+            }
+            className="w-full accent-[#a435f0] cursor-pointer"
+          />
+
+          <div className="flex justify-center gap-2 mt-3 text-xs">
+            <span className="bg-yellow-600/30 text-yellow-300 px-2 py-1 rounded">
+              Comparison
+            </span>
+
+            <span className="bg-green-600/30 text-green-300 px-2 py-1 rounded">
+              Swap
+            </span>
+
+            <span className="bg-blue-600/30 text-blue-300 px-2 py-1 rounded">
+              Insert
+            </span>
+          </div>
+
         </div>
       )}
 

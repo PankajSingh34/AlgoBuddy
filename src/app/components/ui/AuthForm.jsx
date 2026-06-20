@@ -24,6 +24,8 @@ export default function AuthForm({ isLogin = true }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const router = useRouter();
   const { setUser } = useUser();
@@ -42,6 +44,45 @@ export default function AuthForm({ isLogin = true }) {
     return true;
   };
 
+  // Password requirements
+  const passwordRequirements = [
+    { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+    { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
+    { label: "One lowercase letter", test: (pw) => /[a-z]/.test(pw) },
+    { label: "One number", test: (pw) => /\d/.test(pw) },
+    {
+      label: "One special character",
+      test: (pw) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw),
+    },
+  ];
+
+  const getPasswordValidation = (pw) => {
+    return passwordRequirements.map((req) => ({
+      ...req,
+      met: req.test(pw),
+    }));
+  };
+
+  const passwordValidation = getPasswordValidation(password);
+
+  const allRequirementsMet = passwordValidation.every((req) => req.met);
+  const passwordsMatch = password === confirmPassword && password !== "";
+
+  // Real-time validation
+  const validatePasswords = () => {
+    if (password && !allRequirementsMet) {
+      setPasswordError("Password does not meet all requirements");
+    } else {
+      setPasswordError("");
+    }
+
+    if (confirmPassword && !passwordsMatch) {
+      setConfirmError("Passwords do not match");
+    } else {
+      setConfirmError("");
+    }
+  };
+
   const handleAuth = async (event) => {
     event?.preventDefault();
     setLoading(true);
@@ -52,9 +93,27 @@ export default function AuthForm({ isLogin = true }) {
       return;
     }
 
-    try {
-      if (!captchaToken) throw new Error("Please complete captcha");
+    if (!isLogin) {
+      if (!allRequirementsMet) {
+        setPasswordError("Please meet all password requirements");
+        setLoading(false);
+        return;
+      }
 
+      if (!passwordsMatch) {
+        setConfirmError("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (!captchaToken) {
+      setError("Please complete captcha");
+      setLoading(false);
+      return;
+    }
+
+    try {
       if (isLogin) {
         const data = await api.request("/api/auth", {
           method: "POST",
@@ -62,8 +121,9 @@ export default function AuthForm({ isLogin = true }) {
         });
         if (!data.success) throw new Error(data.message || "Login failed");
 
-        // The API route set the session as cookies.
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user || null);
         router.push("/arena");
       } else {
@@ -96,10 +156,9 @@ export default function AuthForm({ isLogin = true }) {
     if (error) setError(error.message);
   };
 
-  // Safe Turnstile sitekey fallback for testing/dev environments
   const turnstileSiteKey =
-    (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
-      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key")
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key"
       ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
       : "1x00000000000000000000AA";
 
@@ -113,24 +172,19 @@ export default function AuthForm({ isLogin = true }) {
         {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
           <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
-            <Link href="/">
-              ← Back To Home
-            </Link>
+            <Link href="/">← Back To Home</Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold font-sans">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-purple-200 text-sm mt-1">
-              {isLogin
-                ? "Sign in to access Arena"
-                : "Join us to get started"}
+              {isLogin ? "Sign in to access Arena" : "Join us to get started"}
             </p>
           </div>
         </div>
 
         <div className="flex justify-center items-center p-6">
-          {/* Google OAuth */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -168,12 +222,14 @@ export default function AuthForm({ isLogin = true }) {
             </motion.div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 w-10 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-gray-400 dark:text-gray-500" />
+                  <Mail
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
                 </div>
                 <input
                   type="email"
@@ -206,7 +262,10 @@ export default function AuthForm({ isLogin = true }) {
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  validatePasswords();
+                }}
               />
               <button
                 type="button"
@@ -218,24 +277,58 @@ export default function AuthForm({ isLogin = true }) {
               </button>
             </div>
 
+            {/* Password Requirements */}
             {!isLogin && (
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User size={18} className="text-gray-400 dark:text-gray-500" />
-                </div>
-                <input
-                  type="text"
-                  aria-label="Full name"
-                  disabled={loading}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
-                  placeholder="Full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+              <div className="text-sm space-y-1 pl-1">
+                {passwordValidation.map((req, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-2 ${req.met ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
+                  >
+                    <span className="text-base leading-none">
+                      {req.met ? "✓" : "○"}
+                    </span>
+                    <span>{req.label}</span>
+                  </div>
+                ))}
+                {passwordError && (
+                  <p className="text-red-600 dark:text-red-400 mt-1">
+                    {passwordError}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Turnstile for both login and signup */}
+            {/* Confirm Password - Only for Signup */}
+            {!isLogin && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
+                </div>
+                <input
+                  type="password"
+                  aria-label="Confirm Password"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    validatePasswords();
+                  }}
+                />
+                {confirmError && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {confirmError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Turnstile */}
             <div className="flex justify-center">
               <Turnstile
                 siteKey={turnstileSiteKey}
@@ -245,11 +338,22 @@ export default function AuthForm({ isLogin = true }) {
 
             <button
               type="submit"
-              disabled={loading || !captchaToken || (email && emailError)}
-              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${loading || !captchaToken || (email && emailError)
+              disabled={
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
+              }
+              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
-                }`}
+              }`}
             >
               {loading ? (
                 <>
@@ -262,7 +366,7 @@ export default function AuthForm({ isLogin = true }) {
                 </>
               ) : (
                 <>
-                  <UserPlus size={18} className="mr-2" /> Continue
+                  <UserPlus size={18} className="mr-2" /> Create Account
                 </>
               )}
             </button>

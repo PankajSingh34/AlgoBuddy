@@ -102,7 +102,51 @@ export const practiceData = [
               pitfalls: "Requires auxiliary linear memory space, making it less memory-efficient than in-place algorithms like Quick Sort.",
               tip: "Merge Sort is highly stable (preserves original order of duplicates) and is widely used for sorting Linked Lists due to constant space merging."
             }
-          }
+          },
+          {
+            id: "maximum-subarray",
+            name: "Maximum Subarray (Kadane's Algorithm)",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft", "google", "meta", "adobe", "flipkart", "swiggy", "zomato"],
+            practiceUrl: "https://leetcode.com/problems/maximum-subarray/",
+            visualizerUrl: "/visualizer/array/maxsubarray",
+            theory: {
+              summary: "Find the contiguous subarray within a one-dimensional array of numbers that has the largest sum, using Kadane's Algorithm for an optimal O(N) solution.",
+              steps: [
+                "Initialize currentSum = 0 and maxSum = -Infinity (or the first element).",
+                "Traverse the array from left to right.",
+                "At each element, add it to currentSum: currentSum = currentSum + array[i].",
+                "Update maxSum = max(maxSum, currentSum) to record the best sum found so far.",
+                "If currentSum becomes negative, reset it to 0, since a negative sum can never help a future subarray.",
+                "After traversing the full array, maxSum holds the answer."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Resetting currentSum to 0 incorrectly when all elements are negative — in that case the answer is simply the largest (least negative) single element, not 0. Always initialize maxSum with the first element, not 0.",
+              tip: "Kadane's Algorithm is a classic example of Dynamic Programming with O(1) space: it only needs the answer 'so far', not a full DP table. It's one of the most frequently asked array problems in interviews."
+            }
+          },
+          {
+            id: "two-sum",
+            name: "Two Sum",
+            difficulty: "Easy",
+            companies: ["amazon", "google", "microsoft", "meta", "apple"],
+            practiceUrl: "https://leetcode.com/problems/two-sum/",
+            visualizerUrl: "/visualizer/array/twosum",
+            theory: {
+              summary: "Given an array of integers and a target value, find the indices of the two numbers that add up to the target, using a HashMap for an optimal one-pass solution.",
+              steps: [
+                "Create an empty HashMap to store value → index pairs.",
+                "Traverse the array from left to right with index i.",
+                "Calculate complement = target - array[i].",
+                "Check if complement already exists in the HashMap.",
+                "If it exists, return [HashMap[complement], i] as the answer.",
+                "If not, insert array[i] → i into the HashMap and continue."
+              ],
+              complexity: { time: "O(N)", space: "O(N)" },
+              pitfalls: "Using the Brute Force nested-loop approach (checking every pair) leads to O(N²) time, which is too slow for large inputs. Also, forgetting to check the HashMap before inserting the current element can cause matching an element with itself.",
+              tip: "Two Sum is the most frequently asked entry-level problem in interviews. The HashMap trick of storing 'what we need' (the complement) is a pattern reused in many other array problems."
+            }
+          },
         ]
       },
       {
@@ -218,26 +262,6 @@ export const practiceData = [
             }
           },
 
-          {
-  id: "palindrome-linked-list",
-  name: "Palindrome Linked List",
-  difficulty: "Easy",
-  companies: ["amazon", "microsoft", "google", "meta", "adobe"],
-  practiceUrl: "https://leetcode.com/problems/palindrome-linked-list/",
-  visualizerUrl: null,
-  theory: {
-    summary: "Check if a singly linked list is a palindrome by finding the middle, reversing the second half, and comparing both halves.",
-    steps: [
-      "Find the middle of the linked list using slow and fast pointers.",
-      "Reverse the second half of the list starting from slow pointer.",
-      "Compare values of first half and reversed second half node by node.",
-      "If all values match, return true. Otherwise return false."
-    ],
-    complexity: { time: "O(N)", space: "O(1)" },
-    pitfalls: "Not handling edge cases like empty list or single node list.",
-    tip: "This problem combines two important concepts: finding middle using two pointers and in-place reversal."
-  }
-},
           
         ]
       },
@@ -387,27 +411,6 @@ export const practiceData = [
               complexity: { time: "O(N + M)", space: "O(1)" },
               pitfalls: "Failing to handle empty lists as inputs or forgetting to advance list pointers, which creates infinite loops.",
               tip: "Using a dummy head node completely bypasses complex null pointer checks during initialization."
-            }
-          },
-         {
-            id: "remove-nth-node",
-            name: "Remove Nth Node from End of List",
-            difficulty: "Medium",
-            companies: ["amazon", "microsoft", "google", "meta"],
-            practiceUrl: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/",
-            visualizerUrl: null,
-            theory: {
-              summary: "Remove the Nth node from the end of a linked list in one pass using two pointers.",
-              steps: [
-                "Initialize two pointers: fast and slow, both at head.",
-                "Move fast pointer N steps ahead.",
-                "Move both fast and slow together until fast reaches the last node.",
-                "slow.next now points to the node to be removed.",
-                "Set slow.next = slow.next.next to skip and delete the target node."
-              ],
-              complexity: { time: "O(N)", space: "O(1)" },
-              pitfalls: "Not handling edge case when the head node itself needs to be removed.",
-              tip: "Two pointer technique with a gap of N between fast and slow solves this in a single pass."
             }
           },
         ]

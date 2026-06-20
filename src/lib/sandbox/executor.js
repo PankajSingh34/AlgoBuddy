@@ -6,22 +6,21 @@ const MEMORY_LIMIT_BYTES = MAX_MEMORY_MB * 1024 * 1024;
 
 async function executeCode(code) {
   const startTime = Date.now();
-  const outputLines = [];
-
   const memoryBefore = process.memoryUsage().heapUsed;
+  const context = vm.createContext(Object.create(null));
 
   try {
-    const sandbox = Object.create(null);
-    sandbox.console = {
-      log:   (...a) => outputLines.push(a.map(String).join(" ")),
-      warn:  (...a) => outputLines.push("[warn] " + a.map(String).join(" ")),
-      error: (...a) => outputLines.push("[error] " + a.map(String).join(" ")),
-      info:  (...a) => outputLines.push("[info] " + a.map(String).join(" ")),
-    };
-
-    const context = vm.createContext(sandbox);
-
     vm.runInContext(`
+      const outputLines = [];
+      const console = {
+        log:   (...a) => { outputLines.push(a.map(String).join(" ")); },
+        warn:  (...a) => { outputLines.push("[warn] " + a.map(String).join(" ")); },
+        error: (...a) => { outputLines.push("[error] " + a.map(String).join(" ")); },
+        info:  (...a) => { outputLines.push("[info] " + a.map(String).join(" ")); },
+      };
+      Object.defineProperty(globalThis, 'console', { value: console, writable: false, configurable: false });
+      Object.defineProperty(globalThis, 'outputLines', { value: outputLines, writable: false, configurable: false });
+
       Object.freeze(Object.prototype);
       Object.freeze(Array.prototype);
       Object.freeze(Function.prototype);
@@ -31,7 +30,7 @@ async function executeCode(code) {
 
     script.runInContext(context, { timeout: MAX_TIMEOUT_MS });
 
-    const rawOutput = outputLines.join("\n");
+    const rawOutput = context.outputLines ? context.outputLines.join("\n") : "";
     const output = rawOutput.length > MAX_OUTPUT_LENGTH
       ? rawOutput.slice(0, MAX_OUTPUT_LENGTH) + "\n… (output truncated)"
       : rawOutput;
@@ -57,6 +56,7 @@ async function executeCode(code) {
 
   } catch (err) {
     const elapsed = Date.now() - startTime;
+    const rawOutput = context.outputLines ? context.outputLines.join("\n") : "";
 
     if (err.code === "ERR_SCRIPT_EXECUTION_TIMEOUT" || err.message?.includes("timed out")) {
       return {
@@ -77,7 +77,7 @@ async function executeCode(code) {
     if (memoryErr) {
       return {
         status: EXECUTION_STATUS.MLE,
-        output: outputLines.join("\n"),
+        output: rawOutput,
         error: `Your code used too much memory (exceeded ${MAX_MEMORY_MB} MB).`,
         executionTime: elapsed,
         memoryUsed: process.memoryUsage().heapUsed - memoryBefore,
@@ -90,7 +90,7 @@ async function executeCode(code) {
     }
     return {
       status: EXECUTION_STATUS.RUNTIME_ERROR,
-      output: outputLines.join("\n"),
+      output: rawOutput,
       error: errorMessage,
       executionTime: elapsed,
       memoryUsed: 0,

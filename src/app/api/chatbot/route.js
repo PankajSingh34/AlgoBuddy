@@ -8,12 +8,12 @@
  * - Conversational memory via full message history array (clamped to 20)
  * - Dual-role system prompt: AlgoBuddy Product Guide + DSA Expert
  * - Complete DSA algorithm knowledge: Basic → Advanced with examples
- * - Provider: Google Gemini (gemini-2.0-flash)
+ * - Provider: Google Gemini (gemini-2.5-flash)
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkChatbotRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { jsonResponse } from "@/lib/serverApi";
 
@@ -174,20 +174,23 @@ You are an expert in ALL DSA topics from basic to advanced. For every algorithm/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GENERAL FORMATTING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- **Be concise by default.** Aim for 150–300 words per reply. Never pad answers.
+- For simple questions, answer directly in 2–4 sentences. No preamble.
+- Use bullet points and short paragraphs — avoid long prose blocks.
 - Always respond in well-structured **Markdown**
 - Use headers (##, ###), bold, inline code, and fenced code blocks (\`\`\`python or \`\`\`js)
-- Keep responses focused — no filler padding
-- For code, always include comments explaining each step
-- Always show at least 1 concrete input/output example for algorithms
+- For code, keep examples short (≤ 20 lines) and add inline comments only where non-obvious
+- Always show 1 concrete input/output example for algorithms — keep it brief
+- End with: "Want me to go deeper on any part?" only when the topic has natural extensions
 - If a question is outside DSA or AlgoBuddy: "I'm specialized in DSA and AlgoBuddy — ask me anything in those areas! 🎯"
 - NEVER fabricate AlgoBuddy features that don't exist
-- Be warm, encouraging, and make learning feel fun!`;
+- Be warm and encouraging — but get to the point fast!`;
 
 // ─── Gemini Client ────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const MODEL = "gemini-2.0-flash";
-const MAX_TOKENS = 2048;
+const MODEL = "gemini-2.5-flash";
+const MAX_TOKENS = 1024;
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 function validateMessages(messages) {
@@ -230,7 +233,7 @@ export async function POST(request) {
   const authResult = await getAuthenticatedUser().catch(() => ({ success: false }));
 
   const ip = getClientIp(request.headers);
-  const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);
+  const { allowed, resetAt } = await checkChatbotRateLimit(`chatbot:${ip}`);
   if (!allowed) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
     return jsonResponse({ error: "Too many requests. Please try again later." }, 429, {
@@ -284,7 +287,12 @@ export async function POST(request) {
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
-          generationConfig: { maxOutputTokens: MAX_TOKENS },
+          generationConfig: {
+            maxOutputTokens: MAX_TOKENS,
+            // Disable thinking mode for gemini-2.5-flash to keep latency low
+            // and avoid burning thinking token budget on a chat usecase.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         });
 
         const structuredContents = toGeminiContents(clampedMessages);
@@ -305,18 +313,37 @@ export async function POST(request) {
         enqueue({ type: "done" });
       } catch (err) {
         const message = err?.message ?? String(err);
+        const httpStatus = err?.status ?? err?.httpStatus;
         console.error("[AlgoBot API Error]", message);
-        if (err?.stack) console.error("[AlgoBot API Error Stack]", err.stack);
+        if (err?.stack) console.error("[AlgoBot API Error Stack]\n", err.stack);
+
+        let userMessage;
+        if (
+          httpStatus === 429 ||
+          message.includes("429") ||
+          message.includes("Too Many Requests") ||
+          message.includes("Quota exceeded")
+        ) {
+          userMessage =
+            "AlgoBot is handling too many requests right now. Please wait a moment and try again! ⏳";
+        } else if (message.includes("timeout") || message.includes("Stream timeout")) {
+          userMessage = "The response took too long. Please try asking again! ⏰";
+        } else if (message.includes("Failed to parse stream")) {
+          userMessage = "There was a connection hiccup with the AI service. Please try again! 🔄";
+        } else {
+          userMessage =
+            "Something went wrong with the AI service. Please try again in a moment!";
+        }
+
         try {
-          enqueue({
-            type: "error",
-            message: "AI service connection error. Please verify your local configuration and try again.",
-          });
-        } catch (_) {}
-        controller.error(err);
+          enqueue({ type: "error", message: userMessage });
+        } catch (_) { }
+        // Do NOT call controller.error() — that signals a broken stream pipe to Next.js
+        // and causes a 500 "failed to pipe response". We already sent the error SSE
+        // event above; the finally block will close the stream cleanly.
       } finally {
         clearTimeout(timeoutId);
-        try { controller.close(); } catch (_) {}
+        try { controller.close(); } catch (_) { }
       }
     },
   });

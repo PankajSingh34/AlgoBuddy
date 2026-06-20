@@ -1,14 +1,12 @@
 package com.algobuddy.backend.service;
 
+import com.algobuddy.backend.dto.ArenaLeaderboardProjection;
 import com.algobuddy.backend.dto.ArenaMatchResponse;
 import com.algobuddy.backend.dto.ArenaProfileResponse;
 import com.algobuddy.backend.entity.ArenaMatch;
 import com.algobuddy.backend.entity.UserArenaProfile;
 import com.algobuddy.backend.repository.ArenaMatchRepository;
 import com.algobuddy.backend.repository.UserArenaProfileRepository;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.ConsumptionProbe;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +19,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 
-import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,20 +33,10 @@ public class ArenaService {
     private final UserArenaProfileRepository profileRepository;
     private final ArenaMatchRepository matchRepository;
 
-    private final Map<UUID, Bucket> matchResultRateLimitCache = new ConcurrentHashMap<>();
-
-    private Bucket newMatchResultBucket() {
-        Bandwidth limit = Bandwidth.builder()
-                .capacity(3)
-                .refillGreedy(3, Duration.ofMinutes(1))
-                .build();
-        return Bucket.builder().addLimit(limit).build();
-    }
-
     private void checkMatchResultRateLimit(UUID userId) {
-        Bucket bucket = matchResultRateLimitCache.computeIfAbsent(userId, k -> newMatchResultBucket());
-        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-        if (!probe.isConsumed()) {
+        LocalDateTime since = LocalDateTime.now().minusMinutes(1);
+        long recentCount = matchRepository.countRecentMatchResultsByUserId(userId, since);
+        if (recentCount >= 3) {
             throw new IllegalStateException("Rate limit exceeded. Max 3 match results per minute.");
         }
     }
@@ -58,23 +44,27 @@ public class ArenaService {
     @Transactional
     @Cacheable(value = "arenaProfile", key = "#userId", unless = "#result == null")
     public ArenaProfileResponse getProfile(UUID userId) {
-        UserArenaProfile profile = profileRepository.findById(userId)
-                .orElseGet(() -> createDefaultProfile(userId));
+        if (!profileRepository.existsById(userId)) {
+            createDefaultProfile(userId);
+        }
+        
+        ArenaLeaderboardProjection projection = profileRepository.findProfileWithUserDetails(userId)
+                .orElseThrow(() -> new IllegalStateException("Profile not found after creation"));
         
         Integer rank = calculateRank(userId);
         
-        return mapToResponse(profile, rank);
+        return mapProjectionToResponse(projection, rank);
     }
     
     @Transactional(readOnly = true)
     @Cacheable(value = "arenaLeaderboard", unless = "#result == null")
     public List<ArenaProfileResponse> getLeaderboard() {
-        List<UserArenaProfile> topPlayers = profileRepository.findTopPlayers(PageRequest.of(0, 50));
+        List<ArenaLeaderboardProjection> topPlayers = profileRepository.findTopPlayersWithUserDetails(PageRequest.of(0, 50));
         
         int rank = 1;
         List<ArenaProfileResponse> result = new java.util.ArrayList<>();
-        for (UserArenaProfile profile : topPlayers) {
-            result.add(mapToResponse(profile, rank++));
+        for (ArenaLeaderboardProjection projection : topPlayers) {
+            result.add(mapProjectionToResponse(projection, rank++));
         }
         return result;
     }
@@ -106,22 +96,29 @@ public class ArenaService {
         return rank != null ? rank : profileRepository.findTopPlayers(PageRequest.of(0, 1)).size() + 1;
     }
 
-    private ArenaProfileResponse mapToResponse(UserArenaProfile profile, Integer rank) {
+    private ArenaProfileResponse mapProjectionToResponse(ArenaLeaderboardProjection projection, Integer rank) {
         return ArenaProfileResponse.builder()
-                .userId(profile.getUserId())
-                .xp(profile.getXp())
-                .level(profile.getLevel())
-                .rating(profile.getRating())
-                .battlesWon(profile.getBattlesWon())
-                .battlesLost(profile.getBattlesLost())
-                .totalProblemsSolved(profile.getTotalProblemsSolved())
+                .userId(projection.getUserId())
+                .xp(projection.getXp())
+                .level(projection.getLevel())
+                .rating(projection.getRating())
+                .battlesWon(projection.getBattlesWon())
+                .battlesLost(projection.getBattlesLost())
+                .totalProblemsSolved(projection.getTotalProblemsSolved())
                 .rank(rank)
+                .name(projection.getName())
+                .avatarUrl(projection.getAvatarUrl())
                 .build();
     }
 
     private ArenaMatchResponse mapToMatchResponse(ArenaMatch match, UUID requestingUserId) {
         boolean isPlayer1 = match.getPlayer1Id().equals(requestingUserId);
         UUID opponentId = isPlayer1 ? match.getPlayer2Id() : match.getPlayer1Id();
+        
+        // Fetch opponent name from db if present, default to "User [id]"
+        String opponentName = profileRepository.findProfileWithUserDetails(opponentId)
+                .map(ArenaLeaderboardProjection::getName)
+                .orElse("User " + opponentId.toString().substring(0, 4));
         
         String result = "In Progress";
         if (match.getWinnerId() != null) {
@@ -132,7 +129,7 @@ public class ArenaService {
         
         return ArenaMatchResponse.builder()
                 .id(match.getId())
-                .opponentName("User " + opponentId.toString().substring(0, 4))
+                .opponentName(opponentName)
                 .topic(match.getTopic())
                 .difficulty(match.getDifficulty())
                 .startTime(match.getStartTime())

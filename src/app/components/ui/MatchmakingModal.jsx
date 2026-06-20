@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Award, Shield, Zap } from "lucide-react";
 import { io } from "socket.io-client";
@@ -25,6 +25,17 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
   const [statusIdx, setStatusIdx] = useState(0);
   const [matchState, setMatchState] = useState("searching"); // searching, matched
   const [matchedOpponent, setMatchedOpponent] = useState(null);
+
+  const onMatchFoundRef = useRef(onMatchFound);
+  const statsRef = useRef(currentUserStats);
+
+  useEffect(() => {
+    onMatchFoundRef.current = onMatchFound;
+  }, [onMatchFound]);
+
+  useEffect(() => {
+    statsRef.current = currentUserStats;
+  }, [currentUserStats]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,9 +79,9 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
     socket.on("connect", () => {
       console.log("Connected to Arena Socket Server:", socket.id);
       socket.emit("join_matchmaking", {
-        name: currentUserStats?.name || "Player",
-        rating: currentUserStats?.rating || 1200,
-        level: currentUserStats?.level || 1,
+        name: statsRef.current?.name || "Player",
+        rating: statsRef.current?.rating || 1200,
+        level: statsRef.current?.level || 1,
         topic: "Arrays",
         difficulty: "Easy"
       });
@@ -99,7 +110,9 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
 
       // Auto-start duel after 3 seconds of matched display
       setTimeout(() => {
-        onMatchFound({ ...opponent, matchId: matchDetails.matchId });
+        if (onMatchFoundRef.current) {
+          onMatchFoundRef.current({ ...opponent, matchId: matchDetails.matchId });
+        }
       }, 3000);
     });
 
@@ -109,7 +122,7 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       socket.emit("leave_matchmaking");
       socket.disconnect();
     };
-  }, [isOpen, onMatchFound, currentUserStats]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,5 @@
 import DashboardClient from "./DashboardClient";
+import AIStudySchedule from "@/app/components/AIStudySchedule";
 
 export const metadata = {
   title: "Dashboard | AlgoBuddy",
@@ -7,5 +8,10 @@ export const metadata = {
 };
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return (
+  <>
+    <DashboardClient />
+    <AIStudySchedule />
+  </>
+);
 }

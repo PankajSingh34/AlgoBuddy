@@ -74,7 +74,7 @@ export default function PracticeSidebar({
         className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:text-purple-400 font-bold text-sm w-fit transition hover:scale-102 active:scale-98"
       >
         <ArrowLeft size={16} />
-        <span>Practice</span>
+        <span>Back to Home</span>
       </button>
 
       {/* Navigation List */}
