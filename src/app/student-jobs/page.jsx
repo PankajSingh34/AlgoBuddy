@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   Briefcase, MapPin, Calendar, Search, ChevronLeft, ChevronRight, X,
-  Send, CheckCircle, Bookmark, BookmarkCheck
+  Send, CheckCircle, Bookmark, BookmarkCheck, Link2, Check
 } from "lucide-react";
 import Link from "next/link";
 import HighlightText from "@/app/components/ui/HighlightText";
@@ -21,6 +21,7 @@ export default function StudentJobsPage() {
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [applying, setApplying] = useState(null);
   const [bookmarking, setBookmarking] = useState(null);
+  const [sharedId, setSharedId] = useState(null);
   const [confirmJob, setConfirmJob] = useState(null);
 
   const fetchJobs = useCallback(async (page, search) => {
@@ -81,6 +82,18 @@ export default function StudentJobsPage() {
 
   function handlePageClick(page) {
     setCurrentPage(page);
+  }
+
+  async function handleShare(job) {
+    const url = `${window.location.origin}/student-jobs?jobId=${job.id}`;
+    try {
+      await navigator.clipboard.writeText(`${job.title} at ${job.company} — ${url}`);
+      toast.success("Job link copied to clipboard!");
+      setSharedId(job.id);
+      setTimeout(() => setSharedId(null), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
   }
 
   async function handleToggleBookmark(jobId) {
@@ -241,6 +254,17 @@ export default function StudentJobsPage() {
                           <h2 className="text-xl font-semibold text-gray-900">
                             <HighlightText text={job.title} query={searchQuery} />
                           </h2>
+                          <button
+                            onClick={() => handleShare(job)}
+                            className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+                            aria-label="Share job"
+                          >
+                            {sharedId === job.id ? (
+                              <Check className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Link2 className="h-5 w-5" />
+                            )}
+                          </button>
                           <button
                             onClick={() => handleToggleBookmark(job.id)}
                             disabled={isBookmarking}
