@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   Briefcase, MapPin, Calendar, Search, ChevronLeft, ChevronRight, X,
-  Send, CheckCircle, Bookmark, BookmarkCheck
+  Send, CheckCircle, Bookmark, BookmarkCheck, Filter
 } from "lucide-react";
 import Link from "next/link";
 import HighlightText from "@/app/components/ui/HighlightText";
@@ -17,17 +17,24 @@ export default function StudentJobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [jobTypeFilter, setJobTypeFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [applying, setApplying] = useState(null);
   const [bookmarking, setBookmarking] = useState(null);
   const [confirmJob, setConfirmJob] = useState(null);
 
-  const fetchJobs = useCallback(async (page, search) => {
+  const fetchJobs = useCallback(async (page, search, jobType, experience, location) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: "20" });
       if (search.trim()) params.set("search", search.trim());
+      if (jobType) params.set("job_type", jobType);
+      if (experience) params.set("experience_level", experience);
+      if (location) params.set("location", location);
       const res = await fetch(`/api/student-jobs?${params}`);
       const data = await res.json();
       setJobs(data.jobs || []);
@@ -62,10 +69,10 @@ export default function StudentJobsPage() {
   }
 
   useEffect(() => {
-    fetchJobs(currentPage, searchQuery);
+    fetchJobs(currentPage, searchQuery, jobTypeFilter, experienceFilter, locationFilter);
     fetchApplications();
     fetchBookmarks();
-  }, [currentPage, searchQuery, fetchJobs]);
+  }, [currentPage, searchQuery, jobTypeFilter, experienceFilter, locationFilter, fetchJobs]);
 
   function handleSearch(e) {
     e.preventDefault();
@@ -76,7 +83,17 @@ export default function StudentJobsPage() {
   function handleClearSearch() {
     setSearchInput("");
     setSearchQuery("");
+    setJobTypeFilter("");
+    setExperienceFilter("");
+    setLocationFilter("");
     setCurrentPage(1);
+  }
+
+  function handleFilterChange(setter) {
+    return (e) => {
+      setter(e.target.value);
+      setCurrentPage(1);
+    };
   }
 
   function handlePageClick(page) {
@@ -195,6 +212,83 @@ export default function StudentJobsPage() {
             </button>
           </div>
         </form>
+
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+              showFilters || jobTypeFilter || experienceFilter || locationFilter
+                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+            {(jobTypeFilter || experienceFilter || locationFilter) && (
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+            )}
+          </button>
+          {(jobTypeFilter || experienceFilter || locationFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setJobTypeFilter("");
+                setExperienceFilter("");
+                setLocationFilter("");
+                setCurrentPage(1);
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {showFilters && (
+          <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Job Type</label>
+                <select
+                  value={jobTypeFilter}
+                  onChange={handleFilterChange(setJobTypeFilter)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="">All Types</option>
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="internship">Internship</option>
+                  <option value="contract">Contract</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Experience</label>
+                <select
+                  value={experienceFilter}
+                  onChange={handleFilterChange(setExperienceFilter)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="">All Levels</option>
+                  <option value="entry">Entry</option>
+                  <option value="mid">Mid</option>
+                  <option value="senior">Senior</option>
+                  <option value="lead">Lead</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={locationFilter}
+                  onChange={handleFilterChange(setLocationFilter)}
+                  placeholder="Filter by location..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4">
