@@ -35,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # Backend test resources — may contain local DB credentials, never commit
 backend/src/test/resources/application.yml
