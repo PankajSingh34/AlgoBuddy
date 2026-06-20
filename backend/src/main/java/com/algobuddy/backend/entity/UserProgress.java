@@ -3,11 +3,11 @@ package com.algobuddy.backend.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import jakarta.persistence.UniqueConstraint;
 import java.util.UUID;
 import java.time.OffsetDateTime;
 

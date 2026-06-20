@@ -8,20 +8,14 @@ import com.algobuddy.backend.entity.UserProgress;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,14 +23,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PracticeService {
 
-    private static final Logger log = LoggerFactory.getLogger(PracticeService.class);
 
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
 
-    @Autowired
-    @Lazy
-    private PracticeService self;
 
     @Transactional(readOnly = true)
     public ProgressResponse getUserProgress(UUID userId) {
@@ -49,7 +39,7 @@ public class PracticeService {
                 ));
 
         UserPracticeStats stats = statsRepository.findById(userId)
-                .orElse(new UserPracticeStats(userId, 0, 0, null, 0, 0));
+                .orElse(new UserPracticeStats(userId, 0, 0, null, 0));
 
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime startOfDay = now.toLocalDate().atStartOfDay(now.getOffset()).toOffsetDateTime();
@@ -73,28 +63,12 @@ public class PracticeService {
 
     @Transactional
     public ProgressResponse updateProgress(UUID userId, ProgressRequest request) {
-        // 1. Update Problem Progress
-        Optional<UserProgress> existingProgress = progressRepository.findByUserIdAndProblemId(userId, request.getProblemId());
-        
-        if (existingProgress.isPresent()) {
-            UserProgress progress = existingProgress.get();
-            progress.setStatus(request.getStatus());
-            progress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(progress);
-        } else {
-            UserProgress newProgress = new UserProgress();
-            newProgress.setUserId(userId);
-            newProgress.setProblemId(request.getProblemId());
-            newProgress.setStatus(request.getStatus());
-            newProgress.setUpdatedAt(OffsetDateTime.now());
-            progressRepository.save(newProgress);
+        progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
+
+        if ("Completed".equals(request.getStatus())) {
+            updateStreak(userId);
         }
 
-        // 2. Update Daily Streak
-        if ("Completed".equals(request.getStatus())) {
-            self.updateStreakWithRetry(userId);
-        }
-        
         return getUserProgress(userId);
     }
 
@@ -104,95 +78,53 @@ public class PracticeService {
             return getUserProgress(userId);
         }
 
-        List<String> problemIds = request.getItems().stream()
-                .map(BulkProgressRequest.Item::getProblemId)
-                .filter(id -> id != null && !id.trim().isEmpty())
-                .collect(Collectors.toList());
+        List<BulkProgressRequest.Item> validItems = request.getItems().stream()
+                .filter(item -> item.getProblemId() != null && !item.getProblemId().trim().isEmpty() && item.getStatus() != null)
+                .toList();
 
-        if (problemIds.isEmpty()) {
+        if (validItems.isEmpty()) {
             return getUserProgress(userId);
         }
 
-        List<UserProgress> existingProgresses = progressRepository.findByUserIdAndProblemIdIn(userId, problemIds);
-        Map<String, UserProgress> existingMap = existingProgresses.stream()
+        List<String> problemIds = validItems.stream().map(BulkProgressRequest.Item::getProblemId).toList();
+        List<UserProgress> existingProgress = progressRepository.findByUserIdAndProblemIdIn(userId, problemIds);
+
+        Map<String, UserProgress> existingProgressMap = existingProgress.stream()
                 .collect(Collectors.toMap(UserProgress::getProblemId, p -> p));
 
+        List<UserProgress> toSave = new java.util.ArrayList<>();
         boolean anyCompleted = false;
-        OffsetDateTime now = OffsetDateTime.now();
-        
-        for (BulkProgressRequest.Item item : request.getItems()) {
-            if (item.getProblemId() == null || item.getProblemId().trim().isEmpty() || item.getStatus() == null) {
-                continue;
-            }
 
-            UserProgress progress = existingMap.get(item.getProblemId());
+        for (BulkProgressRequest.Item item : validItems) {
+            UserProgress progress = existingProgressMap.get(item.getProblemId());
             if (progress != null) {
                 progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
+                progress.setUpdatedAt(OffsetDateTime.now());
             } else {
                 progress = new UserProgress();
                 progress.setUserId(userId);
                 progress.setProblemId(item.getProblemId());
                 progress.setStatus(item.getStatus());
-                progress.setUpdatedAt(now);
-                existingMap.put(item.getProblemId(), progress); // Ensure we save the new ones too
+                progress.setUpdatedAt(OffsetDateTime.now());
             }
+            toSave.add(progress);
 
             if ("Completed".equals(item.getStatus())) {
                 anyCompleted = true;
             }
         }
 
-        progressRepository.saveAll(existingMap.values());
+        progressRepository.saveAll(toSave);
 
-        // Only update streak once even if multiple problems were completed
         if (anyCompleted) {
-            self.updateStreakWithRetry(userId);
+            updateStreak(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    public void updateStreakWithRetry(UUID userId) {
-        final int MAX_RETRIES = 3;
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                self.updateStreak(userId);
-                return;
-            } catch (ObjectOptimisticLockingFailureException e) {
-                if (attempt == MAX_RETRIES) {
-                    log.error("Failed to update streak for user {} after {} attempts", userId, MAX_RETRIES, e);
-                    throw e;
-                }
-                log.warn("Optimistic lock failure for user {}, retry attempt {}/{}", userId, attempt, MAX_RETRIES);
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void updateStreak(UUID userId) {
-        UserPracticeStats stats = statsRepository.findById(userId)
-                .orElse(new UserPracticeStats(userId, 0, 0, null, 0, 0));
-
-        LocalDate today = LocalDate.now();
-        LocalDate lastActive = stats.getLastActiveDate();
-
-        if (lastActive == null) {
-            stats.setCurrentStreak(1);
-            stats.setLongestStreak(1);
-        } else if (lastActive.equals(today.minusDays(1))) {
-            // Consecutive day
-            stats.setCurrentStreak(stats.getCurrentStreak() + 1);
-            if (stats.getCurrentStreak() > stats.getLongestStreak()) {
-                stats.setLongestStreak(stats.getCurrentStreak());
-            }
-        } else if (!lastActive.equals(today)) {
-            // Streak broken (not today and not yesterday)
-            stats.setCurrentStreak(1);
-        }
-        // If lastActive == today, do nothing (streak already incremented today)
-
-        stats.setLastActiveDate(today);
-        statsRepository.save(stats);
+        statsRepository.upsertStreakAtomic(userId, LocalDate.now());
     }
 }

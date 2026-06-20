@@ -115,3 +115,40 @@ export async function getAuthenticatedUser() {
     return { success: false, type: "AUTH_PROVIDER_ERROR" };
   }
 }
+
+/**
+ * Verifies a Supabase JWT access token directly using the Supabase admin client.
+ * Used by the WebSocket arena server and other non-HTTP contexts where
+ * cookie-based session verification is not available.
+ *
+ * @param {string} token - The Supabase access_token JWT
+ * @returns {Promise<object|null>} The verified user object, or null if invalid/expired
+ */
+export async function verifySupabaseToken(token) {
+  if (!token) return null;
+
+  const config = getSupabaseConfig();
+  if (!config) {
+    console.error("[verifySupabaseToken] Config error: Missing Supabase environment variables.");
+    return null;
+  }
+
+  try {
+    // Use the service role client for admin-level token verification
+    const { createClient } = await import("@supabase/supabase-js");
+    const adminClient = createClient(config.supabaseUrl, config.supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data, error } = await adminClient.auth.getUser(token);
+    if (error || !data?.user) {
+      console.warn("[verifySupabaseToken] Token verification failed:", error?.message || "No user returned");
+      return null;
+    }
+
+    return data.user;
+  } catch (err) {
+    console.error("[verifySupabaseToken] Error:", err.message || err);
+    return null;
+  }
+}

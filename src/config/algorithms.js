@@ -434,6 +434,36 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/linkedlist/operations/merge/AlgorithmClient')),
   },
+  "linkedlist/operations/sorting": {
+    metadata: {
+    title:
+      "Linked List Sorting Algorithm | Interactive Visualization & Step-by-Step Guide",
+    description:
+      "Learn how linked list sorting works with interactive animations, detailed explanations, and hands-on practice. Visualize the sorting process step by step and master linked list sorting techniques.",
+    keywords: [
+      "Linked List Sorting",
+      "Merge Sort Linked List",
+      "Linked List Sort Visualization",
+      "Sorting Algorithm",
+      "Data Structures",
+      "DSA Linked List",
+      "Interactive Sorting",
+      "Linked List Tutorial",
+      "Merge Sort Visualization",
+      "Sorting Step-by-Step",
+      "Linked List Learning",
+      "Sorting using C",
+      "Sorting using Java",
+      "Sorting using JavaScript",
+      "Sorting using Python"
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import('@/app/visualizer/linkedlist/operations/sorting/AlgorithmClient')
+  ),  
+  },
   "linkedlist/operations/reverse": {
     metadata: {
   title:

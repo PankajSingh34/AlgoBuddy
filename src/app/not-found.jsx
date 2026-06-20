@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft, Home, Zap } from 'lucide-react';
 
 const NotFoundPage = () => {
@@ -73,18 +74,18 @@ const NotFoundPage = () => {
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
-          <a
+          <Link
             href="/"
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-dark dark:from-primary-dark dark:to-primary text-white rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20"
           >
             <Home className="w-5 h-5" />
             Return Home
-          </a>
+          </Link>
         </div>
 
         {/* Footer note */}
         <p className="pt-12 text-sm text-surface-500 dark:text-surface-400">
-          Still stuck? <a href="/contact" className="text-primary dark:text-primary-light hover:underline">Contact support</a>
+          Still stuck? <Link href="/contact" className="text-primary dark:text-primary-light hover:underline">Contact support</Link>
         </p>
       </div>
     </div>

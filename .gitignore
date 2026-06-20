@@ -36,6 +36,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Backend test resources — may contain local DB credentials, never commit
+backend/src/test/resources/application.yml
+
+# Local build/run logs
+backend_log.txt
+
 # vercel
 .vercel
 

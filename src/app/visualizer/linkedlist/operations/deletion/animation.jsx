@@ -5,7 +5,7 @@ import {
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-import { addNodeDeletionGen, deleteLastNodeGen } from "@/features/algorithms/linkedlist/deletionLogic";
+import { addNodeDeletionGen, deleteLastNodeGen,deleteFirstNodeGen,deleteAtPositionGen} from "@/features/algorithms/linkedlist/deletionLogic";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
@@ -14,14 +14,29 @@ const LinkedListDeletion = () => {
   const [inputValue, setInputValue] = useState("");
   const [list, setList] = useState([]);
   const [pendingOp, setPendingOp] = useState(null); // { type: 'add' | 'delete', val?: string }
+  const [positionInput, setPositionInput] = useState("");
 
   const frames = useMemo(() => {
     if (!pendingOp) return [];
-    if (pendingOp.type === 'add') {
+    if (pendingOp.type === "add") {
       return Array.from(addNodeDeletionGen(list, pendingOp.val));
-    } else {
+    }
+
+    if (pendingOp.type === "delete") {
       return Array.from(deleteLastNodeGen(list));
     }
+
+    if (pendingOp.type === "delete_first") {
+      return Array.from(deleteFirstNodeGen(list));
+    }
+
+    if (pendingOp.type === "delete_position") {
+      return Array.from(
+        deleteAtPositionGen(list, pendingOp.position)
+      );
+    }
+
+    return [];
   }, [list, pendingOp]);
 
   const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
@@ -40,11 +55,37 @@ const LinkedListDeletion = () => {
     engine.play();
   };
 
+  const deleteFirstNode = () => {
+    if (list.length === 0 || engine.isPlaying || pendingOp) return;
+
+    setPendingOp({ type: "delete_first" });
+    engine.reset();
+    engine.play();
+  };
+  
   const handleReset = () => {
     setInputValue("");
     setList([]);
     setPendingOp(null);
     engine.reset();
+  };
+  const deleteAtPosition = () => {
+    const position = Number(positionInput);
+
+    if (
+      isNaN(position) ||
+      position < 0 ||
+      position >= list.length
+    )
+      return;
+
+    setPendingOp({
+      type: "delete_position",
+      position,
+    });
+
+    engine.reset();
+    engine.play();
   };
 
   useVisualizerReset(handleReset);
@@ -105,6 +146,8 @@ const LinkedListDeletion = () => {
 
       <VisualizerCard>
         <div className="flex flex-col gap-4">
+
+          {/* Add Node */}
           <div className="flex flex-col gap-4 sm:flex-row">
             <input
               type="text"
@@ -114,32 +157,86 @@ const LinkedListDeletion = () => {
               placeholder="Enter value"
               disabled={engine.isPlaying || pendingOp !== null}
             />
+
             <button
               onClick={addNode}
               disabled={engine.isPlaying || !inputValue || pendingOp !== null}
               className="w-full rounded-lg bg-primary px-6 py-3 text-white disabled:bg-gray-400 sm:w-auto"
             >
-              {engine.isPlaying && pendingOp?.type === 'add' ? "Adding..." : "Add Node"}
+              {engine.isPlaying && pendingOp?.type === "add"
+                ? "Adding..."
+                : "Add Node"}
             </button>
           </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <button
-              onClick={deleteNode}
-              disabled={engine.isPlaying || list.length === 0 || pendingOp !== null}
-              className="w-full rounded-lg border border-black px-6 py-3 text-black disabled:opacity-50 dark:border-white dark:text-white"
-            >
-              {engine.isPlaying && pendingOp?.type === 'delete' ? "Deleting..." : "Delete Last Node"}
-            </button>
-            <button
-              onClick={handleReset}
-              disabled={engine.isPlaying && pendingOp === null}
-              className="w-full rounded-lg border border-black px-6 py-3 text-black dark:border-white dark:text-white"
-            >
-              Reset
-            </button>
+
+          {/* Delete Operations */}
+          <div className="flex flex-col gap-4">
+
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <button
+                onClick={deleteNode}
+                disabled={
+                  engine.isPlaying ||
+                  list.length === 0 ||
+                  pendingOp !== null
+                }
+                className="w-full rounded-lg border border-black px-6 py-3 text-black disabled:opacity-50 dark:border-white dark:text-white"
+              >
+                {engine.isPlaying && pendingOp?.type === "delete"
+                  ? "Deleting..."
+                  : "Delete Last Node"}
+              </button>
+
+              <button
+                onClick={deleteFirstNode}
+                disabled={
+                  engine.isPlaying ||
+                  list.length === 0 ||
+                  pendingOp !== null
+                }
+                className="w-full rounded-lg border border-black px-6 py-3 text-black disabled:opacity-50 dark:border-white dark:text-white"
+              >
+                Delete First Node
+              </button>
+
+              <button
+                onClick={handleReset}
+                disabled={engine.isPlaying && pendingOp === null}
+                className="w-full rounded-lg border border-black px-6 py-3 text-black dark:border-white dark:text-white"
+              >
+                Reset
+              </button>
+            </div>
+
+            {/* Delete At Position */}
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <input
+                type="number"
+                min="0"
+                value={positionInput}
+                onChange={(e) => setPositionInput(e.target.value)}
+                placeholder="Position"
+                disabled={engine.isPlaying || pendingOp !== null}
+                className="flex-1 rounded-lg border bg-white p-3 dark:bg-gray-700"
+              />
+
+              <button
+                onClick={deleteAtPosition}
+                disabled={
+                  engine.isPlaying ||
+                  list.length === 0 ||
+                  pendingOp !== null ||
+                  positionInput === ""
+                }
+                className="w-full rounded-lg border border-black px-6 py-3 text-black whitespace-nowrap disabled:opacity-50 dark:border-white dark:text-white sm:w-auto"
+              >
+                Delete At Position
+              </button>
+            </div>
+
           </div>
         </div>
-        
+
         {frames.length > 0 && (
           <div className="mt-6">
             <PlaybackControls
@@ -149,7 +246,9 @@ const LinkedListDeletion = () => {
               onSpeedChange={(s) => engine.setSpeed(s * 1000)}
               onStepForward={engine.stepForward}
               onStepBackward={engine.stepBackward}
-              onReset={() => { engine.reset(); }}
+              onReset={() => {
+                engine.reset();
+              }}
               progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
@@ -206,7 +305,15 @@ const LinkedListDeletion = () => {
               {currentFrame.list.map((node, index) => {
                   const isCurrent = currentFrame.currentNodeIndex === index;
                   const isTarget = currentFrame.targetNodeIndex === index;
-                  const bgData = isTarget ? "bg-rose-500" : isCurrent ? "bg-amber-500" : "bg-primary";
+                  const isInsertTraversal =
+                    currentFrame.action === "insert_position" &&
+                    currentFrame.currentNodeIndex === index;
+
+                  const isDeleteFirst =
+                    currentFrame.action === "delete_first" &&
+                    currentFrame.targetNodeIndex === index;
+
+                  const bgData =  isDeleteFirst ? "bg-rose-500": isInsertTraversal ? "bg-amber-500" : isTarget ? "bg-rose-500" : isCurrent ? "bg-amber-500" : "bg-primary";
                   const scaleClass = isTarget ? "scale-90 opacity-50 shadow-none" : isCurrent ? "scale-110 shadow-md z-10" : "scale-100";
                   
                   return (

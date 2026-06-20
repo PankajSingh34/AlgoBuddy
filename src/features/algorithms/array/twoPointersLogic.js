@@ -1,6 +1,7 @@
 /**
  * Pure generator functions for Two Pointers algorithms.
  * Yields state objects representing pointer positions at each step.
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
  */
 
 // ─── 1. Pair Sum (Sorted Array) ───────────────────────────────────────────────
@@ -11,7 +12,7 @@ export function* generateStatesPairSum(arr, target) {
   yield {
     left, right,
     current: `arr[${left}] + arr[${right}] = ${arr[left]} + ${arr[right]}`,
-    best: "Searching...",
+    best: 'Searching...',
     explanation: `Initialize: left=${left} (${arr[left]}), right=${right} (${arr[right]}). Target: ${target}.`,
     activePointers: [left, right]
   };
@@ -32,7 +33,7 @@ export function* generateStatesPairSum(arr, target) {
         left, right,
         current: `${arr[left]} + ${arr[right]} = ${sum}`,
         best: `Found! Indices [${left}, ${right}]`,
-        explanation: `✅ Pair found! arr[${left}] + arr[${right}] = ${sum} equals target ${target}.`,
+        explanation: `Pair found! arr[${left}] + arr[${right}] = ${sum} equals target ${target}.`,
         activePointers: [left, right],
         success: true,
         done: true
@@ -42,7 +43,7 @@ export function* generateStatesPairSum(arr, target) {
       yield {
         left, right,
         current: `${sum} < ${target}`,
-        best: "Searching...",
+        best: 'Searching...',
         explanation: `Sum ${sum} < target ${target}. Move left pointer right to increase sum.`,
         activePointers: [left, right],
         movingLeft: true
@@ -52,7 +53,7 @@ export function* generateStatesPairSum(arr, target) {
       yield {
         left, right,
         current: `${sum} > ${target}`,
-        best: "Searching...",
+        best: 'Searching...',
         explanation: `Sum ${sum} > target ${target}. Move right pointer left to decrease sum.`,
         activePointers: [left, right],
         movingRight: true
@@ -63,8 +64,8 @@ export function* generateStatesPairSum(arr, target) {
 
   yield {
     left, right,
-    current: "No pair found",
-    best: "Not found",
+    current: 'No pair found',
+    best: 'Not found',
     explanation: `Pointers crossed. No pair with sum ${target} exists in the array.`,
     activePointers: [left, right],
     done: true
@@ -80,7 +81,7 @@ export function* generateStatesRemoveDuplicates(arr) {
   yield {
     left: slow, right: 1,
     current: `slow=${slow}, fast=1`,
-    best: `Unique count: 1`,
+    best: 'Unique count: 1',
     explanation: `Initialize: slow pointer at index 0 (${arr[0]}). Fast pointer will scan ahead.`,
     activePointers: [slow, 1]
   };
@@ -100,7 +101,7 @@ export function* generateStatesRemoveDuplicates(arr) {
         left: slow, right: fast,
         current: `New unique: ${arr[fast]}`,
         best: `Unique count: ${slow + 1}`,
-        explanation: `${arr[fast]} ≠ ${arr[slow - 1]}. New unique element! Move slow to ${slow}, copy ${arr[fast]}.`,
+        explanation: `${arr[fast]} != ${arr[slow - 1]}. New unique element! Move slow to ${slow}, copy ${arr[fast]}.`,
         activePointers: [slow, fast],
         success: true
       };
@@ -118,7 +119,7 @@ export function* generateStatesRemoveDuplicates(arr) {
 
   yield {
     left: slow, right: arr.length - 1,
-    current: `Done`,
+    current: 'Done',
     best: `Unique count: ${slow + 1}`,
     explanation: `Finished. Array has ${slow + 1} unique elements.`,
     activePointers: [slow, arr.length - 1],
@@ -135,7 +136,7 @@ export function* generateStatesContainerWater(arr) {
   yield {
     left, right,
     current: `height[${left}]=${arr[left]}, height[${right}]=${arr[right]}`,
-    best: `Max water: 0`,
+    best: 'Max water: 0',
     explanation: `Initialize: left=${left}, right=${right}. Calculate area at each step.`,
     activePointers: [left, right]
   };
@@ -149,9 +150,9 @@ export function* generateStatesContainerWater(arr) {
 
     yield {
       left, right,
-      current: `width=${width} × height=${height} = ${water}`,
+      current: `width=${width} x height=${height} = ${water}`,
       best: `Max water: ${maxWater}`,
-      explanation: `Area = min(${arr[left]}, ${arr[right]}) × (${right} - ${left}) = ${height} × ${width} = ${water}. ${updated ? '🆕 New maximum!' : ''}`,
+      explanation: `Area = min(${arr[left]}, ${arr[right]}) x (${right} - ${left}) = ${height} x ${width} = ${water}.${updated ? ' New maximum!' : ''}`,
       activePointers: [left, right],
       success: updated
     };
@@ -181,7 +182,7 @@ export function* generateStatesContainerWater(arr) {
 
   yield {
     left, right,
-    current: `Pointers met`,
+    current: 'Pointers met',
     best: `Max water: ${maxWater}`,
     explanation: `Finished. Maximum water container holds ${maxWater} units.`,
     activePointers: [left, right],
@@ -189,7 +190,7 @@ export function* generateStatesContainerWater(arr) {
   };
 }
 
-// ─── 4. Three Sum (Find all triplets summing to zero) ────────────────────────
+// ─── 4. Three Sum ────────────────────────────────────────────────────────────
 export function* generateStatesThreeSum(arr) {
   const sorted = [...arr].sort((a, b) => a - b);
   const result = [];
@@ -197,7 +198,7 @@ export function* generateStatesThreeSum(arr) {
   yield {
     left: 0, right: sorted.length - 1,
     current: `Sorted: [${sorted.join(', ')}]`,
-    best: `Triplets found: 0`,
+    best: 'Triplets found: 0',
     explanation: `Sort array first: [${sorted.join(', ')}]. Fix one element, use two pointers for the rest.`,
     activePointers: [0, sorted.length - 1],
     fixedIndex: -1
@@ -247,7 +248,7 @@ export function* generateStatesThreeSum(arr) {
           left, right,
           current: `Triplet: [${sorted[i]}, ${sorted[left]}, ${sorted[right]}]`,
           best: `Triplets: [${result.map(t => `[${t}]`).join(', ')}]`,
-          explanation: `✅ Triplet found: [${sorted[i]}, ${sorted[left]}, ${sorted[right]}]!`,
+          explanation: `Triplet found: [${sorted[i]}, ${sorted[left]}, ${sorted[right]}]!`,
           activePointers: [left, right],
           fixedIndex: i,
           success: true
@@ -282,7 +283,7 @@ export function* generateStatesThreeSum(arr) {
 
   yield {
     left: 0, right: sorted.length - 1,
-    current: `Done`,
+    current: 'Done',
     best: `Triplets: [${result.map(t => `[${t}]`).join(', ')}]`,
     explanation: `Finished. Found ${result.length} unique triplet(s) that sum to zero.`,
     activePointers: [0, sorted.length - 1],

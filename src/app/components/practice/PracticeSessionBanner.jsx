@@ -78,6 +78,26 @@ export default function PracticeSessionBanner({
           {description}
         </p>
 
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <button
+            onClick={onStartSession}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:opacity-90 transition"
+          >
+            <Play size={16} />
+            Start Practice
+          </button>
+
+          <button
+            onClick={onGroupStudy}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
+          >
+            <Users size={16} />
+            Group Study
+          </button>
+
+        </div>
+
       </div>
 
       {/* Vector Illustration Side */}

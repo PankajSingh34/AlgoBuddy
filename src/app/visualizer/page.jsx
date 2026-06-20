@@ -69,7 +69,10 @@ export const metadata = {
   },
 };
 
+
+
 const sections = [
+  
   {
     title: "Code Lab",
     slug: "code-lab",
@@ -106,6 +109,10 @@ const sections = [
           {
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
+          },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
           },
         ],
       },
@@ -408,6 +415,10 @@ const sections = [
             name: "Comparison",
             path: "/visualizer/linkedlist/operations/comparison",
           },
+          {
+            name: "Sorting",
+            path: "/visualizer/linkedlist/operations/sorting",
+          },
         ],
       },
     ],
@@ -664,6 +675,46 @@ const sections = [
     ],
   },
   {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+    info: {
+      About:
+        "Dynamic Programming is a method for solving complex problems by breaking them down into simpler subproblems. It is applicable when the problem has overlapping subproblems and optimal substructure.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "AI Algorithms",
     slug: "ai",
     desc: "Search algorithms used in Artificial Intelligence, heuristic pathfinding, and game tree decision making",
@@ -712,7 +763,53 @@ const sections = [
       },
     ],
   },
+
+    {
+    title: "Quiz Mode",
+    slug: "quiz",
+    desc: "Test your knowledge with algorithm comparison challenges",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 3a9 9 0 100 18 9 9 0 000-18z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Interactive quizzes that help learners choose the best algorithm or data structure for different problem scenarios.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Practice",
+        items: [
+          {
+            name: "Algorithm Comparison Quiz",
+            path: "/visualizer/quiz",
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+
 
 const Visualizer = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
@@ -729,9 +826,10 @@ const Visualizer = () => {
       style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
     >
       <TutorialOverlay />
+
       <VisualizerClient initialSections={clientSections} />
+
       <div className="w-full relative">
-        
         <BookmarkSection />
         <BackToTop />
         <Footer />

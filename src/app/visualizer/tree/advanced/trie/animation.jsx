@@ -14,17 +14,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 
-// Internal Trie Node Class for coordinate mapping
-class TrieNode {
-  constructor(char = "", id = "root") {
-    this.id = id;
-    this.char = char;
-    this.children = {}; // char -> TrieNode
-    this.isEndOfWord = false;
-    this.x = 400;
-    this.y = 60;
-  }
-}
+import { TrieNode, insertGenerator, searchGenerator, prefixSearchGenerator } from "@/features/algorithms/tree/trieLogic";
 
 export default function TrieAnimation() {
   const [root, setRoot] = useState(null);
@@ -246,98 +236,28 @@ export default function TrieAnimation() {
     setInputValue("");
 
     const newSteps = [];
-    let tempRoot = JSON.parse(JSON.stringify(root)); // Deep copy to simulate insertion coordinates
+    const gen = insertGenerator(root, word, nodeIdCounter);
+    let finalTree = null;
+    let finalCounter = nodeIdCounter;
 
-    // Step 0: Starting state
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Begin insertion of word "${word}". Start at the Root node.`
-    });
-
-    let node = tempRoot;
-    let originalNode = root; // pointer to follow real node IDs
-    let counter = nodeIdCounter;
-
-    for (let i = 0; i < word.length; i++) {
-      const char = word[i];
-      const visitedSoFar = word.slice(0, i + 1);
-      const isLast = i === word.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      // Trace back the current path
-      let traceNode = tempRoot;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[word[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
+    for (const step of gen) {
+      newSteps.push({
+        highlightedNodes: step.highlightedNodes,
+        highlightedEdges: step.highlightedEdges,
+        explanation: step.explanation,
+      });
+      if (step.tree) {
+        finalTree = step.tree;
       }
-
-      // Check if child node exists
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Character '${char}' already exists under node '${node.char || "root"}'. Follow edge to character node '${char}'.`
-        });
-
-        node = childNode;
-      } else {
-        // Node does not exist, create it!
-        counter++;
-        const newChild = new TrieNode(char, `node-${counter}`);
-        node.children[char] = newChild;
-
-        activeHighlights[newChild.id] = "visiting";
-        activeEdges[`${node.id}->${newChild.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Character '${char}' is missing under node '${node.char || "root"}'. Create a new node for '${char}' and link it.`
-        });
-
-        node = newChild;
-      }
-
-      if (isLast) {
-        node.isEndOfWord = true;
-        const finalHighlights = { ...activeHighlights };
-        finalHighlights[node.id] = "matched";
-
-        newSteps.push({
-          highlightedNodes: finalHighlights,
-          highlightedEdges: { ...activeEdges },
-          explanation: `Word "${word}" insertion complete. Mark final character node '${char}' as End of Word (isEndOfWord = true).`
-        });
+      if (step.newNodeIdCounter !== undefined) {
+        finalCounter = step.newNodeIdCounter;
       }
     }
 
-    // Update real tree state
-    const updateRealTree = () => {
-      let rNode = root;
-      let c = nodeIdCounter;
-      for (let char of word) {
-        if (!rNode.children[char]) {
-          c++;
-          rNode.children[char] = new TrieNode(char, `node-${c}`);
-        }
-        rNode = rNode.children[char];
-      }
-      rNode.isEndOfWord = true;
-      setNodeIdCounter(c);
-      setRoot(root);
-    };
-
-    updateRealTree();
+    if (finalTree) {
+      setRoot(finalTree);
+    }
+    setNodeIdCounter(finalCounter);
     setSteps(newSteps);
     setCurrentStepIdx(0);
     setIsAnimating(true);
@@ -354,78 +274,7 @@ export default function TrieAnimation() {
     setIsAnimating(false);
     setInputValue("");
 
-    const newSteps = [];
-
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Search for word "${word}". Start matching characters at the Root node.`
-    });
-
-    let node = root;
-    let found = true;
-
-    for (let i = 0; i < word.length; i++) {
-      const char = word[i];
-      const isLast = i === word.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      // Trace highlighted active path
-      let traceNode = root;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[word[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
-      }
-
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Found letter '${char}' under node '${node.char || "root"}'. Matching prefix: "${word.slice(0, i + 1)}".`
-        });
-
-        node = childNode;
-      } else {
-        found = false;
-        // Mark active node as error
-        activeHighlights[node.id] = "error";
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' is missing under node '${node.char || "root"}'. Searching failed: "${word}" is not in the Trie.`
-        });
-        break;
-      }
-
-      if (isLast && found) {
-        const finalHighlights = { ...activeHighlights };
-        if (node.isEndOfWord) {
-          finalHighlights[node.id] = "matched";
-          newSteps.push({
-            highlightedNodes: finalHighlights,
-            highlightedEdges: { ...activeEdges },
-            explanation: `Found letter '${char}' and isEndOfWord = true. Success: Word "${word}" exists in the Trie!`
-          });
-        } else {
-          finalHighlights[node.id] = "error";
-          newSteps.push({
-            highlightedNodes: finalHighlights,
-            highlightedEdges: { ...activeEdges },
-            explanation: `Traversed all letters, but isEndOfWord = false. Word "${word}" is NOT in the Trie (Prefix match only).`
-          });
-        }
-      }
-    }
-
+    const newSteps = [...searchGenerator(root, word)];
     setSteps(newSteps);
     setCurrentStepIdx(0);
     setIsAnimating(true);
@@ -442,67 +291,7 @@ export default function TrieAnimation() {
     setIsAnimating(false);
     setInputValue("");
 
-    const newSteps = [];
-
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Check startsWith prefix "${prefix}". Start at the Root node.`
-    });
-
-    let node = root;
-    let found = true;
-
-    for (let i = 0; i < prefix.length; i++) {
-      const char = prefix[i];
-      const isLast = i === prefix.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      let traceNode = root;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[prefix[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
-      }
-
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' matches. Prefix path exists for: "${prefix.slice(0, i + 1)}".`
-        });
-
-        node = childNode;
-      } else {
-        found = false;
-        activeHighlights[node.id] = "error";
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' missing under node '${node.char || "root"}'. Prefix check failed: "${prefix}" does not exist in the Trie.`
-        });
-        break;
-      }
-
-      if (isLast && found) {
-        const finalHighlights = { ...activeHighlights };
-        finalHighlights[node.id] = "matched";
-        newSteps.push({
-          highlightedNodes: finalHighlights,
-          highlightedEdges: { ...activeEdges },
-          explanation: `All letters in prefix "${prefix}" successfully traversed. Success: Prefix exists in the Trie!`
-        });
-      }
-    }
-
+    const newSteps = [...prefixSearchGenerator(root, prefix)];
     setSteps(newSteps);
     setCurrentStepIdx(0);
     setIsAnimating(true);
