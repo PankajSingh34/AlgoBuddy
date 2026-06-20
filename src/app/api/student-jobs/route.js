@@ -8,6 +8,9 @@ export async function GET(request) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 20;
     const search = searchParams.get("search") || "";
+    const jobType = searchParams.get("job_type") || "";
+    const experienceLevel = searchParams.get("experience_level") || "";
+    const locationFilter = searchParams.get("location") || "";
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
@@ -25,6 +28,18 @@ export async function GET(request) {
       query = query.or(
         `title.ilike.${term},company.ilike.${term},description.ilike.${term},skills.ilike.${term},location.ilike.${term}`
       );
+    }
+
+    if (jobType) {
+      query = query.eq("job_type", jobType);
+    }
+
+    if (experienceLevel) {
+      query = query.eq("experience_level", experienceLevel);
+    }
+
+    if (locationFilter) {
+      query = query.ilike("location", `%${locationFilter}%`);
     }
 
     const { data: jobs, error, count } = await query;
