@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
   Bookmark,
@@ -12,6 +12,10 @@ import {
   Layers3,
   Trash2,
   FolderOpen,
+  Briefcase,
+  Send,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { useUser } from "@/features/user/UserContext";
 import { useBookmark } from "@/app/hooks/useBookmark";
@@ -140,6 +144,29 @@ export default function DashboardClient() {
     { label: "Practice bookmarks", value: problemBookmarks.length },
     { label: "Bookmark groups", value: groupedResourceBookmarks.length },
   ];
+  const [jobStats, setJobStats] = useState(null);
+  const [jobStatsLoading, setJobStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setJobStatsLoading(false);
+      return;
+    }
+    async function fetchJobStats() {
+      try {
+        const res = await fetch("/api/student/dashboard/stats");
+        if (res.ok) {
+          setJobStats(await res.json());
+        }
+      } catch {
+        // ignore
+      } finally {
+        setJobStatsLoading(false);
+      }
+    }
+    fetchJobStats();
+  }, [user]);
+
   const displayName =
     user?.user_metadata?.name ||
     user?.user_metadata?.display_name ||
@@ -472,6 +499,79 @@ export default function DashboardClient() {
             </div>
           )}
         </section>
+
+        {user && !jobStatsLoading && jobStats && (
+          <section>
+            <div className="mb-4">
+              <h2 className="text-lg md:text-xl font-black tracking-tight">
+                Job Search Analytics
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-neutral-400">
+                Track your job applications and bookmarked opportunities.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+              {[
+                { label: "Total Applied", value: jobStats.totalApplications, icon: Send, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/30" },
+                { label: "Pending", value: jobStats.pendingApplications, icon: Clock, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
+                { label: "Accepted", value: jobStats.acceptedApplications, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+                { label: "Rejected", value: jobStats.rejectedApplications, icon: XCircle, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30" },
+                { label: "Bookmarked", value: jobStats.totalBookmarks, icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/30" },
+              ].map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={stat.label}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+                  >
+                    <div className={`inline-flex rounded-lg p-2 ${stat.bg} ${stat.color} mb-3`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                      {stat.value}
+                    </div>
+                    <div className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-neutral-500">
+                      {stat.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {jobStats.recentActivity.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-neutral-500 mb-4">
+                  Recent Activity
+                </h3>
+                <div className="space-y-3">
+                  {jobStats.recentActivity.map((activity, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${
+                        activity.status === "accepted" ? "bg-emerald-500" :
+                        activity.status === "rejected" ? "bg-red-500" :
+                        "bg-amber-500"
+                      }`} />
+                      <span className="font-medium text-slate-700 dark:text-neutral-300">
+                        {activity.jobTitle}
+                      </span>
+                      {activity.company && (
+                        <span className="text-slate-400">at {activity.company}</span>
+                      )}
+                      <span className={`ml-auto font-semibold capitalize ${
+                        activity.status === "accepted" ? "text-emerald-600" :
+                        activity.status === "rejected" ? "text-red-600" :
+                        "text-amber-600"
+                      }`}>
+                        {activity.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
