@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
 import ProfileProgress from "@/app/components/ui/ProfileProgress";
-import { Save, User as UserIcon, BookOpen, GraduationCap, Code, Link2, Github, Linkedin, ArrowLeft } from "lucide-react";
+import { Save, User as UserIcon, BookOpen, GraduationCap, Code, Link2, Github, Linkedin, ArrowLeft, Upload, FileText } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -12,6 +12,8 @@ export default function ProfilePage() {
   const { user, setUser, loading } = useUser();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [resumeFileUrl, setResumeFileUrl] = useState("");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +39,7 @@ export default function ProfilePage() {
         github_profile: meta.github_profile || "",
         linkedin_profile: meta.linkedin_profile || ""
       });
+      setResumeFileUrl(meta.resume_file_url || "");
     }
   }, [user, loading, router]);
 
@@ -63,6 +66,43 @@ export default function ProfilePage() {
       toast.error("Failed to update profile.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Only PDF and DOC/DOCX files are allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("resume", file);
+      const res = await fetch("/api/student/profile/resume", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Upload failed");
+        return;
+      }
+      setResumeFileUrl(data.resumeUrl);
+      toast.success("Resume uploaded successfully!");
+    } catch (err) {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -194,6 +234,34 @@ export default function ProfilePage() {
                       placeholder="https://drive.google.com/..."
                       className="w-full px-4 py-2.5 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-950 text-surface-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     />
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                      <Upload className="w-4 h-4" /> Upload Resume File
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeUpload}
+                      disabled={uploading}
+                      className="block w-full text-sm text-surface-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 disabled:opacity-50 cursor-pointer"
+                    />
+                    {uploading && (
+                      <p className="text-sm text-primary">Uploading...</p>
+                    )}
+                    {resumeFileUrl && (
+                      <a
+                        href={resumeFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                      >
+                        <FileText className="w-4 h-4" />
+                        View uploaded resume
+                      </a>
+                    )}
+                    <p className="text-xs text-surface-400">Accepted formats: PDF, DOC, DOCX (max 5MB)</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

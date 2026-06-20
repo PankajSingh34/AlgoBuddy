@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
     student_cgpa TEXT,
     student_skills TEXT,
     student_resume_link TEXT,
+    student_resume_file_url TEXT,
     applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(student_id, job_id)
 );
