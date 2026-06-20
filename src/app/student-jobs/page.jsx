@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   Briefcase, MapPin, Calendar, Search, ChevronLeft, ChevronRight, X,
-  Send, CheckCircle, Bookmark, BookmarkCheck
+  Send, CheckCircle, Bookmark, BookmarkCheck, BadgeCheck
 } from "lucide-react";
 import Link from "next/link";
 import HighlightText from "@/app/components/ui/HighlightText";
@@ -254,16 +254,13 @@ export default function StudentJobsPage() {
                             )}
                           </button>
                         </div>
-                        <p className="text-indigo-600 font-medium mt-1">
-                          {job.company_id ? (
-                            <Link
-                              href={`/company/${job.company_id}`}
-                              className="hover:underline"
-                            >
-                              <HighlightText text={job.company} query={searchQuery} />
-                            </Link>
-                          ) : (
-                            <HighlightText text={job.company} query={searchQuery} />
+                        <p className="text-indigo-600 font-medium mt-1 flex items-center gap-2">
+                          <HighlightText text={job.company} query={searchQuery} />
+                          {job.verified_recruiter && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                              <BadgeCheck className="h-3.5 w-3.5" />
+                              Verified Recruiter
+                            </span>
                           )}
                         </p>
                         <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
