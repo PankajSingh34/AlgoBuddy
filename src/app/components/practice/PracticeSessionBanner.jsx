@@ -34,18 +34,10 @@ export default function PracticeSessionBanner({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden select-none">
+    <div className="w-full h-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden select-none">
       
       {/* Content Side */}
       <div className="flex-1 space-y-4">
-        {/* Back Link */}
-        <button 
-          onClick={onBackToSessions}
-          className="flex items-center gap-1.5 text-xs font-black text-primary hover:underline"
-        >
-          <ArrowLeft size={12} />
-          <span>Back to All Sessions</span>
-        </button>
 
         {/* Title */}
         <div className="flex items-center gap-3.5">
