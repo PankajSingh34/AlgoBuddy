@@ -73,7 +73,7 @@ export default function PracticeRightSidebar({
               />
             </svg>
             <div className="absolute flex flex-col items-center">
-              <span className="text-xl font-black text-slate-800 dark:text-white leading-none">
+              <span className="text-base font-black text-slate-800 dark:text-white leading-none">
                 {percentage}%
               </span>
             </div>

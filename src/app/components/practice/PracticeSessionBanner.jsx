@@ -96,16 +96,6 @@ export default function PracticeSessionBanner({
             Group Study
           </button>
 
-          <button
-            onClick={handleSaveToggle}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
-          >
-            {saved ? (
-              <BookmarkCheck size={18} className="text-primary" />
-            ) : (
-              <Bookmark size={18} />
-            )}
-          </button>
         </div>
 
       </div>

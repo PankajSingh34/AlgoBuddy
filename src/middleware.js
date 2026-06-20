@@ -1,4 +1,4 @@
-import { proxy as middleware } from "./src/authProxy";
+import { proxy as middleware } from "./authProxy";
 
 export { middleware };
 

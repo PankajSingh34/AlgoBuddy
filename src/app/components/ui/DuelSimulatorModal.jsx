@@ -37,12 +37,56 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     }
   }, [logs]);
 
+  const startTimeRef = useRef(null);
+
   // Main game timer
   useEffect(() => {
     if (!isOpen || battleFinished) return;
-    const timer = setInterval(() => setSeconds(s => s + 1), 1000);
+    
+    // Set absolute start time
+    if (!startTimeRef.current) {
+      startTimeRef.current = Date.now();
+    }
+
+    const timer = setInterval(() => {
+      // Calculate exact elapsed seconds using Date.now() instead of s + 1
+      // This prevents the timer from slowing down if the user switches tabs!
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setSeconds(elapsed);
+    }, 1000);
+    
     return () => clearInterval(timer);
   }, [isOpen, battleFinished]);
+
+  const recordMatchResultToBackend = async (isWinner) => {
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+
+      const springBootBase = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+        ? "http://localhost:8080" 
+        : "https://algobuddy-backend-7iwv.onrender.com";
+
+      await fetch(`${springBootBase}/api/v1/arena/match-result`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          opponentId: opponent?.userId,
+          matchId: opponent?.matchId,
+          topic: opponent?.topic || "Arrays",
+          difficulty: "Easy",
+          isWinner: isWinner
+        })
+      });
+    } catch (e) {
+      console.error("Failed to record match result:", e);
+    }
+  };
 
   // Socket Connection
   useEffect(() => {
@@ -121,6 +165,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       } else {
         setVictoryState("defeat");
         addLog("DEFEAT! Your opponent finished first.");
+        recordMatchResultToBackend(false); // Make sure the loser records the loss!
       }
     });
 
@@ -139,35 +184,6 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     }
   };
 
-  const recordMatchResultToBackend = async (isWinner) => {
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) return;
-
-      const springBootBase = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-        ? "http://localhost:8080" 
-        : "https://algobuddy-backend-7iwv.onrender.com";
-
-      await fetch(`${springBootBase}/api/v1/arena/match-result`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          opponentId: opponent?.userId,
-          matchId: opponent?.matchId,
-          topic: opponent?.topic || "Arrays",
-          difficulty: "Easy",
-          isWinner: isWinner
-        })
-      });
-    } catch (e) {
-      console.error("Failed to record match result:", e);
-    }
-  };
 
   const executeCode = async () => {
     if (!userCode || isExecuting || battleFinished) return;

@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
 import Chatbot from "@/app/components/ui/Chatbot";
@@ -19,7 +20,11 @@ export default function ClientLayoutWrapper({ children }) {
       <Toaster position="top-right" />
       {!isAuthPage && <Navbar />}
       {children}
-      {!isAuthPage && <FloatingNotesAssistant />}
+      {!isAuthPage && (
+        <Suspense fallback={null}>
+          <FloatingNotesAssistant />
+        </Suspense>
+      )}
       {!isAuthPage && <Chatbot />}
       {!isAuthPage && <CommandPalette />}
       <GlobalShortcutsModal />

@@ -41,20 +41,20 @@ export default function ProfileProgress({ compact = false }) {
 
   if (compact) {
     return (
-      <div className="w-full flex flex-col gap-1.5 px-4 py-3 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-100 dark:border-udemy-dark-border">
+      <div className="w-full flex flex-col gap-2 px-4 py-3.5 bg-primary/5 dark:bg-primary/10 border-b border-surface-100 dark:border-udemy-dark-border/60">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-surface-700 dark:text-surface-300">Profile Completion</span>
-          <span className="text-[13px] font-bold text-primary dark:text-primary-light">{percentage}%</span>
+          <span className="text-xs font-semibold text-surface-600 dark:text-surface-300 uppercase tracking-wider">Profile Completion</span>
+          <span className="text-xs font-bold text-primary dark:text-primary-light bg-primary/10 dark:bg-primary/20 px-1.5 py-0.5 rounded">{percentage}%</span>
         </div>
-        <div className="w-full h-1.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-surface-200 dark:bg-surface-700/80 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-primary to-primary-light transition-all duration-500 ease-out"
+            className="h-full bg-primary transition-all duration-500 ease-out"
             style={{ width: `${percentage}%` }}
           />
         </div>
         {missingFields.length > 0 && percentage < 100 && (
-          <p className="text-[11px] text-surface-500 mt-0.5 leading-snug">
-            Add <span className="font-semibold">{missingFields[0]}</span> to boost your profile.
+          <p className="text-[11px] text-surface-500 dark:text-surface-400 mt-0.5 leading-snug">
+            Add <span className="font-medium text-primary dark:text-primary-light">{missingFields[0]}</span> to boost your profile.
           </p>
         )}
       </div>
@@ -70,7 +70,7 @@ export default function ProfileProgress({ compact = false }) {
       
       <div className="w-full h-2 bg-surface-100 dark:bg-surface-800 rounded-full overflow-hidden mb-4">
         <div 
-          className="h-full bg-gradient-to-r from-primary to-primary-light transition-all duration-1000 ease-out"
+          className="h-full bg-primary transition-all duration-1000 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>

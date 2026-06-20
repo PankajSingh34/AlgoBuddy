@@ -5,9 +5,10 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, ChevronDown, Swords, LogOut, User, LayoutDashboard } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
 import NotificationDropdown from "./notifications/NotificationDropdown";
+import ProfileProgress from "./ui/ProfileProgress";
 
 function getStoredTheme() {
   if (typeof window === "undefined") return "light";
@@ -252,47 +253,81 @@ export default function Navbar() {
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] w-52 bg-white dark:bg-udemy-dark-surface border border-surface-200 dark:border-surface-700 shadow-elevated rounded-xl z-[9999] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-surface-100 dark:border-udemy-dark-border">
-                      <p className="text-[13px] text-surface-500 dark:text-[#737373] truncate">
-                        {user.email}
-                      </p>
+                  <div className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white/95 dark:bg-udemy-dark-surface/95 backdrop-blur-md border border-surface-200/80 dark:border-surface-700/80 shadow-elevated rounded-2xl z-[9999] overflow-hidden transition-all duration-200 ease-out origin-top-right">
+                    <div className="px-4 py-3.5 border-b border-surface-100 dark:border-udemy-dark-border bg-surface-50/50 dark:bg-neutral-900/30 flex items-center gap-3">
+                      {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                        <Image
+                          src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                          alt="avatar"
+                          width={36}
+                          height={36}
+                          unoptimized
+                          className="w-9 h-9 rounded-full object-cover ring-2 ring-primary/10"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold ring-2 ring-primary/10">
+                          {getInitials(user.user_metadata?.name || user.email)}
+                        </div>
+                      )}
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">
+                          {user.user_metadata?.name || "AlgoBuddy User"}
+                        </p>
+                        <p className="text-xs text-surface-500 dark:text-[#9e9e9e] truncate">
+                          {user.email}
+                        </p>
+                      </div>
                     </div>
 
                     <ProfileProgress compact={true} />
 
-                    <Link
-                      href="/profile"
-                      onClick={() =>
-                        setUserMenuOpen(false)
-                      }
-                      className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring border-b border-surface-100 dark:border-udemy-dark-border"
-                    >
-                      <User className="w-4 h-4 text-surface-500" />
-                      Profile
-                    </Link>
+                    <div className="py-1.5 px-1.5 flex flex-col gap-0.5">
+                      <Link
+                        href="/dashboard"
+                        onClick={() =>
+                          setUserMenuOpen(false)
+                        }
+                        className="group flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-surface-700 dark:text-[#f5f5f5] rounded-lg hover:text-primary dark:hover:text-primary-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-surface-400 group-hover:text-primary dark:group-hover:text-primary-light group-hover:scale-105 transition-all duration-150" />
+                        Dashboard
+                      </Link>
 
-                    <Link
-                      href="/arena"
-                      onClick={() =>
-                        setUserMenuOpen(false)
-                      }
-                      className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring"
-                    >
-                      <Swords className="w-4 h-4 text-surface-500" />
-                      Arena
-                    </Link>
+                      <Link
+                        href="/profile"
+                        onClick={() =>
+                          setUserMenuOpen(false)
+                        }
+                        className="group flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-surface-700 dark:text-[#f5f5f5] rounded-lg hover:text-primary dark:hover:text-primary-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
+                      >
+                        <User className="w-4 h-4 text-surface-400 group-hover:text-primary dark:group-hover:text-primary-light group-hover:scale-105 transition-all duration-150" />
+                        Profile
+                      </Link>
 
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-danger hover:bg-danger/10 dark:hover:bg-[#2a1515] transition-colors border-t border-surface-100 dark:border-udemy-dark-border focus-ring"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Log out
-                    </button>
+                      <Link
+                        href="/arena"
+                        onClick={() =>
+                          setUserMenuOpen(false)
+                        }
+                        className="group flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-surface-700 dark:text-[#f5f5f5] rounded-lg hover:text-primary dark:hover:text-primary-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
+                      >
+                        <Swords className="w-4 h-4 text-surface-400 group-hover:text-primary dark:group-hover:text-primary-light group-hover:scale-105 transition-all duration-150" />
+                        Arena
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-surface-100 dark:border-udemy-dark-border px-1.5 py-1.5">
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setUserMenuOpen(false);
+                        }}
+                        className="group w-full flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-150 focus-ring"
+                      >
+                        <LogOut className="w-4 h-4 text-red-500 group-hover:scale-105 transition-all duration-150" />
+                        Log out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -422,6 +457,26 @@ export default function Navbar() {
                 <p className="text-[13px] text-surface-500 dark:text-[#737373] truncate pb-1">
                   {user.email}
                 </p>
+
+                <Link
+                  href="/dashboard"
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
+                  className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
+                >
+                  Dashboard
+                </Link>
+
+                <Link
+                  href="/profile"
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
+                  className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
+                >
+                  Profile
+                </Link>
 
                 <Link
                   href="/arena"

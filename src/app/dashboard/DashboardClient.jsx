@@ -11,8 +11,8 @@ import {
   LayoutDashboard,
   Layers3,
   Trash2,
+  FolderOpen,
 } from "lucide-react";
-
 import { useUser } from "@/features/user/UserContext";
 import { useBookmark } from "@/app/hooks/useBookmark";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
@@ -281,9 +281,24 @@ export default function DashboardClient() {
           </div>
 
           {resourceBookmarks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-              No saved visualizers yet. Open the Visualizer and bookmark a page
-              to start building your library.
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-neutral-800 dark:bg-neutral-900">
+              <FolderOpen className="mx-auto h-12 w-12 text-slate-400" />
+
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+                No saved visualizers yet
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600 dark:text-neutral-400">
+                Start bookmarking visualizers and resources to build your personalized study library.
+              </p>
+
+              <Link
+                href="/visualizer"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
+              >
+                Explore Visualizer
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           ) : (
             <div className="space-y-6">
@@ -358,9 +373,24 @@ export default function DashboardClient() {
               Loading practice bookmarks...
             </div>
           ) : problemBookmarks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-              No practice bookmarks yet. Open Practice, save a few problems, and
-              they will appear here.
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-neutral-800 dark:bg-neutral-900">
+              <BookOpen className="mx-auto h-12 w-12 text-slate-400" />
+
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+                No practice bookmarks yet
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600 dark:text-neutral-400">
+                Save practice problems to quickly revisit them and continue your learning journey.
+              </p>
+
+              <Link
+                href="/practice"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
+              >
+                Start Practicing
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           ) : (
             <div className="space-y-6">

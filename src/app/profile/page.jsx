@@ -99,6 +99,7 @@ export default function ProfilePage() {
                     <img 
                       src={user.user_metadata.avatar_url || user.user_metadata.picture} 
                       alt="Avatar" 
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover" 
                     />
                   ) : (
