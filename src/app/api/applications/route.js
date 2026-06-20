@@ -50,6 +50,7 @@ export async function POST(request) {
     const studentCgpa = meta.cgpa || null;
     const studentSkills = meta.skills || null;
     const studentResumeLink = meta.resume_link || null;
+    const studentResumeFileUrl = meta.resume_file_url || null;
 
     const { data: application, error: insertError } = await supabase
       .from("applications")
@@ -63,6 +64,7 @@ export async function POST(request) {
         student_cgpa: studentCgpa,
         student_skills: studentSkills,
         student_resume_link: studentResumeLink,
+        student_resume_file_url: studentResumeFileUrl,
       })
       .select()
       .single();
