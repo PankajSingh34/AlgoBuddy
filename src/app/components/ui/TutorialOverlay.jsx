@@ -54,11 +54,23 @@ export default function TutorialOverlay() {
     });
   };
 
+  useEffect(() => {
+    if (!showOverlay) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") closeOverlay();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showOverlay]);
+
   if (!showOverlay) return null;
 
   return (
     <div
       ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tutorial"
       className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
     >
       <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center relative">

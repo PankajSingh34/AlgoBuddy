@@ -2,418 +2,202 @@
 
 import CodeBlockUI from '@/app/components/ui/CodeBlock';
 
-// ─── All code examples for Trie ─────────────────────────
-const codeExamples = {
-  javascript: `// Trie Implementation
-class TrieNode{
-
-    constructor(){
-
-        this.children={};
-        this.isEndOfWord=false;
-    }
+const trieCode = {
+  javascript: `class TrieNode {
+  constructor() {
+    this.children = {};
+    this.isEndOfWord = false;
+  }
 }
 
-class Trie{
+class Trie {
+  constructor() {
+    this.root = new TrieNode();
+  }
 
-    constructor(){
-
-        this.root=
-        new TrieNode();
+  insert(word) {
+    let current = this.root;
+    for (let char of word) {
+      if (!current.children[char]) {
+        current.children[char] = new TrieNode();
+      }
+      current = current.children[char];
     }
+    current.isEndOfWord = true;
+  }
 
-    insert(word){
-
-        let node=
-        this.root;
-
-        for(
-        let char
-        of word
-        ){
-
-            if(
-            !node.children[
-            char
-            ]
-            ){
-
-                node.children[
-                char
-                ]=
-                new TrieNode();
-            }
-
-            node=
-            node.children[
-            char
-            ];
-        }
-
-        node.isEndOfWord=
-        true;
+  search(word) {
+    let current = this.root;
+    for (let char of word) {
+      if (!current.children[char]) {
+        return false;
+      }
+      current = current.children[char];
     }
+    return current.isEndOfWord;
+  }
 
-    search(word){
-
-        let node=
-        this.root;
-
-        for(
-        let char
-        of word
-        ){
-
-            if(
-            !node.children[
-            char
-            ]
-            ){
-
-                return false;
-            }
-
-            node=
-            node.children[
-            char
-            ];
-        }
-
-        return node
-        .isEndOfWord;
+  startsWith(prefix) {
+    let current = this.root;
+    for (let char of prefix) {
+      if (!current.children[char]) {
+        return false;
+      }
+      current = current.children[char];
     }
-
-    startsWith(prefix){
-
-        let node=
-        this.root;
-
-        for(
-        let char
-        of prefix
-        ){
-
-            if(
-            !node.children[
-            char
-            ]
-            ){
-
-                return false;
-            }
-
-            node=
-            node.children[
-            char
-            ];
-        }
-
-        return true;
-    }
-}
-
-// Usage
-const trie=
-new Trie();
-
-trie.insert(
-"apple"
-);
-
-console.log(
-trie.search(
-"apple"
-));
-
-console.log(
-trie.startsWith(
-"app"
-));`,
-
-  python: `# Trie Implementation
-
-class TrieNode:
-
-    def __init__(
-            self):
-
-        self.children={}
-        self.is_end=False
-
+    return true;
+  }
+}`,
+  python: `class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end_of_word = False
 
 class Trie:
+    def __init__(self):
+        self.root = TrieNode()
 
-    def __init__(
-            self):
-
-        self.root=
-        TrieNode()
-
-
-    def insert(
-            self,
-            word):
-
-        node=
-        self.root
-
+    def insert(self, word: str) -> None:
+        current = self.root
         for char in word:
+            if char not in current.children:
+                current.children[char] = TrieNode()
+            current = current.children[char]
+        current.is_end_of_word = True
 
-            if(
-            char not in
-            node.children
-            ):
-
-                node.children[
-                char
-                ]=TrieNode()
-
-            node=
-            node.children[
-            char
-            ]
-
-        node.is_end=
-        True
-
-
-    def search(
-            self,
-            word):
-
-        node=
-        self.root
-
+    def search(self, word: str) -> bool:
+        current = self.root
         for char in word:
-
-            if(
-            char not in
-            node.children
-            ):
-
+            if char not in current.children:
                 return False
+            current = current.children[char]
+        return current.is_end_of_word
 
-            node=
-            node.children[
-            char
-            ]
-
-        return node.is_end
-
-
-    def starts_with(
-            self,
-            prefix):
-
-        node=
-        self.root
-
+    def startsWith(self, prefix: str) -> bool:
+        current = self.root
         for char in prefix:
-
-            if(
-            char not in
-            node.children
-            ):
-
+            if char not in current.children:
                 return False
-
-            node=
-            node.children[
-            char
-            ]
-
+            current = current.children[char]
         return True`,
-
-  java: `// Trie Implementation
-
-class TrieNode{
-
-    TrieNode[]
-    children=
-    new TrieNode[26];
-
-    boolean
-    isEnd=false;
+  java: `class TrieNode {
+    TrieNode[] children = new TrieNode[26];
+    boolean isEndOfWord = false;
 }
 
-public class Trie{
-
-    private
+class Trie {
     TrieNode root;
 
-    public Trie(){
-
-        root=
-        new TrieNode();
+    public Trie() {
+        root = new TrieNode();
     }
-
-    public void insert(
-            String word){
-
-        TrieNode node=
-        root;
-
-        for(
-        int i=0;
-        i<
-        word.length();
-        i++
-        ){
-
-            int index=
-            word.charAt(
-            i
-            )-'a';
-
-            if(
-            node.children[
-            index
-            ]==null
-            ){
-
-                node.children[
-                index
-                ]=
-                new TrieNode();
+    
+    public void insert(String word) {
+        TrieNode current = root;
+        for (int i = 0; i < word.length(); i++) {
+            int index = word.charAt(i) - 'a';
+            if (current.children[index] == null) {
+                current.children[index] = new TrieNode();
             }
-
-            node=
-            node.children[
-            index
-            ];
+            current = current.children[index];
         }
-
-        node.isEnd=
-        true;
+        current.isEndOfWord = true;
+    }
+    
+    public boolean search(String word) {
+        TrieNode current = root;
+        for (int i = 0; i < word.length(); i++) {
+            int index = word.charAt(i) - 'a';
+            if (current.children[index] == null) {
+                return false;
+            }
+            current = current.children[index];
+        }
+        return current.isEndOfWord;
+    }
+    
+    public boolean startsWith(String prefix) {
+        TrieNode current = root;
+        for (int i = 0; i < prefix.length(); i++) {
+            int index = prefix.charAt(i) - 'a';
+            if (current.children[index] == null) {
+                return false;
+            }
+            current = current.children[index];
+        }
+        return true;
     }
 }`,
-
-  c: `// Trie Implementation
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
-
-typedef struct TrieNode{
-
-    struct TrieNode*
-    children[26];
-
-    bool isEnd;
-
-}TrieNode;
-
-TrieNode*
-createNode(){
-
-    TrieNode*
-    node=
-
-    (TrieNode*)
-    malloc(
-    sizeof(
-    TrieNode
-    ));
-
-    node->isEnd=
-    false;
-
-    for(
-    int i=0;
-    i<26;
-    i++
-    ){
-
-        node->children[i]
-        =NULL;
-    }
-
-    return node;
-}`,
-
-  cpp: `// Trie Implementation
-#include<iostream>
-#include<unordered_map>
-
-using namespace std;
-
-class TrieNode{
-
+  cpp: `class TrieNode {
 public:
+    TrieNode* children[26];
+    bool isEndOfWord;
 
-    unordered_map<
-    char,
-    TrieNode*
-    > children;
-
-    bool isEnd=
-    false;
+    TrieNode() {
+        isEndOfWord = false;
+        for (int i = 0; i < 26; i++) {
+            children[i] = nullptr;
+        }
+    }
 };
 
-class Trie{
-
+class Trie {
 private:
-
-    TrieNode*
-    root;
-
+    TrieNode* root;
 public:
-
-    Trie(){
-
-        root=
-        new TrieNode();
+    Trie() {
+        root = new TrieNode();
     }
-
-    void insert(
-            string word){
-
-        TrieNode*
-        node=root;
-
-        for(
-        char c:
-        word
-        ){
-
-            if(
-            node
-            ->children
-            .find(c)==
-            node
-            ->children
-            .end()
-            ){
-
-                node
-                ->children[c]
-                =new TrieNode();
+    
+    void insert(string word) {
+        TrieNode* current = root;
+        for (char c : word) {
+            int index = c - 'a';
+            if (current->children[index] == nullptr) {
+                current->children[index] = new TrieNode();
             }
-
-            node=
-            node
-            ->children[c];
+            current = current->children[index];
         }
-
-        node->isEnd=
-        true;
+        current->isEndOfWord = true;
+    }
+    
+    bool search(string word) {
+        TrieNode* current = root;
+        for (char c : word) {
+            int index = c - 'a';
+            if (current->children[index] == nullptr) {
+                return false;
+            }
+            current = current->children[index];
+        }
+        return current->isEndOfWord;
+    }
+    
+    bool startsWith(string prefix) {
+        TrieNode* current = root;
+        for (char c : prefix) {
+            int index = c - 'a';
+            if (current->children[index] == nullptr) {
+                return false;
+            }
+            current = current->children[index];
+        }
+        return true;
     }
 };`
 };
 
-// ─── Filenames ─────────────────────────────
 const fileNames = {
-    javascript:'trie.js',
-    python:'trie.py',
-    java:'Trie.java',
-    c:'trie.c',
-    cpp:'trie.cpp'
+  javascript: 'trie.js',
+  python: 'trie.py',
+  java: 'Trie.java',
+  cpp: 'trie.cpp'
 };
 
-// ─── Component ─────────────────────────────
 const CodeBlock = () => (
     <CodeBlockUI
         variant="macos"
-        codeExamples={codeExamples}
+        codeExamples={trieCode}
         fileNames={fileNames}
     />
 );

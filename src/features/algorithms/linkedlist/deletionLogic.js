@@ -4,6 +4,59 @@ const generateAddress = () =>
     .toUpperCase()
     .padStart(4, "0")}`;
 
+export function* deleteAtPositionGen(currentList, position) {
+  if (currentList.length === 0) {
+    yield { type: "error", message: "List is empty" };
+    return;
+  }
+
+  if (position < 0 || position >= currentList.length) {
+    yield { type: "error", message: "Invalid position" };
+    return;
+  }
+
+  // Traverse animation
+  for (let i = 0; i < position; i++) {
+    yield {
+      list: [...currentList],
+      action: "delete_position",
+      phase: "traverse",
+      currentNodeIndex: i,
+      explanation: `Traversing node "${currentList[i].value}".`
+    };
+  }
+
+  yield {
+    list: [...currentList],
+    action: "delete_position",
+    phase: "found",
+    targetNodeIndex: position,
+    explanation: `Found node "${currentList[position].value}". It will be deleted.`
+  };
+
+  const updatedList = [...currentList];
+
+  // Update previous node's next pointer
+  if (position > 0) {
+    updatedList[position - 1] = {
+      ...updatedList[position - 1],
+      next:
+        position === updatedList.length - 1
+          ? "NULL"
+          : updatedList[position + 1].address,
+    };
+  }
+
+  updatedList.splice(position, 1);
+
+  yield {
+    list: updatedList,
+    action: "delete_position",
+    phase: "complete",
+    explanation: `Deleted node at position ${position}.`
+  };
+}
+
 export function* addNodeDeletionGen(currentList, inputValue) {
   if (!inputValue) {
     yield { type: 'error', message: 'Value is required' };
@@ -39,6 +92,31 @@ export function* addNodeDeletionGen(currentList, inputValue) {
     action: 'add',
     phase: 'complete',
     explanation: `Added node with value "${inputValue}".`
+  };
+}
+export function* deleteFirstNodeGen(currentList) {
+  if (currentList.length === 0) {
+    yield { type: "error", message: "List is empty" };
+    return;
+  }
+
+  yield {
+    list: [...currentList],
+    action: "delete_first",
+    phase: "select_head",
+    targetNodeIndex: 0,
+    explanation: `Head node "${currentList[0].value}" will be removed.`
+  };
+
+  const updatedList = [...currentList];
+  updatedList.shift();
+
+  yield {
+    list: updatedList,
+    action: "delete_first",
+    phase: "complete",
+    targetNodeIndex: -1,
+    explanation: "First node deleted."
   };
 }
 

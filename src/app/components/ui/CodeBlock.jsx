@@ -119,6 +119,61 @@ export const highlightCode = (code, language) => {
   });
 };
 
+const decodeHtmlEntities = (value) =>
+  value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&#x27;/g, "'");
+
+const styleStringToObject = (style = '') =>
+  style.split(';').reduce((styles, rule) => {
+    const [rawName, rawValue] = rule.split(':');
+    if (!rawName || !rawValue) return styles;
+
+    const name = rawName.trim().replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+    styles[name] = rawValue.trim();
+    return styles;
+  }, {});
+
+const getSpanAttribute = (attributes, name) => {
+  const match = attributes.match(new RegExp(`${name}="([^"]*)"`, 'i'));
+  return match?.[1] || '';
+};
+
+const renderHighlightedCode = (html) => {
+  const nodes = [];
+  const spanRegex = /<span([^>]*)>(.*?)<\/span>/g;
+  let lastIndex = 0;
+  let tokenIndex = 0;
+  let match;
+
+  while ((match = spanRegex.exec(html)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(decodeHtmlEntities(html.slice(lastIndex, match.index)));
+    }
+
+    const attributes = match[1] || '';
+    const className = getSpanAttribute(attributes, 'class');
+    const style = styleStringToObject(getSpanAttribute(attributes, 'style'));
+
+    nodes.push(
+      <span key={`token-${tokenIndex++}`} className={className || undefined} style={style}>
+        {decodeHtmlEntities(match[2])}
+      </span>
+    );
+
+    lastIndex = spanRegex.lastIndex;
+  }
+
+  if (lastIndex < html.length) {
+    nodes.push(decodeHtmlEntities(html.slice(lastIndex)));
+  }
+
+  return nodes;
+};
+
 const LANGUAGES = [
   { id: 'pseudocode', name: 'Pseudocode' },
   { id: 'javascript', name: 'JavaScript' },
@@ -126,6 +181,7 @@ const LANGUAGES = [
   { id: 'java', name: 'Java' },
   { id: 'c', name: 'C' },
   { id: 'cpp', name: 'C++' },
+  { id: 'go', name: 'Go' },
 ];
 
 const TrafficDot = ({ color, hoverTitle }) => {
@@ -166,15 +222,36 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
     if (!code) {
       if (selectedLanguage === 'c') {
         code = codeExamples?.cpp || codeExamples?.c_cpp || codeExamples?.cppCode;
-      } else if (selectedLanguage === 'cpp') {
+      } 
+      else if (selectedLanguage === 'cpp') {
         code = codeExamples?.c || codeExamples?.cCode;
+      } 
+      else if (selectedLanguage === 'go') {
+        code = codeExamples?.golang || codeExamples?.goCode;
       }
+
       if (!code) {
-        code = codeExamples?.javascript || codeExamples?.js || codeExamples?.python || codeExamples?.java || '';
+        code =
+          codeExamples?.javascript ||
+          codeExamples?.js ||
+          codeExamples?.python ||
+          codeExamples?.java ||
+          codeExamples?.cpp ||
+          '';
       }
     }
     return code;
   }, [selectedLanguage, codeExamples]);
+
+  const highlightedCode = useMemo(
+    () => highlightCode(resolvedCode, selectedLanguage),
+    [resolvedCode, selectedLanguage]
+  );
+
+  const highlightedNodes = useMemo(
+    () => renderHighlightedCode(highlightedCode),
+    [highlightedCode]
+  );
 
   const copyToClipboard = async (text) => {
     try {
@@ -240,7 +317,8 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     python: 'solution.py',
                     java: 'Solution.java',
                     c: 'solution.c',
-                    cpp: 'solution.cpp'
+                    cpp: 'solution.cpp',
+                    go: 'solution.go'
                   }[selectedLanguage] ?? 'solution.txt')}
             </span>
 
@@ -395,10 +473,9 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
                     padding: 0,
                     whiteSpace: 'pre',
                   }}
-                  dangerouslySetInnerHTML={{
-                    __html: highlightCode(resolvedCode, selectedLanguage),
-                  }}
-                />
+                >
+                  {highlightedNodes}
+                </code>
               </pre>
             </motion.div>
           </AnimatePresence>
@@ -494,12 +571,7 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
               className="overflow-x-auto p-4 bg-gray-900 text-white"
             >
               <pre className="text-sm leading-relaxed">
-                <code
-                  className={`language-${selectedLanguage}`}
-                  dangerouslySetInnerHTML={{
-                    __html: highlightCode(resolvedCode, selectedLanguage),
-                  }}
-                />
+                <code className={`language-${selectedLanguage}`}>{highlightedNodes}</code>
               </pre>
             </motion.div>
           </AnimatePresence>

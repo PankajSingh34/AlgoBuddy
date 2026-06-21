@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Trophy } from "lucide-react";
 
 export default function UpcomingTournament() {
@@ -50,12 +51,15 @@ export default function UpcomingTournament() {
   }, []);
 
   return (
-    <div className="card-surface p-5 bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm transition-all duration-300">
+    <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Upcoming Tournament</h3>
-        <span className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline">
+        <Link
+          href="/arena#tournaments"
+          className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
+        >
           View All
-        </span>
+        </Link>
       </div>
 
       <div className="flex gap-4 items-start p-4 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/50 rounded-xl mb-4">

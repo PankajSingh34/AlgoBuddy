@@ -15,4 +15,5 @@ public interface MySheetRepository extends JpaRepository<MySheet, UUID> {
     Page<MySheet> findByUserId(UUID userId, Pageable pageable);
     List<MySheet> findByUserId(UUID userId); // Keep list method for compatibility
     Optional<MySheet> findByUserIdAndProblemId(UUID userId, String problemId);
+    List<MySheet> findByUserIdAndIsPublicTrue(UUID userId);
 }

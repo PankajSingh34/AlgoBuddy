@@ -1,19 +1,38 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Matches the actual shortcuts in useVisualizerKeyboard.js
 const SHORTCUTS = [
-  { keys: ["Space"], label: "Start / Reset" },
-  { keys: ["R"],     label: "Reset All"     },
-  { keys: ["+","="], label: "Speed up"      },
-  { keys: ["-"],     label: "Slow down"     },
+  { keys: ["Space"],      label: "Play / Pause"  },
+  { keys: ["→"],          label: "Step forward"  },
+  { keys: ["R"],          label: "Reset All"     },
+  { keys: ["+","="],      label: "Speed up"      },
+  { keys: ["-"],          label: "Slow down"     },
 ];
 
 export default function KeyboardShortcutsLegend() {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      document.addEventListener("touchstart", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [open]);
 
   return (
-    <div className="relative inline-block">
+    <div ref={containerRef} className="relative inline-block">
       {/* Trigger */}
       <button
         type="button"

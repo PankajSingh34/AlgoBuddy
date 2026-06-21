@@ -1,35 +1,72 @@
 import { supabase } from "@/lib/supabase";
 import { ApiError, AuthError } from "@/lib/apiErrors";
+import { CSRF_HEADER_NAME, CSRF_COOKIE_NAME } from "@/lib/csrf";
+
+const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const MAX_AUTH_RETRIES = 2;
 
 class ApiClient {
-  async request(path, options = {}) {
-    const { method = 'GET', body, headers = {} } = options;
+  constructor() {
+    this.csrfToken = null;
+  }
 
-    // Get session from Supabase SSR cookie store instead of localStorage
+  async getCsrfToken() {
+    if (this.csrfToken) return this.csrfToken;
+    try {
+      const res = await fetch("/api/csrf-token", { method: "GET" });
+      if (res.ok) {
+        const data = await res.json();
+        this.csrfToken = data.csrfToken;
+        return this.csrfToken;
+      }
+    } catch {
+      // CSRF token fetch failed, proceed without it
+    }
+    return null;
+  }
+
+  async request(path, options = {}, authRetries = 0) {
+    const { method = 'GET', body, headers = {} } = options;
+    const extraHeaders = { ...headers };
+
+    if (STATE_CHANGING_METHODS.has(method)) {
+      let token = this.csrfToken;
+      if (!token && typeof document !== 'undefined') {
+        const match = document.cookie.match(
+          new RegExp(`(^| )${CSRF_COOKIE_NAME}=([^;]+)`),
+        );
+        token = match ? decodeURIComponent(match[2]) : null;
+      }
+      if (!token) {
+        token = await this.getCsrfToken();
+      }
+      if (token) {
+        extraHeaders[CSRF_HEADER_NAME] = token;
+      }
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const accessToken = session?.access_token;
 
     const res = await fetch(path, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...headers,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...extraHeaders,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    if (res.status === 401) {
+    if (res.status === 401 && authRetries < MAX_AUTH_RETRIES) {
       try {
         const { data: { session: newSession } } = await supabase.auth.refreshSession();
         if (newSession) {
-          // Supabase SSR handles cookie storage automatically
-          return this.request(path, options);
+          return this.request(path, options, authRetries + 1);
         }
       } catch {
         // refresh failed, redirect to login below
       }
-      // Clean up any stale localStorage artifact
       localStorage.removeItem('supabase.auth.token');
       if (typeof window !== 'undefined') {
         window.location.href = '/login';

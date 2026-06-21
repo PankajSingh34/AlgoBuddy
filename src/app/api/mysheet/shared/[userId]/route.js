@@ -1,15 +1,25 @@
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function GET(request, { params }) {
   try {
+    const authResult = await getAuthenticatedUser();
+    if (!authResult.success) {
+      return jsonResponse(
+        { error: "Authentication required" },
+        authResult.type === "CONFIG_ERROR" ? 500 : 401
+      );
+    }
+
     const { userId } = await params;
     if (!userId) return jsonResponse({ error: "userId is required" }, 400);
 
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRequestClient(request);
     const { data, error } = await supabase
       .from("my_sheet")
       .select("problem_id, added_at, note")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("is_public", true);
 
     if (error) return jsonResponse({ error: error.message }, 500);
 

@@ -14,6 +14,8 @@ import {
   complexityInfo,
   algorithmComparisons,
 } from "./utils/complexityData";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const COMPLEXITIES = [
   "O(1)",
@@ -50,7 +52,15 @@ export default function ComplexityAnalyzerClient() {
 
   return (
     <main className="container mx-auto px-4 py-6">
-
+      <div className="mb-6">
+        <Link
+          href="/visualizer"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Visualizer
+        </Link>
+      </div>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white">

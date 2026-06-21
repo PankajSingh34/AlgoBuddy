@@ -13,5 +13,6 @@ import java.time.OffsetDateTime;
 public class MySheetDto {
     private String problemId;
     private String note;
+    private boolean isPublic;
     private OffsetDateTime addedAt;
 }

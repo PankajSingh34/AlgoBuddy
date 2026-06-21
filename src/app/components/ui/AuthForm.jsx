@@ -19,10 +19,13 @@ const Turnstile = dynamic(
 export default function AuthForm({ isLogin = true }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const router = useRouter();
   const { setUser } = useUser();
@@ -41,6 +44,20 @@ export default function AuthForm({ isLogin = true }) {
     return true;
   };
 
+  const allRequirementsMet = password !== "";
+  const passwordsMatch = password === confirmPassword && password !== "";
+
+  // Real-time validation
+  const validatePasswords = () => {
+    setPasswordError("");
+
+    if (confirmPassword && !passwordsMatch) {
+      setConfirmError("Passwords do not match");
+    } else {
+      setConfirmError("");
+    }
+  };
+
   const handleAuth = async (event) => {
     event?.preventDefault();
     setLoading(true);
@@ -51,9 +68,27 @@ export default function AuthForm({ isLogin = true }) {
       return;
     }
 
-    try {
-      if (!captchaToken) throw new Error("Please complete captcha");
+    if (!isLogin) {
+      if (!allRequirementsMet) {
+        setPasswordError("Please meet all password requirements");
+        setLoading(false);
+        return;
+      }
 
+      if (!passwordsMatch) {
+        setConfirmError("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (!captchaToken) {
+      setError("Please complete captcha");
+      setLoading(false);
+      return;
+    }
+
+    try {
       if (isLogin) {
         const data = await api.request("/api/auth", {
           method: "POST",
@@ -134,7 +169,6 @@ export default function AuthForm({ isLogin = true }) {
         </div>
 
         <div className="flex justify-center items-center p-6">
-          {/* Google OAuth */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -172,7 +206,6 @@ export default function AuthForm({ isLogin = true }) {
             </motion.div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
             {/* Email Field */}
             <div>
@@ -215,10 +248,23 @@ export default function AuthForm({ isLogin = true }) {
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  validatePasswords();
+                }}
               />
             </div>
 
+            {/* Password Requirements */}
+            {!isLogin && passwordError && (
+              <div className="text-sm space-y-1 pl-1">
+                <p className="text-red-600 dark:text-red-400 mt-1">
+                  {passwordError}
+                </p>
+              </div>
+            )}
+
+            {/* Confirm Password - Only for Signup */}
             {/* Forgot Password Link - Only shown on Login */}
             {isLogin && (
               <div className="text-right -mt-2">
@@ -236,20 +282,31 @@ export default function AuthForm({ isLogin = true }) {
             {!isLogin && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User
+                  <Lock
+                   
                     size={18}
+                   
                     className="text-gray-400 dark:text-gray-500"
+                 
                   />
                 </div>
                 <input
-                  type="text"
-                  aria-label="Full name"
+                  type="password"
+                  aria-label="Confirm Password"
                   disabled={loading}
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
-                  placeholder="Full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    validatePasswords();
+                  }}
                 />
+                {confirmError && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {confirmError}
+                  </p>
+                )}
               </div>
             )}
 
@@ -264,9 +321,20 @@ export default function AuthForm({ isLogin = true }) {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !captchaToken || (email && emailError)}
+              disabled={
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
+              }
               className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
-                loading || !captchaToken || (email && emailError)
+                
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
               }`}
@@ -282,7 +350,7 @@ export default function AuthForm({ isLogin = true }) {
                 </>
               ) : (
                 <>
-                  <UserPlus size={18} className="mr-2" /> Continue
+                  <UserPlus size={18} className="mr-2" /> Create Account
                 </>
               )}
             </button>

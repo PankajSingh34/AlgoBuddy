@@ -1,4 +1,5 @@
 import CodeOfConductContent from "@/app/components/CodeOfConductContent";
+import Footer from "@/app/components/footer";
 
 export default function CodeOfConductPage() {
   return (
@@ -10,6 +11,7 @@ export default function CodeOfConductPage() {
 
         <CodeOfConductContent />
       </div>
+      <Footer/>
     </main>
   );
 }

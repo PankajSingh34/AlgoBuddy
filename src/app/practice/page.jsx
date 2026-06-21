@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { 
   Search, 
@@ -20,6 +20,7 @@ import {
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
 import PracticeRightSidebar from "@/app/components/practice/PracticeRightSidebar";
 import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
+import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import BackToTop from "@/app/components/ui/backtotop";
@@ -34,8 +35,9 @@ import { useMySheet } from "@/app/hooks/useMySheet";
 export default function PracticePage() {
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Views: 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
+  // Views: 'dashboard', 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
   const [activeView, setActiveView] = useState("problem-list");
   const [activeTab, setActiveTab] = useState("problems"); // 'problems', 'description', 'resources', 'discussion'
   
@@ -53,6 +55,10 @@ export default function PracticePage() {
   // Accordion Topic-wise state
   const [expandedTopics, setExpandedTopics] = useState({});
 
+  // Topic-wise view state
+  const [selectedTopicWise, setSelectedTopicWise] = useState(practiceData[0]?.title || "Arrays");
+  const [isTopicLoading, setIsTopicLoading] = useState(false);
+
   // Unified progress hook (replaces all inline progress/streak logic)
   const { progress, getStatus, updateProgress, streakData } = useSheetProgress();
   const currentStreak = streakData.current;
@@ -65,17 +71,16 @@ export default function PracticePage() {
   const { bookmarks, isBookmarked, toggleBookmark } = useProblemBookmarks();
   const [mounted, setMounted] = useState(false);
 
-  // Authentication check & mount
+  // Mount
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const view = params.get("view");
-      if (view) {
-        setActiveView(view);
-      }
-    }
   }, []);
+
+  // Sync activeView with the URL ?view= param so browser Back/Forward works
+  useEffect(() => {
+    const view = searchParams.get("view") || "problem-list";
+    setActiveView(view);
+  }, [searchParams]);
 
   const ensureLoggedIn = () => {
     if (!user) {
@@ -104,6 +109,10 @@ export default function PracticePage() {
     return list;
   }, []);
 
+  const nextProblem = useMemo(() => {
+    return allProblems.find((p) => getStatus(p.id) !== "Completed") || null;
+  }, [allProblems, getStatus]);
+
   // Compute Session Stats Dynamically from current loaded practiceData
   const stats = useMemo(() => {
     let solved = 0;
@@ -111,12 +120,21 @@ export default function PracticePage() {
     let easyTotal = 0;
     let mediumTotal = 0;
     let hardTotal = 0;
+    let easySolved = 0;
+    let mediumSolved = 0;
+    let hardSolved = 0;
     const uniqueCompanies = new Set();
 
     allProblems.forEach((prob) => {
       const status = getStatus(prob.id);
-      if (status === "Completed") solved++;
-      else if (status === "In Progress") attempted++;
+      if (status === "Completed") {
+        solved++;
+        if (prob.difficulty === "Easy") easySolved++;
+        else if (prob.difficulty === "Medium") mediumSolved++;
+        else if (prob.difficulty === "Hard") hardSolved++;
+      } else if (status === "In Progress") {
+        attempted++;
+      }
 
       if (prob.difficulty === "Easy") easyTotal++;
       else if (prob.difficulty === "Medium") mediumTotal++;
@@ -151,6 +169,9 @@ export default function PracticePage() {
       easyTotal,
       mediumTotal,
       hardTotal,
+      easySolved,
+      mediumSolved,
+      hardSolved,
       companiesCount: uniqueCompanies.size
     };
   }, [allProblems, progress, getStatus, streakData]);
@@ -318,16 +339,10 @@ export default function PracticePage() {
   }, [user]);
 
   const dailyChallenge = useMemo(() => {
-  const unsolvedProblems = allProblems.filter(
-    (problem) => getStatus(problem.id) !== "Completed"
-  );
-
-  if (unsolvedProblems.length === 0) return null;
-
-  const today = new Date().getDate();
-
-  return unsolvedProblems[today % unsolvedProblems.length];
-}, [allProblems, progress]);
+    if (allProblems.length === 0) return null;
+    const daySeed = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+    return allProblems[daySeed % allProblems.length];
+  }, [allProblems]);
 
   // Seed values if not loaded
   if (!mounted) return null;
@@ -336,7 +351,7 @@ export default function PracticePage() {
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
       
       {/* Container holding three-column layout */}
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-8">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-y-8 lg:gap-0">
         
         {/* Left Sidebar */}
         <PracticeSidebar 
@@ -345,9 +360,11 @@ export default function PracticePage() {
             if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
               if (!ensureLoggedIn()) return;
             }
-            setActiveView(view);
             setCurrentPage(1); // Reset page on view change
             setSelectedCompanyFilter("All"); // Reset company filter
+            // Push to URL so the browser records a history entry;
+            // the searchParams useEffect above will sync activeView in response.
+            router.push(`/practice?view=${view}`);
           }}
           solvedCount={stats.solved}
           dailySolved={stats.dailySolved}
@@ -364,10 +381,36 @@ export default function PracticePage() {
         />
 
         {/* Center Content */}
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
           
           {/* Main dashboard rendering based on activeView */}
-          {activeView === "my-sheet" ? (
+          {activeView === "dashboard" ? (
+            <PracticeDashboard
+              dailyChallenge={dailyChallenge}
+              solvedCount={stats.solved}
+              dailySolved={stats.dailySolved}
+              weeklySolved={stats.weeklySolved}
+              monthlySolved={stats.monthlySolved}
+              dailyGoal={3}
+              weeklyGoal={10}
+              monthlyGoal={50}
+              streakDays={currentStreak}
+              bestStreak={longestStreak}
+              solved={stats.solved}
+              attempted={stats.attempted}
+              remaining={stats.remaining}
+              total={stats.total}
+              estimatedTime={stats.estimatedTime}
+              easyCount={stats.easySolved}
+              mediumCount={stats.mediumSolved}
+              hardCount={stats.hardSolved}
+              totalEasy={stats.easyTotal}
+              totalMed={stats.mediumTotal}
+              totalHard={stats.hardTotal}
+              companiesCount={stats.companiesCount}
+              activityData={activityData}
+            />
+          ) : activeView === "my-sheet" ? (
             /* ── MY SHEET VIEW ─────────────────────────────────────── */
             <section className="space-y-5">
               {/* Header */}
@@ -539,48 +582,40 @@ export default function PracticePage() {
             </section>
           ) : activeView === "problem-list" || activeView === "bookmarks" || activeView === "recent-solved" ? (
             <>
-              {/* Session banner (rendered as the top UI header of Problem List) */}
-              <PracticeSessionBanner 
-                title="DSA Sheet - Most Important Interview Questions"
-                description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
-                difficulty="Beginner"
-                problemCount={stats.total}
-                duration={stats.estimatedTime}
-                onBackToSessions={() => toast.success("You are at the main problem list dashboard.")}
-              />
-
-              {dailyChallenge && (
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg">
-                    <h3 className="text-lg font-black">
-                      🎯 Challenge of the Day
-                    </h3>
-
-                    <p className="mt-2 font-semibold">
-                      {dailyChallenge.name}
-                    </p>
-
-                    <p className="text-sm opacity-90">
-                      Difficulty: {dailyChallenge.difficulty}
-                    </p>
-
-                    <a
-                      href={dailyChallenge.practiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-3 px-4 py-2 bg-white text-purple-600 rounded-lg font-bold"
-                    >
-                      Solve Challenge
-                    </a>
+              {/* Top Row: Banner and Session Progress */}
+              <div className="flex flex-col lg:flex-row items-stretch gap-4">
+                <div className="flex-1">
+                  <PracticeSessionBanner 
+                    title="DSA Sheet - Most Important Interview Questions"
+                    description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
+                    difficulty="Beginner"
+                    problemCount={stats.total}
+                    duration={stats.estimatedTime}
+                    solved={stats.solved}
+                    attempted={stats.attempted}
+                    remaining={stats.remaining}
+                    total={stats.total}
+                  />
+                </div>
+                {activeView === "problem-list" && (
+                  <div className="w-full lg:w-[260px] flex-shrink-0">
+                    <PracticeRightSidebar 
+                      solved={stats.solved}
+                      attempted={stats.attempted}
+                      remaining={stats.remaining}
+                      total={stats.total}
+                      onViewProgress={() => setActiveView("dashboard")}
+                    />
                   </div>
                 )}
+              </div>
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
                 {[
                   { id: "problems", label: `Problems (${filteredProblems.length})` },
                   { id: "description", label: "Description" },
-                  { id: "resources", label: "Resources" },
-                  { id: "discussion", label: "Discussion (23)" }
+                  { id: "resources", label: "Resources" }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -648,7 +683,7 @@ export default function PracticePage() {
                   )}
 
                   {/* Problem Table */}
-                  <div className="overflow-x-auto bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm">
+                  <div className="overflow-x-auto bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                       <thead>
                         <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
@@ -889,260 +924,184 @@ export default function PracticePage() {
                 </div>
               )}
 
-              {/* Discussion Tab Content */}
-              {activeTab === "discussion" && (
-                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-neutral-850">
-                    <h3 className="text-base font-black text-slate-800 dark:text-white">Community Discussion</h3>
-                    <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-black transition">
-                      Post Comment
-                    </button>
-                  </div>
 
-                  <div className="space-y-4 divide-y divide-slate-100 dark:divide-neutral-850">
-                    {[
-                      { user: "Priya Sharma", role: "Level 12", content: "Is Boyer-Moore required for Majority Element or can we use HashMap in tech interviews? Some interviewers prefer Boyers because of O(1) space.", time: "4h ago" },
-                      { user: "Rohan Gupta", role: "Level 21", content: "Monotonic stack on Largest Rectangle in Histogram was tricky! Drawing stack elements physically on paper helped me realize the bounds.", time: "1d ago" },
-                      { user: "Vikram Das", role: "Level 8", content: "Are there visualizers for dynamic programming available here? Most DP concepts are best shown using 2D grids.", time: "2d ago" }
-                    ].map((c, i) => (
-                      <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""}`}>
-                        <div className="flex items-center justify-between text-xs mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-slate-800 dark:text-white">{c.user}</span>
-                            <span className="px-1.5 py-0.5 bg-slate-50 dark:bg-neutral-800 text-slate-400 text-[9px] font-black rounded">{c.role}</span>
-                          </div>
-                          <span className="text-slate-400 dark:text-neutral-500 font-medium text-[10px]">{c.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-neutral-450 leading-relaxed">
-                          {c.content}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           ) : activeView === "topic-wise" ? (
-            /* Accordion View (Dynamic Topic-wise Roadmap) */
+            /* Topic-wise Filter View */
             <section className="space-y-5">
-              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-5 rounded-2xl">
-  <h3 className="font-black text-lg">
-    Suggested Next Step
-  </h3>
-
-  <p className="text-sm mt-2">
-    {nextProblem
-      ? `Continue with "${nextProblem.name}"`
-      : "Congratulations! You completed all roadmap problems 🎉"}
-  </p>
-</div>
-              <div className="flex justify-between items-center mb-4">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-purple-500/20">
                 <div>
-                  <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                    DSA Roadmap Accordions
-                  </h2>
-                  <p className="text-xs text-slate-400 dark:text-neutral-500 font-bold mt-1">
-                    Structured way to master Data Structures & Algorithms topic-by-topic
-                  </p>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <Bookmark size={16} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest text-purple-200">Topic-wise Practice</span>
+                  </div>
+                  <h3 className="font-black text-2xl">Master Patterns</h3>
+                  <p className="text-sm mt-1 text-purple-200">Select a topic below to focus on specific problem patterns.</p>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const all = {};
-                      practiceData.forEach((t) => { all[t.slug] = true; });
-                      setExpandedTopics(all);
-                    }}
-                    className="px-4.5 py-2 border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800/40 rounded-xl text-xs font-bold transition"
-                  >
-                    Expand All
-                  </button>
-                  <button
-                    onClick={() => setExpandedTopics({})}
-                    className="px-4.5 py-2 border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800/40 rounded-xl text-xs font-bold transition"
-                  >
-                    Collapse All
-                  </button>
+                <div className="bg-white/10 px-5 py-3 rounded-2xl backdrop-blur-sm border border-white/10">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-200 block mb-1">Selected Topic</span>
+                  <p className="text-base font-black truncate max-w-[200px]">{selectedTopicWise}</p>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border p-5">
-  <h3 className="font-black mb-3">
-    Overall Roadmap Progress
-  </h3>
-
-  <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
-    <div
-      className="h-full bg-green-500"
-      style={{
-        width: `${Math.round(
-          (stats.solved / stats.total) * 100
-        )}%`
-      }}
-    />
-  </div>
-
-  <p className="mt-2 text-sm">
-    {stats.solved}/{stats.total} Problems Completed
-  </p>
-</div>
-
-              <div className="space-y-4">
-                {practiceData.map((topic) => {
-
-  const topicProblems = topic.subsections.flatMap(
-    (sub) => sub.items
-  );
-
-  const completedProblems = topicProblems.filter(
-    (item) => getStatus(item.id) === "Completed"
-  ).length;
-
-  const progressPercentage = Math.round(
-    (completedProblems / topicProblems.length) * 100
-  );
-
-  const isExpanded = !!expandedTopics[topic.slug];
-                  return (
-                    <div 
-                      key={topic.slug}
-                      className="border border-slate-100 dark:border-neutral-800/80 rounded-2xl overflow-hidden bg-white dark:bg-[#1a1b1e] shadow-sm transition-all duration-300"
-                    >
-                      {/* Header */}
-                      <div
-                        onClick={() => toggleAccordion(topic.slug)}
-                        className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-neutral-850 select-none"
+              {/* Topics Pill List */}
+              <div className="relative">
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {practiceData.map((topic) => {
+                    const isSelected = selectedTopicWise === topic.title;
+                    return (
+                      <button
+                        key={topic.slug}
+                        onClick={() => {
+                          if (selectedTopicWise !== topic.title) {
+                            setIsTopicLoading(true);
+                            setSelectedTopicWise(topic.title);
+                            setTimeout(() => setIsTopicLoading(false), 300);
+                          }
+                        }}
+                        className={`snap-start whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border flex-shrink-0 ${
+                          isSelected 
+                            ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                            : "bg-white dark:bg-[#1a1b1e] text-slate-600 dark:text-neutral-300 border-slate-200 dark:border-neutral-800 hover:border-primary/50 dark:hover:border-purple-500/50"
+                        }`}
                       >
-                        <div className="flex flex-col gap-2">
-  <h3 className="text-sm font-black text-slate-850 dark:text-white">
-    {topic.title}
-  </h3>
+                        {topic.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-  <div className="w-48">
-    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-purple-600"
-        style={{
-          width: `${progressPercentage}%`
-        }}
-      />
-    </div>
-
-    <span className="text-[10px] text-slate-500">
-      {progressPercentage}% Completed
-    </span>
-  </div>
-</div>
-<div className="text-[10px] text-green-600 font-bold">
-  {completedProblems}/{topicProblems.length} Solved
-</div>
-                        <ChevronDown 
-                          size={18} 
-                          className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`} 
-                        />
+              {/* Content Area */}
+              {isTopicLoading ? (
+                <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1a1b1e] rounded-3xl border border-slate-100 dark:border-neutral-800/80 shadow-sm transition-all duration-300">
+                  <div className="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin dark:border-neutral-800 dark:border-t-purple-500"></div>
+                  <p className="mt-4 text-sm font-bold text-slate-400 dark:text-neutral-500 animate-pulse">Loading {selectedTopicWise} problems...</p>
+                </div>
+              ) : (
+                (() => {
+                  const topicData = practiceData.find(t => t.title === selectedTopicWise);
+                  const problems = topicData ? topicData.subsections.flatMap(sub => sub.items) : [];
+                  
+                  if (problems.length === 0) {
+                    return (
+                      <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-12 text-center shadow-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                          <Bookmark size={28} className="text-purple-500" />
+                        </div>
+                        <h3 className="text-base font-black text-slate-800 dark:text-white mb-2">No problems found</h3>
+                        <p className="text-sm text-slate-400 dark:text-neutral-500 max-w-sm mx-auto">
+                          There are currently no problems listed under {selectedTopicWise}. Check back later!
+                        </p>
                       </div>
+                    );
+                  }
 
-                      {/* Content Table */}
-                      {isExpanded && (
-                        <div className="p-5 border-t border-slate-50 dark:border-neutral-850/80 bg-white dark:bg-[#1f2023] overflow-x-auto">
-                          <table className="w-full text-left border-collapse min-w-[700px]">
-                            <thead>
-                              <tr className="bg-slate-50/40 dark:bg-neutral-900/30 text-xs font-bold uppercase text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
-                                <th className="py-3.5 px-5">Problem</th>
-                                <th className="py-3.5 px-5 text-center">Difficulty</th>
-                                <th className="py-3.5 px-5 text-center">Companies</th>
-                                <th className="py-3.5 px-5 text-center">Actions</th>
-                                <th className="py-3.5 px-5 text-center">Status</th>
-                                <th className="py-3.5 px-5 text-center">Access</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {topic.subsections.flatMap((sub) => sub.items).map((item, index, arr) => {
-                                const status = getStatus(item.id);
-                                const isCompleted = status === "Completed";
-                                return (
-                                  <tr
-                                    key={item.id}
-                                    className="border-b border-slate-50 dark:border-neutral-850 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
-                                  >
-                                    <td className="py-5 px-5 font-bold text-xs text-slate-800 dark:text-white">
-                                      {item.name}
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <span className={`inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                                        item.difficulty === "Easy"
-                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                          : item.difficulty === "Medium"
-                                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                            : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                      }`}>
-                                        {item.difficulty}
-                                      </span>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <div className="flex justify-center">
-                                        <CompanyLogos companies={item.companies} />
-                                      </div>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <div className="flex items-center justify-center gap-2.5">
-                                        <button
-                                          onClick={() => {
-                                            setSelectedProblem(item);
-                                            setIsDrawerOpen(true);
-                                          }}
-                                          className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm"
-                                        >
-                                          <BookOpen size={12} />
-                                          Theory
-                                        </button>
-
-                                        {item.visualizerUrl ? (
-                                          <button
-                                            onClick={() => router.push(item.visualizerUrl)}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-primary/20 text-primary dark:text-purple-400 hover:bg-primary hover:text-white dark:hover:bg-purple-500 transition shadow-sm"
-                                          >
-                                            <Play size={12} />
-                                            Visualize
-                                          </button>
-                                        ) : (
-                                          <span className="text-xs text-slate-300 dark:text-neutral-700 font-bold px-3">N/A</span>
-                                        )}
-
-                                        <a
-                                          href={item.practiceUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 bg-primary text-white hover:bg-primary-dark rounded-lg transition shadow-sm"
-                                        >
-                                          Solve <ExternalLink size={10} />
-                                        </a>
-                                      </div>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <button
-                                        onClick={() => handleStatusToggle(item.id, status)}
-                                        className="focus:outline-none"
-                                      >
-                                        {isCompleted ? (
-                                          <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
-                                            <CheckCircle2 size={12} className="stroke-[3]" />
-                                          </div>
+                  return (
+                    <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[700px]">
+                          <thead>
+                            <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
+                              <th className="py-4 px-5 w-12 text-center">#</th>
+                              <th className="py-4 px-5">Problem</th>
+                              <th className="py-4 px-5 text-center">Level</th>
+                              <th className="py-4 px-5 text-center">Company</th>
+                              <th className="py-4 px-5 text-center">Status</th>
+                              <th className="py-4 px-5 text-center w-12"></th>
+                              <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {problems.map((prob, idx) => {
+                              const status = getStatus(prob.id);
+                              const isSaved = isBookmarked(prob.id);
+                              return (
+                                <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                                  <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
+                                  <td className="py-4 px-5">
+                                    <a
+                                      href={prob.practiceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition"
+                                    >
+                                      <span>{prob.name}</span>
+                                      <ExternalLink size={12} className="opacity-50 shrink-0" />
+                                    </a>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                      prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                      : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                      : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                    }`}>{prob.difficulty}</span>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <div className="flex justify-center">
+                                      <button onClick={() => handleStatusToggle(prob.id, status)} className="focus:outline-none">
+                                        {status === "Completed" ? (
+                                          <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition"><CheckCircle2 size={12} className="stroke-[3]" /></div>
+                                        ) : status === "In Progress" ? (
+                                          <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /></div>
                                         ) : (
                                           <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
                                         )}
                                       </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        if (!ensureLoggedIn()) return;
+                                        toggleBookmark(prob.id, selectedTopicWise.toLowerCase());
+                                      }}
+                                      className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
+                                        isSaved 
+                                          ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                          : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
+                                      }`}
+                                    >
+                                      <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
+                                    </button>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        if (!ensureLoggedIn()) return;
+                                        if (isInSheet(prob.id)) {
+                                          removeFromSheet(prob.id);
+                                          toast.success('Removed from My Sheet');
+                                        } else {
+                                          addToSheet(prob.id);
+                                          toast.success('Added to My Sheet! ✨');
+                                        }
+                                      }}
+                                      title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
+                                      className={`focus:outline-none p-1.5 rounded-lg transition ${
+                                        isInSheet(prob.id)
+                                          ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
+                                          : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
+                                      }`}
+                                    >
+                                      <ScrollText size={14} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   );
-                })}
-              </div>
+                })()
+              )}
             </section>
           ) : (
             /* Company-wise View */
@@ -1186,21 +1145,6 @@ export default function PracticePage() {
           )}
 
         </div>
-
-        {/* Right Sidebar */}
-        <PracticeRightSidebar 
-          solved={stats.solved}
-          attempted={stats.attempted}
-          remaining={stats.remaining}
-          total={stats.total}
-          estimatedTime={stats.estimatedTime}
-          easyCount={stats.easyTotal}
-          mediumCount={stats.mediumTotal}
-          hardCount={stats.hardTotal}
-          companiesCount={stats.companiesCount}
-          userName={userName}
-          activityData={activityData}
-        />
 
       </div>
 

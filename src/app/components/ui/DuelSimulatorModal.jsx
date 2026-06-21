@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, AlertTriangle, CheckCircle, Terminal } from "lucide-react";
 import { Editor } from "@monaco-editor/react";
 import { io } from "socket.io-client";
+import { api } from "@/lib/apiClient";
 
 export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentUserStats, problemName = "Two Sum" }) {
   const [seconds, setSeconds] = useState(0);
@@ -37,73 +38,26 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     }
   }, [logs]);
 
+  const startTimeRef = useRef(null);
+
   // Main game timer
   useEffect(() => {
     if (!isOpen || battleFinished) return;
-    const timer = setInterval(() => setSeconds(s => s + 1), 1000);
+    
+    // Set absolute start time
+    if (!startTimeRef.current) {
+      startTimeRef.current = Date.now();
+    }
+
+    const timer = setInterval(() => {
+      // Calculate exact elapsed seconds using Date.now() instead of s + 1
+      // This prevents the timer from slowing down if the user switches tabs!
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setSeconds(elapsed);
+    }, 1000);
+    
     return () => clearInterval(timer);
   }, [isOpen, battleFinished]);
-
-  // Socket Connection
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-      ? "http://127.0.0.1:4000"
-      : "https://algobuddy-socket-server.onrender.com";
-
-    const newSocket = io(socketUrl, {
-      transports: ["websocket", "polling"]
-    });
-    setSocket(newSocket);
-
-    // Join room when connected
-    newSocket.on("connect", () => {
-      if (opponent?.matchId) {
-         newSocket.emit("join_match", { matchId: opponent.matchId, userId: currentUserStats?.userId });
-      }
-    });
-
-    newSocket.on("opponent_code_update", (data) => {
-      setOppCode(data.code);
-    });
-
-    newSocket.on("opponent_test_submit", () => {
-      setOppStatus("Running tests...");
-      addLog("Opponent is executing code.");
-    });
-
-    newSocket.on("opponent_test_result", (data) => {
-      setOppStatus(`Tested. Status: ${data.status}`);
-      addLog(`Opponent execution result: ${(data.status === 3 || data.status === "SUCCESS") ? "Accepted" : "Failed"}`);
-    });
-
-    newSocket.on("match_ended", (data) => {
-      setBattleFinished(true);
-      if (data.winnerId === currentUserStats?.userId) {
-        setVictoryState("victory");
-        addLog("VICTORY! You won the battle!");
-      } else {
-        setVictoryState("defeat");
-        addLog("DEFEAT! Your opponent finished first.");
-      }
-    });
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [isOpen]);
-
-  const handleCodeChange = (value) => {
-    setUserCode(value);
-    if (socket && opponent?.matchId) {
-      socket.emit("code_update", {
-        matchId: opponent.matchId,
-        userId: currentUserStats?.userId,
-        code: value
-      });
-    }
-  };
 
   const recordMatchResultToBackend = async (isWinner) => {
     try {
@@ -135,6 +89,103 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     }
   };
 
+  // Socket Connection
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:4000"
+      : "https://algobuddy-socket-server.onrender.com";
+
+    const newSocket = io(socketUrl, {
+      transports: ["websocket", "polling"],
+      auth: async (cb) => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data: sessionData } = await supabase.auth.getSession();
+          cb({ token: sessionData?.session?.access_token || null });
+        } catch {
+          cb({ token: null });
+        }
+      }
+    });
+    setSocket(newSocket);
+
+    // Join room when connected
+    newSocket.on("connect", async () => {
+      if (opponent?.matchId) {
+         newSocket.emit("join_match", { matchId: opponent.matchId });
+
+         const { supabase } = await import('@/lib/supabase');
+         const { data: sessionData } = await supabase.auth.getSession();
+         const token = sessionData?.session?.access_token;
+         if (token) {
+           const springBootBase = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+             ? "http://localhost:8080" 
+             : "https://algobuddy-backend-7iwv.onrender.com";
+           try {
+             await fetch(`${springBootBase}/api/v1/arena/match/init`, {
+               method: "POST",
+               headers: {
+                 "Content-Type": "application/json",
+                 Authorization: `Bearer ${token}`
+               },
+               body: JSON.stringify({
+                 matchId: opponent.matchId,
+                 opponentId: opponent.userId,
+                 topic: opponent.topic || "Arrays",
+                 difficulty: "Easy"
+               })
+             });
+           } catch (e) {
+             console.error("Failed to init match:", e);
+           }
+         }
+      }
+    });
+
+    newSocket.on("opponent_code_update", (data) => {
+      setOppCode(data.code);
+    });
+
+    newSocket.on("opponent_test_submit", () => {
+      setOppStatus("Running tests...");
+      addLog("Opponent is executing code.");
+    });
+
+    newSocket.on("opponent_test_result", (data) => {
+      setOppStatus(`Tested. Status: ${data.status}`);
+      addLog(`Opponent execution result: ${(data.status === 3 || data.status === "SUCCESS") ? "Accepted" : "Failed"}`);
+    });
+
+    newSocket.on("match_ended", (data) => {
+      setBattleFinished(true);
+      if (data.winnerId === currentUserStats?.userId) {
+        setVictoryState("victory");
+        addLog("VICTORY! You won the battle!");
+      } else {
+        setVictoryState("defeat");
+        addLog("DEFEAT! Your opponent finished first.");
+        recordMatchResultToBackend(false); // Make sure the loser records the loss!
+      }
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [isOpen, opponent]);
+
+  const handleCodeChange = (value) => {
+    setUserCode(value);
+    if (socket && opponent?.matchId) {
+      socket.emit("code_update", {
+        matchId: opponent.matchId,
+        code: value
+      });
+    }
+  };
+
+
   const executeCode = async () => {
     if (!userCode || isExecuting || battleFinished) return;
     setIsExecuting(true);
@@ -142,20 +193,16 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     
     if (socket && opponent?.matchId) {
       socket.emit("test_submit", {
-        matchId: opponent.matchId,
-        userId: currentUserStats?.userId
+        matchId: opponent.matchId
       });
       addLog("You started executing code.");
     }
 
     try {
-      const res = await fetch("/api/code-lab", {
+      const data = await api.request("/api/code-lab", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: userCode })
+        body: { code: userCode }
       });
-      
-      const data = await res.json();
       
       let outText = `Status: ${data.message || data.status}\n`;
       if (data.output) outText += `Output: ${data.output}\n`;
@@ -166,7 +213,6 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       if (socket && opponent?.matchId) {
         socket.emit("test_result", {
           matchId: opponent.matchId,
-          userId: currentUserStats?.userId,
           status: data.status,
           passed: (data.status === 3 || data.status === "SUCCESS") ? 1 : 0,
           total: 1
@@ -174,8 +220,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
 
         if (data.status === 3 || data.status === "SUCCESS") {
           socket.emit("match_complete", {
-            matchId: opponent.matchId,
-            winnerId: currentUserStats?.userId
+            matchId: opponent.matchId
           });
           setBattleFinished(true);
           setVictoryState("victory");
