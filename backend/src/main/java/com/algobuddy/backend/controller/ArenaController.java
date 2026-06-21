@@ -2,6 +2,7 @@ package com.algobuddy.backend.controller;
 
 import com.algobuddy.backend.config.annotation.CurrentUserId;
 import com.algobuddy.backend.dto.ArenaProfileResponse;
+import com.algobuddy.backend.dto.InitMatchRequest;
 import com.algobuddy.backend.service.ArenaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,10 +54,18 @@ public class ArenaController {
         return ResponseEntity.ok(arenaService.getDailyChallenge());
     }
 
-    @org.springframework.web.bind.annotation.PostMapping("/match-result")
+    @PostMapping("/match/init")
+    @Operation(summary = "Initialize match", description = "Creates a match record before the duel begins. Must be called when both players are matched.")
+    @ApiResponse(responseCode = "200", description = "Match initialized successfully")
+    public ResponseEntity<String> initMatch(@CurrentUserId UUID userId, @RequestBody InitMatchRequest request) {
+        arenaService.initMatch(userId, request);
+        return ResponseEntity.ok("Match initialized successfully");
+    }
+
+    @PostMapping("/match-result")
     @Operation(summary = "Record match result", description = "Records the outcome of an arena match.")
     @ApiResponse(responseCode = "200", description = "Match result recorded successfully")
-    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @org.springframework.web.bind.annotation.RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
+    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
         arenaService.recordMatchResult(userId, request);
         return ResponseEntity.ok("Match result recorded successfully");
     }

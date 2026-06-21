@@ -10,8 +10,14 @@ export async function POST(request) {
     }
     const body = await request.json().catch(() => ({}));
     const { type } = body;
-    const today = new Date();
-    const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
+    // Prefer the client-supplied local date (YYYY-MM-DD) so the activity row
+    // reflects the user's own calendar day rather than the server's UTC date.
+    // Fall back to UTC date when the client does not send one.
+    let localDate = typeof body.localDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.localDate)
+      ? body.localDate
+      : new Date().toISOString().split("T")[0];
+
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase

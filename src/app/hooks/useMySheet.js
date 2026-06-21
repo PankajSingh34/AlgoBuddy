@@ -44,14 +44,12 @@ async function fetchMySheetFromServer() {
       console.warn("[useMySheet] fetch skipped: No authorization token");
       return null;
     }
-    console.log("[useMySheet] Fetching sheet from Spring Boot:", `${apiBase()}/api/v1/mysheet`);
     const res = await fetch(`${apiBase()}/api/v1/mysheet`, { headers });
     if (!res.ok) {
       console.error("[useMySheet] fetch failed with status:", res.status);
       return null;
     }
     const data = await res.json();
-    console.log("[useMySheet] fetch succeeded with data:", data);
     // Expect: { items: [ { problemId, addedAt, note } ] }
     const map = {};
     (data.items || []).forEach((item) => {
@@ -61,7 +59,6 @@ async function fetchMySheetFromServer() {
   }
 
   // Supabase path via Next.js API route
-  console.log("[useMySheet] Fetching sheet from NextJS API");
   const res = await fetch("/api/mysheet");
   if (!res.ok) {
     console.error("[useMySheet] fetch from NextJS failed with status:", res.status);
@@ -75,13 +72,11 @@ async function addToSheetOnServer(problemId, note = "") {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    console.log("[useMySheet] Adding problem to Spring Boot sheet:", problemId);
     const res = await fetch(`${apiBase()}/api/v1/mysheet`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ problemId, note }),
     });
-    console.log("[useMySheet] Add problem response status:", res.status);
     return;
   }
 
@@ -96,12 +91,10 @@ async function removeFromSheetOnServer(problemId) {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    console.log("[useMySheet] Removing problem from Spring Boot sheet:", problemId);
     const res = await fetch(`${apiBase()}/api/v1/mysheet?problemId=${problemId}`, {
       method: "DELETE",
       headers,
     });
-    console.log("[useMySheet] Remove problem response status:", res.status);
     return;
   }
 

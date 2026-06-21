@@ -18,6 +18,7 @@
 
 import { useState, useCallback } from "react";
 import { EXECUTION_STATUS, EXECUTION_MESSAGES } from "@/lib/sandbox/errorCodes";
+import { api } from "@/lib/apiClient";
 
 // ── Status badge config ───────────────────────────────────────────────
 // Maps each execution status to a Tailwind colour class and icon label.
@@ -66,35 +67,27 @@ export default function CodeLabEditor() {
     setRateLimitInfo(null);
 
     try {
-      const response = await fetch("/api/code-lab", {
+      const data = await api.request("/api/code-lab", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: { code },
       });
-
-      // ── 429 Rate Limited ────────────────────────────────────────
-      if (response.status === 429) {
-        const data = await response.json();
-        setRateLimitInfo({
-          retryAfter: data.retryAfter ?? 60,
-          message: data.message ?? "Too many requests. Please wait before running again.",
-        });
-        return;
-      }
-
-      // ── Parse execution result ───────────────────────────────────
-      const data = await response.json();
       setResult(data);
-    } catch (networkError) {
-      // Network failure — not a sandbox error
-      setResult({
-        status: EXECUTION_STATUS.INTERNAL_ERROR,
-        message: "Could not reach the server. Check your connection.",
-        output: "",
-        error: networkError.message,
-        executionTime: 0,
-        memoryUsed: 0,
-      });
+    } catch (error) {
+      if (error.status === 429) {
+        setRateLimitInfo({
+          retryAfter: 60,
+          message: error.message ?? "Too many requests. Please wait before running again.",
+        });
+      } else {
+        setResult({
+          status: EXECUTION_STATUS.INTERNAL_ERROR,
+          message: "Could not reach the server. Check your connection.",
+          output: "",
+          error: error.message,
+          executionTime: 0,
+          memoryUsed: 0,
+        });
+      }
     } finally {
       setIsRunning(false);
     }

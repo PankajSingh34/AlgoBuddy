@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
+import { practiceData } from "@/lib/practiceData";
 
 // Mock recent battle data
 const RECENT_BATTLES = [
@@ -126,8 +127,42 @@ function getInitials(name) {
 export default function ArenaPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const { profile, leaderboard, matchHistory, dailyChallenge, loadingProfile, loadingLeaderboard } = useArenaProfile(user);
-  const { streakData } = useSheetProgress();
+  const { profile, leaderboard, matchHistory, loadingProfile, loadingLeaderboard } = useArenaProfile(user);
+  const { progress, getStatus, streakData } = useSheetProgress();
+
+  // Dynamically flatten all problems from practiceData (Zero Hardcoding!)
+  const allProblems = useMemo(() => {
+    const list = [];
+    practiceData.forEach((topic) => {
+      topic.subsections.forEach((sub) => {
+        sub.items.forEach((item) => {
+          list.push({
+            ...item,
+            topic: topic.title,
+            topicSlug: topic.slug,
+            time: item.difficulty === "Easy" ? "20m" : item.difficulty === "Medium" ? "30m" : "45m"
+          });
+        });
+      });
+    });
+    return list;
+  }, []);
+
+  const todaysChallenge = useMemo(() => {
+    if (allProblems.length === 0) return null;
+
+    const daySeed = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+    const problem = allProblems[daySeed % allProblems.length];
+    if (!problem) return null;
+    
+    return {
+      title: problem.name,
+      difficulty: problem.difficulty,
+      description: problem.theory?.summary || "Practice this coding challenge to improve your DSA skills.",
+      xpAward: problem.difficulty === "Easy" ? 100 : problem.difficulty === "Medium" ? 250 : 500,
+      practiceUrl: problem.practiceUrl
+    };
+  }, [allProblems]);
 
 
   const ensureLoggedIn = () => {
@@ -146,7 +181,8 @@ export default function ArenaPage() {
       if (!ensureLoggedIn()) return;
     }
     if (typeof window !== "undefined") {
-      window.location.hash = tabId === "home" ? "" : tabId;
+      router.push(tabId === "home" ? "/arena" : `/arena#${tabId}`);
+      setActiveTab(tabId);
     }
   };
 
@@ -158,9 +194,7 @@ export default function ArenaPage() {
       
       if (validTabs.includes(hash)) {
         if (protectedTabs.includes(hash) && !user) {
-          if (typeof window !== "undefined") {
-            window.location.hash = "";
-          }
+          router.push("/arena");
           setActiveTab("home");
           return;
         }
@@ -176,11 +210,51 @@ export default function ArenaPage() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [user]);
+  }, [user, router]);
 
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
+
+  // Fix for browser back button from Matchmaking modal (Issue #1333)
+  // Fix for browser back button from Create Duel modal (Issue #1336)
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (matchmakingOpen) {
+        setMatchmakingOpen(false);
+      } else if (createDuelOpen) {
+        setCreateDuelOpen(false);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [matchmakingOpen, createDuelOpen]);
+
+  const openMatchmakingModal = () => {
+    if (!ensureLoggedIn()) return;
+    window.history.pushState({ modal: "matchmaking" }, "", window.location.href);
+    setMatchmakingOpen(true);
+  };
+
+  const closeMatchmakingModal = () => {
+    setMatchmakingOpen(false);
+    if (window.history.state?.modal === "matchmaking") {
+      window.history.back();
+    }
+  };
+
+  const openCreateDuelModal = () => {
+    if (!ensureLoggedIn()) return;
+    window.history.pushState({ modal: "createDuel" }, "", window.location.href);
+    setCreateDuelOpen(true);
+  };
+
+  const closeCreateDuelModal = () => {
+    setCreateDuelOpen(false);
+    if (window.history.state?.modal === "createDuel") {
+      window.history.back();
+    }
+  };
   const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState(null);
   const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
@@ -196,7 +270,7 @@ export default function ArenaPage() {
 }, [showXPWidget]);
 
   const [currentUserStats, setCurrentUserStats] = useState({
-    name: "Pankaj Singh",
+    name: "",
     level: 1,
     rating: 1200,
     xp: 0,
@@ -218,7 +292,7 @@ export default function ArenaPage() {
 
   const handleMatchFound = (opponent) => {
     setSelectedOpponent(opponent);
-    setMatchmakingOpen(false);
+    closeMatchmakingModal();
     setActiveDuelProblem("Two Sum");
     setDuelSimulatorOpen(true);
   };
@@ -327,8 +401,7 @@ export default function ArenaPage() {
 
               <button
                 onClick={() => {
-                  if (!ensureLoggedIn()) return;
-                  setMatchmakingOpen(true);
+                  openMatchmakingModal();
                 }}
                 className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10"
               >
@@ -356,8 +429,7 @@ export default function ArenaPage() {
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                       <button
                         onClick={() => {
-                          if (!ensureLoggedIn()) return;
-                          setMatchmakingOpen(true);
+                          openMatchmakingModal();
                         }}
                         className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
@@ -365,10 +437,7 @@ export default function ArenaPage() {
                         Find Match
                       </button>
                       <button
-                        onClick={() => {
-                          if (!ensureLoggedIn()) return;
-                          setCreateDuelOpen(true);
-                        }}
+                        onClick={openCreateDuelModal}
                         className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <Swords size={14} />
@@ -382,18 +451,25 @@ export default function ArenaPage() {
                     {/* 2nd Place (Logged in User) */}
                     <div className="flex flex-col items-center mt-6">
                       <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs shadow border-2 border-slate-600 mb-1.5 overflow-hidden">
-                        {leaderboard[1] ? (
+                        {leaderboard[1]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[1].avatarUrl} 
+                            alt={leaderboard[1]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[1] ? (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
                             {getInitials(leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`)}
                           </div>
                         ) : (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
-                            {(currentUserStats.name || "Pankaj").split(" ")[0].substring(0,2).toUpperCase()}
+                            {(currentUserStats.name || "You").split(" ")[0].substring(0,2).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <span className="text-[10px] text-slate-300 block font-semibold mb-1 truncate max-w-[64px]">
-                        {leaderboard[1] ? (leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`) : (currentUserStats.name || "Pankaj").split(" ")[0]}
+                        {leaderboard[1] ? (leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`) : (currentUserStats.name || "You").split(" ")[0]}
                       </span>
                       <span className="text-[9px] text-slate-400 block mb-2">{leaderboard[1] ? leaderboard[1].xp : currentUserStats.xp || 2320} XP</span>
                       <div className="w-14 h-12 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
@@ -404,7 +480,14 @@ export default function ArenaPage() {
                     {/* 1st Place */}
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center font-bold text-sm shadow-md border-2 border-amber-400 mb-1.5 overflow-hidden">
-                        {leaderboard[0] ? (
+                        {leaderboard[0]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[0].avatarUrl} 
+                            alt={leaderboard[0]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[0] ? (
                            <div className="w-full h-full text-white flex items-center justify-center text-sm font-bold">
                              {getInitials(leaderboard[0]?.name || `User ${leaderboard[0]?.userId.substring(0,4)}`)}
                            </div>
@@ -422,7 +505,14 @@ export default function ArenaPage() {
                     {/* 3rd Place */}
                     <div className="flex flex-col items-center mt-8">
                       <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs shadow border-2 border-purple-500 mb-1.5 overflow-hidden">
-                        {leaderboard[2] ? (
+                        {leaderboard[2]?.avatarUrl ? (
+                          <img 
+                            src={leaderboard[2].avatarUrl} 
+                            alt={leaderboard[2]?.name || "User"} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : leaderboard[2] ? (
                            <div className="w-full h-full text-white flex items-center justify-center text-xs font-bold">
                              {getInitials(leaderboard[2]?.name || `User ${leaderboard[2]?.userId.substring(0,4)}`)}
                            </div>
@@ -500,39 +590,49 @@ export default function ArenaPage() {
                         </span>
                       </div>
 
-                      <div className="flex gap-3.5 items-start p-3 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/40 rounded-xl mb-3">
-                        <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-lg shrink-0 font-mono text-sm font-extrabold">
-                          &lt;/&gt;
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
-                              {dailyChallenge ? dailyChallenge.title : "Reverse Linked List"}
-                            </h4>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
-                              (dailyChallenge ? dailyChallenge.difficulty : "Easy") === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                              "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                            }`}>
-                              {dailyChallenge ? dailyChallenge.difficulty : "Easy"}
-                            </span>
+                      {todaysChallenge ? (
+                        <>
+                          <div className="flex gap-3.5 items-start p-3 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/40 rounded-xl mb-3">
+                            <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-lg shrink-0 font-mono text-sm font-extrabold">
+                              &lt;/&gt;
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
+                                  {todaysChallenge.title}
+                                </h4>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                                  todaysChallenge.difficulty === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
+                                  todaysChallenge.difficulty === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
+                                  "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                                }`}>
+                                  {todaysChallenge.difficulty}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
+                                {todaysChallenge.description}
+                              </p>
+                              <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
+                                Reward: +{todaysChallenge.xpAward} XP
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
-                            {dailyChallenge ? dailyChallenge.description : "Reverse a singly linked list."}
-                          </p>
-                          <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
-                            Reward: +{dailyChallenge ? dailyChallenge.xpAward : 50} XP
-                          </div>
+                          
+                          <a
+                            href={todaysChallenge.practiceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold text-center transition block shadow-md shadow-primary/10"
+                          >
+                            Solve Now
+                          </a>
+                        </>
+                      ) : (
+                        <div className="p-6 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">
+                          Wow, you've completed all problems! 🎉
                         </div>
-                      </div>
+                      )}
                     </div>
-
-                    <Link
-                      href="/practice"
-                      className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold text-center transition block shadow-md shadow-primary/10"
-                    >
-                      Solve Now
-                    </Link>
                   </div>
                 </div>
 
@@ -541,7 +641,15 @@ export default function ArenaPage() {
                   {/* Leaderboard Table */}
                   <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Global Leaderboard</h3>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
+                          🏆 Global Learning Leaderboard
+                        </h3>
+
+                        <p className="text-xs text-slate-400 dark:text-neutral-500">
+                          Compete with top learners and improve your rank.
+                        </p>
+                      </div>
                       <span
                         onClick={() => handleTabChange("leaderboard")}
                         className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
@@ -554,13 +662,38 @@ export default function ArenaPage() {
                       {(leaderboard.length > 0 ? leaderboard : LEADERBOARD_ROWS).map((row, idx) => {
                         const rank = row.rank || idx + 1;
                         const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
+                        const isCurrentUser = name === currentUserStats.name;
                         return (
-                          <div key={rank} className="flex items-center justify-between text-xs px-2 py-1.5 border-b border-slate-50 dark:border-neutral-800 last:border-0">
+                          <div
+                            key={rank}
+                            className={`flex items-center justify-between 
+                            text-xs px-3 py-3 rounded-xl mb-2 transition
+
+                            ${
+                              isCurrentUser
+                              ? "bg-purple-100 dark:bg-purple-900/30 border border-purple-400"
+                              : "hover:bg-slate-50 dark:hover:bg-neutral-900"
+                            }
+                            `}
+                            >
                             <div className="flex items-center gap-3">
                               <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
                                 }`}>
                                 {rank}
                               </span>
+                              {/* Avatar Circle */}
+                              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0">
+                                {row.avatarUrl ? (
+                                  <img 
+                                    src={row.avatarUrl} 
+                                    alt={name} 
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover" 
+                                  />
+                                ) : (
+                                  getInitials(name)
+                                )}
+                              </div>
                               <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
                             </div>
                             <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
@@ -671,7 +804,7 @@ export default function ArenaPage() {
 
                 {activeTab === "ranked" && (
                   <button
-                    onClick={() => setMatchmakingOpen(true)}
+                    onClick={() => openMatchmakingModal()}
                     className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition"
                   >
                     Launch Ranked Matchmaking
@@ -680,7 +813,7 @@ export default function ArenaPage() {
 
                 {activeTab === "friend" && (
                   <button
-                    onClick={() => setCreateDuelOpen(true)}
+                    onClick={openCreateDuelModal}
                     className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition"
                   >
                     Create Custom Lobby
@@ -693,8 +826,24 @@ export default function ArenaPage() {
                       const rank = row.rank || idx + 1;
                       const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
                       return (
-                        <div key={rank} className="flex justify-between p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
-                          <span className="font-semibold">{rank}. {name}</span>
+                        <div key={rank} className="flex justify-between items-center p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold">{rank}.</span>
+                            {/* Avatar Circle */}
+                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-650 dark:text-neutral-300 overflow-hidden shrink-0">
+                              {row.avatarUrl ? (
+                                <img 
+                                  src={row.avatarUrl} 
+                                  alt={name} 
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover" 
+                                  />
+                              ) : (
+                                getInitials(name)
+                              )}
+                            </div>
+                            <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                          </div>
                           <span className="font-bold text-primary">{row.rating} Rating</span>
                         </div>
                       );
@@ -867,7 +1016,7 @@ export default function ArenaPage() {
       {/* ─── Interactive Modals ────────────────────────────────────────────── */}
       <MatchmakingModal
         isOpen={matchmakingOpen}
-        onClose={() => setMatchmakingOpen(false)}
+        onClose={() => closeMatchmakingModal()}
         onMatchFound={handleMatchFound}
         currentUserStats={currentUserStats}
       />
@@ -882,7 +1031,7 @@ export default function ArenaPage() {
 
       <CreateDuelModal
         isOpen={createDuelOpen}
-        onClose={() => setCreateDuelOpen(false)}
+        onClose={closeCreateDuelModal}
         onCreateMatch={handleCreateMatchLaunch}
       />
     </section>

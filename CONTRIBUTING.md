@@ -1,4 +1,4 @@
-﻿# Contributing to AlgoBuddy
+# Contributing to AlgoBuddy
 
 Thank you for your interest in contributing to **AlgoBuddy**!
 We welcome and appreciate contributions from the community to help make this project better.
@@ -43,7 +43,7 @@ Feel free to suggest new contribution ideas by opening an issue first.
 
 | Layer     | Technology                                         |
 | --------- | -------------------------------------------------- |
-| Framework | Next.js 14 (App Router)                            |
+| Framework | Next.js 16 (App Router)                            |
 | Library   | React.js                                           |
 | Styling   | Tailwind CSS                                       |
 | Language  | JavaScript                                         |
@@ -86,7 +86,7 @@ npm install
 Copy the example env file and fill in the required values:
 
 ```bash
-cp EnvExample.txt .env.local
+cp .env.example .env.local
 ```
 
 | Variable                           | Description                                      |
@@ -99,6 +99,14 @@ cp EnvExample.txt .env.local
 | `SUPABASE_SERVICE_KEY`             | Supabase service role key (server-side only)     |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`   | Cloudflare Turnstile site key                    |
 | `TURNSTILE_SECRET_KEY`             | Cloudflare Turnstile secret key                  |
+| `TURNSTILE_BYPASS`                 | Bypass Turnstile locally (set to `true` to bypass) |
+| `UPSTASH_REDIS_REST_URL`           | Upstash Redis REST URL for rate limiting         |
+| `UPSTASH_REDIS_REST_TOKEN`         | Upstash Redis REST Token for rate limiting       |
+| `GEMINI_API_KEY`                   | Google Gemini API key for AI chatbot             |
+| `AUTO_CONFIRM_EMAIL`               | Auto confirm user email in Supabase (if set)     |
+| `NEXT_PUBLIC_SHOW_COMMUNITY_BADGE`  | Toggle visibility of community badge in UI       |
+| `NEXT_PUBLIC_USE_SPRING_BOOT_API`  | Route requests to Java Spring Boot API locally   |
+| `NEXT_PUBLIC_SPRING_BOOT_API_URL`  | URL of local Java Spring Boot API (default `http://localhost:8080`) |
 
 > ⚠️ **Never commit `.env.local` to version control.** It is already listed in `.gitignore`.
 

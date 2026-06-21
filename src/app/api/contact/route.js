@@ -2,7 +2,8 @@ import nodemailer from "nodemailer";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { jsonResponse, errorResponse } from "@/lib/serverApi";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
+import { RATE_LIMITS } from "@/config/rateLimits";
 
 function escapeHtml(value) {
   return String(value)
@@ -28,7 +29,7 @@ export async function POST(req) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
       return jsonResponse({ message: "Too many requests. Please try again later." }, 429, {
         "Retry-After": retryAfter.toString(),
-        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
         "X-RateLimit-Remaining": "0",
       });
     }
@@ -73,15 +74,23 @@ export async function POST(req) {
       return jsonResponse({ message: "Server misconfigured: email credentials missing" }, 500);
     }
 
-    const { allowed: smtpAllowed, remaining: smtpRemaining } = await checkGlobalSmtpQuota(
-      parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
+    const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
+      RATE_LIMITS.SMTP.DAILY_QUOTA
     );
     if (!smtpAllowed) {
-      console.error("[contact] SMTP daily quota exceeded. Email not sent.");
-      return jsonResponse({ message: "Message received." }, 200, {
-        "X-RateLimit-Limit": "5",
-        "X-RateLimit-Remaining": smtpRemaining.toString(),
-      });
+      console.warn("[contact] SMTP daily quota exceeded. Persisting message to pending_messages.");
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from("pending_messages").insert({
+          type: "contact",
+          payload: { name: trimmedName, email: trimmedEmail, subject: trimmedSubject, message: trimmedMessage },
+        });
+      } catch (dbErr) {
+        console.error("[contact] Failed to persist pending message:", dbErr);
+      }
+      return jsonResponse({
+        message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
+      }, 503);
     }
 
     const transporter = nodemailer.createTransport({
@@ -116,7 +125,7 @@ export async function POST(req) {
     await transporter.sendMail(mailOptions);
 
     return jsonResponse({ message: "Email sent successfully" }, 200, {
-      "X-RateLimit-Limit": "5",
+      "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
       "X-RateLimit-Remaining": remaining.toString(),
     });
   } catch (error) {

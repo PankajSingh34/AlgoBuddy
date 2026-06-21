@@ -14,13 +14,14 @@ export async function POST(request, { params }) {
     const { sharedUserId } = await params;
     if (!sharedUserId) return jsonResponse({ error: "sharedUserId is required" }, 400);
 
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseRequestClient(request);
     
-    // 1. Fetch shared user's sheet items
+    // 1. Fetch shared user's public sheet items only
     const { data: sharedData, error: fetchError } = await supabase
       .from("my_sheet")
       .select("problem_id, note")
-      .eq("user_id", sharedUserId);
+      .eq("user_id", sharedUserId)
+      .eq("is_public", true);
 
     if (fetchError) return jsonResponse({ error: fetchError.message }, 500);
     if (!sharedData || sharedData.length === 0) {

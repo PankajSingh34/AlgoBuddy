@@ -28,23 +28,40 @@ public class MySheetService {
         return mySheetRepository.findByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
+    public List<MySheet> getSharedSheet(UUID userId) {
+        return mySheetRepository.findByUserIdAndIsPublicTrue(userId);
+    }
+
     @Transactional
-    public void addToSheet(UUID userId, String problemId, String note) {
+    public void addToSheet(UUID userId, String problemId, String note, Boolean isPublic) {
         Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(userId, problemId);
         if (existing.isPresent()) {
             MySheet item = existing.get();
-            // Only update the note if a non-null note was provided
             if (note != null) {
                 item.setNote(note);
-                mySheetRepository.save(item);
             }
+            if (isPublic != null) {
+                item.setPublic(isPublic);
+            }
+            mySheetRepository.save(item);
         } else {
             MySheet item = new MySheet();
             item.setUserId(userId);
             item.setProblemId(problemId);
             item.setNote(note == null ? "" : note);
+            item.setPublic(isPublic != null && isPublic);
             mySheetRepository.save(item);
         }
+    }
+
+    @Transactional
+    public void updateVisibility(UUID userId, String problemId, boolean isPublic) {
+        mySheetRepository.findByUserIdAndProblemId(userId, problemId)
+                .ifPresent(item -> {
+                    item.setPublic(isPublic);
+                    mySheetRepository.save(item);
+                });
     }
 
     @Transactional
@@ -55,7 +72,10 @@ public class MySheetService {
 
     @Transactional
     public void cloneSheet(UUID sharedUserId, UUID targetUserId) {
-        List<MySheet> sharedItems = mySheetRepository.findByUserId(sharedUserId);
+        List<MySheet> sharedItems = mySheetRepository.findByUserIdAndIsPublicTrue(sharedUserId);
+        if (sharedItems.isEmpty()) {
+            throw new IllegalStateException("This user has not shared any sheet items");
+        }
         for (MySheet sharedItem : sharedItems) {
             Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(targetUserId, sharedItem.getProblemId());
             if (existing.isEmpty()) {

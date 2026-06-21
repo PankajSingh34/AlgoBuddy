@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useGlobalCollaboration } from "@/app/components/ui/CollaborationProvider";
 
 export default function usePlayback(initialSpeed = 1) {
   const [isPaused, setIsPaused] = useState(false);
@@ -11,32 +10,6 @@ export default function usePlayback(initialSpeed = 1) {
   // Pause resolution for async/await (Sorting algorithms)
   const pausePromiseRef = useRef(null);
   const pauseResolveRef = useRef(null);
-
-  const {
-    session,
-    presenterId,
-    clientId,
-    registerHandler,
-    unregisterHandler,
-    broadcastEvent,
-  } = useGlobalCollaboration();
-
-  const isPresenter = !session || (presenterId && presenterId === clientId) || (!presenterId && session);
-
-  // Sync state from remote events
-  useEffect(() => {
-    const handler = (delta, envelope) => {
-      if (envelope?.eventName === "playback:toggle") {
-        internalTogglePlayPauseRef.current();
-      } else if (envelope?.eventName === "playback:set_pause" && delta?.isPaused !== undefined) {
-        internalSetIsPausedRef.current(delta.isPaused);
-      } else if (envelope?.eventName === "playback:speed" && delta?.speed !== undefined) {
-        setSpeedRef.current(delta.speed);
-      }
-    };
-    registerHandler("usePlayback", handler);
-    return () => unregisterHandler("usePlayback");
-  }, [registerHandler, unregisterHandler]);
 
   const internalSetIsPaused = useCallback((nextPaused) => {
     setIsPaused((prev) => {
@@ -67,17 +40,11 @@ export default function usePlayback(initialSpeed = 1) {
 
   const setPausedSync = useCallback((val) => {
     internalSetIsPaused(val);
-    if (isPresenter) {
-      broadcastEvent("playback:set_pause", { isPaused: val });
-    }
-  }, [internalSetIsPaused, isPresenter, broadcastEvent]);
+  }, [internalSetIsPaused]);
 
   const togglePlayPause = useCallback(() => {
     internalTogglePlayPause();
-    if (isPresenter) {
-      broadcastEvent("playback:toggle", {});
-    }
-  }, [internalTogglePlayPause, isPresenter, broadcastEvent]);
+  }, [internalTogglePlayPause]);
 
   // Async function for sorting algorithms to await between steps
   const checkPause = async () => {
@@ -92,28 +59,16 @@ export default function usePlayback(initialSpeed = 1) {
   };
 
   const increaseSpeed = useCallback(() => {
-    setSpeed((s) => {
-      const next = Math.min(s + 0.5, 5);
-      if (isPresenter) broadcastEvent("playback:speed", { speed: next });
-      return next;
-    });
-  }, [isPresenter, broadcastEvent]);
+    setSpeed((s) => Math.min(s + 0.5, 5));
+  }, []);
 
   const decreaseSpeed = useCallback(() => {
-    setSpeed((s) => {
-      const next = Math.max(s - 0.5, 0.5);
-      if (isPresenter) broadcastEvent("playback:speed", { speed: next });
-      return next;
-    });
-  }, [isPresenter, broadcastEvent]);
+    setSpeed((s) => Math.max(s - 0.5, 0.5));
+  }, []);
 
   const setSpeedSync = useCallback((val) => {
-    setSpeed((s) => {
-      const next = typeof val === "function" ? val(s) : val;
-      if (isPresenter) broadcastEvent("playback:speed", { speed: next });
-      return next;
-    });
-  }, [isPresenter, broadcastEvent]);
+    setSpeed((s) => (typeof val === "function" ? val(s) : val));
+  }, []);
 
   // Ensure speed ref is always synced for setTimeout delays
   useEffect(() => {

@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { jsonResponse, errorResponse } from "@/lib/serverApi";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
 function escapeHtml(value) {
   return String(value)
@@ -81,15 +81,23 @@ export async function POST(request) {
       return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
     }
 
-    const { allowed: smtpAllowed, remaining: smtpRemaining } = await checkGlobalSmtpQuota(
+    const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
       parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
     );
     if (!smtpAllowed) {
-      console.error("[review] SMTP daily quota exceeded. Email not sent.");
-      return jsonResponse({ message: "Review received." }, 200, {
-        "X-RateLimit-Limit": "5",
-        "X-RateLimit-Remaining": smtpRemaining.toString(),
-      });
+      console.warn("[review] SMTP daily quota exceeded. Persisting message to pending_messages.");
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from("pending_messages").insert({
+          type: "review",
+          payload: { name: trimmedName, email: trimmedEmail, review: trimmedReview, rating: safeRating },
+        });
+      } catch (dbErr) {
+        console.error("[review] Failed to persist pending message:", dbErr);
+      }
+      return jsonResponse({
+        message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
+      }, 503);
     }
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;

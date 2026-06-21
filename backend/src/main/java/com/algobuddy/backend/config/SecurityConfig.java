@@ -2,20 +2,16 @@ package com.algobuddy.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +80,7 @@ public class SecurityConfig {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/mysheet/shared/**").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/arena/leaderboard", "/api/v1/arena/daily-challenge").permitAll()
                     .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2
                     .jwt(jwt -> jwt.decoder(jwtDecoder())));
@@ -93,24 +89,15 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
+    }
+
+    @Bean
     public JwtDecoder jwtDecoder() {
-        // Set explicit connect+read timeouts on the JWKS fetch (5 seconds each).
-        // The default RestTemplate has no timeout — Supabase network blips caused the
-        // JWKS read to hang for 30+ seconds, failing every JWT validation with a 500.
-        //
-        // NimbusJwtDecoder caches the JWKS in memory and only re-fetches when a
-        // key ID is missing (i.e. after key rotation), so normal traffic is unaffected.
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(5_000);
-        factory.setReadTimeout(5_000);
-        RestOperations rest = new RestTemplate(factory);
-
         String jwkSetUri = supabaseUrl + "/auth/v1/.well-known/jwks.json";
-
-        return NimbusJwtDecoder
-                .withJwkSetUri(jwkSetUri)
-                .jwsAlgorithm(SignatureAlgorithm.ES256)
-                .restOperations(rest)
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .jwsAlgorithm(org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.ES256)
                 .build();
     }
 

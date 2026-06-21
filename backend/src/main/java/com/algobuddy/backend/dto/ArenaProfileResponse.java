@@ -20,4 +20,6 @@ public class ArenaProfileResponse {
     private Integer battlesLost;
     private Integer totalProblemsSolved;
     private Integer rank; // Calculated rank compared to others
+    private String name;
+    private String avatarUrl;
 }
