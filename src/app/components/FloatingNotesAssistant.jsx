@@ -76,6 +76,7 @@ const preprocessMarkdown = (text) => {
 export default function FloatingNotesAssistant() {
   const [open, setOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(false);
   const [editMode, setEditMode] = useState("write"); // 'write' or 'preview'
   const [copied, setCopied] = useState(false);
 
@@ -101,6 +102,8 @@ export default function FloatingNotesAssistant() {
   useEffect(() => {
     const handleScroll = () => {
       setHasScrolled(window.scrollY > 300);
+      const distanceFromBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      setIsNearBottom(distanceFromBottom <= 300);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll);
@@ -160,9 +163,11 @@ export default function FloatingNotesAssistant() {
     window.dispatchEvent(event);
   };
 
-  const buttonPosition = hasScrolled
-    ? "bottom-36 right-3 sm:bottom-44 sm:right-6"
-    : "bottom-20 right-3 sm:bottom-24 sm:right-6";
+    const buttonPosition = hasScrolled && !isNearBottom
+      ? "bottom-[208px] right-3 sm:right-6"
+      : isNearBottom
+      ? "bottom-[152px] right-3 sm:right-6"
+      : "bottom-[152px] right-3 sm:right-6";
 
   const panelPosition = "bottom-[80px] right-4 left-4 sm:bottom-[92px] sm:right-[88px] sm:left-auto";
 
