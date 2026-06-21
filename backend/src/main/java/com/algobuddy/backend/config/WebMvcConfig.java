@@ -11,6 +11,7 @@ import org.springframework.lang.NonNull;
 import java.util.List;
 
 @Configuration
+@SuppressWarnings("null")
 public class WebMvcConfig implements WebMvcConfigurer {
 
     @Autowired

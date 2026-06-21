@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ArenaService {
 
     private static final Logger log = LoggerFactory.getLogger(ArenaService.class);
@@ -279,10 +280,10 @@ public class ArenaService {
     public com.algobuddy.backend.dto.DailyChallengeResponse getDailyChallenge() {
         // Hardcoded list of challenges to simulate a rotating daily problem
         List<com.algobuddy.backend.dto.DailyChallengeResponse> pool = List.of(
-            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350)
+            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250, "https://leetcode.com/problems/valid-anagram/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200, "https://leetcode.com/problems/two-sum/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400, "https://leetcode.com/problems/lru-cache/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350, "https://leetcode.com/problems/merge-intervals/")
         );
 
         long daysSinceEpoch = java.time.LocalDate.now().toEpochDay();
