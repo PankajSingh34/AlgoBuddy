@@ -10,19 +10,22 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
 import java.util.UUID;
 
 public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
-    public boolean supportsParameter(MethodParameter parameter) {
+    public boolean supportsParameter(@NonNull MethodParameter parameter) {
         return parameter.getParameterAnnotation(CurrentUserId.class) != null
                 && parameter.getParameterType().equals(UUID.class);
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(@NonNull MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+                                  @NonNull NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {

@@ -1,13 +1,11 @@
 import { supabase } from "@/lib/supabase";
+import { api } from "./apiClient";
 
 const trackActivity = async (type = "site_visit") => {
   try {
-    await fetch("/api/activity", {
+    await api.request("/api/activity", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // Send the browser's local calendar date so the server records activity
-      // against the user's own day rather than the server's UTC date.
-      body: JSON.stringify({ type, localDate: getLocalISODate() }),
+      body: { type, localDate: getLocalISODate() },
     });
   } catch (e) {
     console.error("trackActivity failed:", e);

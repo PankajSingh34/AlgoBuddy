@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, AlertTriangle, CheckCircle, Terminal } from "lucide-react";
 import { Editor } from "@monaco-editor/react";
 import { io } from "socket.io-client";
+import { api } from "@/lib/apiClient";
 
 export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentUserStats, problemName = "Two Sum" }) {
   const [seconds, setSeconds] = useState(0);
@@ -172,7 +173,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     return () => {
       newSocket.disconnect();
     };
-  }, [isOpen]);
+  }, [isOpen, opponent]);
 
   const handleCodeChange = (value) => {
     setUserCode(value);
@@ -198,13 +199,10 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     }
 
     try {
-      const res = await fetch("/api/code-lab", {
+      const data = await api.request("/api/code-lab", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: userCode })
+        body: { code: userCode }
       });
-      
-      const data = await res.json();
       
       let outText = `Status: ${data.message || data.status}\n`;
       if (data.output) outText += `Output: ${data.output}\n`;

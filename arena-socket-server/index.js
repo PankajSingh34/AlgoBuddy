@@ -23,7 +23,7 @@ function isAllowedVercelOrigin(origin) {
     const url = new URL(origin);
     const hostname = url.hostname.toLowerCase();
     return hostname === 'algobuddy.vercel.app' ||
-           hostname.endsWith('.algobuddy.vercel.app');
+      hostname.endsWith('.algobuddy.vercel.app');
   } catch {
     return false;
   }
@@ -67,9 +67,11 @@ const ATOMIC_JOIN_MATCHMAKING_SCRIPT = `
     local elements = redis.call('LRANGE', existingQueueKey, 0, -1)
     if elements and #elements > 0 then
       for i = 1, #elements do
-        local parsed = cjson.decode(elements[i])
-        if parsed and (parsed.socketId == socketId or parsed.userId == userId) then
-          redis.call('LREM', existingQueueKey, 0, elements[i])
+        local el = elements[i]
+        local p_socketId = string.match(el, '"socketId"%s*:%s*"([^"]+)"')
+        local p_userId = string.match(el, '"userId"%s*:%s*"([^"]+)"')
+        if p_socketId == socketId or p_userId == userId then
+          redis.call('LREM', existingQueueKey, 0, el)
         end
       end
     end
@@ -83,13 +85,18 @@ const ATOMIC_JOIN_MATCHMAKING_SCRIPT = `
       break
     end
 
-    local opponent = cjson.decode(opponentStr)
-    if opponent.userId == userId then
+    local oppUserId = string.match(opponentStr, '"userId"%s*:%s*"([^"]+)"')
+    local oppSocketId = string.match(opponentStr, '"socketId"%s*:%s*"([^"]+)"')
+    local oppName = string.match(opponentStr, '"name"%s*:%s*"([^"]+)"') or 'Player'
+    local oppRating = string.match(opponentStr, '"rating"%s*:%s*(%d+)') or '1200'
+    local oppLevel = string.match(opponentStr, '"level"%s*:%s*(%d+)') or '1'
+
+    if oppUserId == userId then
       table.insert(skipList, opponentStr)
     else
       local created = redis.call('SET', matchKey, matchDetails, 'NX', 'EX', 3600)
       if created then
-        local oppKey = 'socket:' .. opponent.socketId
+        local oppKey = 'socket:' .. oppSocketId
         redis.call('HSET', socketKey, 'matchId', matchKey)
         redis.call('HSET', oppKey, 'matchId', matchKey)
         redis.call('HDEL', socketKey, 'queueKey')
@@ -98,7 +105,7 @@ const ATOMIC_JOIN_MATCHMAKING_SCRIPT = `
         for i = #skipList, 1, -1 do
           redis.call('RPUSH', queueKey, skipList[i])
         end
-        return cjson.encode({ status = 'MATCH_FOUND', opponent = opponent })
+        return '{"status":"MATCH_FOUND","opponent":{"userId":"' .. oppUserId .. '","socketId":"' .. oppSocketId .. '","name":"' .. oppName .. '","rating":' .. oppRating .. ',"level":' .. oppLevel .. '}}'
       else
         redis.call('RPUSH', queueKey, opponentStr)
       end
@@ -114,15 +121,17 @@ const ATOMIC_JOIN_MATCHMAKING_SCRIPT = `
   local elements = redis.call('LRANGE', queueKey, 0, -1)
   if elements and #elements > 0 then
     for i = 1, #elements do
-      local parsed = cjson.decode(elements[i])
-      if parsed and (parsed.socketId == socketId or parsed.userId == userId) then
-        redis.call('LREM', queueKey, 0, elements[i])
+      local el = elements[i]
+      local p_socketId = string.match(el, '"socketId"%s*:%s*"([^"]+)"')
+      local p_userId = string.match(el, '"userId"%s*:%s*"([^"]+)"')
+      if p_socketId == socketId or p_userId == userId then
+        redis.call('LREM', queueKey, 0, el)
       end
     end
   end
   redis.call('RPUSH', queueKey, entry)
   redis.call('HSET', socketKey, 'queueKey', queueKey)
-  return cjson.encode({ status = 'QUEUED' })
+  return '{"status":"QUEUED"}'
 `;
 
 const ATOMIC_LEAVE_MATCHMAKING_SCRIPT = `
@@ -135,9 +144,11 @@ const ATOMIC_LEAVE_MATCHMAKING_SCRIPT = `
     local elements = redis.call('LRANGE', existingQueueKey, 0, -1)
     if elements and #elements > 0 then
       for i = 1, #elements do
-        local parsed = cjson.decode(elements[i])
-        if parsed and (parsed.socketId == socketId or parsed.userId == userId) then
-          redis.call('LREM', existingQueueKey, 0, elements[i])
+        local el = elements[i]
+        local p_socketId = string.match(el, '"socketId"%s*:%s*"([^"]+)"')
+        local p_userId = string.match(el, '"userId"%s*:%s*"([^"]+)"')
+        if p_socketId == socketId or p_userId == userId then
+          redis.call('LREM', existingQueueKey, 0, el)
         end
       end
     end
@@ -156,9 +167,11 @@ const ATOMIC_DISCONNECT_CLEANUP_SCRIPT = `
     local elements = redis.call('LRANGE', existingQueueKey, 0, -1)
     if elements and #elements > 0 then
       for i = 1, #elements do
-        local parsed = cjson.decode(elements[i])
-        if parsed and (parsed.socketId == socketId or parsed.userId == userId) then
-          redis.call('LREM', existingQueueKey, 0, elements[i])
+        local el = elements[i]
+        local p_socketId = string.match(el, '"socketId"%s*:%s*"([^"]+)"')
+        local p_userId = string.match(el, '"userId"%s*:%s*"([^"]+)"')
+        if p_socketId == socketId or p_userId == userId then
+          redis.call('LREM', existingQueueKey, 0, el)
         end
       end
     end
@@ -170,16 +183,16 @@ const ATOMIC_DISCONNECT_CLEANUP_SCRIPT = `
   if matchId then
     local matchStr = redis.call('GET', 'match:' .. matchId)
     if matchStr then
-      local match = cjson.decode(matchStr)
-      if match and match.status ~= 'completed' then
-        match.status = 'completed'
-        redis.call('SET', 'match:' .. matchId, cjson.encode(match), 'EX', 3600)
-        for i, p in ipairs(match.players) do
-          if p.socketId ~= socketId then
-            opponentSocketId = p.socketId
-          end
-          redis.call('HDEL', 'socket:' .. p.socketId, 'matchId')
+      -- String replacement of status: "in-progress" to "completed"
+      local updatedMatchStr = string.gsub(matchStr, '"status"%s*:%s*"in%-progress"', '"status":"completed"')
+      redis.call('SET', 'match:' .. matchId, updatedMatchStr, 'EX', 3600)
+      
+      -- Extract socketIds using pattern matching
+      for sId in string.gmatch(matchStr, '"socketId"%s*:%s*"([^"]+)"') do
+        if sId ~= socketId then
+          opponentSocketId = sId
         end
+        redis.call('HDEL', 'socket:' .. sId, 'matchId')
       end
     end
   end
@@ -187,7 +200,7 @@ const ATOMIC_DISCONNECT_CLEANUP_SCRIPT = `
   redis.call('DEL', socketKey)
   redis.call('DEL', 'ratelimit:' .. socketId)
 
-  return cjson.encode({ opponentSocketId = opponentSocketId })
+  return '{"opponentSocketId":"' .. opponentSocketId .. '"}'
 `;
 
 const io = new Server(server, {
@@ -207,8 +220,8 @@ const client = jwksClient({
   jwksUri: `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
 });
 
-function getKey(header, callback){
-  client.getSigningKey(header.kid, function(err, key) {
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, function (err, key) {
     if (err) {
       callback(err, null);
       return;
@@ -224,7 +237,7 @@ function verifyAuthToken(token) {
       resolve(null);
       return;
     }
-    jwt.verify(token, getKey, { algorithms: ["ES256", "RS256"] }, function(err, decoded) {
+    jwt.verify(token, getKey, { algorithms: ["ES256", "RS256"] }, function (err, decoded) {
       if (err) {
         resolve(null);
       } else {
@@ -296,7 +309,7 @@ const REFILL_RATE_MS = 200;
 async function isRateLimited(userId) {
   const key = `ratelimit:${userId}`;
   const now = Date.now();
-  
+
   const script = `
     local key = KEYS[1]
     local now = tonumber(ARGV[1])
@@ -328,7 +341,7 @@ async function isRateLimited(userId) {
     end
     return 1
   `;
-  
+
   const result = await redisClient.eval(script, 1, key, now, MAX_TOKENS, REFILL_RATE_MS);
   return result === 1;
 }
@@ -358,7 +371,7 @@ io.on("connection", async (socket) => {
   socket.on("join_matchmaking", async (data) => {
     try {
       if (await isRateLimited(socket.data.userId)) return;
-    
+
       console.log(`User joined matchmaking: userId=${socket.data.userId}`);
       const targetTopic = data.topic || "Arrays";
       const targetDifficulty = data.difficulty || "Easy";
@@ -505,7 +518,7 @@ io.on("connection", async (socket) => {
   socket.on("test_result", async (data) => {
     try {
       if (await isRateLimited(socket.data.userId)) return;
-      
+
       const matchId = await redisClient.hget(`socket:${socket.id}`, "matchId");
       if (!matchId || matchId !== data.matchId) return;
 
@@ -523,7 +536,7 @@ io.on("connection", async (socket) => {
   socket.on("match_complete", async (data) => {
     try {
       if (await isRateLimited(socket.data.userId)) return;
-      
+
       const matchId = await redisClient.hget(`socket:${socket.id}`, "matchId");
       if (!matchId || matchId !== data.matchId) return;
 
@@ -531,11 +544,21 @@ io.on("connection", async (socket) => {
         local matchKey = KEYS[1]
         local matchStr = redis.call('GET', matchKey)
         if not matchStr then return 0 end
-        local match = cjson.decode(matchStr)
-        if match.status == 'completed' then return 0 end
-        match.status = 'completed'
-        match.winnerId = ARGV[1]
-        redis.call('SET', matchKey, cjson.encode(match))
+        
+        -- Check if already completed
+        if string.find(matchStr, '"status"%s*:%s*"completed"') then
+          return 0
+        end
+        
+        -- Replace status and add/replace winnerId
+        local updated = string.gsub(matchStr, '"status"%s*:%s*"[^"]+"', '"status":"completed"')
+        if string.find(updated, '"winnerId"') then
+          updated = string.gsub(updated, '"winnerId"%s*:%s*"[^"]+"', '"winnerId":"' .. ARGV[1] .. '"')
+        else
+          updated = string.gsub(updated, '}%s*$', ',"winnerId":"' .. ARGV[1] .. '"}')
+        end
+        
+        redis.call('SET', matchKey, updated)
         return 1
       `;
 
@@ -604,10 +627,39 @@ io.on("connection", async (socket) => {
 });
 
 app.get("/debug", async (req, res) => {
-  res.json({
-    status: "Redis migration complete. Queue details are stored in Redis.",
-    activeConnections: io.engine.clientsCount
-  });
+  try {
+    const keys = await redisClient.keys('*');
+    const dbContent = {};
+    for (const key of keys) {
+      const type = await redisClient.type(key);
+      if (type === 'string') {
+        dbContent[key] = await redisClient.get(key);
+      } else if (type === 'list') {
+        dbContent[key] = await redisClient.lrange(key, 0, -1);
+      } else if (type === 'hash') {
+        dbContent[key] = await redisClient.hgetall(key);
+      } else {
+        dbContent[key] = `[type: ${type}]`;
+      }
+    }
+    const activeSockets = [];
+    for (const [id, s] of io.sockets.sockets.entries()) {
+      activeSockets.push({
+        socketId: id,
+        userId: s.data?.userId,
+        connected: s.connected
+      });
+    }
+    res.json({
+      status: "Redis debug info",
+      activeConnections: io.engine.clientsCount,
+      activeSockets: activeSockets,
+      redisKeys: keys,
+      redisContent: dbContent
+    });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
 });
 
 app.get("/health", (req, res) => {
