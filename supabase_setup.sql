@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
 ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Allow the service role to manage subscriptions
+DROP POLICY IF EXISTS "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions;
 CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
   USING (true) WITH CHECK (true);
 
