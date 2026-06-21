@@ -149,14 +149,11 @@ export default function ArenaPage() {
   }, []);
 
   const todaysChallenge = useMemo(() => {
-    const unsolvedProblems = allProblems.filter(
-      (problem) => getStatus(problem.id) !== "Completed"
-    );
+    if (allProblems.length === 0) return null;
 
-    if (unsolvedProblems.length === 0) return null;
-
-    const today = new Date().getDate();
-    const problem = unsolvedProblems[today % unsolvedProblems.length];
+    const daySeed = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+    const problem = allProblems[daySeed % allProblems.length];
+    if (!problem) return null;
     
     return {
       title: problem.name,
@@ -165,7 +162,7 @@ export default function ArenaPage() {
       xpAward: problem.difficulty === "Easy" ? 100 : problem.difficulty === "Medium" ? 250 : 500,
       practiceUrl: problem.practiceUrl
     };
-  }, [allProblems, progress, getStatus]);
+  }, [allProblems]);
 
 
   const ensureLoggedIn = () => {
@@ -177,10 +174,10 @@ export default function ArenaPage() {
     return true;
   };
 
-  const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, tournaments, badges, history
+  const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, streak, tournaments, badges, history
 
   const handleTabChange = (tabId) => {
-    if (["ranked", "friend", "badges", "history"].includes(tabId)) {
+    if (["ranked", "friend", "streak", "badges", "history"].includes(tabId)) {
       if (!ensureLoggedIn()) return;
     }
     if (typeof window !== "undefined") {
@@ -192,8 +189,8 @@ export default function ArenaPage() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
-      const validTabs = ["home", "live", "ranked", "friend", "leaderboard", "tournaments", "badges", "history"];
-      const protectedTabs = ["ranked", "friend", "badges", "history"];
+      const validTabs = ["home", "live", "ranked", "friend", "leaderboard", "streak", "tournaments", "badges", "history"];
+      const protectedTabs = ["ranked", "friend", "streak", "badges", "history"];
       
       if (validTabs.includes(hash)) {
         if (protectedTabs.includes(hash) && !user) {
@@ -218,27 +215,20 @@ export default function ArenaPage() {
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
-  const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
-  const [selectedOpponent, setSelectedOpponent] = useState(null);
-  const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
-  const [showXPWidget, setShowXPWidget] = useState(true);
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
-  // Fix for browser back button from Duel Simulator modal (Issue #1415)
   useEffect(() => {
     const handlePopState = (e) => {
       if (matchmakingOpen) {
         setMatchmakingOpen(false);
       } else if (createDuelOpen) {
         setCreateDuelOpen(false);
-      } else if (duelSimulatorOpen) {
-        setDuelSimulatorOpen(false);
       }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [matchmakingOpen, createDuelOpen, duelSimulatorOpen]);
+  }, [matchmakingOpen, createDuelOpen]);
 
   const openMatchmakingModal = () => {
     if (!ensureLoggedIn()) return;
@@ -265,20 +255,10 @@ export default function ArenaPage() {
       window.history.back();
     }
   };
-
-  const openDuelSimulator = (opponent, topic) => {
-    setSelectedOpponent(opponent);
-    setActiveDuelProblem(topic);
-    window.history.pushState({ modal: "duelSimulator" }, "", window.location.href);
-    setDuelSimulatorOpen(true);
-  };
-
-  const closeDuelSimulator = () => {
-    setDuelSimulatorOpen(false);
-    if (window.history.state?.modal === "duelSimulator") {
-      window.history.back();
-    }
-  };
+  const [duelSimulatorOpen, setDuelSimulatorOpen] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState(null);
+  const [activeDuelProblem, setActiveDuelProblem] = useState("Reverse Linked List");
+  const [showXPWidget, setShowXPWidget] = useState(true);
 
    useEffect(() => {
   if (typeof window !== "undefined") {
@@ -290,7 +270,7 @@ export default function ArenaPage() {
 }, [showXPWidget]);
 
   const [currentUserStats, setCurrentUserStats] = useState({
-    name: "Pankaj Singh",
+    name: "",
     level: 1,
     rating: 1200,
     xp: 0,
@@ -311,23 +291,23 @@ export default function ArenaPage() {
   }, [user, loading, profile]);
 
   const handleMatchFound = (opponent) => {
+    setSelectedOpponent(opponent);
     closeMatchmakingModal();
-    setTimeout(() => {
-      openDuelSimulator(opponent, "Two Sum");
-    }, 100);
+    setActiveDuelProblem("Two Sum");
+    setDuelSimulatorOpen(true);
   };
- 
+
   const handleWatchLive = (p1, p2, topic) => {
-    const opponent = { name: p2, rating: 2100, level: 15, avatar: p2.slice(0, 2).toUpperCase() };
-    openDuelSimulator(opponent, topic);
+    setSelectedOpponent({ name: p2, rating: 2100, level: 15, avatar: p2.slice(0, 2).toUpperCase() });
+    setActiveDuelProblem(topic);
+    setDuelSimulatorOpen(true);
   };
- 
+
   const handleCreateMatchLaunch = (matchConfig) => {
-    closeCreateDuelModal();
-    setTimeout(() => {
-      const opponent = { name: "Opponent", rating: 1600, level: 15, avatar: "OP" };
-      openDuelSimulator(opponent, matchConfig.topic);
-    }, 100);
+    setCreateDuelOpen(false);
+    setSelectedOpponent({ name: "Opponent", rating: 1600, level: 15, avatar: "OP" });
+    setActiveDuelProblem(matchConfig.topic);
+    setDuelSimulatorOpen(true);
   };
 
   if (loading) {
@@ -355,6 +335,7 @@ export default function ArenaPage() {
                   { id: "ranked", label: "Ranked Match", icon: Trophy },
                   { id: "friend", label: "Friend Challenge", icon: User },
                   { id: "leaderboard", label: "Leaderboard", icon: Activity },
+                  { id: "streak", label: "Daily Streak", icon: Flame },
                   { id: "tournaments", label: "Tournaments", icon: Trophy },
                   { id: "badges", label: "Badges", icon: Award },
                   { id: "history", label: "Match History", icon: History }
@@ -390,6 +371,9 @@ export default function ArenaPage() {
                   </span>
                   <div className="text-lg font-extrabold text-slate-800 dark:text-neutral-100 flex items-center gap-1.5 leading-none mt-0.5">
                     #{currentUserStats.rank}
+                    <span className="text-xs text-emerald-500 font-semibold flex items-center">
+                      ▲ 12
+                    </span>
                   </div>
                 </div>
               </div>
@@ -407,11 +391,11 @@ export default function ArenaPage() {
 
               <div className="space-y-1 mb-4">
                 <div className="flex justify-between text-[10px] text-slate-400 dark:text-neutral-500">
-                  <span>Next Rank: +{1000 - ((currentUserStats.xp || 0) % 1000)} XP</span>
-                  <span>{(currentUserStats.xp || 0) % 1000}/1000</span>
+                  <span>Next Rank: +180 XP</span>
+                  <span>{currentUserStats.xp % 1000}/1000</span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-neutral-900 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: `${((currentUserStats.xp || 0) % 1000) / 10}%` }} />
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${(currentUserStats.xp % 1000) / 10}%` }} />
                 </div>
               </div>
 
@@ -480,12 +464,12 @@ export default function ArenaPage() {
                           </div>
                         ) : (
                           <div className="w-full h-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold">
-                            {(currentUserStats.name || "Pankaj").split(" ")[0].substring(0,2).toUpperCase()}
+                            {(currentUserStats.name || "You").split(" ")[0].substring(0,2).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <span className="text-[10px] text-slate-300 block font-semibold mb-1 truncate max-w-[64px]">
-                        {leaderboard[1] ? (leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`) : (currentUserStats.name || "Pankaj").split(" ")[0]}
+                        {leaderboard[1] ? (leaderboard[1]?.name || `User ${leaderboard[1]?.userId.substring(0,4)}`) : (currentUserStats.name || "You").split(" ")[0]}
                       </span>
                       <span className="text-[9px] text-slate-400 block mb-2">{leaderboard[1] ? leaderboard[1].xp : currentUserStats.xp || 2320} XP</span>
                       <div className="w-14 h-12 bg-slate-800 border-t border-slate-700 rounded-t-lg flex items-center justify-center font-bold text-slate-400 shadow-lg text-lg">
@@ -1039,7 +1023,7 @@ export default function ArenaPage() {
 
       <DuelSimulatorModal
         isOpen={duelSimulatorOpen}
-        onClose={closeDuelSimulator}
+        onClose={() => setDuelSimulatorOpen(false)}
         opponent={selectedOpponent}
         currentUserStats={currentUserStats}
         problemName={activeDuelProblem}
