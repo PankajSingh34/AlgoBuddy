@@ -14,7 +14,8 @@ import {
   ExternalLink,
   BookOpen,
   Play,
-  ScrollText
+  ScrollText,
+  History
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
@@ -521,7 +522,7 @@ export default function PracticePage() {
                           if (!prob) return null;
                           const status = getStatus(prob.id);
                           return (
-                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                               <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                               <td className="py-4 px-5">
                                 <div className="font-bold text-xs text-slate-800 dark:text-white">{prob.name}</div>
@@ -732,7 +733,7 @@ export default function PracticePage() {
                             return (
                               <tr
                                 key={prob.id}
-                                className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
+                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
                               >
                                 <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
                                   {indexNumber}
@@ -877,14 +878,14 @@ export default function PracticePage() {
                           <button
                             onClick={() => setCurrentPage((c) => Math.max(1, c - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 border border-slate-200 dark:border-neutral-850 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
+                            className="p-2 border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
                           >
                             <ChevronLeft size={14} />
                           </button>
                           <button
                             onClick={() => setCurrentPage((c) => Math.min(totalPages, c + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 border border-slate-200 dark:border-neutral-850 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
+                            className="p-2 border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
                           >
                             <ChevronRight size={14} />
                           </button>
@@ -922,7 +923,7 @@ export default function PracticePage() {
                       { title: "Dynamic Programming Guide", desc: "Tutorial detailing Memoization vs Tabulation optimization patterns.", url: "/tutorials" },
                       { title: "Complexity Cheatsheet", desc: "Quick-reference matrix of time and space complexities for all structures.", url: "/cheatsheets" }
                     ].map((res, i) => (
-                      <div key={i} className="p-4 rounded-2xl border border-slate-100 dark:border-neutral-850 hover:border-primary transition duration-300">
+                      <div key={i} className="p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 hover:border-primary transition duration-300">
                         <h4 className="text-xs font-black text-slate-800 dark:text-white flex items-center gap-1">
                           <span>{res.title}</span>
                           <ExternalLink size={12} className="text-slate-400" />
@@ -990,7 +991,7 @@ export default function PracticePage() {
                           const bInfo = bookmarks.find(b => b.id === prob.id);
                           const dateStr = bInfo?.createdAt ? new Date(bInfo.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "Recently";
                           return (
-                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                               <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                               <td className="py-4 px-5">
                                 <a href={prob.practiceUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition">
@@ -1087,7 +1088,7 @@ export default function PracticePage() {
                           const progInfo = progress[prob.id];
                           const dateStr = progInfo?.updatedAt ? new Date(progInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) : "Recently";
                           return (
-                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                               <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                               <td className="py-4 px-5">
                                 <a href={prob.practiceUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 transition">
@@ -1218,7 +1219,7 @@ export default function PracticePage() {
                               const status = getStatus(prob.id);
                               const isSaved = isBookmarked(prob.id);
                               return (
-                                <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                                <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                                   <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                                   <td className="py-4 px-5">
                                     <a
@@ -1327,7 +1328,7 @@ export default function PracticePage() {
                     }}
                     className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 shadow-sm hover:border-primary dark:hover:border-purple-500 transition duration-300 text-center select-none"
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-neutral-850 mb-3 border border-slate-100 dark:border-neutral-800">
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-neutral-800 mb-3 border border-slate-100 dark:border-neutral-800">
                       {/* Reuse dynamic CompanyLogos logo defs by passing array */}
                       <CompanyLogos companies={[comp.name]} />
                     </div>

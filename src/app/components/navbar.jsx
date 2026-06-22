@@ -174,10 +174,6 @@ export default function Navbar() {
     };
   }, [menuOpen]);
 
-  useEffect(() => {
-  console.log("Navbar User:", user?.user_metadata);
-}, [user]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);

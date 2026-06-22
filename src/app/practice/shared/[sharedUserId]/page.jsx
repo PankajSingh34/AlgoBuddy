@@ -250,7 +250,7 @@ export default function SharedSheetPage() {
                       {mappedProblems.map((prob, idx) => (
                         <tr 
                           key={prob.id} 
-                          className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
+                          className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
                         >
                           <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
                             {idx + 1}

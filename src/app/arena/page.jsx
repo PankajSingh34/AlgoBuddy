@@ -675,7 +675,7 @@ export default function ArenaPage() {
                                 if (!ensureLoggedIn()) return;
                                 handleWatchLive("You", opponentName, topic);
                               }}
-                              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-neutral-900 dark:hover:bg-neutral-850 border border-slate-200 dark:border-neutral-800 rounded-xl font-bold transition shrink-0"
+                              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 rounded-xl font-bold transition shrink-0"
                             >
                               Replay
                             </button>
