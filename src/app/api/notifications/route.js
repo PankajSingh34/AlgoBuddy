@@ -2,6 +2,29 @@ import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+function parsePagination(searchParams) {
+  const page = Number(searchParams.get("page") ?? DEFAULT_PAGE);
+  const limit = Number(searchParams.get("limit") ?? DEFAULT_LIMIT);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return { error: "page must be a positive integer" };
+  }
+
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
+    return { error: `limit must be an integer between 1 and ${MAX_LIMIT}` };
+  }
+
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit,
+  };
+}
+
 export async function GET(request) {
   try {
     const authResult = await getAuthenticatedUser();
@@ -11,9 +34,19 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
-    const skip = (page - 1) * limit;
+    const pagination = parsePagination(searchParams);
+
+    if (pagination.error) {
+      return jsonResponse({
+        error: pagination.error,
+        notifications: [],
+        totalPages: 0,
+        currentPage: DEFAULT_PAGE,
+        totalUnread: 0,
+      }, 400);
+    }
+
+    const { page, limit, skip } = pagination;
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
