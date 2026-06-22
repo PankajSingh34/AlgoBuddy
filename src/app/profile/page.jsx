@@ -35,6 +35,8 @@ const heatLevelClass = {
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
 const MAX_AVATAR_URL_LENGTH = 512;
+const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_AVATAR_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 
 const allPracticeProblems = practiceData.flatMap((topic) =>
   topic.subsections.flatMap((section) =>
@@ -374,9 +376,11 @@ export default function ProfilePage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+
+    if (!ALLOWED_AVATAR_TYPES.has(file.type) || !ALLOWED_AVATAR_EXTENSIONS.has(extension)) {
       event.target.value = "";
-      toast.error("Please choose an image file");
+      toast.error("Please choose a JPG, PNG, or WebP image");
       return;
     }
 
@@ -390,7 +394,6 @@ export default function ProfilePage() {
       setSavingAvatar(true);
 
       try {
-        const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const filePath = `${user.id}/avatar-${Date.now()}.${extension}`;
         const { error: uploadError } = await supabase.storage
           .from(AVATAR_BUCKET)
