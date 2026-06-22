@@ -4,6 +4,29 @@ import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serv
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+function parsePagination(searchParams) {
+  const page = Number(searchParams.get("page") ?? DEFAULT_PAGE);
+  const limit = Number(searchParams.get("limit") ?? DEFAULT_LIMIT);
+
+  if (!Number.isInteger(page) || page < 1) {
+    return { error: "page must be a positive integer" };
+  }
+
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_LIMIT) {
+    return { error: `limit must be an integer between 1 and ${MAX_LIMIT}` };
+  }
+
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit,
+  };
+}
+
 export async function GET(request) {
   try {
     const ip = getClientIp(request.headers);
@@ -14,10 +37,20 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
+    const pagination = parsePagination(searchParams);
     const search = (searchParams.get("search") || "").trim();
-    const skip = (page - 1) * limit;
+
+    if (pagination.error) {
+      return jsonResponse({
+        error: pagination.error,
+        jobs: [],
+        totalPages: 0,
+        currentPage: DEFAULT_PAGE,
+        totalJobs: 0,
+      }, 400);
+    }
+
+    const { page, limit, skip } = pagination;
 
     if (search && search.length < 2) {
       return jsonResponse({
