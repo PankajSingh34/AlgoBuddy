@@ -19,6 +19,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   const [socket, setSocket] = useState(null);
 
   const logContainerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Formatting time helper
   const formatTime = (secs) => {
@@ -178,10 +179,25 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   const handleCodeChange = (value) => {
     setUserCode(value);
     if (socket && opponent?.matchId) {
-      socket.emit("code_update", {
-        matchId: opponent.matchId,
-        code: value
-      });
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      } else {
+        // If no timeout existed, we just started typing!
+        socket.emit("typing_status", {
+          matchId: opponent.matchId,
+          isTyping: true
+        });
+      }
+
+      // Set timeout to stop typing after 1.5s
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("typing_status", {
+          matchId: opponent.matchId,
+          isTyping: false
+        });
+        typingTimeoutRef.current = null;
+      }, 1500);
     }
   };
 
