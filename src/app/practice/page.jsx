@@ -225,11 +225,14 @@ export default function PracticePage() {
       const prob = allProblems.find((p) => p.id === problemId);
       if (!prob) return;
 
+      const activityDate = new Date(updatedAt);
+      if (Number.isNaN(activityDate.getTime())) return;
+
       activities.push({
         problemId,
         title: status === "Completed" ? `Solved ${prob.name}` : `Attempted ${prob.name}`,
         status,
-        updatedAt: new Date(updatedAt),
+        updatedAt: activityDate,
         statusColor: status === "Completed" ? "bg-emerald-500" : "bg-amber-500"
       });
     });
