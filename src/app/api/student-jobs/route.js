@@ -4,6 +4,14 @@ import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serv
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 
+function escapeIlikeSearch(value) {
+  return value
+    .replace(/[\\%_]/g, "\\$&")
+    .replace(/[(),]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function GET(request) {
   try {
     const ip = getClientIp(request.headers);
@@ -37,7 +45,18 @@ export async function GET(request) {
       .range(skip, skip + limit - 1);
 
     if (search) {
-      const term = `${search}%`;
+      const safeSearch = escapeIlikeSearch(search);
+      if (!safeSearch) {
+        return jsonResponse({
+          error: "Search term must include searchable text.",
+          jobs: [],
+          totalPages: 0,
+          currentPage: page,
+          totalJobs: 0,
+        }, 400);
+      }
+
+      const term = `${safeSearch}%`;
       query = query.or(
         `title.ilike.${term},company.ilike.${term},location.ilike.${term}`
       );
