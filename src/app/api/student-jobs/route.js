@@ -1,8 +1,16 @@
 import { cookies } from "next/headers";
-import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
+import { parsePagination } from "@/lib/apiPagination";
+
+function escapeIlikeSearch(value) {
+  return value
+    .replace(/[\\%_]/g, "\\$&")
+    .replace(/[(),]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export async function GET(request) {
   try {
@@ -14,10 +22,20 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
     const search = (searchParams.get("search") || "").trim();
-    const skip = (page - 1) * limit;
+    const pagination = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 });
+
+    if (pagination.error) {
+      return jsonResponse({
+        error: pagination.error,
+        jobs: [],
+        totalPages: 0,
+        currentPage: 1,
+        totalJobs: 0,
+      }, 400);
+    }
+
+    const { page, limit, from, to } = pagination;
 
     if (search && search.length < 2) {
       return jsonResponse({
@@ -34,10 +52,20 @@ export async function GET(request) {
       .select("*", { count: "exact" })
       .eq("status", "approved")
       .order("created_at", { ascending: false })
-      .range(skip, skip + limit - 1);
+      .range(from, to);
 
     if (search) {
-      const term = `${search}%`;
+      const safeSearch = escapeIlikeSearch(search);
+      if (!safeSearch) {
+        return jsonResponse({
+          error: "Search term must include searchable text.",
+          jobs: [],
+          totalPages: 0,
+          currentPage: page,
+          totalJobs: 0,
+        }, 400);
+      }
+      const term = `${safeSearch}%`;
       query = query.or(
         `title.ilike.${term},company.ilike.${term},location.ilike.${term}`
       );

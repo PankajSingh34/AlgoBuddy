@@ -225,11 +225,14 @@ export default function PracticePage() {
       const prob = allProblems.find((p) => p.id === problemId);
       if (!prob) return;
 
+      const activityDate = new Date(updatedAt);
+      if (Number.isNaN(activityDate.getTime())) return;
+
       activities.push({
         problemId,
         title: status === "Completed" ? `Solved ${prob.name}` : `Attempted ${prob.name}`,
         status,
-        updatedAt: new Date(updatedAt),
+        updatedAt: activityDate,
         statusColor: status === "Completed" ? "bg-emerald-500" : "bg-amber-500"
       });
     });
@@ -310,6 +313,10 @@ export default function PracticePage() {
     return filtered;
   }, [allProblems, searchQuery, selectedTopic, selectedCompanyFilter, activeView, bookmarks, progress, getStatus, isBookmarked]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTopic, selectedCompanyFilter, activeView]);
+
   // Paginated problems
   const paginatedProblems = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -317,6 +324,12 @@ export default function PracticePage() {
   }, [filteredProblems, currentPage]);
 
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleShareSheet = () => {
     if (!user) return;

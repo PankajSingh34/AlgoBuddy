@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { parsePagination } from "@/lib/apiPagination";
 
 export async function GET(request) {
   try {
@@ -11,9 +12,19 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
-    const skip = (page - 1) * limit;
+    const pagination = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 });
+
+    if (pagination.error) {
+      return jsonResponse({
+        error: pagination.error,
+        notifications: [],
+        totalPages: 0,
+        currentPage: 1,
+        totalUnread: 0,
+      }, 400);
+    }
+
+    const { page, limit, from, to } = pagination;
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
@@ -23,7 +34,7 @@ export async function GET(request) {
       .select("*, job:job_id(title, company)", { count: "exact" })
       .eq("student_id", authResult.user.id)
       .order("created_at", { ascending: false })
-      .range(skip, skip + limit - 1);
+      .range(from, to);
 
     if (unreadOnly) {
       query = query.eq("read", false);
@@ -110,14 +121,14 @@ export async function PATCH(request) {
     // the authenticated user. The .eq("student_id", ...) above ensures the
     // operation is always scoped to the requesting user.
 
-    const { error, count } = await query;
+    const { data: updatedRows, error } = await query.select("id");
 
     if (error) {
       console.error("[/api/notifications PATCH] Supabase error:", error.message);
       return jsonResponse({ error: error.message }, 500);
     }
 
-    return jsonResponse({ success: true, updated: count ?? 0 });
+    return jsonResponse({ success: true, updated: updatedRows?.length ?? 0 });
   } catch (error) {
     return errorResponse(error);
   }
