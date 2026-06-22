@@ -59,17 +59,14 @@ const getEntryDate = (entry) => {
 
 const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value || 0);
 
-const seededRandom = (seed) => {
-  const value = Math.sin(seed * 9999) * 10000;
-  return value - Math.floor(value);
-};
-
 const safeAvatarUrl = (value) => {
   if (typeof value !== "string") return "";
   if (value.startsWith("data:")) return "";
   if (value.length > MAX_AVATAR_URL_LENGTH) return "";
   return value;
 };
+
+const getDateKey = (date) => date.toISOString().slice(0, 10);
 
 function LeetCodeIcon() {
   return (
@@ -195,24 +192,32 @@ export default function ProfilePage() {
   }, [completedEntries, progressEntries, streakData?.monthlySolved]);
 
   const activitySummary = useMemo(() => {
-    const heatmapData = Array.from({ length: 343 }, (_, index) => {
-      const wave = Math.sin(index / 9) + Math.cos(index / 17);
-      const activityChance = 0.42 + wave * 0.08;
-      const activityRoll = seededRandom(index + 1);
-      const levelRoll = seededRandom(index + 101);
+    const activityByDate = new Map();
 
-      if (activityRoll > activityChance) return 0;
-      if (levelRoll > 0.74) return 4;
-      if (levelRoll > 0.58) return 3;
-      if (levelRoll > 0.38) return 2;
-      return 1;
+    progressEntries.forEach((entry) => {
+      if (!entry.updatedAt || entry.status === "Not Started") return;
+      const key = getDateKey(entry.updatedAt);
+      activityByDate.set(key, (activityByDate.get(key) || 0) + 1);
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const heatmapData = Array.from({ length: 343 }, (_, index) => {
+      const cellDate = new Date(today);
+      cellDate.setDate(today.getDate() - (342 - index));
+      const count = activityByDate.get(getDateKey(cellDate)) || 0;
+
+      if (count === 0) return 0;
+      if (count >= 4) return 4;
+      return count;
     });
 
     return {
       heatmapData,
       activeDays: heatmapData.filter((level) => level > 0).length,
     };
-  }, []);
+  }, [progressEntries]);
 
   const dsaProgress = useMemo(
     () =>
