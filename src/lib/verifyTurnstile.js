@@ -15,7 +15,6 @@ export function getCaptchaSecret() {
  */
 export async function verifyTurnstile(captchaToken, opts = {}) {
   const secretKey = getCaptchaSecret();
-  console.error('Turnstile config valid:', !!secretKey);
 
   const token = String(captchaToken || "").trim();
   if (!token) {
@@ -44,8 +43,6 @@ export async function verifyTurnstile(captchaToken, opts = {}) {
   }
 
   const data = await response.json().catch(() => null);
-  
-  console.error('Turnstile verify success:', !!data?.success);
 
   if (!data?.success) {
     const errorCodes = data?.["error-codes"] || [];
