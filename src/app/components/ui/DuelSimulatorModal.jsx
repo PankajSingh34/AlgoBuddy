@@ -19,6 +19,8 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   const [socket, setSocket] = useState(null);
 
   const logContainerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const opponentIdleTimerRef = useRef(null);
 
   // Formatting time helper
   const formatTime = (secs) => {
@@ -144,18 +146,50 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       }
     });
 
-    newSocket.on("opponent_code_update", (data) => {
-      setOppCode(data.code);
+    newSocket.on("opponent_typing_status", (data) => {
+      if (opponentIdleTimerRef.current) {
+        clearTimeout(opponentIdleTimerRef.current);
+        opponentIdleTimerRef.current = null;
+      }
+
+      if (data.isTyping) {
+        setOppCode("// Opponent is typing...");
+      } else {
+        setOppCode("// Opponent is thinking...");
+        
+        // Transition to idle after 15 seconds of inactivity
+        opponentIdleTimerRef.current = setTimeout(() => {
+          setOppCode((prev) => {
+            if (prev.includes("thinking")) return "// Opponent went idle...";
+            return prev;
+          });
+        }, 15000);
+      }
     });
 
     newSocket.on("opponent_test_submit", () => {
       setOppStatus("Running tests...");
+      setOppCode("// Opponent is executing code...");
       addLog("Opponent is executing code.");
     });
 
     newSocket.on("opponent_test_result", (data) => {
       setOppStatus(`Tested. Status: ${data.status}`);
       addLog(`Opponent execution result: ${(data.status === 3 || data.status === "SUCCESS") ? "Accepted" : "Failed"}`);
+      
+      if (data.passed) {
+        setOppCode("// Opponent's tests passed!");
+      } else {
+        setOppCode("// Opponent's tests failed...");
+      }
+      
+      // After 3 seconds, if they haven't won the match, revert to thinking
+      setTimeout(() => {
+        setOppCode((prev) => {
+          if (prev.includes("tests")) return "// Opponent is thinking...";
+          return prev;
+        });
+      }, 3000);
     });
 
     newSocket.on("match_ended", (data) => {
@@ -171,17 +205,33 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
     });
 
     return () => {
+      if (opponentIdleTimerRef.current) clearTimeout(opponentIdleTimerRef.current);
       newSocket.disconnect();
     };
-  }, [isOpen, opponent]);
+  }, [isOpen, opponent?.matchId]);
 
   const handleCodeChange = (value) => {
     setUserCode(value);
     if (socket && opponent?.matchId) {
-      socket.emit("code_update", {
-        matchId: opponent.matchId,
-        code: value
-      });
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      } else {
+        // If no timeout existed, we just started typing!
+        socket.emit("typing_status", {
+          matchId: opponent.matchId,
+          isTyping: true
+        });
+      }
+
+      // Set timeout to stop typing after 1.5s
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("typing_status", {
+          matchId: opponent.matchId,
+          isTyping: false
+        });
+        typingTimeoutRef.current = null;
+      }, 1500);
     }
   };
 

@@ -491,25 +491,42 @@ io.on("connection", async (socket) => {
       const match = JSON.parse(matchStr);
       const isParticipant = match.players && match.players.some(p => p.userId === socket.data.userId);
       if (!isParticipant) return;
+      
       socket.join(data.matchId);
+      await redisClient.hset(`{arena}:socket:${socket.id}`, "matchId", data.matchId);
     } catch (error) {
       console.error(`[join_match] Error for user ${socket.data.userId}:`, error);
     }
   });
 
   // Duel Room Events
-  socket.on("code_update", async (data) => {
+  socket.on("typing_status", async (data) => {
     try {
       if (await isRateLimited(socket.data.userId)) return;
       const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
       if (!matchId || matchId !== data.matchId) return;
 
-      socket.to(data.matchId).emit("opponent_code_update", {
-        code: data.code,
+      socket.to(data.matchId).emit("opponent_typing_status", {
+        isTyping: data.isTyping,
         userId: socket.data.userId
       });
     } catch (error) {
-      console.error(`[code_update] Error for user ${socket.data.userId}:`, error);
+      console.error(`[typing_status] Error for user ${socket.data.userId}:`, error);
+    }
+  });
+
+  socket.on("test_result", async (data) => {
+    try {
+      if (await isRateLimited(socket.data.userId)) return;
+      const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
+      if (!matchId || matchId !== data.matchId) return;
+
+      socket.to(data.matchId).emit("opponent_test_result", {
+        passed: data.passed,
+        userId: socket.data.userId
+      });
+    } catch (error) {
+      console.error(`[test_result] Error for user ${socket.data.userId}:`, error);
     }
   });
 
