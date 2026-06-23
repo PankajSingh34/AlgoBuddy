@@ -414,7 +414,7 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
                       y1={edge.y1}
                       x2={edge.x2}
                       y2={edge.y2}
-                      className="stroke-slate-300 dark:stroke-slate-700"
+                      stroke="#334155"
                       strokeWidth="2.5"
                       className="transition-all duration-300"
                     />
@@ -471,7 +471,7 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
                           x={node.x}
                           y={node.y + 4.5}
                           textAnchor="middle"
-                          className="fill-white dark:fill-slate-800"
+                          fill="#ffffff"
                           fontSize="12"
                           fontWeight="bold"
                         >
@@ -482,7 +482,7 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
                           x={node.x}
                           y={node.y + 39}
                           textAnchor="middle"
-                          className="fill-slate-400 dark:fill-slate-400"
+                          fill="#94a3b8"
                           fontSize="9"
                           fontWeight="700"
                         >

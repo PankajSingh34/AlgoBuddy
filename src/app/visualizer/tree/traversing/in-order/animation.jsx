@@ -347,7 +347,7 @@ export default function InOrderVisualizer() {
                     y1={edge.y1}
                     x2={edge.x2}
                     y2={edge.y2}
-                    className="stroke-slate-400 dark:stroke-slate-400"
+                    stroke="#94a3b8"
                     strokeWidth="2"
                     className="dark:stroke-gray-600"
                   />

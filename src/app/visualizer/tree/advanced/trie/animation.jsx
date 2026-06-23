@@ -378,32 +378,33 @@ export default function TrieAnimation() {
                 y1={edge.y1}
                 x2={edge.x2}
                 y2={edge.y2}
+                stroke={edge.state === "active" ? "#10b981" : "#475569"}
                 strokeWidth={edge.state === "active" ? 4 : 2}
-                className={`transition-all duration-300 ${edge.state === "active" ? "stroke-emerald-500" : "stroke-slate-300 dark:stroke-slate-600"}`}
+                className="transition-all duration-300"
                 strokeOpacity={edge.state === "active" ? 1 : 0.3}
               />
             ))}
             {renderNodes.map((node) => {
-              let bgClass = "fill-white dark:fill-slate-800";
-              let strokeClass = "stroke-slate-300 dark:stroke-slate-600";
-              let textClass = "fill-slate-700 dark:fill-slate-200";
+              let bgColor = "#1e293b"; // Default slate-800
+              let strokeColor = "#334155";
+              let textColor = "#f8fafc";
               let strokeWidth = 2;
 
               if (node.state === "visiting" || node.state === "active") {
-                bgClass = "fill-emerald-100 dark:fill-emerald-500/20";
-                strokeClass = "stroke-emerald-500 dark:stroke-emerald-400";
-                textClass = "fill-emerald-700 dark:fill-emerald-400";
+                bgColor = "#10b981"; // Emerald
+                strokeColor = "#059669";
+                textColor = "#ffffff";
               } else if (node.state === "matched") {
-                bgClass = "fill-amber-100 dark:fill-amber-500/20";
-                strokeClass = "stroke-amber-500 dark:stroke-amber-400";
-                textClass = "fill-amber-700 dark:fill-amber-400";
+                bgColor = "#f59e0b"; // Amber
+                strokeColor = "#d97706";
+                textColor = "#ffffff";
               } else if (node.state === "error") {
-                bgClass = "fill-rose-100 dark:fill-rose-500/20";
-                strokeClass = "stroke-rose-500 dark:stroke-rose-400";
-                textClass = "fill-rose-700 dark:fill-rose-400";
+                bgColor = "#f43f5e"; // Rose
+                strokeColor = "#e11d48";
+                textColor = "#ffffff";
               } else {
                 if (node.isEndOfWord) {
-                  strokeClass = "stroke-indigo-500 dark:stroke-indigo-400";
+                  strokeColor = "#6366f1"; // Indigo border for end of word
                   strokeWidth = 4;
                 }
               }
@@ -414,17 +415,20 @@ export default function TrieAnimation() {
                     cx={node.x}
                     cy={node.y}
                     r={24}
+                    fill={bgColor}
+                    stroke={strokeColor}
                     strokeWidth={strokeWidth}
-                    className={`transition-all duration-300 shadow-sm ${bgClass} ${strokeClass}`}
+                    className="transition-all duration-300 shadow-sm"
                   />
                   <text
                     x={node.x}
                     y={node.y}
                     textAnchor="middle"
                     dy=".3em"
+                    fill={textColor}
                     fontSize="18px"
                     fontWeight="600"
-                    className={`font-sans ${textClass}`}
+                    className="font-sans"
                   >
                     {node.char}
                   </text>
@@ -434,10 +438,10 @@ export default function TrieAnimation() {
                       cy={node.y}
                       r={20}
                       fill="none"
+                      stroke={strokeColor}
                       strokeWidth={1}
                       strokeDasharray="4 2"
                       opacity={0.5}
-                      className={strokeClass}
                     />
                   )}
                 </g>
