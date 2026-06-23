@@ -5,7 +5,6 @@ import { UserProvider } from "@/features/user/UserContext";
 import { NotificationProvider } from "@/features/notifications/NotificationContext";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
-import ScrollToBottom from "@/app/components/ui/scrolltobottom";
 import VoiceAgent from "@/app/components/VoiceAgent";
 import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
@@ -154,7 +153,6 @@ export default async function RootLayout({ children }) {
           </NotificationProvider>
         </UserProvider>
       <BackToTop />
-      <ScrollToBottom />
       <VoiceAgent />
         <SpeedInsights />
       </body>
