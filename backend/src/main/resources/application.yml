@@ -28,6 +28,18 @@ spring:
 server:
   port: ${PORT:8080}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+
 supabase:
   url: ${SUPABASE_URL:https://your-project-id.supabase.co}
 
