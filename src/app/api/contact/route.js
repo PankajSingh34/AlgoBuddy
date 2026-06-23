@@ -5,6 +5,10 @@ import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 import { RATE_LIMITS } from "@/config/rateLimits";
 
+function sanitizeForPlainText(value) {
+  return String(value).replace(/[\r\n\x00-\x1f\x7f]/g, "");
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -107,10 +111,10 @@ export async function POST(req) {
       to: process.env.EMAIL_USER,
       subject: `New Contact Form Submission: ${trimmedSubject}`,
       text: `
-        Name: ${trimmedName}
-        Email: ${trimmedEmail}
-        Subject: ${trimmedSubject}
-        Message: ${trimmedMessage}
+        Name: ${sanitizeForPlainText(trimmedName)}
+        Email: ${sanitizeForPlainText(trimmedEmail)}
+        Subject: ${sanitizeForPlainText(trimmedSubject)}
+        Message: ${sanitizeForPlainText(trimmedMessage)}
       `,
       html: `
         <h2>New Contact Form Submission</h2>
