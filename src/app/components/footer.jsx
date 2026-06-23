@@ -53,24 +53,24 @@ const Footer = () => {
   };
 
   const footerHeading =
-    'text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600'
+    'text-slate-900 dark:text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-slate-300 dark:after:bg-gray-600'
   const footerLink =
-    'block text-gray-400 hover:text-white transition-colors duration-300 text-sm'
+    'block text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm'
   const socialIcon =
-    'w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-primary/20 hover:border-primary/50 hover:text-white transition-all duration-300'
+    'w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-primary/20 hover:border-primary/50 hover:text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-gray-400 dark:hover:text-white transition-all duration-300'
 
   return (
     <>
-      <footer className="relative bg-udemy-dark-bg text-gray-400 overflow-hidden border-t border-white/5">
+      <footer className="relative bg-white text-slate-600 overflow-hidden border-t border-slate-200 dark:bg-udemy-dark-bg dark:text-gray-400 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-12">
             {/* Left Section */}
             <div>
-              <h2 className="text-4xl font-black tracking-tight text-white">
+              <h2 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 Algo<span className="text-primary">Buddy</span>
               </h2>
 
-              <p className="mt-6 text-sm leading-8 max-w-xs text-gray-400">
+              <p className="mt-6 text-sm leading-8 max-w-xs text-slate-600 dark:text-gray-400">
                 Interactive visualization tools for mastering data structures
                 and algorithms.
               </p>
@@ -128,12 +128,12 @@ const Footer = () => {
 
               {/* Newsletter */}
               <form onSubmit={handleNewsletterSubscribe} className="mt-10">
-                <h3 className="text-white font-semibold mb-2">Stay updated</h3>
-                <p className="text-sm mb-4 text-gray-400 max-w-xs">
+                <h3 className="text-slate-900 dark:text-white font-semibold mb-2">Stay updated</h3>
+                <p className="text-sm mb-4 text-slate-600 dark:text-gray-400 max-w-xs">
                   Subscribe to get the latest updates, features, and tutorials.
                 </p>
 
-                <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/5 focus-within:border-primary/50 transition-colors w-full max-w-sm">
+                <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-primary/50 transition-colors w-full max-w-sm dark:border-white/10 dark:bg-white/5">
                   <input
                     type="email"
                     placeholder="Enter your email"
@@ -142,7 +142,7 @@ const Footer = () => {
                       setNewsletterEmail(e.target.value);
                       validateEmail(e.target.value, false);
                     }}
-                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
+                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-slate-900 placeholder-slate-400 dark:text-white dark:placeholder-gray-500"
                   />
                   <button type="submit" className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
                     Subscribe
@@ -212,7 +212,7 @@ const Footer = () => {
             {/* Community */}
             <div>
               <h3 className={footerHeading}>Community</h3>
-              <p className="text-sm text-gray-400 mb-6 leading-relaxed pr-4">
+              <p className="text-sm text-slate-600 dark:text-gray-400 mb-6 leading-relaxed pr-4">
                 Join our community and connect with learners and developers.
               </p>
               <div className="space-y-4">
@@ -220,7 +220,7 @@ const Footer = () => {
                   href="https://discord.gg/PqnazRxPc"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
@@ -228,7 +228,7 @@ const Footer = () => {
                   href="https://github.com/PankajSingh34/AlgoBuddy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaGithub className="w-4 h-4" /> GitHub
                 </a>
@@ -236,7 +236,7 @@ const Footer = () => {
                   href="https://www.youtube.com/@AlgoBuddy.connect"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaYoutube className="w-4 h-4" /> YouTube
                 </a>
@@ -244,7 +244,7 @@ const Footer = () => {
                   href="https://www.instagram.com/algobuddy.connect/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaInstagram className="w-4 h-4" /> Instagram
                 </a>
@@ -252,7 +252,7 @@ const Footer = () => {
                   href="https://x.com/AlgoBuddy_"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   <FaTwitter className="w-4 h-4" /> Twitter
                 </a>
@@ -264,7 +264,7 @@ const Footer = () => {
               <h3 className={footerHeading}>Legal</h3>
               <div className="space-y-4">
                 <Link href="/privacy"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   Privacy Policy
                 </Link>
@@ -281,7 +281,7 @@ const Footer = () => {
                   Cookies Policy
                 </button>
                 <Link href="/code-of-conduct"
-                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  className="flex items-center gap-3 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
                   Code Of Conduct
                 </Link>
@@ -290,7 +290,7 @@ const Footer = () => {
           </div>
 
           {/* Bottom Row */}
-          <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <div className="border-t border-slate-200 dark:border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 dark:text-gray-500">
             <p>© {new Date().getFullYear()} AlgoBuddy. All rights reserved.</p>
             <p>
               Made with <span className="text-primary">💜</span> by developers,
