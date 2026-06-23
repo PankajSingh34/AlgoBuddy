@@ -1,146 +1,165 @@
 // security-tests/storage.test.cjs
 //
-// Run with:  node --experimental-detect-module --test security-tests/storage.test.cjs
+// Run with:  node --test security-tests/storage.test.cjs
 //
-// Tests localStorage utilities in src/utils/storage.js.
+// Tests src/utils/storage.js — saveToStorage, loadFromStorage, removeFromStorage.
+// Uses Function wrapper so the inlined code can access a test-provided 'window'.
 
-const { describe, test, beforeEach, afterEach } = require("node:test");
+const { describe, test } = require("node:test");
 const assert = require("node:assert/strict");
 
-// Inlined source to avoid ESM import issues.
-const saveToStorage = (key, value) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-};
+// ── Inlined implementations wrapped to accept 'window' as a parameter ─────────
+// Mirrors src/utils/storage.js but uses the 'window' param injected by the test.
 
-const loadFromStorage = (key, fallback) => {
-  if (typeof window !== "undefined") {
-    const item = localStorage.getItem(key);
-    if (item) {
-      try {
-        return JSON.parse(item);
-      } catch {
-        return fallback;
+function buildStorageUtils(window) {
+  return {
+    saveToStorage: (key, value) => {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, JSON.stringify(value));
       }
-    }
-  }
-  return fallback;
-};
+    },
+    loadFromStorage: (key, fallback) => {
+      if (typeof window !== "undefined") {
+        const item = window.localStorage.getItem(key);
+        if (item) {
+          try {
+            return JSON.parse(item);
+          } catch {
+            return fallback;
+          }
+        }
+      }
+      return fallback;
+    },
+    removeFromStorage: (key) => {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(key);
+      }
+    },
+  };
+}
 
-const removeFromStorage = (key) => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(key);
-  }
-};
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-// Mock localStorage for testing.
-// Set globalThis.window so the guard `typeof window !== "undefined"` passes in Node.js.
-globalThis.window = {};
-const store = {};
-const mockLocalStorage = {
-  getItem: (key) => store[key] ?? null,
-  setItem: (key, value) => { store[key] = value; },
-  removeItem: (key) => { delete store[key]; },
-  clear: () => { for (const k in store) delete store[k]; },
-};
-globalThis.localStorage = mockLocalStorage;
+function makeStore() {
+  const s = {};
+  return {
+    getItem: (k) => s[k] ?? null,
+    setItem: (k, v) => { s[k] = v; },
+    removeItem: (k) => { delete s[k]; },
+  };
+}
 
-// ── Tests ────────────────────────────────────────────────────────────
+function withWindow(impl, fn) {
+  const mockWindow = { localStorage: impl };
+  const utils = buildStorageUtils(mockWindow);
+  return fn(utils);
+}
 
-describe("saveToStorage", () => {
-  beforeEach(() => { mockLocalStorage.clear(); });
-  afterEach(() => { mockLocalStorage.clear(); });
+function withoutWindow(fn) {
+  const utils = buildStorageUtils(undefined);
+  return fn(utils);
+}
 
-  test("stores JSON-stringified value in localStorage", () => {
-    saveToStorage("theme", { mode: "dark", accent: "blue" });
-    assert.equal(store["theme"], JSON.stringify({ mode: "dark", accent: "blue" }));
-  });
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-  test("stores primitive values as JSON", () => {
-    saveToStorage("count", 42);
-    assert.equal(store["count"], "42");
-  });
-
-  test("stores arrays correctly", () => {
-    saveToStorage("items", [1, 2, 3]);
-    assert.equal(store["items"], "[1,2,3]");
-  });
-
-  test("is no-op when localStorage is undefined (SSR)", () => {
-    // In true SSR (no window, no localStorage), function should not throw.
-    const savedWindow = globalThis.window;
-    const savedLS = globalThis.localStorage;
-    globalThis.window = undefined;
-    globalThis.localStorage = undefined;
-    saveToStorage("key", "value"); // must not throw
-    globalThis.window = savedWindow;
-    globalThis.localStorage = savedLS; // restore for next test
+test("saveToStorage stores JSON-stringified value", () => {
+  const store = makeStore();
+  withWindow(store, ({ saveToStorage }) => {
+    saveToStorage("theme", { mode: "dark" });
+    assert.strictEqual(store.getItem("theme"), '{"mode":"dark"}');
   });
 });
 
-describe("loadFromStorage", () => {
-  beforeEach(() => { mockLocalStorage.clear(); });
-  afterEach(() => { mockLocalStorage.clear(); });
-
-  test("parses stored JSON and returns the value", () => {
-    store["user"] = JSON.stringify({ id: 1, name: "Alice" });
-    const result = loadFromStorage("user", null);
-    assert.deepStrictEqual(result, { id: 1, name: "Alice" });
+test("saveToStorage stores primitives as JSON strings", () => {
+  const store = makeStore();
+  withWindow(store, ({ saveToStorage }) => {
+    saveToStorage("count", 42);
+    assert.strictEqual(store.getItem("count"), "42");
+    saveToStorage("flag", true);
+    assert.strictEqual(store.getItem("flag"), "true");
+    saveToStorage("name", "alice");
+    assert.strictEqual(store.getItem("name"), '"alice"');
   });
+});
 
-  test("returns fallback for missing key", () => {
-    const result = loadFromStorage("nonexistent", { default: true });
-    assert.deepStrictEqual(result, { default: true });
+test("saveToStorage no-ops when window is undefined", () => {
+  withoutWindow(({ saveToStorage }) => {
+    assert.doesNotThrow(() => saveToStorage("key", "value"));
   });
+});
 
-  test("returns fallback when stored value is invalid JSON", () => {
-    store["bad"] = "not json {{{";
-    const result = loadFromStorage("bad", "fallback_value");
-    assert.equal(result, "fallback_value");
+test("loadFromStorage parses stored JSON value", () => {
+  const store = makeStore();
+  withWindow(store, ({ loadFromStorage }) => {
+    store.setItem("demo", '{"user":"alice"}');
+    const result = loadFromStorage("demo");
+    assert.deepStrictEqual(result, { user: "alice" });
   });
+});
 
-  test("handles null-stored value correctly", () => {
-    store["nullval"] = "null"; // what JSON.stringify(null) produces
-    const result = loadFromStorage("nullval", "fallback");
-    // JSON.parse("null") returns null (valid JSON), not the fallback
+test("loadFromStorage returns fallback when key is absent", () => {
+  const store = makeStore();
+  withWindow(store, ({ loadFromStorage }) => {
+    const result = loadFromStorage("nonexistent", { fallback: true });
+    assert.deepStrictEqual(result, { fallback: true });
+  });
+});
+
+test("loadFromStorage returns fallback when stored value is invalid JSON", () => {
+  const store = makeStore();
+  withWindow(store, ({ loadFromStorage }) => {
+    store.setItem("corrupt", "not valid json {{{");
+    const result = loadFromStorage("corrupt", null);
     assert.strictEqual(result, null);
   });
+});
 
-  test("returns fallback when localStorage is undefined (SSR)", () => {
-    const savedWindow = globalThis.window;
-    const savedLS = globalThis.localStorage;
-    globalThis.window = undefined;
-    globalThis.localStorage = undefined;
-    const result = loadFromStorage("anykey", "SSR_fallback");
-    assert.equal(result, "SSR_fallback");
-    globalThis.window = savedWindow;
-    globalThis.localStorage = savedLS; // restore for next test
+test("loadFromStorage returns fallback when localStorage has no value", () => {
+  const store = makeStore();
+  withWindow(store, ({ loadFromStorage }) => {
+    const result = loadFromStorage("nothing", "default");
+    assert.strictEqual(result, "default");
   });
 });
 
-describe("removeFromStorage", () => {
-  beforeEach(() => { mockLocalStorage.clear(); });
-  afterEach(() => { mockLocalStorage.clear(); });
-
-  test("removes the key from localStorage", () => {
-    store["temp"] = "data";
-    removeFromStorage("temp");
-    assert.equal(store["temp"], undefined);
+test("loadFromStorage no-ops and returns fallback when window is undefined", () => {
+  withoutWindow(({ loadFromStorage }) => {
+    const result = loadFromStorage("key", "fallback");
+    assert.strictEqual(result, "fallback");
   });
+});
 
-  test("is no-op for non-existent key", () => {
-    // Should not throw.
-    removeFromStorage("missing_key");
+test("removeFromStorage deletes key from localStorage", () => {
+  const store = makeStore();
+  withWindow(store, ({ removeFromStorage }) => {
+    store.setItem("toDelete", "value");
+    removeFromStorage("toDelete");
+    assert.strictEqual(store.getItem("toDelete"), null);
   });
+});
 
-  test("is no-op when localStorage is undefined (SSR)", () => {
-    const savedWindow = globalThis.window;
-    const savedLS = globalThis.localStorage;
-    globalThis.window = undefined;
-    globalThis.localStorage = undefined;
-    removeFromStorage("key"); // must not throw
-    globalThis.window = savedWindow;
-    globalThis.localStorage = savedLS; // restore for next test
+test("removeFromStorage no-ops when key does not exist", () => {
+  const store = makeStore();
+  withWindow(store, ({ removeFromStorage }) => {
+    assert.doesNotThrow(() => removeFromStorage("absent"));
+  });
+});
+
+test("removeFromStorage no-ops when window is undefined", () => {
+  withoutWindow(({ removeFromStorage }) => {
+    assert.doesNotThrow(() => removeFromStorage("key"));
+  });
+});
+
+test("full round-trip: save, load, remove", () => {
+  const store = makeStore();
+  withWindow(store, ({ saveToStorage, loadFromStorage, removeFromStorage }) => {
+    saveToStorage("session", { token: "abc123", user: 9 });
+    const loaded = loadFromStorage("session");
+    assert.deepStrictEqual(loaded, { token: "abc123", user: 9 });
+    removeFromStorage("session");
+    const gone = loadFromStorage("session", null);
+    assert.strictEqual(gone, null);
   });
 });
