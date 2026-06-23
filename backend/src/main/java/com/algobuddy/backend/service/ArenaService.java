@@ -196,32 +196,27 @@ public class ArenaService {
             throw new IllegalArgumentException("matchId is required");
         }
 
-        ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
-
-        if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
-            !existingMatch.getPlayer2Id().equals(requestingUserId)) {
-            throw new SecurityException("User is not a participant in this match");
-        }
-
-        // Derive opponent from match record, not from client input
-        UUID opponentId;
-        if (existingMatch.getPlayer1Id().equals(requestingUserId)) {
-            opponentId = existingMatch.getPlayer2Id();
-        } else {
-            opponentId = existingMatch.getPlayer1Id();
-        }
-
-        if (existingMatch.getWinnerId() != null) {
-            throw new IllegalArgumentException("Match result has already been recorded");
-        }
-
         boolean isWinner = request.isWinner();
 
         final int MAX_RETRIES = 3;
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                // Deadlock Prevention: Always lock rows in the same order
+                ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
+
+                if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
+                    !existingMatch.getPlayer2Id().equals(requestingUserId)) {
+                    throw new SecurityException("User is not a participant in this match");
+                }
+
+                if (existingMatch.getWinnerId() != null) {
+                    throw new IllegalArgumentException("Match result has already been recorded");
+                }
+
+                UUID opponentId = existingMatch.getPlayer1Id().equals(requestingUserId)
+                    ? existingMatch.getPlayer2Id()
+                    : existingMatch.getPlayer1Id();
+
                 UUID firstId = requestingUserId.compareTo(opponentId) < 0 ? requestingUserId : opponentId;
                 UUID secondId = requestingUserId.compareTo(opponentId) < 0 ? opponentId : requestingUserId;
 
