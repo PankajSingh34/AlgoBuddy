@@ -17,17 +17,20 @@ export default function StudentJobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [filters, setFilters] = useState({ minSalary: "", maxSalary: "" });
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [applying, setApplying] = useState(null);
   const [bookmarking, setBookmarking] = useState(null);
   const [confirmJob, setConfirmJob] = useState(null);
 
-  const fetchJobs = useCallback(async (page, search) => {
+  const fetchJobs = useCallback(async (page, search, minSal, maxSal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: "20" });
       if (search.trim()) params.set("search", search.trim());
+      if (minSal) params.set("minSalary", minSal);
+      if (maxSal) params.set("maxSalary", maxSal);
       const res = await fetch(`/api/student-jobs?${params}`);
       const data = await res.json();
       setJobs(data.jobs || []);
@@ -62,10 +65,10 @@ export default function StudentJobsPage() {
   }
 
   useEffect(() => {
-    fetchJobs(currentPage, searchQuery);
+    fetchJobs(currentPage, searchQuery, filters.minSalary, filters.maxSalary);
     fetchApplications();
     fetchBookmarks();
-  }, [currentPage, searchQuery, fetchJobs]);
+  }, [currentPage, searchQuery, filters.minSalary, filters.maxSalary, fetchJobs]);
 
   function handleSearch(e) {
     e.preventDefault();
@@ -76,6 +79,7 @@ export default function StudentJobsPage() {
   function handleClearSearch() {
     setSearchInput("");
     setSearchQuery("");
+    setFilters({ minSalary: "", maxSalary: "" });
     setCurrentPage(1);
   }
 
@@ -196,6 +200,26 @@ export default function StudentJobsPage() {
           </div>
         </form>
 
+        <div className="mb-4 space-y-3">
+          <label className="text-sm font-medium text-gray-700">Salary Range</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Min"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+              value={filters.minSalary}
+              onChange={(e) => setFilters({ ...filters, minSalary: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Max"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+              value={filters.maxSalary}
+              onChange={(e) => setFilters({ ...filters, maxSalary: e.target.value })}
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -210,14 +234,14 @@ export default function StudentJobsPage() {
           <div className="text-center py-20">
             <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
             <h2 className="mt-4 text-xl font-semibold text-gray-600">
-              {searchQuery ? "No matching jobs found" : "No jobs found"}
+              {searchQuery || filters.minSalary || filters.maxSalary ? "No matching jobs found" : "No jobs found"}
             </h2>
             <p className="text-gray-500 mt-1">
-              {searchQuery
-                ? "Try different keywords or clear your search."
+              {searchQuery || filters.minSalary || filters.maxSalary
+                ? "Try different keywords or filters."
                 : "Check back later for new opportunities."}
             </p>
-            {searchQuery && (
+            { (searchQuery || filters.minSalary || filters.maxSalary) && (
               <button
                 onClick={handleClearSearch}
                 className="mt-4 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"

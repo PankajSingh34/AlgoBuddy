@@ -39,6 +39,8 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
     const search = (searchParams.get("search") || "").trim();
+    const minSalary = searchParams.get("minSalary");
+    const maxSalary = searchParams.get("maxSalary");
 
     if (pagination.error) {
       return jsonResponse({
@@ -74,6 +76,13 @@ export async function GET(request) {
       query = query.or(
         `title.ilike.${term},company.ilike.${term},location.ilike.${term}`
       );
+    }
+
+    if (minSalary) {
+      query = query.gte("salary_min", parseFloat(minSalary));
+    }
+    if (maxSalary) {
+      query = query.lte("salary_max", parseFloat(maxSalary));
     }
 
     const { data: jobs, error, count } = await query;
