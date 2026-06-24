@@ -646,7 +646,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                   >
                     <defs>
                       <marker id="arrow-morris" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#c084fc" />
+                        <path d="M 0 1.5 L 9 5 L 0 8.5 z" className="fill-purple-400 dark:fill-purple-400" />
                       </marker>
                     </defs>
 
@@ -658,7 +658,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                             key={`thread-${idx}`}
                             d={drawMorrisCurve(edge.x1, edge.y1, edge.x2, edge.y2)}
                             fill="none"
-                            stroke="#c084fc"
+                            className="stroke-purple-400 dark:stroke-purple-400"
                             strokeWidth="2.5"
                             strokeDasharray="6,4"
                             markerEnd="url(#arrow-morris)"
@@ -673,7 +673,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                           y1={edge.y1}
                           x2={edge.x2}
                           y2={edge.y2}
-                          stroke="#334155"
+                          className="stroke-slate-300 dark:stroke-slate-700"
                           strokeWidth="2.5"
                         />
                       );
@@ -736,7 +736,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                             x={node.x}
                             y={node.y + 4.5}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            className="fill-white dark:fill-slate-800"
                             fontSize="12"
                             fontWeight="bold"
                           >
@@ -746,7 +746,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
                           {/* Extra pointers labels inside SVGs */}
                           {isCurr && (
                             <g transform={`translate(${node.x - 22}, ${node.y - 35})`}>
-                              <rect width="44" height="15" rx="4" fill="#047857" className="stroke stroke-emerald-400" strokeWidth="0.5" />
+                              <rect width="44" height="15" rx="4" className="fill-emerald-700 dark:fill-emerald-600 stroke stroke-emerald-400" strokeWidth="0.5" />
                               <text x="22" y="11" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">curr</text>
                             </g>
                           )}

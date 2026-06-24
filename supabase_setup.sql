@@ -101,3 +101,46 @@ CREATE POLICY "Users can insert own activity" ON user_activity
 CREATE POLICY "Users can update own activity" ON user_activity
   FOR UPDATE
   USING (auth.uid() = user_id);
+
+-- ====================================================================
+-- pending_messages table for SMTP quota fallback
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS pending_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL CHECK (type IN ('contact', 'review')),
+  payload JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  sent_at TIMESTAMPTZ
+);
+
+ALTER TABLE pending_messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow the service role (admin) to insert and read pending messages
+CREATE POLICY "Service role can insert pending_messages" ON pending_messages
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Service role can read pending_messages" ON pending_messages
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Service role can update pending_messages" ON pending_messages
+  FOR UPDATE
+  USING (true);
+
+-- ====================================================================
+-- newsletter_subscriptions table for Footer Newsletter
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  subscribed_at TIMESTAMPTZ DEFAULT now(),
+  status TEXT DEFAULT 'active'
+);
+
+ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Allow the service role to manage subscriptions
+CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
+  USING (true) WITH CHECK (true);
+

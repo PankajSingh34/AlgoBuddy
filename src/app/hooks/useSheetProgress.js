@@ -88,12 +88,13 @@ async function postProgressToServer(problemId, status) {
   if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    await fetch(`${springBootBase()}/api/v1/practice/progress`, {
+    const res = await fetch(`${springBootBase()}/api/v1/practice/progress`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ problemId, status }),
     });
-    return;
+    if (!res.ok) return null;
+    return await res.json();
   }
 
   // Supabase path
@@ -102,6 +103,7 @@ async function postProgressToServer(problemId, status) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ problemId, status }),
   });
+  return null;
 }
 
 /** Bulk-sync items that exist locally but not on the server */
@@ -181,6 +183,7 @@ export function useSheetProgress() {
   const { user } = useUser();
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [streakData, setStreakData] = useState({
     current: 0,
     best: 0,
@@ -227,12 +230,7 @@ export function useSheetProgress() {
           serverMap[id] = normalizeEntry(val);
         });
 
-        // 3. Merge server wins over local (by timestamp)
-        const merged = mergeProgress(local, serverMap);
-        writeLocal(merged);
-        if (!cancelled) setProgress(merged);
-
-        // 4. Find items in local but not on server → bulk sync them
+        // 3. Find items in local but not on server → bulk sync them up first
         const toSync = [];
         Object.entries(local).forEach(([id, entry]) => {
           const e = normalizeEntry(entry);
@@ -242,22 +240,35 @@ export function useSheetProgress() {
         });
         if (toSync.length > 0) {
           const bulkResult = await bulkSyncToServer(toSync);
-          // If Spring Boot returned fresh data, apply it
-          if (bulkResult?.progress && !cancelled) {
-            const freshMap = {};
+          // If Spring Boot returned fresh data after bulk sync, use it
+          if (bulkResult?.progress) {
             Object.entries(bulkResult.progress).forEach(([id, val]) => {
-              freshMap[id] = normalizeEntry(val);
+              serverMap[id] = normalizeEntry(val);
             });
-            const reMerged = mergeProgress(merged, freshMap);
-            writeLocal(reMerged);
-            setProgress(reMerged);
           }
         }
 
-        // 5. Update streak state
+        // 4. DB is authoritative: build final state from serverMap only.
+        //    - Server entries are used as-is.
+        //    - Local-only entries that were just bulk-synced are also included.
+        //    - Local entries that don't exist on server AND weren't synced up
+        //      (e.g. "Not Started") are dropped — they reflect deletions from
+        //      another browser/device.
+        const syncedIds = new Set(toSync.map((i) => i.problemId));
+        const authoritative = { ...serverMap };
+        // Keep local entries that were just synced (they are now on server)
+        syncedIds.forEach((id) => {
+          if (!authoritative[id] && local[id]) {
+            authoritative[id] = normalizeEntry(local[id]);
+          }
+        });
+        writeLocal(authoritative);
+        if (!cancelled) setProgress(authoritative);
+
+        // 5. Update streak state — server is authoritative for authenticated users.
         if (!cancelled) {
-          if (isUsingSpringBoot() && serverData.currentStreak !== undefined) {
-            // Spring Boot streak is authoritative
+          if (serverData.currentStreak !== undefined) {
+            // Both Spring Boot and Supabase paths now return currentStreak.
             setStreakData({
               current: serverData.currentStreak || 0,
               best: serverData.longestStreak || 0,
@@ -266,12 +277,17 @@ export function useSheetProgress() {
               monthlySolved: serverData.monthlySolved || 0,
             });
           } else {
+            // Server did not return streak fields — fall back to localStorage
+            // only as a last resort (e.g. unexpected API shape change).
             const localStreak = readLocalStreak();
             setStreakData((prev) => ({ ...prev, ...localStreak }));
           }
         }
       } catch (err) {
         console.error("[useSheetProgress] Server sync failed:", err);
+        if (!cancelled) {
+          setError(err.message || "Failed to load progress");
+        }
       }
 
       if (!cancelled) {
@@ -295,8 +311,10 @@ export function useSheetProgress() {
       setProgress(updated);
       writeLocal(updated);
 
-      // Update local streak on completion
-      if (newStatus === "Completed") {
+      // Update local streak on completion only for guests.
+      // Authenticated users get their streak from the server after the sync
+      // below, so updating localStorage here would cause divergence.
+      if (newStatus === "Completed" && !user) {
         const next = updateLocalStreak(streakData.current);
         setStreakData((prev) => ({
           ...prev,
@@ -308,19 +326,17 @@ export function useSheetProgress() {
       // Sync to server asynchronously
       if (user) {
         try {
-          await postProgressToServer(problemId, newStatus);
-          // After Spring Boot update, re-fetch fresh streak data
-          if (isUsingSpringBoot() && newStatus === "Completed") {
-            const fresh = await fetchProgressFromServer();
-            if (fresh) {
-              setStreakData({
-                current: fresh.currentStreak || 0,
-                best: fresh.longestStreak || 0,
-                dailySolved: fresh.dailySolved || 0,
-                weeklySolved: fresh.weeklySolved || 0,
-                monthlySolved: fresh.monthlySolved || 0,
-              });
-            }
+          const fresh = await postProgressToServer(problemId, newStatus);
+          // Use server streak data whenever it is returned (both Spring Boot
+          // and Supabase paths now include currentStreak/longestStreak).
+          if (fresh && fresh.currentStreak !== undefined) {
+            setStreakData({
+              current: fresh.currentStreak || 0,
+              best: fresh.longestStreak || 0,
+              dailySolved: fresh.dailySolved || 0,
+              weeklySolved: fresh.weeklySolved || 0,
+              monthlySolved: fresh.monthlySolved || 0,
+            });
           }
         } catch (err) {
           console.error("[useSheetProgress] Failed to sync progress:", err);
@@ -340,5 +356,5 @@ export function useSheetProgress() {
     [progress]
   );
 
-  return { progress, getStatus, updateProgress, streakData, loading };
+  return { progress, getStatus, updateProgress, streakData, loading, error };
 }

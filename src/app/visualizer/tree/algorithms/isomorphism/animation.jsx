@@ -177,21 +177,21 @@ export default function IsomorphismAnimation() {
         <div className="overflow-auto flex justify-center py-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 relative min-h-[500px]">
           <svg width="800" height="350" viewBox="0 0 800 350" className="max-w-full h-auto drop-shadow-sm">
             {/* Divider */}
-            <line x1="400" y1="0" x2="400" y2="350" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="5,5" className="dark:stroke-slate-700" />
+            <line x1="400" y1="0" x2="400" y2="350" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" strokeDasharray="5,5" className="dark:stroke-slate-700" />
             <text x="200" y="20" fill="var(--foreground)" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 1</text>
             <text x="600" y="20" fill="var(--foreground)" fontSize="16" fontWeight="bold" textAnchor="middle">Tree 2</text>
 
             {/* Tree 1 Edges */}
-            {EDGES1.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#cbd5e1" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
+            {EDGES1.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
             {/* Tree 2 Edges */}
-            {EDGES2.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#cbd5e1" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
+            {EDGES2.map(e => <line key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" className="dark:stroke-slate-700 transition-colors" />)}
 
             {/* Active Comparison Indicator */}
             {activePairs.length === 2 && (
               <path 
                 d={`M ${NODES1.find(n => n.id === activePairs[0]).x} ${NODES1.find(n => n.id === activePairs[0]).y} Q 400 0 ${NODES2.find(n => n.id === activePairs[1]).x} ${NODES2.find(n => n.id === activePairs[1]).y}`}
                 fill="none"
-                stroke="#a435f0"
+                className="stroke-purple-600 dark:stroke-purple-500"
                 strokeWidth="2"
                 strokeDasharray="5,5"
                 className="opacity-60 animate-pulse"
@@ -221,7 +221,7 @@ export default function IsomorphismAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-300">
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-300 dark:stroke-slate-600" />
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={textFill} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                 </g>
@@ -250,7 +250,7 @@ export default function IsomorphismAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-300">
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#d8b4fe" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle cx={node.x} cy={node.y} r="24" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-300 dark:stroke-slate-600" />
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={textFill} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                 </g>

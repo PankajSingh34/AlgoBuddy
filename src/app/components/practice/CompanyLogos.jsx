@@ -348,7 +348,7 @@ export default function CompanyLogos({ companies = [] }) {
                 return (
                   <div
                     key={idx}
-                    className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-50/60 dark:bg-neutral-850 border border-surface-100 dark:border-neutral-800/80 shadow-sm hover:scale-[1.03] transition-all duration-200"
+                    className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-50/60 dark:bg-neutral-800 border border-surface-100 dark:border-neutral-800/80 shadow-sm hover:scale-[1.03] transition-all duration-200"
                   >
                     <div
                       className={`w-8 h-8 rounded-full border border-surface-200 dark:border-neutral-700 flex items-center justify-center overflow-hidden flex-shrink-0 ${item.bg}`}

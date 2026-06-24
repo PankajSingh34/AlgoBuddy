@@ -114,7 +114,7 @@ export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
                 </span>
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-neutral-850 rounded-lg text-slate-550 dark:text-neutral-400 transition"
+                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-neutral-800 rounded-lg text-slate-550 dark:text-neutral-400 transition"
                   title="Copy link"
                 >
                   {copied ? (

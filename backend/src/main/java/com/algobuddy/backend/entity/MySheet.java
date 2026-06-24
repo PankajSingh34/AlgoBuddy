@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "my_sheet")
+@Table(name = "my_sheet", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "problem_id"})})
 @Data
 @NoArgsConstructor
 public class MySheet {
@@ -24,6 +24,12 @@ public class MySheet {
 
     @Column(name = "note")
     private String note;
+
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
+    @Column(name = "shared_notes", nullable = false)
+    private boolean sharedNotes = false;
 
     @Column(name = "added_at", insertable = false, updatable = false)
     private OffsetDateTime addedAt;

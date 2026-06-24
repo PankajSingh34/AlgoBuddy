@@ -101,3 +101,66 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete from their own sheet"
 ON my_sheet FOR DELETE
 USING (auth.uid() = user_id);
+
+-- ─── Arena: user_arena_profiles ──────────────────────────────────────────────
+
+-- Enable RLS
+ALTER TABLE user_arena_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can read profiles (needed for leaderboard)
+CREATE POLICY "Anyone can view arena profiles"
+ON user_arena_profiles FOR SELECT
+USING (true);
+
+-- Users can insert their own profile (first-time setup)
+CREATE POLICY "Users can insert their own arena profile"
+ON user_arena_profiles FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update their own arena profile"
+ON user_arena_profiles FOR UPDATE
+USING (auth.uid() = user_id);
+
+-- ─── Arena: arena_matches ────────────────────────────────────────────────────
+
+-- Enable RLS
+ALTER TABLE arena_matches ENABLE ROW LEVEL SECURITY;
+
+-- Players can view matches they participated in
+CREATE POLICY "Players can view their own matches"
+ON arena_matches FOR SELECT
+USING (
+    auth.uid() = player1_id
+    OR auth.uid() = player2_id
+);
+
+-- Only the service role (backend) may insert/update/delete matches.
+-- Authenticated users have no direct write access — all writes go through
+-- the Spring Boot service which connects as the service role.
+-- (No INSERT / UPDATE / DELETE policies = blocked for anon + authenticated roles)
+
+
+-- ─── notifications ────────────────────────────────────────────────────────────
+-- Stores in-app notifications for users (e.g., job application status updates)
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    job_id UUID,
+    message TEXT NOT NULL DEFAULT '',
+    read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own notifications"
+ON notifications FOR SELECT
+USING (auth.uid() = student_id);
+
+CREATE POLICY "Users can mark their own notifications as read"
+ON notifications FOR UPDATE
+USING (auth.uid() = student_id);
+
+-- Service role inserts notifications (no INSERT policy for authenticated users)

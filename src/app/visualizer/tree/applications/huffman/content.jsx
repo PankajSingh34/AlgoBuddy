@@ -29,29 +29,29 @@ const HuffmanContent = () => {
           </h2>
           <div className="flex justify-center my-6">
             <svg width="400" height="250" viewBox="0 0 400 250" className="drop-shadow-lg">
-              <line x1="200" y1="50" x2="100" y2="120" stroke="#475569" strokeWidth="2" />
-              <line x1="200" y1="50" x2="300" y2="120" stroke="#475569" strokeWidth="2" />
-              <line x1="100" y1="120" x2="50" y2="190" stroke="#475569" strokeWidth="2" />
-              <line x1="100" y1="120" x2="150" y2="190" stroke="#475569" strokeWidth="2" />
+              <line x1="200" y1="50" x2="100" y2="120" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="200" y1="50" x2="300" y2="120" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="100" y1="120" x2="50" y2="190" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="100" y1="120" x2="150" y2="190" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
 
-              <text x="140" y="80" fill="#a855f7" fontSize="14" fontWeight="bold">0</text>
-              <text x="260" y="80" fill="#a855f7" fontSize="14" fontWeight="bold">1</text>
-              <text x="65" y="150" fill="#a855f7" fontSize="14" fontWeight="bold">0</text>
-              <text x="135" y="150" fill="#a855f7" fontSize="14" fontWeight="bold">1</text>
+              <text x="140" y="80" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">0</text>
+              <text x="260" y="80" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">1</text>
+              <text x="65" y="150" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">0</text>
+              <text x="135" y="150" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">1</text>
 
-              <circle cx="200" cy="50" r="24" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+              <circle cx="200" cy="50" r="24" className="fill-white dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               <text x="200" y="55" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">100</text>
               
-              <circle cx="100" cy="120" r="24" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+              <circle cx="100" cy="120" r="24" className="fill-white dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               <text x="100" y="125" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">45</text>
               
-              <circle cx="300" cy="120" r="24" fill="#4c1d95" stroke="#a855f7" strokeWidth="3" />
+              <circle cx="300" cy="120" r="24" className="fill-purple-100 dark:fill-purple-900 stroke-purple-500 dark:stroke-purple-400" strokeWidth="3" />
               <text x="300" y="125" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">55 (A)</text>
               
-              <circle cx="50" cy="190" r="24" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <circle cx="50" cy="190" r="24" className="fill-purple-50 dark:fill-indigo-950 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="50" y="195" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">20 (B)</text>
               
-              <circle cx="150" cy="190" r="24" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <circle cx="150" cy="190" r="24" className="fill-purple-50 dark:fill-indigo-950 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="150" y="195" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">25 (C)</text>
             </svg>
           </div>

@@ -1,3 +1,9 @@
+const ALGORITHMS = new Map();
+
+export function registerAlgorithm(name, fn) {
+  ALGORITHMS.set(name, fn);
+}
+
 export async function* generateSteps(algorithmFn, input) {
   const queue = [input];
   while (queue.length > 0) {
@@ -10,11 +16,17 @@ export async function* generateSteps(algorithmFn, input) {
   }
 }
 
-export function createStepWorker(algorithmFn) {
+export function createStepWorker(algorithmName) {
+  const fn = ALGORITHMS.get(algorithmName);
+  if (!fn) {
+    throw new Error(`Unknown algorithm: "${algorithmName}". Register it with registerAlgorithm() first.`);
+  }
+
+  const fnBody = fn.toString();
   const workerCode = `
+    const fn = ${fnBody};
     self.onmessage = function(e) {
-      const { input, algorithm } = e.data;
-      const fn = new Function('return ' + algorithm)();
+      const { input } = e.data;
       const steps = [];
       const queue = [input];
       while (queue.length > 0) {

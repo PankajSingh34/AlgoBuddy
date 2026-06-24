@@ -69,9 +69,24 @@ export function useProblemBookmarks() {
             createdAt: row.created_at || row.createdAt,
           }));
 
-          const merged = persistence.mergeBookmarks(localBookmarks, dbBookmarks, "id");
-          setBookmarks(merged);
-          persistence.set("PROBLEM_BOOKMARKS", merged);
+          // DB is authoritative for logged-in users.
+          // Sync any local-only bookmarks (added offline) up to the server first.
+          const dbIds = new Set(dbBookmarks.map((b) => b.id));
+          const localOnly = localBookmarks.filter((b) => !dbIds.has(b.id));
+          for (const b of localOnly) {
+            try {
+              await apiFetch("/api/bookmarks", {
+                method: "POST",
+                body: JSON.stringify({ problemId: b.id, topicSlug: b.topicSlug }),
+              });
+            } catch (_) {}
+          }
+
+          // Final state = DB items + any local-only items just synced up.
+          // Items deleted in another browser (in local but not DB) are dropped.
+          const authoritative = [...dbBookmarks, ...localOnly];
+          setBookmarks(authoritative);
+          persistence.set("PROBLEM_BOOKMARKS", authoritative);
         } catch (e) {
           console.error("Bookmark fetch failed:", e);
         }

@@ -217,33 +217,33 @@ export default function SyntaxTreesAnimation() {
 
             {/* Nodes */}
             <g className="transition-all duration-500">
-              {activeNode === "N1" && <circle cx="250" cy="50" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N1" && <circle cx="250" cy="50" r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <circle cx="250" cy="50" r="24" fill={getNodeFill("N1", false)} stroke={getStroke("N1")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="250" y="55" textAnchor="middle" fill={getTextColor("N1")} fontSize="16" fontWeight="bold">+</text>
               <text x="250" y="90" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="12" fontWeight="bold">{nodeValues.N1}</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N2" && <circle cx="150" cy="120" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N2" && <circle cx="150" cy="120" r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <circle cx="150" cy="120" r="24" fill={getNodeFill("N2", true)} stroke={getStroke("N2")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="150" y="125" textAnchor="middle" fill={getTextColor("N2")} fontSize="14" fontWeight="bold">3</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N3" && <circle cx="350" cy="120" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N3" && <circle cx="350" cy="120" r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <circle cx="350" cy="120" r="24" fill={getNodeFill("N3", false)} stroke={getStroke("N3")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="350" y="125" textAnchor="middle" fill={getTextColor("N3")} fontSize="16" fontWeight="bold">*</text>
               <text x="350" y="160" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="12" fontWeight="bold">{nodeValues.N3}</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N4" && <circle cx="280" cy="190" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N4" && <circle cx="280" cy="190" r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <circle cx="280" cy="190" r="24" fill={getNodeFill("N4", true)} stroke={getStroke("N4")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="280" y="195" textAnchor="middle" fill={getTextColor("N4")} fontSize="14" fontWeight="bold">5</text>
             </g>
 
             <g className="transition-all duration-500">
-              {activeNode === "N5" && <circle cx="420" cy="190" r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N5" && <circle cx="420" cy="190" r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <circle cx="420" cy="190" r="24" fill={getNodeFill("N5", true)} stroke={getStroke("N5")} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="420" y="195" textAnchor="middle" fill={getTextColor("N5")} fontSize="14" fontWeight="bold">2</text>
             </g>

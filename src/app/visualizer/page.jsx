@@ -7,7 +7,6 @@ import QueueModal from "@/app/components/models/QueueModal";
 import LinkedListModal from "@/app/components/models/LinkedListModal";
 import TreeModal from "@/app/components/models/TreeModal";
 import GraphModal from "@/app/components/models/GraphModal";
-import TutorialOverlay from "@/app/components/ui/TutorialOverlay";
 import BackToTop from "../components/ui/backtotop";
 import BookmarkSection from "@/app/components/ui/BookmarkSection";
 
@@ -69,7 +68,10 @@ export const metadata = {
   },
 };
 
+
+
 const sections = [
+  
   {
     title: "Code Lab",
     slug: "code-lab",
@@ -107,12 +109,17 @@ const sections = [
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
           },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
+          },
         ],
       },
     ],
   },
   {
     title: "Array",
+    slug: "array",
     desc: "Searching & sorting algorithms on contiguous memory",
     icon: (
       <svg
@@ -143,17 +150,19 @@ const sections = [
           { name: "Binary Search", path: "/visualizer/array/binarysearch" },
         ],
       },
-      {
-        title: "Sorting",
-        items: [
-          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
-          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
-          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
-          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
-          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
-          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
-        ],
-      },
+     {
+      title: "Sorting",
+      items: [
+        { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
+        { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
+        { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
+        { name: "Merge Sort", path: "/visualizer/array/mergesort" },
+        { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+        { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+        { name: "Radix Sort", path: "/visualizer/array/radixsort" },
+        { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+      ],
+    },
       {
         title: "Interview Patterns",
         items: [
@@ -165,6 +174,7 @@ const sections = [
   },
   {
     title: "Recursion",
+    slug: "recursion",
     desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
     icon: (
       <svg
@@ -205,6 +215,7 @@ const sections = [
   },
   {
     title: "Stack",
+    slug: "stack",
     desc: "LIFO operations, polish notations & implementations",
     icon: (
       <svg
@@ -261,6 +272,7 @@ const sections = [
   },
   {
     title: "Queue",
+    slug: "queue",
     desc: "FIFO operations, variants & implementations",
     icon: (
       <svg
@@ -331,6 +343,7 @@ const sections = [
   },
   {
     title: "Linked List",
+    slug: "linkedlist",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -408,12 +421,17 @@ const sections = [
             name: "Comparison",
             path: "/visualizer/linkedlist/operations/comparison",
           },
+          {
+            name: "Sorting",
+            path: "/visualizer/linkedlist/operations/sorting",
+          },
         ],
       },
     ],
   },
   {
     title: "Tree",
+    slug: "tree",
     desc: "BST, AVL, traversals, tries & advanced trees",
     icon: (
       <svg
@@ -552,6 +570,7 @@ const sections = [
   },
   {
     title: "HashMap",
+    slug: "hashmap",
     desc: "Key-value pairs with hash function and collision handling",
     icon: (
       <svg
@@ -587,6 +606,7 @@ const sections = [
   },
   {
     title: "Graph",
+    slug: "graph",
     desc: "BFS, DFS, shortest paths, MST & topological sort",
     icon: (
       <svg
@@ -664,6 +684,46 @@ const sections = [
     ],
   },
   {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+    info: {
+      About:
+        "Dynamic Programming is a method for solving complex problems by breaking them down into simpler subproblems. It is applicable when the problem has overlapping subproblems and optimal substructure.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "AI Algorithms",
     slug: "ai",
     desc: "Search algorithms used in Artificial Intelligence, heuristic pathfinding, and game tree decision making",
@@ -712,8 +772,126 @@ const sections = [
       },
     ],
   },
-];
 
+    {
+    title: "Quiz Mode",
+    slug: "quiz",
+    desc: "Test your knowledge with algorithm comparison challenges",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 3a9 9 0 100 18 9 9 0 000-18z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Interactive quizzes that help learners choose the best algorithm or data structure for different problem scenarios.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Practice",
+        items: [
+          {
+            name: "Algorithm Comparison Quiz",
+            path: "/visualizer/quiz",
+          },
+        ],
+      },
+    ],
+    },
+
+  {
+    title: "Smart Revision",
+    slug: "smart-revision",
+    desc: "Revise completed DSA topics with interactive flashcards",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6M12 9v6M5 5h14v14H5z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Generate AI-powered flashcards from completed DSA topics and improve long-term retention using smart revision.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Revision Tools",
+        items: [
+          {
+            name: "DSA Flashcards",
+            path: "/visualizer/revision-flashcards"
+          },
+        ],
+      },
+    ],
+  },
+  {
+  title: "Collaborative Sessions",
+  slug: "collaboration",
+  desc: "Learn and visualize algorithms with friends in real-time",
+  icon: (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 00-3-3H10a3 3 0 00-3 3v4m10 0H7m10-12a3 3 0 11-6 0 3 3 0 016 0zm-8 0a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  ),
+  info: {
+    About:
+      "Create collaborative algorithm rooms, discuss execution steps, and learn together.",
+    Representation: null,
+  },
+  subsections: [
+    {
+      title: "Collaborative Learning",
+      items: [
+        {
+          name: "Start Session",
+          path: "/visualizer/collaboration",
+        },
+      ],
+    },
+  ],
+},
+];
 const Visualizer = () => {
   /* Strip non-serialisable `info` (contains JSX modals) before
      passing to the client component. Icons are fine — they're
@@ -728,10 +906,9 @@ const Visualizer = () => {
       className="min-h-screen bg-white dark:bg-[#1c1d1f] text-gray-800 dark:text-gray-200 flex flex-col"
       style={{ fontFamily: "'Inter', 'Source Sans 3', sans-serif" }}
     >
-      <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
+
       <div className="w-full relative">
-        
         <BookmarkSection />
         <BackToTop />
         <Footer />

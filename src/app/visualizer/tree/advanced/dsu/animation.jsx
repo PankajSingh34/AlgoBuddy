@@ -539,7 +539,7 @@ export default function DsuAnimation() {
                   markerHeight="6"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" className="fill-gray-400 dark:fill-gray-600" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" className="fill-slate-400 dark:fill-slate-400 fill-gray-400 dark:fill-gray-600" />
                 </marker>
                 <marker
                   id="arrow-active"
@@ -550,7 +550,7 @@ export default function DsuAnimation() {
                   markerHeight="8"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" className="fill-blue-500 dark:fill-blue-400" />
                 </marker>
               </defs>
 

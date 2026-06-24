@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FiX } from "react-icons/fi";
+
 
 export const policySections = [
   {
@@ -378,6 +378,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
             </div>
           </div>
         </div>
+      
 
         <div className="sticky bottom-0 flex justify-end border-t border-neutral-200 bg-white/95 p-3 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/95">
           <button

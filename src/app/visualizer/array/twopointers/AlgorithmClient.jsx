@@ -20,7 +20,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.twoPointers}
-          description="Mark Two Pointers as done and view it on your dashboard"
+          description="Mark Two Pointers as done and view it in your progress"
           initialDone={false}
         />
       }

@@ -332,11 +332,11 @@ export default function LCAAnimation() {
               return (
                 <g key={node.id} className="transition-all duration-500">
                   {/* Active node glow */}
-                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#fcd34d" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" className="stroke-yellow-300 dark:stroke-yellow-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   {/* LCA ultimate glow */}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" stroke="#fcd34d" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" stroke="#f59e0b" strokeWidth="1" className="opacity-40 animate-pulse" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" className="stroke-yellow-300 dark:stroke-yellow-400" strokeWidth="2" className="opacity-80 animate-ping" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" className="stroke-amber-500 dark:stroke-amber-400" strokeWidth="1" className="opacity-40 animate-pulse" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
@@ -347,9 +347,9 @@ export default function LCAAnimation() {
                   />
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={getTextColor(node.id)} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                   
-                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">p</text>}
-                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">q</text>}
-                  {isLCA && <text x={node.x + 45} y={node.y + 5} fill="#f59e0b" fontSize="16" fontWeight="black">LCA</text>}
+                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="14" fontWeight="bold">p</text>}
+                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="14" fontWeight="bold">q</text>}
+                  {isLCA && <text x={node.x + 45} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="16" fontWeight="black">LCA</text>}
                 </g>
               );
             })}
