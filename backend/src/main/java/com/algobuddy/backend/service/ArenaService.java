@@ -10,14 +10,14 @@ import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,12 +26,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ArenaService {
 
     private static final Logger log = LoggerFactory.getLogger(ArenaService.class);
 
     private final UserArenaProfileRepository profileRepository;
     private final ArenaMatchRepository matchRepository;
+    private final CacheManager cacheManager;
 
     private void checkMatchResultRateLimit(UUID userId) {
         LocalDateTime since = LocalDateTime.now().minusMinutes(1);
@@ -139,10 +141,23 @@ public class ArenaService {
                 .build();
     }
 
+    private void checkInitMatchRateLimit(UUID userId) {
+        LocalDateTime since = LocalDateTime.now().minusMinutes(1);
+        long recentCount = matchRepository.countRecentInitiationsByUserId(userId, since);
+        if (recentCount >= 5) {
+            throw new IllegalStateException("Rate limit exceeded. Max 5 match initiations per minute.");
+        }
+    }
+
     @Transactional
     public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request) {
         if (request.getMatchId() == null || request.getMatchId().isEmpty()) {
             throw new IllegalArgumentException("matchId is required");
+        }
+
+        checkInitMatchRateLimit(requestingUserId);
+        if (request.getOpponentId().equals(requestingUserId)) {
+            throw new IllegalArgumentException("Cannot initiate a match against yourself");
         }
 
         if (matchRepository.findByMatchId(request.getMatchId()).isPresent()) {
@@ -156,17 +171,23 @@ public class ArenaService {
                 .topic(request.getTopic() != null ? request.getTopic() : "Arrays")
                 .difficulty(request.getDifficulty() != null ? request.getDifficulty() : "Easy")
                 .startTime(java.time.LocalDateTime.now())
+                .status(ArenaMatch.MatchStatus.PENDING)
                 .build();
 
         matchRepository.save(match);
     }
 
+    @Scheduled(fixedRate = 300_000)
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "arenaProfile", key = "#requestingUserId"),
-        @CacheEvict(value = "arenaProfile", key = "#request.opponentId"),
-        @CacheEvict(value = "arenaLeaderboard", allEntries = true)
-    })
+    public void expireStaleMatches() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(1);
+        int expired = matchRepository.expireStaleMatches(cutoff, ArenaMatch.MatchStatus.EXPIRED);
+        if (expired > 0) {
+            log.info("Expired {} stale arena matches older than {}", expired, cutoff);
+        }
+    }
+
+    @Transactional
     public void recordMatchResult(UUID requestingUserId, com.algobuddy.backend.dto.RecordMatchRequest request) {
         checkMatchResultRateLimit(requestingUserId);
 
@@ -175,30 +196,27 @@ public class ArenaService {
             throw new IllegalArgumentException("matchId is required");
         }
 
-        ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
-
-        if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
-            !existingMatch.getPlayer2Id().equals(requestingUserId)) {
-            throw new SecurityException("User is not a participant in this match");
-        }
-
-        UUID opponentId = request.getOpponentId();
-        if (!existingMatch.getPlayer1Id().equals(opponentId) &&
-            !existingMatch.getPlayer2Id().equals(opponentId)) {
-            throw new SecurityException("Opponent is not a participant in this match");
-        }
-
-        if (existingMatch.getWinnerId() != null) {
-            throw new IllegalArgumentException("Match result has already been recorded");
-        }
-
         boolean isWinner = request.isWinner();
 
         final int MAX_RETRIES = 3;
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                // Deadlock Prevention: Always lock rows in the same order
+                ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
+
+                if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
+                    !existingMatch.getPlayer2Id().equals(requestingUserId)) {
+                    throw new SecurityException("User is not a participant in this match");
+                }
+
+                if (existingMatch.getWinnerId() != null) {
+                    throw new IllegalArgumentException("Match result has already been recorded");
+                }
+
+                UUID opponentId = existingMatch.getPlayer1Id().equals(requestingUserId)
+                    ? existingMatch.getPlayer2Id()
+                    : existingMatch.getPlayer1Id();
+
                 UUID firstId = requestingUserId.compareTo(opponentId) < 0 ? requestingUserId : opponentId;
                 UUID secondId = requestingUserId.compareTo(opponentId) < 0 ? opponentId : requestingUserId;
 
@@ -235,7 +253,12 @@ public class ArenaService {
 
                 existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
                 existingMatch.setEndTime(java.time.LocalDateTime.now());
+                existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
                 matchRepository.save(existingMatch);
+
+                cacheManager.getCache("arenaProfile").evict(requestingUserId);
+                cacheManager.getCache("arenaProfile").evict(opponentId);
+                cacheManager.getCache("arenaLeaderboard").clear();
 
                 return;
             } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
@@ -252,10 +275,10 @@ public class ArenaService {
     public com.algobuddy.backend.dto.DailyChallengeResponse getDailyChallenge() {
         // Hardcoded list of challenges to simulate a rotating daily problem
         List<com.algobuddy.backend.dto.DailyChallengeResponse> pool = List.of(
-            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350)
+            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250, "https://leetcode.com/problems/valid-anagram/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200, "https://leetcode.com/problems/two-sum/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400, "https://leetcode.com/problems/lru-cache/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350, "https://leetcode.com/problems/merge-intervals/")
         );
 
         long daysSinceEpoch = java.time.LocalDate.now().toEpochDay();

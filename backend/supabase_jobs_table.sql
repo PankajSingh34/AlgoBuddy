@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS public.jobs (
     status TEXT NOT NULL DEFAULT 'pending',
     posted_by UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    verified_recruiter BOOLEAN DEFAULT false
 );
 
 -- Enable Row Level Security

@@ -821,7 +821,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                         y1={edge.y1}
                         x2={edge.x2}
                         y2={edge.y2}
-                        stroke="#334155"
+                        className="stroke-slate-300 dark:stroke-slate-700"
                         strokeWidth="2.5"
                       />
                     ))}
@@ -899,7 +899,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                             x={node.x}
                             y={node.y + 4.5}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            className="fill-white dark:fill-slate-800"
                             fontSize="12"
                             fontWeight="bold"
                           >
@@ -909,13 +909,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
                           {/* Label labels */}
                           {isCurr && node.state === "visiting" && (
                             <g transform={`translate(${node.x - 22}, ${node.y - 35})`}>
-                              <rect width="44" height="15" rx="4" fill="#047857" className="stroke stroke-emerald-400" strokeWidth="0.5" />
+                              <rect width="44" height="15" rx="4" className="fill-emerald-700 dark:fill-emerald-600 stroke stroke-emerald-400" strokeWidth="0.5" />
                               <text x="22" y="11" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">curr</text>
                             </g>
                           )}
                           {isPred && (
                             <g transform={`translate(${node.x - 22}, ${node.y - 35})`}>
-                              <rect width="44" height="15" rx="4" fill="#6b21a8" className="stroke stroke-purple-400" strokeWidth="0.5" />
+                              <rect width="44" height="15" rx="4" className="fill-purple-800 dark:fill-purple-700 stroke stroke-purple-400" strokeWidth="0.5" />
                               <text x="22" y="11" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">succ</text>
                             </g>
                           )}

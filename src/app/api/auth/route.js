@@ -43,6 +43,9 @@ const LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60; // 15 minutes
 const LOGIN_FAILURE_THRESHOLD = 5; // lock after 5 failed attempts
 const LOGIN_LOCK_SECONDS = 15 * 60; // 15 minutes lockout
 
+const MAX_MEMORY_LOCKOUTS = 5000;
+const MAX_MEMORY_FAILURES = 5000;
+
 // In-memory fallback for local dev (single instance). Not suitable for serverless scaling.
 const memoryLockouts = new Map(); // email -> until timestamp
 const memoryFailures = new Map(); // email -> { count, resetAt }
@@ -75,6 +78,23 @@ function startMemorySweeper() {
     }
     for (const [k, bucket] of memoryFailures.entries()) {
       if (bucket.resetAt <= now) memoryFailures.delete(k);
+    }
+    // memoryLockouts is exempt from size-based eviction to prevent brute-force
+    // bypass (an attacker flooding dummy emails should not flush a target's lockout).
+    // OOM risk is low since lockouts require 5 consecutive failures before creation.
+    // memoryFailures gets size limits to bound the higher-volume failure tracking.
+    if (memoryFailures.size > MAX_MEMORY_FAILURES) {
+      const toEvict = memoryFailures.size - MAX_MEMORY_FAILURES;
+      const iter = memoryFailures.keys();
+      for (let i = 0; i < toEvict; i++) {
+        const k = iter.next().value;
+        if (k !== undefined) memoryFailures.delete(k);
+      }
+      console.warn(`[auth] Evicted ${toEvict} failure entries: exceeded ${MAX_MEMORY_FAILURES} limit`);
+    }
+    const totalMemoryEntries = memoryLockouts.size + memoryFailures.size + memoryLocks.size;
+    if (totalMemoryEntries > 0) {
+      console.log(`[auth] Memory state: lockouts=${memoryLockouts.size}, failures=${memoryFailures.size}, locks=${memoryLocks.size}`);
     }
   }, MEMORY_SWEEP_INTERVAL_MS);
   if (memorySweepTimer.unref) memorySweepTimer.unref();
@@ -355,7 +375,11 @@ export async function POST(req) {
             },
             setAll(cookiesToSet) {
               cookiesToSet.forEach(({ name, value, options }) => {
-                cookieStore.set(name, value, options);
+                cookieStore.set(name, value, {
+                  ...options,
+                  sameSite: 'strict',
+                  secure: process.env.NODE_ENV === 'production',
+                });
               });
             },
           },

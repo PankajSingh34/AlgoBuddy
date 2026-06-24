@@ -31,7 +31,11 @@ export function getSupabaseServerClient(cookieStore) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           try {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, {
+              ...options,
+              sameSite: 'strict',
+              secure: process.env.NODE_ENV === 'production',
+            });
           } catch {
             // Can happen during GET requests or rendering in Next.js
           }

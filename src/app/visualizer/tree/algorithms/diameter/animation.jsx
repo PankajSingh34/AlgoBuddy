@@ -211,8 +211,8 @@ export default function DiameterAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#22d3ee" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#06b6d4" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" strokeWidth="2" className="stroke-cyan-400 opacity-80 animate-ping dark:stroke-cyan-400" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
@@ -223,7 +223,7 @@ export default function DiameterAnimation() {
                   
                   {/* Height Indicator Label */}
                   {h !== undefined && (
-                    <text x={node.x + 28} y={node.y + 4} fill="#06b6d4" fontSize="12" fontWeight="bold">h:{h}</text>
+                    <text x={node.x + 28} y={node.y + 4} fontSize="12" fontWeight="bold" className="fill-cyan-500 dark:fill-cyan-400">h:{h}</text>
                   )}
                 </g>
               );

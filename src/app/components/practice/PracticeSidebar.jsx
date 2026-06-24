@@ -13,7 +13,8 @@ import {
   GraduationCap, 
   Flame, 
   ScrollText,
-  ChevronRight 
+  ChevronRight,
+  NotebookPen
 } from "lucide-react";
 
 export default function PracticeSidebar({ 
@@ -32,12 +33,14 @@ export default function PracticeSidebar({
   onBackToPractice
 }) {
   const navItems = [
-    { id: "my-sheet",     label: "My Sheet",     icon: ScrollText, badge: mySheetCount > 0 ? mySheetCount : null },
     { id: "problem-list", label: "Problem List", icon: ListTodo },
+    { id: "dashboard",    label: "Progress",     icon: Layers },
+    { id: "my-sheet",     label: "My Sheet",     icon: ScrollText, badge: mySheetCount > 0 ? mySheetCount : null },
     { id: "topic-wise",   label: "Topic-wise",   icon: GitMerge },
     { id: "company-wise", label: "Company-wise", icon: Building2 },
     { id: "bookmarks",    label: "Bookmarks",    icon: Bookmark },
     { id: "recent-solved",label: "Recent Solved",icon: History },
+    { id: "notes",        label: "Notebook",     icon: NotebookPen },
   ];
 
   const dailyGoalPercentage = Math.min(100, Math.round((dailySolved / dailyGoal) * 100) || 0);
@@ -108,153 +111,6 @@ export default function PracticeSidebar({
           );
         })}
       </nav>
-
-      {/* Widgets Column */}
-      <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
-        {/* Achievement Badges */}
-<div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <h3 className="text-sm font-black text-slate-800 dark:text-white mb-4">
-    Achievement Badges
-  </h3>
-
-  <div className="space-y-3">
-    {achievementBadges.map((badge) => (
-      <div
-        key={badge.name}
-        className={`flex items-center justify-between p-3 rounded-xl ${
-          badge.unlocked
-            ? "bg-green-50 dark:bg-green-900/20"
-            : "bg-slate-50 dark:bg-neutral-800"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xl">{badge.icon}</span>
-          <span className="text-xs font-bold">
-            {badge.name}
-          </span>
-        </div>
-
-        <span
-          className={`text-[10px] font-black px-2 py-1 rounded-full ${
-            badge.unlocked
-              ? "bg-green-500 text-white"
-              : "bg-slate-300 text-slate-600"
-          }`}
-        >
-          {badge.unlocked ? "Unlocked" : "Locked"}
-        </span>
-      </div>
-    ))}
-  </div>
-</div>
-        {/* Daily Goal Card */}
-        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-4.5">
-            <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
-              <Flame size={18} className="fill-orange-500/10" />
-            </div>
-            <div>
-              <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest block">
-                Daily Goal
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-slate-800 dark:text-white">
-                  {dailySolved}/{dailyGoal}
-                </span>
-                <span className="text-xs text-slate-400 dark:text-neutral-500 font-semibold">
-                  Problems Solved
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-slate-100 dark:bg-neutral-800 h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-primary h-full rounded-full transition-all duration-500" 
-              style={{ width: `${dailyGoalPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Weekly Goal Card */}
-        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-4.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <Layers size={18} />
-            </div>
-            <div>
-              <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest block">
-                Weekly Goal
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-slate-800 dark:text-white">
-                  {weeklySolved}/{weeklyGoal}
-                </span>
-                <span className="text-xs text-slate-400 dark:text-neutral-500 font-semibold">
-                  Problems Solved
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-slate-100 dark:bg-neutral-800 h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-purple-500 h-full rounded-full transition-all duration-500" 
-              style={{ width: `${weeklyGoalPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Monthly Goal Card */}
-        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-4.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Trophy size={18} />
-            </div>
-            <div>
-              <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest block">
-                Monthly Goal
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-slate-800 dark:text-white">
-                  {monthlySolved}/{monthlyGoal}
-                </span>
-                <span className="text-xs text-slate-400 dark:text-neutral-500 font-semibold">
-                  Problems Solved
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-slate-100 dark:bg-neutral-800 h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-blue-500 h-full rounded-full transition-all duration-500" 
-              style={{ width: `${monthlyGoalPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Streak Card */}
-        <div className="flex-1 bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0 animate-pulse">
-            <Flame size={22} className="fill-amber-500/20" />
-          </div>
-          <div>
-            <span className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest block">
-              Current Streak
-            </span>
-            <span className="text-xl font-black text-slate-800 dark:text-white block mt-0.5">
-              {streakDays} Days
-            </span>
-            <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-bold block mt-0.5">
-              🔥 Best: {bestStreak} Days
-            </span>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }

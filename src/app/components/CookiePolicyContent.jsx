@@ -1,23 +1,12 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { 
-  FiInfo, 
-  FiSettings, 
-  FiLock, 
-  FiActivity, 
-  FiPieChart, 
-  FiGlobe, 
-  FiClock, 
-  FiShield, 
-  FiMail 
-} from "react-icons/fi";
+
 
 const cookieSections = [
   {
     id: "what-are-cookies",
     title: "What Cookies Are",
-    icon: <FiInfo className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         Cookies are small text files that are placed on your computer or mobile device when you visit our website. They are widely used to make websites work more efficiently, provide a better user experience, and supply information to the owners of the site.
@@ -27,7 +16,6 @@ const cookieSections = [
   {
     id: "why-we-use-cookies",
     title: "Why We Use Cookies",
-    icon: <FiSettings className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         We use cookies and similar tracking technologies to recognize you when you visit our platform, remember your preferences, understand how you interact with our services, and enhance your overall experience. They also help us ensure the security of your account and prevent fraudulent activity.
@@ -37,7 +25,6 @@ const cookieSections = [
   {
     id: "essential-cookies",
     title: "Essential Cookies",
-    icon: <FiLock className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         These cookies are strictly necessary to provide you with services available through our platform and to use some of its features. Because these cookies are strictly necessary to deliver the website, refusing them will impact how our site functions. You can block or delete them by changing your browser settings, but some parts of the site will not work properly.
@@ -47,7 +34,6 @@ const cookieSections = [
   {
     id: "functional-cookies",
     title: "Functional Cookies",
-    icon: <FiSettings className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         These cookies allow our website to remember choices you make (such as your user name, language, or the region you are in) and provide enhanced, more personal features. The information these cookies collect may be anonymized and they cannot track your browsing activity on other websites.
@@ -57,7 +43,6 @@ const cookieSections = [
   {
     id: "analytics-cookies",
     title: "Analytics Cookies",
-    icon: <FiPieChart className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         These cookies collect information that is used either in aggregate form to help us understand how our website is being used or how effective our marketing campaigns are, or to help us customize our website and application for you in order to enhance your experience.
@@ -67,7 +52,6 @@ const cookieSections = [
   {
     id: "performance-cookies",
     title: "Performance Cookies",
-    icon: <FiActivity className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         These cookies collect information about how visitors use a website, for instance which pages visitors go to most often, and if they get error messages from web pages. These cookies don't collect information that identifies a visitor. All information these cookies collect is aggregated and therefore anonymous.
@@ -77,7 +61,6 @@ const cookieSections = [
   {
     id: "third-party-cookies",
     title: "Third-Party Cookies",
-    icon: <FiGlobe className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         In some special cases, we also use cookies provided by trusted third parties. For example, we use third-party analytics to help us understand how you use the site and ways that we can improve your experience. These cookies may track things such as how long you spend on the site and the pages that you visit.
@@ -87,7 +70,6 @@ const cookieSections = [
   {
     id: "cookie-retention",
     title: "Cookie Retention Policy",
-    icon: <FiClock className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         The length of time that a cookie remains on your computer or mobile device depends on whether it is a "persistent" or "session" cookie. Session cookies last until you stop browsing, and persistent cookies last until they expire or are deleted. Most of the cookies we use are persistent and will expire between 30 minutes and two years from the date they are downloaded to your device.
@@ -97,7 +79,6 @@ const cookieSections = [
   {
     id: "managing-preferences",
     title: "Managing Cookie Preferences",
-    icon: <FiShield className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         You can manage your cookie preferences at any time by accessing our cookie consent manager. This tool allows you to adjust your settings for non-essential cookies. Please note that blocking some types of cookies may impact your experience of the site and the services we are able to offer.
@@ -107,7 +88,6 @@ const cookieSections = [
   {
     id: "browser-controls",
     title: "Browser Cookie Controls",
-    icon: <FiSettings className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         In addition to our cookie consent manager, most browsers allow you to manage cookies through their settings preferences. However, if you limit the ability of websites to set cookies, you may worsen your overall user experience, since it will no longer be personalized to you.
@@ -117,7 +97,6 @@ const cookieSections = [
   {
     id: "updates",
     title: "Updates to This Policy",
-    icon: <FiActivity className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         We may update this Cookie Policy from time to time in order to reflect, for example, changes to the cookies we use or for other operational, legal or regulatory reasons. Please therefore re-visit this Cookie Policy regularly to stay informed about our use of cookies and related technologies.
@@ -127,7 +106,6 @@ const cookieSections = [
   {
     id: "contact",
     title: "Contact Information",
-    icon: <FiMail className="w-5 h-5" />,
     content: (
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
         If you have any questions about our use of cookies or other technologies, please contact us at{" "}
@@ -151,7 +129,7 @@ export default function CookiePolicyContent() {
 
       {/* Hero Section */}
       <div className="mb-16 max-w-3xl">
-        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-bold tracking-[0.15em] uppercase mb-6">
+        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-[#1E1E26] dark:text-gray-300 text-xs font-bold tracking-[0.15em] uppercase mb-6">
           Legal
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-6">
@@ -176,7 +154,7 @@ export default function CookiePolicyContent() {
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="block pl-4 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 border-l-2 border-transparent hover:border-purple-600 dark:hover:border-purple-400 transition-all duration-200"
+                  className="block pl-4 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border-l-2 border-transparent hover:border-gray-400 dark:hover:border-purple-400 transition-all duration-200"
                 >
                   {item.title}
                 </a>
@@ -185,7 +163,7 @@ export default function CookiePolicyContent() {
             <li>
               <a
                 href="#cookie-types"
-                className="block pl-4 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 border-l-2 border-transparent hover:border-purple-600 dark:hover:border-purple-400 transition-all duration-200"
+                className="block pl-4 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border-l-2 border-transparent hover:border-gray-400 dark:hover:border-purple-400 transition-all duration-200"
               >
                 Cookie Types Table
               </a>
@@ -199,12 +177,9 @@ export default function CookiePolicyContent() {
             <section 
               key={section.id} 
               id={section.id}
-              className="scroll-mt-24 bg-white dark:bg-[#14141A] p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-[#2A2A35] transition-all duration-300 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/5 group"
+              className="scroll-mt-24 pb-10 border-b border-gray-200 dark:border-[#2A2A35]"
             >
               <div className="flex items-start mb-4">
-                <div className="w-10 h-10 flex-shrink-0 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center mr-4 mt-0.5 group-hover:scale-110 transition-transform duration-300">
-                  {section.icon}
-                </div>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
                     {section.title}

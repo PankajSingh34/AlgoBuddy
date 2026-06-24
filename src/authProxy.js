@@ -1,8 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import {
+  validateCsrfOrigin,
+  isStateChangingMethod,
+  isApiRoute,
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
+} from "@/lib/csrf";
 
 const SUPABASE_ENV_ERROR =
-  "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy EnvExample.txt to .env.local and add your Supabase project URL and anon key.";
+  "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.local and add your Supabase project URL and anon key.";
+
+const CSRF_EXEMPT_ROUTES = new Set(["/api/csrf-token"]);
 
 function isValidHttpUrl(value) {
   try {
@@ -28,7 +37,7 @@ function getSupabaseConfig() {
   return { supabaseUrl, supabaseAnonKey };
 }
 
-const protectedRoutes = ["/arena", "/practice", "/dashboard", "/profile"];
+const protectedRoutes = ["/arena", "/practice", "/profile"];
 
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
@@ -55,24 +64,48 @@ export async function proxy(request) {
           );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              sameSite: "strict",
+              secure: process.env.NODE_ENV === "production",
+            }),
           );
         },
       },
     },
   );
 
-  // Calling getUser() triggers a token refresh if the access token is expired.
-  // This must not be removed — without it, sessions silently expire mid-browse.
   const { data: { user }, error } = await supabase.auth.getUser();
 
-  // Route protection — redirect unauthenticated users away from protected routes
   const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
       const url = new URL("/login", request.url);
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
+    }
+  }
+
+  if (
+    isApiRoute(pathname) &&
+    isStateChangingMethod(request.method) &&
+    !CSRF_EXEMPT_ROUTES.has(pathname)
+  ) {
+    if (!validateCsrfOrigin(request)) {
+      return NextResponse.json(
+        { error: "CSRF validation failed: untrusted origin" },
+        { status: 403 },
+      );
+    }
+
+    const headerToken = request.headers.get(CSRF_HEADER_NAME);
+    const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
+
+    if (!headerToken || !cookieToken || headerToken !== cookieToken) {
+      return NextResponse.json(
+        { error: "CSRF validation failed: token mismatch" },
+        { status: 403 },
+      );
     }
   }
 

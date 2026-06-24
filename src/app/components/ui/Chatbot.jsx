@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { api } from "@/lib/apiClient";
+import { CSRF_HEADER_NAME } from "@/lib/csrf";
 
 // ─── Custom Robot Icon matching AlgoBuddy Theme ──────────────────────────────
 
@@ -480,12 +482,22 @@ export default function Chatbot() {
       abortControllerRef.current = new AbortController();
 
       try {
-        const res = await fetch("/api/chatbot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
-          signal: abortControllerRef.current.signal,
-        });
+        const csrfToken = await api.getCsrfToken();
+
+const headers = {
+  "Content-Type": "application/json",
+};
+
+if (csrfToken) {
+  headers[CSRF_HEADER_NAME] = csrfToken;
+}
+
+const res = await fetch("/api/chatbot", {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ messages: history }),
+  signal: abortControllerRef.current.signal,
+});
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));

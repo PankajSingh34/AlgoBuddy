@@ -3,17 +3,39 @@ import { jwtVerify } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
 const RATE_LIMIT_KEY_PREFIX = "rl:";
+const MAX_IN_MEMORY_ENTRIES = 10000;
+const MEMORY_SWEEP_INTERVAL_MS = 60000;
 const store = new Map();
 
-function gc() {
-  if (Math.random() < 0.05) {
+// Periodic sweeper to clean expired entries — avoids O(N) scan on every request
+// and ensures FIFO eviction doesn't silently reset active rate-limit windows.
+let memorySweepTimer = null;
+function startMemorySweeper() {
+  if (memorySweepTimer) return;
+  memorySweepTimer = setInterval(() => {
     const now = Date.now();
+    let expired = 0;
     for (const [key, bucket] of store.entries()) {
       if (bucket.resetAt <= now) {
         store.delete(key);
+        expired++;
       }
     }
-  }
+    // Size-based forced eviction only under extreme overflow, not as primary strategy.
+    if (store.size > MAX_IN_MEMORY_ENTRIES) {
+      const toEvict = store.size - MAX_IN_MEMORY_ENTRIES;
+      const iter = store.keys();
+      for (let i = 0; i < toEvict; i++) {
+        const k = iter.next().value;
+        if (k !== undefined) store.delete(k);
+      }
+      console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
+    }
+    if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
+      console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
+    }
+  }, MEMORY_SWEEP_INTERVAL_MS);
+  if (memorySweepTimer.unref) memorySweepTimer.unref();
 }
 
 const redis =
@@ -109,7 +131,7 @@ export function createRateLimiter(options) {
       console.warn("Critical: Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are not configured in production. Using in-memory fallback.");
     }
 
-    gc();
+    startMemorySweeper();
 
     const isOutage = redis && (isRedisOffline || Date.now() < redisOfflineUntil);
     const limit = isOutage ? Math.max(1, Math.floor(maxRequests * 0.5)) : maxRequests;

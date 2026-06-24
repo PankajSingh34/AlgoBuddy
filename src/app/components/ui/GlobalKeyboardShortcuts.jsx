@@ -9,10 +9,8 @@ const SHORTCUTS = [
   { keys: ["/", "Ctrl+K"], label: "Focus page search" },
   { keys: ["?"], label: "Show keyboard shortcuts" },
   { keys: ["Esc"], label: "Close shortcut help" },
-  { keys: ["Ctrl+Shift+D"], label: "Open dashboard" },
   { keys: ["Ctrl+Shift+P"], label: "Open practice" },
   { keys: ["Ctrl+Shift+V"], label: "Open visualizer" },
-  { keys: ["Ctrl+Shift+B"], label: "Open bookmarks dashboard" },
 ];
 
 function isTypingTarget(target) {
@@ -81,10 +79,8 @@ export default function GlobalKeyboardShortcuts() {
       if (!isModifier || !event.shiftKey) return;
 
       const routes = {
-        d: "/dashboard",
         p: "/practice",
         v: "/visualizer",
-        b: "/dashboard",
       };
 
       const route = routes[key];

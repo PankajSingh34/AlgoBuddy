@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { Users } from 'lucide-react'
 import {
   FaGithub,
   FaLinkedin,
@@ -237,11 +238,19 @@ const Footer = () => {
                 Join our community and connect with learners and developers.
               </p>
               <div className="space-y-4">
+                <Link
+                  href="/community"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  aria-label="Visit AlgoBuddy Community"
+                >
+                  <Users className="w-4 h-4" /> Community
+                </Link>
                 <a
                   href="https://discord.gg/PqnazRxPc"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  aria-label="Join AlgoBuddy Discord Community"
                 >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>

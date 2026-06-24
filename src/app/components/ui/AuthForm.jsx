@@ -44,37 +44,12 @@ export default function AuthForm({ isLogin = true }) {
     return true;
   };
 
-  // Password requirements
-  const passwordRequirements = [
-    { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
-    { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
-    { label: "One lowercase letter", test: (pw) => /[a-z]/.test(pw) },
-    { label: "One number", test: (pw) => /\d/.test(pw) },
-    {
-      label: "One special character",
-      test: (pw) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw),
-    },
-  ];
-
-  const getPasswordValidation = (pw) => {
-    return passwordRequirements.map((req) => ({
-      ...req,
-      met: req.test(pw),
-    }));
-  };
-
-  const passwordValidation = getPasswordValidation(password);
-
-  const allRequirementsMet = passwordValidation.every((req) => req.met);
+  const allRequirementsMet = password !== "";
   const passwordsMatch = password === confirmPassword && password !== "";
 
   // Real-time validation
   const validatePasswords = () => {
-    if (password && !allRequirementsMet) {
-      setPasswordError("Password does not meet all requirements");
-    } else {
-      setPasswordError("");
-    }
+    setPasswordError("");
 
     if (confirmPassword && !passwordsMatch) {
       setConfirmError("Passwords do not match");
@@ -270,24 +245,11 @@ export default function AuthForm({ isLogin = true }) {
             </div>
 
             {/* Password Requirements */}
-            {!isLogin && (
+            {!isLogin && passwordError && (
               <div className="text-sm space-y-1 pl-1">
-                {passwordValidation.map((req, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-2 ${req.met ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
-                  >
-                    <span className="text-base leading-none">
-                      {req.met ? "✓" : "○"}
-                    </span>
-                    <span>{req.label}</span>
-                  </div>
-                ))}
-                {passwordError && (
-                  <p className="text-red-600 dark:text-red-400 mt-1">
-                    {passwordError}
-                  </p>
-                )}
+                <p className="text-red-600 dark:text-red-400 mt-1">
+                  {passwordError}
+                </p>
               </div>
             )}
 

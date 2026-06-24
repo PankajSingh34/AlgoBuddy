@@ -3,23 +3,26 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
-import {
-  Search,
-  ChevronDown,
-  Shuffle,
-  Bookmark,
-  CheckCircle2,
+import { 
+  Search, 
+  ChevronDown, 
+  Shuffle, 
+  Bookmark, 
+  CheckCircle2, 
   ChevronLeft,
   ChevronRight,
   ExternalLink,
   BookOpen,
   Play,
-  ScrollText
+  ScrollText,
+  History
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
 import PracticeRightSidebar from "@/app/components/practice/PracticeRightSidebar";
 import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
+import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
+import PracticeNotebook from "@/app/components/practice/PracticeNotebook";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
 import BackToTop from "@/app/components/ui/backtotop";
@@ -36,10 +39,10 @@ export default function PracticePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Views: 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
+  // Views: 'dashboard', 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
   const [activeView, setActiveView] = useState("problem-list");
   const [activeTab, setActiveTab] = useState("problems"); // 'problems', 'description', 'resources', 'discussion'
-
+  
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("All Topics");
@@ -54,8 +57,12 @@ export default function PracticePage() {
   // Accordion Topic-wise state
   const [expandedTopics, setExpandedTopics] = useState({});
 
+  // Topic-wise view state
+  const [selectedTopicWise, setSelectedTopicWise] = useState(practiceData[0]?.title || "Arrays");
+  const [isTopicLoading, setIsTopicLoading] = useState(false);
+
   // Unified progress hook (replaces all inline progress/streak logic)
-  const { progress, getStatus, updateProgress, streakData } = useSheetProgress();
+  const { progress, getStatus, updateProgress, streakData, loading: progressLoading, error: progressError } = useSheetProgress();
   const currentStreak = streakData.current;
   const longestStreak = streakData.best;
 
@@ -104,6 +111,10 @@ export default function PracticePage() {
     return list;
   }, []);
 
+  const nextProblem = useMemo(() => {
+    return allProblems.find((p) => getStatus(p.id) !== "Completed") || null;
+  }, [allProblems, getStatus]);
+
   // Compute Session Stats Dynamically from current loaded practiceData
   const stats = useMemo(() => {
     let solved = 0;
@@ -111,12 +122,21 @@ export default function PracticePage() {
     let easyTotal = 0;
     let mediumTotal = 0;
     let hardTotal = 0;
+    let easySolved = 0;
+    let mediumSolved = 0;
+    let hardSolved = 0;
     const uniqueCompanies = new Set();
 
     allProblems.forEach((prob) => {
       const status = getStatus(prob.id);
-      if (status === "Completed") solved++;
-      else if (status === "In Progress") attempted++;
+      if (status === "Completed") {
+        solved++;
+        if (prob.difficulty === "Easy") easySolved++;
+        else if (prob.difficulty === "Medium") mediumSolved++;
+        else if (prob.difficulty === "Hard") hardSolved++;
+      } else if (status === "In Progress") {
+        attempted++;
+      }
 
       if (prob.difficulty === "Easy") easyTotal++;
       else if (prob.difficulty === "Medium") mediumTotal++;
@@ -151,6 +171,9 @@ export default function PracticePage() {
       easyTotal,
       mediumTotal,
       hardTotal,
+      easySolved,
+      mediumSolved,
+      hardSolved,
       companiesCount: uniqueCompanies.size
     };
   }, [allProblems, progress, getStatus, streakData]);
@@ -252,13 +275,13 @@ export default function PracticePage() {
 
   // Filtered problems list (mockup table/flat table)
   const filteredProblems = useMemo(() => {
-    return allProblems.filter((p) => {
+    let filtered = allProblems.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.topic.toLowerCase().includes(searchQuery.toLowerCase());
+                            p.topic.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTopic = selectedTopic === "All Topics" || p.topic === selectedTopic;
-
-      const matchesCompany = selectedCompanyFilter === "All" ||
-        (p.companies && p.companies.some(c => c.toLowerCase() === selectedCompanyFilter.toLowerCase()));
+      
+      const matchesCompany = selectedCompanyFilter === "All" || 
+                             (p.companies && p.companies.some(c => c.toLowerCase() === selectedCompanyFilter.toLowerCase()));
 
       if (activeView === "bookmarks") {
         return matchesSearch && matchesTopic && matchesCompany && isBookmarked(p.id);
@@ -268,7 +291,25 @@ export default function PracticePage() {
       }
       return matchesSearch && matchesTopic && matchesCompany;
     });
-  }, [allProblems, searchQuery, selectedTopic, selectedCompanyFilter, activeView, bookmarks, progress]);
+
+    if (activeView === "recent-solved") {
+      filtered.sort((a, b) => {
+        const timeA = progress[a.id]?.updatedAt ? new Date(progress[a.id].updatedAt).getTime() : 0;
+        const timeB = progress[b.id]?.updatedAt ? new Date(progress[b.id].updatedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+    } else if (activeView === "bookmarks") {
+      filtered.sort((a, b) => {
+        const bA = bookmarks.find(x => x.id === a.id);
+        const bB = bookmarks.find(x => x.id === b.id);
+        const timeA = bA?.createdAt ? new Date(bA.createdAt).getTime() : 0;
+        const timeB = bB?.createdAt ? new Date(bB.createdAt).getTime() : 0;
+        return timeB - timeA;
+      });
+    }
+
+    return filtered;
+  }, [allProblems, searchQuery, selectedTopic, selectedCompanyFilter, activeView, bookmarks, progress, getStatus, isBookmarked]);
 
   // Paginated problems
   const paginatedProblems = useMemo(() => {
@@ -317,25 +358,23 @@ export default function PracticePage() {
     return user.user_metadata?.name || user.email?.split("@")[0] || "Guest User";
   }, [user]);
 
-
-  const nextProblem = useMemo(() => {
-    return allProblems.find(
-      (problem) => getStatus(problem.id) !== "Completed"
-    );
-  }, [allProblems, progress, getStatus]);
-
+  const dailyChallenge = useMemo(() => {
+    if (allProblems.length === 0) return null;
+    const daySeed = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+    return allProblems[daySeed % allProblems.length];
+  }, [allProblems]);
 
   // Seed values if not loaded
   if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
-
+      
       {/* Container holding three-column layout */}
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-8">
-
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-y-8 lg:gap-0">
+        
         {/* Left Sidebar */}
-        <PracticeSidebar
+        <PracticeSidebar 
           activeView={activeView}
           onViewChange={(view) => {
             if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
@@ -362,10 +401,36 @@ export default function PracticePage() {
         />
 
         {/* Center Content */}
-        <div className="flex-1 min-w-0 space-y-6">
-
+        <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
+          
           {/* Main dashboard rendering based on activeView */}
-          {activeView === "my-sheet" ? (
+          {activeView === "dashboard" ? (
+            <PracticeDashboard
+              dailyChallenge={dailyChallenge}
+              solvedCount={stats.solved}
+              dailySolved={stats.dailySolved}
+              weeklySolved={stats.weeklySolved}
+              monthlySolved={stats.monthlySolved}
+              dailyGoal={3}
+              weeklyGoal={10}
+              monthlyGoal={50}
+              streakDays={currentStreak}
+              bestStreak={longestStreak}
+              solved={stats.solved}
+              attempted={stats.attempted}
+              remaining={stats.remaining}
+              total={stats.total}
+              estimatedTime={stats.estimatedTime}
+              easyCount={stats.easySolved}
+              mediumCount={stats.mediumSolved}
+              hardCount={stats.hardSolved}
+              totalEasy={stats.easyTotal}
+              totalMed={stats.mediumTotal}
+              totalHard={stats.hardTotal}
+              companiesCount={stats.companiesCount}
+              activityData={activityData}
+            />
+          ) : activeView === "my-sheet" ? (
             /* ── MY SHEET VIEW ─────────────────────────────────────── */
             <section className="space-y-5">
               {/* Header */}
@@ -386,20 +451,20 @@ export default function PracticePage() {
                           className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10"
                           title="Share your sheet with others"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                           <span>Share</span>
                         </button>
                       )}
                     </div>
                     <p className="text-sm text-purple-200 mt-1">
                       {sheetCount > 0
-                        ? `${sheetCount} problem${sheetCount !== 1 ? 's' : ''} curated · ${Object.values(sheet).filter((_, i) => getStatus(Object.keys(sheet)[i]) === 'Completed').length} solved`
+                        ? `${sheetCount} problem${sheetCount !== 1 ? 's' : ''} curated · ${Object.values(sheet).filter((_,i) => getStatus(Object.keys(sheet)[i]) === 'Completed').length} solved`
                         : 'Add problems from the Problem List using the ＋ button'}
                     </p>
                   </div>
                   {sheetCount > 0 && (
                     <div className="flex gap-3">
-                      {['Easy', 'Medium', 'Hard'].map(diff => {
+                      {['Easy','Medium','Hard'].map(diff => {
                         const c = Object.keys(sheet).filter(id => {
                           const p = allProblems.find(x => x.id === id);
                           return p?.difficulty === diff;
@@ -407,8 +472,9 @@ export default function PracticePage() {
                         return c > 0 ? (
                           <div key={diff} className="text-center bg-white/15 rounded-2xl px-4 py-2">
                             <div className="text-lg font-black">{c}</div>
-                            <div className={`text-[10px] font-black uppercase ${diff === 'Easy' ? 'text-emerald-300' : diff === 'Medium' ? 'text-amber-300' : 'text-red-300'
-                              }`}>{diff}</div>
+                            <div className={`text-[10px] font-black uppercase ${
+                              diff === 'Easy' ? 'text-emerald-300' : diff === 'Medium' ? 'text-amber-300' : 'text-red-300'
+                            }`}>{diff}</div>
                           </div>
                         ) : null;
                       })}
@@ -457,17 +523,18 @@ export default function PracticePage() {
                           if (!prob) return null;
                           const status = getStatus(prob.id);
                           return (
-                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                               <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                               <td className="py-4 px-5">
                                 <div className="font-bold text-xs text-slate-800 dark:text-white">{prob.name}</div>
                               </td>
                               <td className="py-4 px-5 text-xs font-bold text-slate-500 dark:text-neutral-400">{prob.topic}</td>
                               <td className="py-4 px-5 text-center">
-                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                    : prob.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                  }`}>{prob.difficulty}</span>
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                  prob.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  : prob.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                }`}>{prob.difficulty}</span>
                               </td>
                               <td className="py-4 px-5 text-center">
                                 <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
@@ -521,7 +588,7 @@ export default function PracticePage() {
                                   className="text-slate-300 dark:text-neutral-700 hover:text-red-500 dark:hover:text-red-400 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
                                   title="Remove from My Sheet"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                 </button>
                               </td>
                             </tr>
@@ -533,35 +600,51 @@ export default function PracticePage() {
                 </div>
               )}
             </section>
-          ) : activeView === "problem-list" || activeView === "bookmarks" || activeView === "recent-solved" ? (
+          ) : activeView === "problem-list" ? (
             <>
-              {/* Session banner (rendered as the top UI header of Problem List) */}
-              <PracticeSessionBanner
-                title="DSA Sheet - Most Important Interview Questions"
-                description="All DSA topics covered from basic to advanced. Perfect for interview preparation."
-                difficulty="Beginner"
-                problemCount={stats.total}
-                duration={stats.estimatedTime}
-                onBackToSessions={() => router.push("/visualizer")}
-              />
-
-
+              {/* Top Row: Banner and Session Progress */}
+              <div className="flex flex-col lg:flex-row items-stretch gap-4">
+                <div className="flex-1">
+                  <PracticeSessionBanner 
+                    title="DSA Sheet - Most Important Interview Questions"
+                    description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
+                    difficulty="Beginner"
+                    problemCount={stats.total}
+                    duration={stats.estimatedTime}
+                    solved={stats.solved}
+                    attempted={stats.attempted}
+                    remaining={stats.remaining}
+                    total={stats.total}
+                  />
+                </div>
+                {activeView === "problem-list" && (
+                  <div className="w-full lg:w-[260px] flex-shrink-0">
+                    <PracticeRightSidebar 
+                      solved={stats.solved}
+                      attempted={stats.attempted}
+                      remaining={stats.remaining}
+                      total={stats.total}
+                      onViewProgress={() => setActiveView("dashboard")}
+                    />
+                  </div>
+                )}
+              </div>
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
                 {[
                   { id: "problems", label: `Problems (${filteredProblems.length})` },
                   { id: "description", label: "Description" },
-                  { id: "resources", label: "Resources" },
-                  { id: "discussion", label: "Discussion (23)" }
+                  { id: "resources", label: "Resources" }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === tab.id
+                    className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${
+                      activeTab === tab.id
                         ? "border-primary text-primary dark:text-purple-400"
                         : "border-transparent text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300"
-                      }`}
+                    }`}
                   >
                     {tab.label}
                   </button>
@@ -610,7 +693,7 @@ export default function PracticePage() {
                   {selectedCompanyFilter !== "All" && (
                     <div className="flex items-center gap-2 text-xs font-bold bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:text-purple-400 px-3.5 py-1.5 rounded-xl w-fit">
                       <span>Filtering by company: {selectedCompanyFilter}</span>
-                      <button
+                      <button 
                         onClick={() => { setSelectedCompanyFilter("All"); setCurrentPage(1); }}
                         className="font-black text-purple-600 dark:text-purple-300 hover:opacity-85 ml-1.5"
                       >
@@ -620,7 +703,7 @@ export default function PracticePage() {
                   )}
 
                   {/* Problem Table */}
-                  <div className="overflow-x-auto bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm">
+                  <div className="overflow-x-auto bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                       <thead>
                         <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
@@ -638,7 +721,7 @@ export default function PracticePage() {
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="9" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="8" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -651,7 +734,7 @@ export default function PracticePage() {
                             return (
                               <tr
                                 key={prob.id}
-                                className="border-b border-slate-50 dark:border-neutral-850/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
+                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
                               >
                                 <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
                                   {indexNumber}
@@ -671,12 +754,13 @@ export default function PracticePage() {
                                   {prob.topic}
                                 </td>
                                 <td className="py-4 px-5 text-center">
-                                  <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === "Easy"
+                                  <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                    prob.difficulty === "Easy"
                                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                       : prob.difficulty === "Medium"
                                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                         : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                    }`}>
+                                  }`}>
                                     {prob.difficulty}
                                   </span>
                                 </td>
@@ -715,10 +799,11 @@ export default function PracticePage() {
                                       if (!ensureLoggedIn()) return;
                                       toggleBookmark(prob.id, prob.topic.toLowerCase());
                                     }}
-                                    className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${isSaved
-                                        ? "text-primary bg-primary/10 dark:text-purple-400"
+                                    className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
+                                      isSaved 
+                                        ? "text-primary bg-primary/10 dark:text-purple-400" 
                                         : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
-                                      }`}
+                                    }`}
                                   >
                                     <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                   </button>
@@ -736,10 +821,11 @@ export default function PracticePage() {
                                       }
                                     }}
                                     title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                    className={`focus:outline-none p-1.5 rounded-lg transition ${isInSheet(prob.id)
+                                    className={`focus:outline-none p-1.5 rounded-lg transition ${
+                                      isInSheet(prob.id)
                                         ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
                                         : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                      }`}
+                                    }`}
                                   >
                                     <ScrollText size={14} />
                                   </button>
@@ -779,7 +865,7 @@ export default function PracticePage() {
 
                     {/* Shuffle / Random & Pagination controls */}
                     <div className="flex items-center gap-3">
-                      <button
+                      <button 
                         onClick={handleSolveRandom}
                         className="flex items-center gap-1.5 px-3 py-2 border border-purple-500/20 hover:bg-primary hover:text-white dark:hover:bg-purple-600 text-primary dark:text-purple-400 rounded-xl text-xs font-bold transition shadow-sm"
                       >
@@ -793,14 +879,14 @@ export default function PracticePage() {
                           <button
                             onClick={() => setCurrentPage((c) => Math.max(1, c - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 border border-slate-200 dark:border-neutral-850 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
+                            className="p-2 border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
                           >
                             <ChevronLeft size={14} />
                           </button>
                           <button
                             onClick={() => setCurrentPage((c) => Math.min(totalPages, c + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 border border-slate-200 dark:border-neutral-850 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
+                            className="p-2 border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] rounded-xl disabled:opacity-40 transition"
                           >
                             <ChevronRight size={14} />
                           </button>
@@ -838,7 +924,7 @@ export default function PracticePage() {
                       { title: "Dynamic Programming Guide", desc: "Tutorial detailing Memoization vs Tabulation optimization patterns.", url: "/tutorials" },
                       { title: "Complexity Cheatsheet", desc: "Quick-reference matrix of time and space complexities for all structures.", url: "/cheatsheets" }
                     ].map((res, i) => (
-                      <div key={i} className="p-4 rounded-2xl border border-slate-100 dark:border-neutral-850 hover:border-primary transition duration-300">
+                      <div key={i} className="p-4 rounded-2xl border border-slate-100 dark:border-neutral-800 hover:border-primary transition duration-300">
                         <h4 className="text-xs font-black text-slate-800 dark:text-white flex items-center gap-1">
                           <span>{res.title}</span>
                           <ExternalLink size={12} className="text-slate-400" />
@@ -846,7 +932,7 @@ export default function PracticePage() {
                         <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-1.5 leading-normal">
                           {res.desc}
                         </p>
-                        <button
+                        <button 
                           onClick={() => router.push(res.url)}
                           className="text-[11px] font-black text-primary hover:underline mt-3 block"
                         >
@@ -858,259 +944,387 @@ export default function PracticePage() {
                 </div>
               )}
 
-              {/* Discussion Tab Content */}
-              {activeTab === "discussion" && (
-                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-neutral-850">
-                    <h3 className="text-base font-black text-slate-800 dark:text-white">Community Discussion</h3>
-                    <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-black transition">
-                      Post Comment
-                    </button>
-                  </div>
 
-                  <div className="space-y-4 divide-y divide-slate-100 dark:divide-neutral-850">
-                    {[
-                      { user: "Priya Sharma", role: "Level 12", content: "Is Boyer-Moore required for Majority Element or can we use HashMap in tech interviews? Some interviewers prefer Boyers because of O(1) space.", time: "4h ago" },
-                      { user: "Rohan Gupta", role: "Level 21", content: "Monotonic stack on Largest Rectangle in Histogram was tricky! Drawing stack elements physically on paper helped me realize the bounds.", time: "1d ago" },
-                      { user: "Vikram Das", role: "Level 8", content: "Are there visualizers for dynamic programming available here? Most DP concepts are best shown using 2D grids.", time: "2d ago" }
-                    ].map((c, i) => (
-                      <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""}`}>
-                        <div className="flex items-center justify-between text-xs mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-slate-800 dark:text-white">{c.user}</span>
-                            <span className="px-1.5 py-0.5 bg-slate-50 dark:bg-neutral-800 text-slate-400 text-[9px] font-black rounded">{c.role}</span>
-                          </div>
-                          <span className="text-slate-400 dark:text-neutral-500 font-medium text-[10px]">{c.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-neutral-450 leading-relaxed">
-                          {c.content}
-                        </p>
-                      </div>
-                    ))}
+            </>
+          ) : activeView === "bookmarks" ? (
+            <section className="space-y-5">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-purple-500/20">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <Bookmark size={16} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest text-purple-200">Your Bookmarks</span>
+                  </div>
+                  <h3 className="font-black text-2xl">Saved Problems</h3>
+                  <p className="text-sm mt-1 text-purple-200">Review your bookmarked problems.</p>
+                </div>
+              </div>
+
+              {filteredProblems.length === 0 ? (
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-12 text-center shadow-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Bookmark size={28} className="text-purple-500" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-800 dark:text-white mb-2">No bookmarks yet</h3>
+                  <p className="text-sm text-slate-400 dark:text-neutral-500 max-w-sm mx-auto">
+                    Browse the problem list and click the bookmark icon to save problems here for later review.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
+                          <th className="py-4 px-5 w-12 text-center">#</th>
+                          <th className="py-4 px-5">Problem</th>
+                          <th className="py-4 px-5 text-center">Level</th>
+                          <th className="py-4 px-5 text-center">Bookmarked On</th>
+                          <th className="py-4 px-5 text-center">Status</th>
+                          <th className="py-4 px-5 text-center w-12"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProblems.map((prob, idx) => {
+                          const status = getStatus(prob.id);
+                          const isSaved = isBookmarked(prob.id);
+                          const bInfo = bookmarks.find(b => b.id === prob.id);
+                          const dateStr = bInfo?.createdAt ? new Date(bInfo.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "Recently";
+                          return (
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                              <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
+                              <td className="py-4 px-5">
+                                <a href={prob.practiceUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition">
+                                  <span>{prob.name}</span>
+                                  <ExternalLink size={12} className="opacity-50 shrink-0" />
+                                </a>
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                  prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                }`}>{prob.difficulty}</span>
+                              </td>
+                              <td className="py-4 px-5 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">{dateStr}</td>
+                              <td className="py-4 px-5 text-center">
+                                <div className="flex justify-center">
+                                  <button onClick={() => handleStatusToggle(prob.id, status)} className="focus:outline-none focus-ring rounded-full" title={`Click to toggle status: currently ${status}`}>
+                                    {status === "Completed" ? (
+                                      <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition"><CheckCircle2 size={12} className="stroke-[3]" /></div>
+                                    ) : status === "In Progress" ? (
+                                      <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /></div>
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <button
+                                  onClick={() => {
+                                    if (!ensureLoggedIn()) return;
+                                    toggleBookmark(prob.id, prob.topic.toLowerCase());
+                                  }}
+                                  className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
+                                    isSaved 
+                                      ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                      : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
+                                  }`}
+                                >
+                                  <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
-            </>
-          ) : activeView === "topic-wise" ? (
-            /* Accordion View (Dynamic Topic-wise Roadmap) */
+            </section>
+          ) : activeView === "recent-solved" ? (
             <section className="space-y-5">
-              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-5 rounded-2xl">
-                <h3 className="font-black text-lg">
-                  Suggested Next Step
-                </h3>
-
-                <p className="text-sm mt-2">
-                  {nextProblem
-                    ? `Continue with "${nextProblem.name}"`
-                    : "Congratulations! You completed all roadmap problems 🎉"}
-                </p>
-              </div>
-              <div className="flex justify-between items-center mb-4">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-emerald-500/20">
                 <div>
-                  <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                    DSA Roadmap Accordions
-                  </h2>
-                  <p className="text-xs text-slate-400 dark:text-neutral-500 font-bold mt-1">
-                    Structured way to master Data Structures & Algorithms topic-by-topic
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <History size={16} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest text-emerald-200">Activity History</span>
+                  </div>
+                  <h3 className="font-black text-2xl">Recently Solved</h3>
+                  <p className="text-sm mt-1 text-emerald-200">Problems you have completed, ordered by most recent.</p>
+                </div>
+              </div>
+
+              {progressLoading ? (
+                <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1a1b1e] rounded-3xl border border-slate-100 dark:border-neutral-800/80 shadow-sm transition-all duration-300">
+                  <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin dark:border-neutral-800 dark:border-t-emerald-400"></div>
+                  <p className="mt-4 text-sm font-bold text-slate-400 dark:text-neutral-500 animate-pulse">Loading recently solved problems...</p>
+                </div>
+              ) : progressError ? (
+                <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-3xl p-12 text-center shadow-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                    <History size={28} className="text-red-500" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-800 dark:text-white mb-2">Error loading progress</h3>
+                  <p className="text-sm text-red-400 dark:text-red-500/80 max-w-sm mx-auto">
+                    {progressError}. Please refresh the page.
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const all = {};
-                      practiceData.forEach((t) => { all[t.slug] = true; });
-                      setExpandedTopics(all);
-                    }}
-                    className="px-4.5 py-2 border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800/40 rounded-xl text-xs font-bold transition"
-                  >
-                    Expand All
-                  </button>
-                  <button
-                    onClick={() => setExpandedTopics({})}
-                    className="px-4.5 py-2 border border-slate-200 dark:border-neutral-800 hover:bg-slate-50 dark:hover:bg-neutral-800/40 rounded-xl text-xs font-bold transition"
-                  >
-                    Collapse All
-                  </button>
+              ) : filteredProblems.length === 0 ? (
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-12 text-center shadow-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                    <History size={28} className="text-emerald-500" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-800 dark:text-white mb-2">No recently solved problems yet.</h3>
+                  <p className="text-sm text-slate-400 dark:text-neutral-500 max-w-sm mx-auto">
+                    Your completed problems will appear here. Start practicing!
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
+                          <th className="py-4 px-5 w-12 text-center">#</th>
+                          <th className="py-4 px-5">Problem</th>
+                          <th className="py-4 px-5 text-center">Topic</th>
+                          <th className="py-4 px-5 text-center">Level</th>
+                          <th className="py-4 px-5 text-center">Completed On</th>
+                          <th className="py-4 px-5 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProblems.map((prob, idx) => {
+                          const status = getStatus(prob.id);
+                          const progInfo = progress[prob.id];
+                          const dateStr = progInfo?.updatedAt ? new Date(progInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) : "Recently";
+                          return (
+                            <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                              <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
+                              <td className="py-4 px-5">
+                                <a href={prob.practiceUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 transition">
+                                  <span>{prob.name}</span>
+                                  <ExternalLink size={12} className="opacity-50 shrink-0" />
+                                </a>
+                              </td>
+                              <td className="py-4 px-5 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">
+                                {prob.topic}
+                              </td>
+                              <td className="py-4 px-5 text-center">
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                  prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                }`}>{prob.difficulty}</span>
+                              </td>
+                              <td className="py-4 px-5 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">{dateStr}</td>
+                              <td className="py-4 px-5 text-center">
+                                <div className="flex justify-center">
+                                  <button onClick={() => handleStatusToggle(prob.id, status)} className="focus:outline-none focus-ring rounded-full" title={`Click to toggle status: currently ${status}`}>
+                                    {status === "Completed" ? (
+                                      <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition"><CheckCircle2 size={12} className="stroke-[3]" /></div>
+                                    ) : status === "In Progress" ? (
+                                      <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /></div>
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-emerald-500 transition" />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : activeView === "topic-wise" ? (
+            /* Topic-wise Filter View */
+            <section className="space-y-5">
+              <div className="bg-gradient-to-r from-purple-500 to-violet-600 text-white p-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-purple-500/20">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <Bookmark size={16} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest text-purple-200">Topic-wise Practice</span>
+                  </div>
+                  <h3 className="font-black text-2xl">Master Patterns</h3>
+                  <p className="text-sm mt-1 text-purple-200">Select a topic below to focus on specific problem patterns.</p>
+                </div>
+                <div className="bg-white/10 px-5 py-3 rounded-2xl backdrop-blur-sm border border-white/10">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-200 block mb-1">Selected Topic</span>
+                  <p className="text-base font-black truncate max-w-[200px]">{selectedTopicWise}</p>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#1a1b1e] rounded-2xl border p-5">
-                <h3 className="font-black mb-3">
-                  Overall Roadmap Progress
-                </h3>
-
-                <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500"
-                    style={{
-                      width: `${Math.round(
-                        (stats.solved / stats.total) * 100
-                      )}%`
-                    }}
-                  />
-                </div>
-
-                <p className="mt-2 text-sm">
-                  {stats.solved}/{stats.total} Problems Completed
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {practiceData.map((topic) => {
-
-                  const topicProblems = topic.subsections.flatMap(
-                    (sub) => sub.items
-                  );
-
-                  const completedProblems = topicProblems.filter(
-                    (item) => getStatus(item.id) === "Completed"
-                  ).length;
-
-                  const progressPercentage = Math.round(
-                    (completedProblems / topicProblems.length) * 100
-                  );
-
-                  const isExpanded = !!expandedTopics[topic.slug];
-                  return (
-                    <div
-                      key={topic.slug}
-                      className="border border-slate-100 dark:border-neutral-800/80 rounded-2xl overflow-hidden bg-white dark:bg-[#1a1b1e] shadow-sm transition-all duration-300"
-                    >
-                      {/* Header */}
-                      <div
-                        onClick={() => toggleAccordion(topic.slug)}
-                        className="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-neutral-850 select-none"
+              {/* Topics Pill List */}
+              <div className="relative">
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {practiceData.map((topic) => {
+                    const isSelected = selectedTopicWise === topic.title;
+                    return (
+                      <button
+                        key={topic.slug}
+                        onClick={() => {
+                          if (selectedTopicWise !== topic.title) {
+                            setIsTopicLoading(true);
+                            setSelectedTopicWise(topic.title);
+                            setTimeout(() => setIsTopicLoading(false), 300);
+                          }
+                        }}
+                        className={`snap-start whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border flex-shrink-0 ${
+                          isSelected 
+                            ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                            : "bg-white dark:bg-[#1a1b1e] text-slate-600 dark:text-neutral-300 border-slate-200 dark:border-neutral-800 hover:border-primary/50 dark:hover:border-purple-500/50"
+                        }`}
                       >
-                        <div className="flex flex-col gap-2">
-                          <h3 className="text-sm font-black text-slate-850 dark:text-white">
-                            {topic.title}
-                          </h3>
+                        {topic.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                          <div className="w-48">
-                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-purple-600"
-                                style={{
-                                  width: `${progressPercentage}%`
-                                }}
-                              />
-                            </div>
-
-                            <span className="text-[10px] text-slate-500">
-                              {progressPercentage}% Completed
-                            </span>
-                          </div>
+              {/* Content Area */}
+              {isTopicLoading ? (
+                <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1a1b1e] rounded-3xl border border-slate-100 dark:border-neutral-800/80 shadow-sm transition-all duration-300">
+                  <div className="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin dark:border-neutral-800 dark:border-t-purple-500"></div>
+                  <p className="mt-4 text-sm font-bold text-slate-400 dark:text-neutral-500 animate-pulse">Loading {selectedTopicWise} problems...</p>
+                </div>
+              ) : (
+                (() => {
+                  const topicData = practiceData.find(t => t.title === selectedTopicWise);
+                  const problems = topicData ? topicData.subsections.flatMap(sub => sub.items) : [];
+                  
+                  if (problems.length === 0) {
+                    return (
+                      <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-12 text-center shadow-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                          <Bookmark size={28} className="text-purple-500" />
                         </div>
-                        <div className="text-[10px] text-green-600 font-bold">
-                          {completedProblems}/{topicProblems.length} Solved
-                        </div>
-                        <ChevronDown
-                          size={18}
-                          className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "transform rotate-180" : ""}`}
-                        />
+                        <h3 className="text-base font-black text-slate-800 dark:text-white mb-2">No problems found</h3>
+                        <p className="text-sm text-slate-400 dark:text-neutral-500 max-w-sm mx-auto">
+                          There are currently no problems listed under {selectedTopicWise}. Check back later!
+                        </p>
                       </div>
+                    );
+                  }
 
-                      {/* Content Table */}
-                      {isExpanded && (
-                        <div className="p-5 border-t border-slate-50 dark:border-neutral-850/80 bg-white dark:bg-[#1f2023] overflow-x-auto">
-                          <table className="w-full text-left border-collapse min-w-[700px]">
-                            <thead>
-                              <tr className="bg-slate-50/40 dark:bg-neutral-900/30 text-xs font-bold uppercase text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
-                                <th className="py-3.5 px-5">Problem</th>
-                                <th className="py-3.5 px-5 text-center">Difficulty</th>
-                                <th className="py-3.5 px-5 text-center">Companies</th>
-                                <th className="py-3.5 px-5 text-center">Actions</th>
-                                <th className="py-3.5 px-5 text-center">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {topic.subsections.flatMap((sub) => sub.items).map((item, index, arr) => {
-                                const status = getStatus(item.id);
-                                const isCompleted = status === "Completed";
-                                return (
-                                  <tr
-                                    key={item.id}
-                                    className="border-b border-slate-50 dark:border-neutral-850 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
-                                  >
-                                    <td className="py-5 px-5 font-bold text-xs text-slate-800 dark:text-white">
-                                      {item.name}
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <span className={`inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full ${item.difficulty === "Easy"
-                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                          : item.difficulty === "Medium"
-                                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                            : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                        }`}>
-                                        {item.difficulty}
-                                      </span>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <div className="flex justify-center">
-                                        <CompanyLogos companies={item.companies} />
-                                      </div>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <div className="flex items-center justify-center gap-2.5">
-                                        <button
-                                          onClick={() => {
-                                            setSelectedProblem(item);
-                                            setIsDrawerOpen(true);
-                                          }}
-                                          className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800 transition shadow-sm"
-                                        >
-                                          <BookOpen size={12} />
-                                          Theory
-                                        </button>
-
-                                        {item.visualizerUrl ? (
-                                          <button
-                                            onClick={() => router.push(item.visualizerUrl)}
-                                            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-primary/20 text-primary dark:text-purple-400 hover:bg-primary hover:text-white dark:hover:bg-purple-500 transition shadow-sm"
-                                          >
-                                            <Play size={12} />
-                                            Visualize
-                                          </button>
-                                        ) : (
-                                          <span className="text-xs text-slate-300 dark:text-neutral-700 font-bold px-3">N/A</span>
-                                        )}
-
-                                        <a
-                                          href={item.practiceUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 bg-primary text-white hover:bg-primary-dark rounded-lg transition shadow-sm"
-                                        >
-                                          Solve <ExternalLink size={10} />
-                                        </a>
-                                      </div>
-                                    </td>
-                                    <td className="py-5 px-5 text-center">
-                                      <button
-                                        onClick={() => handleStatusToggle(item.id, status)}
-                                        className="focus:outline-none"
-                                      >
-                                        {isCompleted ? (
-                                          <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
-                                            <CheckCircle2 size={12} className="stroke-[3]" />
-                                          </div>
+                  return (
+                    <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[700px]">
+                          <thead>
+                            <tr className="bg-slate-50/40 dark:bg-neutral-900/10 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-neutral-500 border-b border-slate-100 dark:border-neutral-800">
+                              <th className="py-4 px-5 w-12 text-center">#</th>
+                              <th className="py-4 px-5">Problem</th>
+                              <th className="py-4 px-5 text-center">Level</th>
+                              <th className="py-4 px-5 text-center">Company</th>
+                              <th className="py-4 px-5 text-center">Status</th>
+                              <th className="py-4 px-5 text-center w-12"></th>
+                              <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {problems.map((prob, idx) => {
+                              const status = getStatus(prob.id);
+                              const isSaved = isBookmarked(prob.id);
+                              return (
+                                <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                                  <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
+                                  <td className="py-4 px-5">
+                                    <a
+                                      href={prob.practiceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition"
+                                    >
+                                      <span>{prob.name}</span>
+                                      <ExternalLink size={12} className="opacity-50 shrink-0" />
+                                    </a>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
+                                      prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                      : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                      : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                    }`}>{prob.difficulty}</span>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <div className="flex justify-center">
+                                      <button onClick={() => handleStatusToggle(prob.id, status)} className="focus:outline-none">
+                                        {status === "Completed" ? (
+                                          <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition"><CheckCircle2 size={12} className="stroke-[3]" /></div>
+                                        ) : status === "In Progress" ? (
+                                          <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition"><div className="w-2.5 h-2.5 rounded-full bg-amber-500" /></div>
                                         ) : (
                                           <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
                                         )}
                                       </button>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        if (!ensureLoggedIn()) return;
+                                        toggleBookmark(prob.id, selectedTopicWise.toLowerCase());
+                                      }}
+                                      className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
+                                        isSaved 
+                                          ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                          : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
+                                      }`}
+                                    >
+                                      <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
+                                    </button>
+                                  </td>
+                                  <td className="py-4 px-5 text-center">
+                                    <button
+                                      onClick={() => {
+                                        if (!ensureLoggedIn()) return;
+                                        if (isInSheet(prob.id)) {
+                                          removeFromSheet(prob.id);
+                                          toast.success('Removed from My Sheet');
+                                        } else {
+                                          addToSheet(prob.id);
+                                          toast.success('Added to My Sheet! ✨');
+                                        }
+                                      }}
+                                      title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
+                                      className={`focus:outline-none p-1.5 rounded-lg transition ${
+                                        isInSheet(prob.id)
+                                          ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
+                                          : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
+                                      }`}
+                                    >
+                                      <ScrollText size={14} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   );
-                })}
-              </div>
+                })()
+              )}
             </section>
+          ) : activeView === "notes" ? (
+            <PracticeNotebook />
           ) : (
             /* Company-wise View */
             <div className="space-y-6">
@@ -1136,7 +1350,7 @@ export default function PracticePage() {
                     }}
                     className="flex flex-col items-center justify-center p-5 rounded-2xl bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 shadow-sm hover:border-primary dark:hover:border-purple-500 transition duration-300 text-center select-none"
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-neutral-850 mb-3 border border-slate-100 dark:border-neutral-800">
+                    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-neutral-800 mb-3 border border-slate-100 dark:border-neutral-800">
                       {/* Reuse dynamic CompanyLogos logo defs by passing array */}
                       <CompanyLogos companies={[comp.name]} />
                     </div>
@@ -1153,21 +1367,6 @@ export default function PracticePage() {
           )}
 
         </div>
-
-        {/* Right Sidebar */}
-        <PracticeRightSidebar
-          solved={stats.solved}
-          attempted={stats.attempted}
-          remaining={stats.remaining}
-          total={stats.total}
-          estimatedTime={stats.estimatedTime}
-          easyCount={stats.easyTotal}
-          mediumCount={stats.mediumTotal}
-          hardCount={stats.hardTotal}
-          companiesCount={stats.companiesCount}
-          userName={userName}
-          activityData={activityData}
-        />
 
       </div>
 

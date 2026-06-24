@@ -21,7 +21,7 @@ const initialMockNotifications = [
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     read: false,
     priority: "high",
-    actionUrl: "/dashboard",
+    actionUrl: "/profile",
   },
   {
     id: "3",
@@ -51,7 +51,7 @@ const initialMockNotifications = [
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     read: true,
     priority: "medium",
-    actionUrl: "/dashboard",
+    actionUrl: "/profile",
   },
   {
     id: "6",

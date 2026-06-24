@@ -1,21 +1,29 @@
 import { supabase } from "@/lib/supabase";
+import { api } from "./apiClient";
 
 const trackActivity = async (type = "site_visit") => {
   try {
-    await fetch("/api/activity", {
+    await api.request("/api/activity", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type }),
+      body: { type, localDate: getLocalISODate() },
     });
   } catch (e) {
     console.error("trackActivity failed:", e);
   }
 };
 
+const getLocalISODate = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const computeStreak = (activities) => {
   if (!activities || activities.length === 0) return 0;
 
   const dates = activities
+    .filter(Boolean)
     .map((a) => {
       const d = new Date(a.activity_date || a.created_at);
       return d.toISOString().split("T")[0];

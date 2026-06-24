@@ -43,6 +43,7 @@ export const sections = [
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort"},
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
           { name: "Comparison Mode", path: "/visualizer/array/comparison" },
         ],
@@ -168,6 +169,7 @@ export const sections = [
           { name: "Reverse", path: "/visualizer/linkedlist/operations/reverse" },
           { name: "Merge", path: "/visualizer/linkedlist/operations/merge" },
           { name: "Comparison", path: "/visualizer/linkedlist/operations/comparison" },
+          { name: "Sorting", path: "/visualizer/linkedlist/operations/sorting" },
         ],
       },
     ],
@@ -282,6 +284,30 @@ export const sections = [
           { name: "Prim's Algorithm", path: "/visualizer/graph/prim" },
           { name: "Kruskal's Algorithm", path: "/visualizer/graph/kruskal" },
           { name: "Topological Sort", path: "/visualizer/graph/topological-sort" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
         ],
       },
     ],

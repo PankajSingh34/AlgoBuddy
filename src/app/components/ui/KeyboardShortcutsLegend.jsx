@@ -3,10 +3,11 @@ import { useState, useEffect, useRef } from "react";
 
 // Matches the actual shortcuts in useVisualizerKeyboard.js
 const SHORTCUTS = [
-  { keys: ["Space"], label: "Start / Reset" },
-  { keys: ["R"],     label: "Reset All"     },
-  { keys: ["+","="], label: "Speed up"      },
-  { keys: ["-"],     label: "Slow down"     },
+  { keys: ["Space"],      label: "Play / Pause"  },
+  { keys: ["→"],          label: "Step forward"  },
+  { keys: ["R"],          label: "Reset All"     },
+  { keys: ["+","="],      label: "Speed up"      },
+  { keys: ["-"],          label: "Slow down"     },
 ];
 
 export default function KeyboardShortcutsLegend() {
