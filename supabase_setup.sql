@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS community_contributors (
 ALTER TABLE community_contributors ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read access (unauthenticated users can view contributors)
+DROP POLICY IF EXISTS "Allow public read access" ON community_contributors;
 CREATE POLICY "Allow public read access" ON community_contributors
   FOR SELECT
   USING (true);
@@ -24,16 +25,19 @@ CREATE POLICY "Allow public read access" ON community_contributors
 ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 
 -- Users can read only their own progress
+DROP POLICY IF EXISTS "Users can read own progress" ON user_progress;
 CREATE POLICY "Users can read own progress" ON user_progress
   FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Users can insert their own progress
+DROP POLICY IF EXISTS "Users can insert own progress" ON user_progress;
 CREATE POLICY "Users can insert own progress" ON user_progress
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own progress
+DROP POLICY IF EXISTS "Users can update own progress" ON user_progress;
 CREATE POLICY "Users can update own progress" ON user_progress
   FOR UPDATE
   USING (auth.uid() = user_id);
@@ -44,21 +48,25 @@ CREATE POLICY "Users can update own progress" ON user_progress
 ALTER TABLE problem_bookmarks ENABLE ROW LEVEL SECURITY;
 
 -- Users can read only their own bookmarks
+DROP POLICY IF EXISTS "Users can read own bookmarks" ON problem_bookmarks;
 CREATE POLICY "Users can read own bookmarks" ON problem_bookmarks
   FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Users can insert their own bookmarks
+DROP POLICY IF EXISTS "Users can insert own bookmarks" ON problem_bookmarks;
 CREATE POLICY "Users can insert own bookmarks" ON problem_bookmarks
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own bookmarks
+DROP POLICY IF EXISTS "Users can update own bookmarks" ON problem_bookmarks;
 CREATE POLICY "Users can update own bookmarks" ON problem_bookmarks
   FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Users can delete their own bookmarks
+DROP POLICY IF EXISTS "Users can delete own bookmarks" ON problem_bookmarks;
 CREATE POLICY "Users can delete own bookmarks" ON problem_bookmarks
   FOR DELETE
   USING (auth.uid() = user_id);
@@ -69,15 +77,18 @@ CREATE POLICY "Users can delete own bookmarks" ON problem_bookmarks
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own profile
+DROP POLICY IF EXISTS "Users can read own profile" ON user_profiles;
 CREATE POLICY "Users can read own profile" ON user_profiles
   FOR SELECT
   USING (auth.uid() = id);
 
 -- Users can upsert their own profile
+DROP POLICY IF EXISTS "Users can upsert own profile" ON user_profiles;
 CREATE POLICY "Users can upsert own profile" ON user_profiles
   FOR INSERT
   WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
 CREATE POLICY "Users can update own profile" ON user_profiles
   FOR UPDATE
   USING (auth.uid() = id);
@@ -88,16 +99,19 @@ CREATE POLICY "Users can update own profile" ON user_profiles
 ALTER TABLE user_activity ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own activity
+DROP POLICY IF EXISTS "Users can read own activity" ON user_activity;
 CREATE POLICY "Users can read own activity" ON user_activity
   FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Users can insert their own activity
+DROP POLICY IF EXISTS "Users can insert own activity" ON user_activity;
 CREATE POLICY "Users can insert own activity" ON user_activity
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own activity
+DROP POLICY IF EXISTS "Users can update own activity" ON user_activity;
 CREATE POLICY "Users can update own activity" ON user_activity
   FOR UPDATE
   USING (auth.uid() = user_id);
@@ -116,14 +130,17 @@ CREATE TABLE IF NOT EXISTS pending_messages (
 ALTER TABLE pending_messages ENABLE ROW LEVEL SECURITY;
 
 -- Allow the service role (admin) to insert and read pending messages
+DROP POLICY IF EXISTS "Service role can insert pending_messages" ON pending_messages;
 CREATE POLICY "Service role can insert pending_messages" ON pending_messages
   FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role can read pending_messages" ON pending_messages;
 CREATE POLICY "Service role can read pending_messages" ON pending_messages
   FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Service role can update pending_messages" ON pending_messages;
 CREATE POLICY "Service role can update pending_messages" ON pending_messages
   FOR UPDATE
   USING (true);
@@ -141,6 +158,7 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
 ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Allow the service role to manage subscriptions
+DROP POLICY IF EXISTS "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions;
 CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
   USING (true) WITH CHECK (true);
 
