@@ -84,6 +84,14 @@ export async function POST(request) {
     const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
       parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
     );
+<<<<<<< HEAD
+    if (!smtpQuotaAllowed.allowed) {
+      console.error("[review] SMTP daily quota exceeded. Email not sent.");
+      return jsonResponse({ message: "Review received." }, 200, {
+        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Remaining": smtpRemaining.toString(),
+      });
+=======
     if (!smtpAllowed) {
       console.warn("[review] SMTP daily quota exceeded. Persisting message to pending_messages.");
       try {
@@ -98,6 +106,7 @@ export async function POST(request) {
       return jsonResponse({
         message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
       }, 503);
+>>>>>>> main
     }
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
