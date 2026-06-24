@@ -1,88 +1,122 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 
-const CountingSortCodeBlock = () => {
+const RadixSortCodeBlock = () => {
   const code = {
-    javascript: `function countingSort(arr) {
-  const max = Math.max(...arr);
-  const count = new Array(max + 1).fill(0);
-  const output = new Array(arr.length);
-
-  arr.forEach((value) => {
-    count[value] += 1;
-  });
-
-  for (let i = 1; i < count.length; i++) {
-    count[i] += count[i - 1];
-  }
-
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const value = arr[i];
-    output[count[value] - 1] = value;
-    count[value] -= 1;
-  }
-
-  return output;
+    javascript: `function getDigit(num, place) {
+  return Math.floor(num / place) % 10;
 }
-`,
-    python: `def counting_sort(arr):
+
+function radixSort(arr) {
+  const max = Math.max(...arr);
+  let place = 1;
+
+  while (Math.floor(max / place) > 0) {
+    const buckets = Array.from({ length: 10 }, () => []);
+
+    for (const num of arr) {
+      const digit = getDigit(num, place);
+      buckets[digit].push(num);
+    }
+
+    arr = [].concat(...buckets);
+    place *= 10;
+  }
+
+  return arr;
+}`,
+    python: `def get_digit(num, place):
+    return (num // place) % 10
+
+def radix_sort(arr):
     if not arr:
         return []
 
-    maximum = max(arr)
-    count = [0] * (maximum + 1)
-    output = [0] * len(arr)
+    max_val = max(arr)
+    place = 1
 
-    for value in arr:
-        count[value] += 1
+    while max_val // place > 0:
+        buckets = [[] for _ in range(10)]
 
-    for i in range(1, len(count)):
-        count[i] += count[i - 1]
+        for num in arr:
+            digit = get_digit(num, place)
+            buckets[digit].append(num)
 
-    for value in reversed(arr):
-        output[count[value] - 1] = value
-        count[value] -= 1
+        arr = [num for bucket in buckets for num in bucket]
+        place *= 10
 
-    return output
-`,
-    java: `public static int[] countingSort(int[] arr) {
-    int max = Arrays.stream(arr).max().orElse(0);
-    int[] count = new int[max + 1];
-    int[] output = new int[arr.length];
+    return arr`,
+    cpp: `#include <vector>
+#include <algorithm>
+using namespace std;
 
-    for (int value : arr) {
-        count[value]++;
-    }
-
-    for (int i = 1; i < count.length; i++) {
-        count[i] += count[i - 1];
-    }
-
-    for (int i = arr.length - 1; i >= 0; i--) {
-        int value = arr[i];
-        output[count[value] - 1] = value;
-        count[value]--;
-    }
-
-    return output;
+int getDigit(int num, int place) {
+    return (num / place) % 10;
 }
-`,
+
+vector<int> radixSort(vector<int> arr) {
+    if (arr.empty()) return arr;
+
+    int maxVal = *max_element(arr.begin(), arr.end());
+
+    for (int place = 1; maxVal / place > 0; place *= 10) {
+        vector<vector<int>> buckets(10);
+
+        for (int num : arr)
+            buckets[getDigit(num, place)].push_back(num);
+
+        arr.clear();
+        for (auto& bucket : buckets)
+            for (int num : bucket)
+                arr.push_back(num);
+    }
+
+    return arr;
+}`,
+  };
+
+  const [active, setActive] = useState("javascript");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code[active]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-950 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 mb-8">
-      <h2 className="text-2xl font-semibold mb-4">Counting Sort Code Example</h2>
-      <div className="space-y-6">
-        {Object.entries(code).map(([lang, snippet]) => (
-          <div key={lang}>
-            <h3 className="text-lg font-medium mb-2 capitalize">{lang}</h3>
-            <pre className="rounded-lg bg-[#f5f7ff] dark:bg-[#111827] p-4 overflow-x-auto text-xs sm:text-sm text-[#0f172a] dark:text-[#e5e7eb]">
-              <code>{snippet}</code>
-            </pre>
-          </div>
+    <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-8">
+      <h2 className="text-2xl font-semibold mb-4">Radix Sort Code</h2>
+
+      <div className="flex gap-2 mb-4">
+        {Object.keys(code).map((lang) => (
+          <button
+            key={lang}
+            onClick={() => setActive(lang)}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              active === lang
+                ? "bg-[#a435f0] text-white"
+                : "bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700"
+            }`}
+          >
+            {lang.charAt(0).toUpperCase() + lang.slice(1)}
+          </button>
         ))}
+      </div>
+
+      <div className="relative">
+        <pre className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 overflow-x-auto text-sm font-mono text-gray-800 dark:text-gray-200">
+          <code>{code[active]}</code>
+        </pre>
+        <button
+          onClick={handleCopy}
+          className="absolute top-3 right-3 px-3 py-1 rounded text-xs bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition-colors"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
       </div>
     </div>
   );
 };
 
-export default CountingSortCodeBlock;
+export default RadixSortCodeBlock;

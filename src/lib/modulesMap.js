@@ -8,6 +8,7 @@ export const MODULE_MAPS = {
     quickSort : "19ad8f43-b858-4e80-998c-49c5e0f69f8c",
     radixSort : "radix-sort-001",
     countingSort : "a3b0cb48-1234-4cde-8f6b-9f12a3b4c5d6",
+    radixSort : "b4c1dc59-2345-4def-9g7c-0g23b4c5d6e7",
     pushPop : "48138388-914b-4f84-8468-683175ce1a1e",
     peek : "fd95f8af-fb22-413f-9080-ebb558b53e70",
     isEmpty : "05ecbddd-e3d4-4fa1-aa45-71accac97d79",
@@ -60,6 +61,8 @@ export const MODULE_MAPS = {
     mcts: "c9f1d2a4-6b7e-4d2f-9a8c-1e2f3a4b5c6d",
     slidingWindow: "a81d4a92-b6f1-4c22-8d7e-9a6b7c8d9e10",
     monotonicStack: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+    dsu: "d9e8fa7c-6b5a-4d3c-2b1a-0f9e8d7c6b5a"
+}
     dsu: "d9e8fa7c-6b5a-4d3c-2b1a-0f9e8d7c6b5a",
     twoPointers: "f3a1b2c3-d4e5-4f60-a7b8-c9d0e1f2a3b4",
 }

@@ -45,6 +45,7 @@ export const sections = [
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
           { name: "Radix Sort", path: "/visualizer/array/radixsort"},
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort" },
           { name: "Comparison Mode", path: "/visualizer/array/comparison" },
         ],
       },
