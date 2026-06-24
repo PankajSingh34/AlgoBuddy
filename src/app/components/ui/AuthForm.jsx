@@ -131,6 +131,15 @@ export default function AuthForm({ isLogin = true }) {
     if (error) setError(error.message);
   };
 
+  const handleForgotPassword = () => {
+    if (!email || emailError) {
+      toast.error("Please enter a valid email address first");
+      return;
+    }
+    router.push(`/auth/forgot-password?email=${encodeURIComponent(email)}`);
+  };
+
+  // Safe Turnstile sitekey fallback for testing/dev environments
   const turnstileSiteKey =
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key"
@@ -198,6 +207,7 @@ export default function AuthForm({ isLogin = true }) {
           )}
 
           <form onSubmit={handleAuth} noValidate className="space-y-4">
+            {/* Email Field */}
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 w-10 flex items-center pointer-events-none">
@@ -226,6 +236,7 @@ export default function AuthForm({ isLogin = true }) {
               )}
             </div>
 
+            {/* Password Field */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock size={18} className="text-gray-400 dark:text-gray-500" />
@@ -254,12 +265,29 @@ export default function AuthForm({ isLogin = true }) {
             )}
 
             {/* Confirm Password - Only for Signup */}
+            {/* Forgot Password Link - Only shown on Login */}
+            {isLogin && (
+              <div className="text-right -mt-2">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-udemy-purple dark:text-udemy-purple-light hover:underline font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            {/* Name Field - Only for Signup */}
             {!isLogin && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock
+                   
                     size={18}
+                   
                     className="text-gray-400 dark:text-gray-500"
+                 
                   />
                 </div>
                 <input
@@ -290,6 +318,7 @@ export default function AuthForm({ isLogin = true }) {
               />
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={
@@ -300,6 +329,7 @@ export default function AuthForm({ isLogin = true }) {
                 (!isLogin && !passwordsMatch)
               }
               className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
+                
                 loading ||
                 !captchaToken ||
                 (email && emailError) ||
@@ -326,7 +356,7 @@ export default function AuthForm({ isLogin = true }) {
             </button>
           </form>
 
-          {/* Switch forms */}
+          {/* Switch between Login / Signup */}
           <div className="text-center text-sm text-udemy-muted dark:text-udemy-dark-muted">
             {isLogin ? (
               <p>
