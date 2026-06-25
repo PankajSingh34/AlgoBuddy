@@ -21,6 +21,11 @@ const baseRelatedLinks = [
   { key: "prim", text: "Prim", url: "/visualizer/graph/prim" },
   { key: "kruskal", text: "Kruskal", url: "/visualizer/graph/kruskal" },
   {
+  key: "union-find",
+  text: "Union Find",
+  url: "/visualizer/graph/union-find",
+   },
+  {
     key: "topological-sort",
     text: "Topological Sort",
     url: "/visualizer/graph/topological-sort",
@@ -232,6 +237,31 @@ export const graphTopics = {
       { label: "Output", value: "Minimum spanning tree" },
     ],
   },
+  "union-find": {
+  key: "union-find",
+  title: "Union Find",
+  category: "Graph Algorithm",
+  description:
+    "Maintain disjoint sets efficiently using path compression and union by rank.",
+  animationType: "union-find",
+  summary: [
+    "Union Find maintains connected components.",
+    "Find returns the parent representative.",
+    "Union merges two sets.",
+    "Path compression speeds up future operations."
+  ],
+  steps: [
+    "Initialize each node as its own parent.",
+    "Use find() to locate the root.",
+    "Use union() to merge sets.",
+    "Apply path compression and union by rank."
+  ],
+  complexity: [
+     { label: "Find", value: "Almost O(1)" },
+     { label: "Union", value: "Almost O(1)" },
+     { label: "Space", value: "O(n)" }
+  ],
+   },
   "topological-sort": {
     key: "topological-sort",
     title: "Topological Sort",

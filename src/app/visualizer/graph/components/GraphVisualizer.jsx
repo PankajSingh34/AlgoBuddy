@@ -29,6 +29,7 @@ import { bellmanFordGenerator } from "@/features/algorithms/graph/bellmanFordLog
 import { floydWarshallGenerator } from "@/features/algorithms/graph/floydWarshallLogic";
 import { primGenerator } from "@/features/algorithms/graph/primLogic";
 import { kruskalGenerator } from "@/features/algorithms/graph/kruskalLogic";
+import { unionFindGenerator } from "@/features/algorithms/graph/unionFindLogic";
 import { topologicalSortGenerator } from "@/features/algorithms/graph/topologicalSortLogic";
 import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
 import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
@@ -285,6 +286,26 @@ const complexityData = {
     { name: 'Time', value: 90, label: 'O(ElogE)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
   ],
+  "union-find": [
+  {
+    name: "Find",
+    value: 95,
+    label: "O(α(n))",
+    full: "Find Operation",
+  },
+  {
+    name: "Union",
+    value: 95,
+    label: "O(α(n))",
+    full: "Union Operation",
+  },
+  {
+    name: "Space",
+    value: 60,
+    label: "O(n)",
+    full: "Space Complexity",
+  },
+],
   "topological-sort": [
     { name: 'Time', value: 80, label: 'O(V+E)', full: 'Time Complexity' },
     { name: 'Space', value: 60, label: 'O(V)', full: 'Space Complexity' },
@@ -318,8 +339,24 @@ const comparisonData = [
 ];
 
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
-  const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
-  const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
+  console.log("Algorithm:", algorithm);
+  const unionFindNodes = [
+  { id: "A" },
+  { id: "B" },
+  { id: "C" },
+  { id: "D" },
+  { id: "E" }
+];
+const [nodes, setNodes] = useState(
+  algorithm === "union-find"
+    ? unionFindNodes
+    : defaultGraphs[algorithm]?.nodes || []
+);
+const [edges, setEdges] = useState(
+  algorithm === "union-find"
+    ? []
+    : defaultGraphs[algorithm]?.edges || []
+);
   const [isEditing, setIsEditing] = useState(true);
 
   // Derived flags
@@ -347,6 +384,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
     if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
     if (algorithm === "kruskal") return Array.from(kruskalGenerator(nodes, edges));
+    if (algorithm === "union-find") return Array.from(unionFindGenerator(nodes));
     if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
     if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
     if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
@@ -354,6 +392,10 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
   }, [nodes, edges, algorithm, initialStartNode, isWeighted]);
+  console.log("Algorithm:", algorithm);
+  console.log("Nodes:", nodes);
+  console.log("edges:", frames); 
+  console.log("Frames:", frames);
 
   const onStep = useCallback((step) => {
     // No specific local state needs to be updated here 
@@ -450,6 +492,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   });
 
   const currentFrameData = frames[engine.currentStep] || {};
+  console.log(frames);
+  console.log(currentFrameData);
   const showFloydMatrix = algorithm === "floyd-warshall" && currentFrameData.matrix;
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
@@ -640,10 +684,17 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                     }}
                   />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
-                    {complexityData[algorithm].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? "var(--color-primary)" : "var(--color-success)"} />
-                    ))}
-                  </Bar>
+  {(complexityData[algorithm] || []).map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={
+        index === 0
+          ? "var(--color-primary)"
+          : "var(--color-success)"
+      }
+    />
+  ))}
+</Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -186,7 +186,9 @@ export default function SegmentAnimation() {
                 <input type="number" value={updateVal} onChange={e => setUpdateVal(e.target.value)} placeholder="New value"
                   className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700" disabled={engine.isPlaying}
                   onKeyDown={e => e.key === "Enter" && triggerUpdate()} />
-                <button onClick={triggerUpdate} disabled={engine.isPlaying}
+                <button
+  aria-label="Update segment tree"
+  onClick={triggerUpdate}disabled={engine.isPlaying}
                   className="rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50">
                   Update
                 </button>
@@ -195,7 +197,9 @@ export default function SegmentAnimation() {
           </div>
           
           <div className="flex justify-end gap-2 items-start">
-            <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
+<button
+  aria-label="Reset segment tree visualization"
+  onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
               <RefreshCw className="w-4 h-4" /> Reset
             </button>
           </div>
