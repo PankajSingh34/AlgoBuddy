@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
 import { X } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
-/* ─── colour + icon theme per DS ─── */
+import ShortcutsButton from "@/components/ui/ShortcutsButton";
+
 const DS_THEME = {
   Array: {
     color: "#a435f0",
@@ -125,9 +126,6 @@ const getTheme = (t) =>
     border: "#e5e7eb",
   };
 
-/* ═══════════════════════════════════════
-   Mini Visuals for cards
-   ═══════════════════════════════════════ */
 function ArrayMiniViz({ color }) {
   const bars = [65, 30, 80, 45, 55, 20, 70];
   const highlight = 2;
@@ -308,7 +306,6 @@ function RecursionMiniViz({ color }) {
   );
 }
 
-
 function CustomCodeMiniViz({ color }) {
   const lines = [
     { width: "75%", highlight: true },
@@ -365,7 +362,6 @@ function DPMiniViz({ color }) {
   );
 }
 
-
 const MINI_VIZ = {
   Array: ArrayMiniViz,
   Stack: StackMiniViz,
@@ -380,9 +376,6 @@ const MINI_VIZ = {
   "Dynamic Programming": DPMiniViz,
 };
 
-/* ═══════════════════════════════════════
-   DS Card — homepage-style window card
-   ═══════════════════════════════════════ */
 function DSCard({ section, theme, delay }) {
   const MiniViz = MINI_VIZ[section.title];
   const count = section.subsections
@@ -405,7 +398,6 @@ function DSCard({ section, theme, delay }) {
           style={{ borderColor: theme.border }}
           data-theme-card={section.title || "Custom Code"}
         >
-          {/* title bar */}
           <div
             className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
             style={{ background: theme.bg, borderColor: theme.border }}
@@ -419,12 +411,10 @@ function DSCard({ section, theme, delay }) {
             </span>
           </div>
 
-          {/* card body */}
           <div
             className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
             data-theme-card={section.title || "Custom Code"}
           >
-            {/* icon + title */}
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
@@ -443,12 +433,10 @@ function DSCard({ section, theme, delay }) {
               </div>
             </div>
 
-            {/* description */}
             <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
               {section.desc}
             </p>
 
-            {/* mini visualization */}
             {MiniViz && (
               <div
                 className="rounded-lg p-3 mb-4 border transition-colors duration-300"
@@ -459,7 +447,6 @@ function DSCard({ section, theme, delay }) {
               </div>
             )}
 
-            {/* CTA pill */}
             <div
               className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
                 group-hover:gap-3 transition-all duration-200"
@@ -475,50 +462,46 @@ function DSCard({ section, theme, delay }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   Main Client Component — Grid only
-   ═══════════════════════════════════════ */
 export default function VisualizerClient({ initialSections }) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
-const searchRef = useRef(null);
-const [searchHistory, setSearchHistory] = useState(() => {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
-  } catch { return []; }
-});
-const [showHistory, setShowHistory] = useState(false);
+  const searchRef = useRef(null);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
 
-// Keyboard shortcut Ctrl+K or /
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey && e.key === "k") || e.key === "/") {
-      e.preventDefault();
-      searchRef.current?.focus();
-      setShowHistory(true);
-    }
-    if (e.key === "Escape") {
-      searchRef.current?.blur();
-      setShowHistory(false);
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey && e.key === "k") || e.key === "/") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        setShowHistory(true);
+      }
+      if (e.key === "Escape") {
+        searchRef.current?.blur();
+        setShowHistory(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (val.trim().length > 2) {
+      setSearchHistory((prev) => {
+        const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
+        localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
+        return updated;
+      });
     }
   };
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, []);
 
-// Save search history
-const handleSearchChange = (e) => {
-  const val = e.target.value;
-  setSearch(val);
-  if (val.trim().length > 2) {
-    setSearchHistory((prev) => {
-      const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
-      localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
-      return updated;
-    });
-  }
-};
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
     const q = search.trim().toLowerCase();
@@ -538,41 +521,25 @@ const handleSearchChange = (e) => {
   }, [search, initialSections]);
 
   const flatResults = useMemo(() => {
-
-let results = [];
-
-initialSections.forEach(section => {
-
- section.subsections?.forEach(sub => {
-
-  sub.items.forEach(item => {
-
-   results.push({
-    ...item,
-    ds: section.title
-   });
-
-  });
-
- });
-
-});
-
-
-if(search){
- results = results.filter(item =>
- item.name.toLowerCase()
- .includes(search.toLowerCase())
- );
-}
-
-return results;
-
-},
-[
-search,
-initialSections
-]);
+    let results = [];
+    initialSections.forEach(section => {
+      section.subsections?.forEach(sub => {
+        sub.items.forEach(item => {
+          results.push({
+            ...item,
+            ds: section.title
+          });
+        });
+      });
+    });
+    if(search){
+      results = results.filter(item =>
+        item.name.toLowerCase()
+        .includes(search.toLowerCase())
+      );
+    }
+    return results;
+  }, [search, initialSections]);
 
   return (
     <div>
@@ -612,8 +579,6 @@ initialSections
 
       <section className="px-5 pt-12 pb-20 min-h-screen bg-gradient-to-b from-white via-surface-50 to-purple-50/40 dark:bg-none dark:bg-[#1c1d1f] transition-colors duration-300">
         <div className="max-w-[1100px] mx-auto">
-          
-
           <div className="flex flex-col items-center gap-4 max-w-[680px] mx-auto mt-8 mb-10">
             <div className="relative w-full max-w-[480px]">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
@@ -668,19 +633,19 @@ initialSections
                             <span className="block text-[11px] text-surface-500 dark:text-surface-400">{item.ds}</span>
                           </div>
                           <button
-  onClick={(e) => {
-    e.preventDefault();
-    isBookmarked(item.path)
-      ? removeBookmark(item.path)
-      : addBookmark({ name: item.name, path: item.path, category: item.ds });
-  }}
-  className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-  aria-label={isBookmarked(item.path) ? `Remove ${item.name} from bookmarks` : `Bookmark ${item.name}`}
->
-  <FiBookmark
-    className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
-  />
-</button>
+                            onClick={(e) => {
+                              e.preventDefault();
+                              isBookmarked(item.path)
+                                ? removeBookmark(item.path)
+                                : addBookmark({ name: item.name, path: item.path, category: item.ds });
+                            }}
+                            className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            aria-label={isBookmarked(item.path) ? `Remove ${item.name} from bookmarks` : `Bookmark ${item.name}`}
+                          >
+                            <FiBookmark
+                              className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
+                            />
+                          </button>
                           <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
                         </Link>
                       );
@@ -713,6 +678,10 @@ initialSections
           )}
         </div>
       </section>
+
+      <div className="fixed bottom-6 right-6 z-50">
+        <ShortcutsButton position="controls" />
+      </div>
     </div>
   );
 }

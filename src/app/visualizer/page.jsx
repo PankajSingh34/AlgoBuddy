@@ -68,10 +68,7 @@ export const metadata = {
   },
 };
 
-
-
 const sections = [
-  
   {
     title: "Code Lab",
     slug: "code-lab",
@@ -150,19 +147,19 @@ const sections = [
           { name: "Binary Search", path: "/visualizer/array/binarysearch" },
         ],
       },
-     {
-      title: "Sorting",
-      items: [
-        { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
-        { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
-        { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
-        { name: "Merge Sort", path: "/visualizer/array/mergesort" },
-        { name: "Quick Sort", path: "/visualizer/array/quicksort" },
-        { name: "Heap Sort", path: "/visualizer/array/heapsort" },
-        { name: "Radix Sort", path: "/visualizer/array/radixsort" },
-        { name: "Counting Sort", path: "/visualizer/array/countingsort" },
-      ],
-    },
+      {
+        title: "Sorting",
+        items: [
+          { name: "Bubble Sort", path: "/visualizer/array/bubblesort" },
+          { name: "Selection Sort", path: "/visualizer/array/selectionsort" },
+          { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
+          { name: "Merge Sort", path: "/visualizer/array/mergesort" },
+          { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort" },
+          { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+        ],
+      },
       {
         title: "Interview Patterns",
         items: [
@@ -772,8 +769,7 @@ const sections = [
       },
     ],
   },
-
-    {
+  {
     title: "Quiz Mode",
     slug: "quiz",
     desc: "Test your knowledge with algorithm comparison challenges",
@@ -815,8 +811,7 @@ const sections = [
         ],
       },
     ],
-    },
-
+  },
   {
     title: "Smart Revision",
     slug: "smart-revision",
@@ -855,47 +850,45 @@ const sections = [
     ],
   },
   {
-  title: "Collaborative Sessions",
-  slug: "collaboration",
-  desc: "Learn and visualize algorithms with friends in real-time",
-  icon: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 00-3-3H10a3 3 0 00-3 3v4m10 0H7m10-12a3 3 0 11-6 0 3 3 0 016 0zm-8 0a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  ),
-  info: {
-    About:
-      "Create collaborative algorithm rooms, discuss execution steps, and learn together.",
-    Representation: null,
-  },
-  subsections: [
-    {
-      title: "Collaborative Learning",
-      items: [
-        {
-          name: "Start Session",
-          path: "/visualizer/collaboration",
-        },
-      ],
+    title: "Collaborative Sessions",
+    slug: "collaboration",
+    desc: "Learn and visualize algorithms with friends in real-time",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 00-3-3H10a3 3 0 00-3 3v4m10 0H7m10-12a3 3 0 11-6 0 3 3 0 016 0zm-8 0a3 3 0 11-6 0 3 3 0 016 0z"
+        />
+      </svg>
+    ),
+    info: {
+      About:
+        "Create collaborative algorithm rooms, discuss execution steps, and learn together.",
+      Representation: null,
     },
-  ],
-},
+    subsections: [
+      {
+        title: "Collaborative Learning",
+        items: [
+          {
+            name: "Start Session",
+            path: "/visualizer/collaboration",
+          },
+        ],
+      },
+    ],
+  },
 ];
+
 const Visualizer = () => {
-  /* Strip non-serialisable `info` (contains JSX modals) before
-     passing to the client component. Icons are fine — they're
-     plain <svg> elements. */
   const clientSections = sections.map(({ info, ...rest }) => ({
     ...rest,
     slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-")
@@ -918,4 +911,3 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
-
