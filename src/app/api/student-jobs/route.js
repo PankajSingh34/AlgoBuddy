@@ -9,8 +9,8 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 function parsePagination(searchParams) {
-  const page = Number(searchParams.get("page") ?? DEFAULT_PAGE);
-  const limit = Number(searchParams.get("limit") ?? DEFAULT_LIMIT);
+  const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(searchParams.get("limit")) || 20, 1), 100);
 
   if (!Number.isInteger(page) || page < 1) {
     return { error: "page must be a positive integer" };

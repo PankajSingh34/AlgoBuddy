@@ -11,8 +11,8 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
+    const page = Math.max(parseInt(searchParams.get("page")) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit")) || 20, 1), 100);
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
