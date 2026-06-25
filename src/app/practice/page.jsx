@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { 
   Search, 
@@ -37,6 +37,7 @@ import { useMySheet } from "@/app/hooks/useMySheet";
 export default function PracticePage() {
   const { user } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // Views: 'dashboard', 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
@@ -77,6 +78,28 @@ export default function PracticePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const tabFromUrl = searchParams?.get("tab");
+    const allowedTabs = new Set(["problems", "description", "resources", "discussion"]);
+    const nextTab = allowedTabs.has(tabFromUrl) ? tabFromUrl : "problems";
+
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+  }, [searchParams, activeTab]);
+
+  const updateTabHistory = (nextTab) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (nextTab === "problems") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextTab);
+    }
+
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(nextUrl, { scroll: false });
+  };
 
   // Sync activeView with the URL ?view= param so browser Back/Forward works
   useEffect(() => {
@@ -639,7 +662,10 @@ export default function PracticePage() {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      updateTabHistory(tab.id);
+                    }}
                     className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${
                       activeTab === tab.id
                         ? "border-primary text-primary dark:text-purple-400"
