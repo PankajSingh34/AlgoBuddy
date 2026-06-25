@@ -263,7 +263,9 @@ Please explain exactly what is happening in this step in detail.`;
                 className="w-full" />
             </div>
             <div className="flex flex-col gap-2 justify-between">
-              <button onClick={handleStart} disabled={!array.length} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
+              <button
+  aria-label="Start insertion sort visualization"
+  onClick={handleStart} disabled={!array.length} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
                 {engine.isPlaying ? "Sorting..." : currentStepData?.sorted ? "Restart" : "Start Insertion Sort"}
               </button>
               <button 
