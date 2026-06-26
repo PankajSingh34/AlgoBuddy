@@ -637,7 +637,7 @@ export default function PracticePage() {
                       attempted={stats.attempted}
                       remaining={stats.remaining}
                       total={stats.total}
-                      onViewProgress={() => setActiveView("dashboard")}
+                      onViewProgress={() => router.push("/practice?view=dashboard")}
                     />
                   </div>
                 )}
