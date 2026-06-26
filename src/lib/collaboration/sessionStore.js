@@ -1020,9 +1020,12 @@ export async function listCollaborationSessions({ limit, cursor } = {}) {
           if (lastScore !== null && lastScore !== undefined) {
             // Count how many entries at this same score have already been
             // returned (including any from previous pages at this score).
-            let tieCount = startOffset;
+            let tieCount = (lastScore === maxScore) ? startOffset : 0;
             for (let i = 0; i <= idIdx; i++) {
-              if (scores[i] === lastScore) tieCount++;
+              const s = values[i];
+              if (scores[i] === lastScore && s && s.visibility === "public") {
+                tieCount++;
+              }
             }
             nextCursor = `${lastScore}::${tieCount}`;
           }
