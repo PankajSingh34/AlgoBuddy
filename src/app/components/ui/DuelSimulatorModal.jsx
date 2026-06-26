@@ -100,7 +100,19 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   useEffect(() => {
     if (!isOpen) return;
 
+    // Reset game/match state
     setIsInitializing(true);
+    setSeconds(0);
+    startTimeRef.current = Date.now();
+    setUserCode(`function twoSum(nums, target) {\n    // Write your code here\n    \n}`);
+    setOppCode(`// Opponent is preparing...`);
+    setUserOutput("");
+    setOppStatus("Idle");
+    setLogs(["[00:00] Duel started. Let the battle begin!"]);
+    setBattleFinished(false);
+    setVictoryState(null);
+    setIsExecuting(false);
+    setFailedAttempts(0);
 
     const safetyTimeout = setTimeout(() => {
       setIsInitializing((initializing) => {

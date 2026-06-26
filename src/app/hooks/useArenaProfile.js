@@ -65,7 +65,7 @@ export function useArenaProfile(user) {
             setMatchHistory(historyData);
           }
         } catch (historyErr) {
-          console.error("Failed to fetch match history:", historyErr);
+          console.warn("Failed to fetch match history:", historyErr.message);
         } finally {
           setLoadingHistory(false);
         }
@@ -78,11 +78,11 @@ export function useArenaProfile(user) {
             setDailyChallenge(dailyData);
           }
         } catch (dailyErr) {
-          console.error("Failed to fetch daily challenge:", dailyErr);
+          console.warn("Failed to fetch daily challenge:", dailyErr.message);
         }
 
       } catch (err) {
-        console.error("Failed to fetch arena profile:", err);
+        console.warn("Failed to fetch arena profile:", err.message);
         setError(err.message);
       } finally {
         setLoadingProfile(false);
@@ -114,7 +114,7 @@ export function useArenaProfile(user) {
         const data = await res.json();
         setLeaderboard(data);
       } catch (err) {
-        console.error("Failed to fetch leaderboard:", err);
+        console.warn("Failed to fetch leaderboard:", err.message);
         // Silently fail leaderboard so it doesn't break the page
       } finally {
         setLoadingLeaderboard(false);

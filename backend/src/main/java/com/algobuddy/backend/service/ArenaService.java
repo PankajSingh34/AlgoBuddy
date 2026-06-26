@@ -307,6 +307,13 @@ public class ArenaService {
                 existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
                 existingMatch.setEndTime(java.time.LocalDateTime.now());
                 existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
+
+                boolean isReqUserPlayer1 = requestingUserId.equals(existingMatch.getPlayer1Id());
+                existingMatch.setRatingChangeP1(isReqUserPlayer1 ? p1RatingChange : p2RatingChange);
+                existingMatch.setRatingChangeP2(isReqUserPlayer1 ? p2RatingChange : p1RatingChange);
+                existingMatch.setXpAwardedP1(isReqUserPlayer1 ? p1XpAwarded : p2XpAwarded);
+                existingMatch.setXpAwardedP2(isReqUserPlayer1 ? p2XpAwarded : p1XpAwarded);
+
                 matchRepository.save(existingMatch);
 
                 cacheManager.getCache("arenaProfile").evict(requestingUserId);

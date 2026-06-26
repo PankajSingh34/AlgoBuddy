@@ -1,6 +1,7 @@
 package com.algobuddy.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +17,8 @@ public class RecordMatchRequest {
     private String matchId;
     private String topic;
     private String difficulty;
+    
+    @JsonProperty("isWinner")
     private boolean isWinner;
 }
+

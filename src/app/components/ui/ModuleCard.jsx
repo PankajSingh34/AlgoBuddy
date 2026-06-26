@@ -3,33 +3,29 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-
-async function apiFetch(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
-}
+import { api } from "@/lib/apiClient";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
-  
+
   useEffect(() => {
+    if (!user) {
+      setIsDone(initialDone ?? false);
+      return;
+    }
+
     const fetchUserProgress = async () => {
-      if (!user) return;
       try {
-        const data = await apiFetch(`/api/progress?moduleId=${encodeURIComponent(moduleId)}`);
-        setIsDone(data?.is_done ?? false);
+        const data = await api.request("/api/progress");
+        const status = data.progress?.[moduleId]?.status;
+        setIsDone(status === "Completed");
       } catch (e) {
         console.error("Error fetching user progress:", e);
       }
     };
     fetchUserProgress();
-  }, [user, moduleId]);
+  }, [user, moduleId, initialDone]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -63,4 +59,44 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
       return;
     }
 
-  }}
+    try {
+      const nextStatus = isDone ? "Not Started" : "Completed";
+      await api.request("/api/progress", {
+        method: "POST",
+        body: { problemId: moduleId, status: nextStatus },
+      });
+      setIsDone(!isDone);
+      toast.success(
+        isDone ? "Module marked as incomplete." : "Module marked as completed!"
+      );
+    } catch (err) {
+      console.error("Error updating progress:", err);
+      toast.error("Failed to update progress. Please try again.");
+    }
+  }
+
+  return (
+    <div
+      className={`border border-surface-200 dark:border-surface-700 max-w-4xl mx-auto rounded-lg p-4 shadow-lg flex flex-col justify-between ${
+        isDone ? "bg-green-50 dark:bg-green-900/30" : "bg-white dark:bg-surface-900"
+      }`}
+    >
+      <div className="my-4 px-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-surface-800 dark:text-surface-200">
+            Done With the Learning
+          </h1>
+          <p className="text-sm text-surface-500 dark:text-surface-400">{description}</p>
+        </div>
+        <input
+          type="checkbox"
+          checked={isDone}
+          onChange={toggleCompletion}
+          className={`w-6 h-6 rounded cursor-pointer transition duration-300 ${
+            isDone ? "accent-green-500 ring-2 ring-green-500" : "accent-[#a435f0]"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}

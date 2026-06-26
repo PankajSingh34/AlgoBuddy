@@ -15,7 +15,7 @@ import java.util.UUID;
 @Repository
 public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfile, UUID> {
     
-    @Query("SELECT p FROM UserArenaProfile p ORDER BY p.rating DESC, p.xp DESC")
+    @Query(value = "SELECT * FROM user_arena_profiles p WHERE p.user_id != '00000000-0000-0000-0000-000000000000' ORDER BY p.rating DESC, p.xp DESC", nativeQuery = true)
     List<UserArenaProfile> findTopPlayers(Pageable pageable);
 
     @Query(value = """
@@ -31,6 +31,7 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
             FROM public.user_arena_profiles p
             LEFT JOIN auth.users u ON p.user_id = u.id
+            WHERE p.user_id != '00000000-0000-0000-0000-000000000000'
             ORDER BY p.rating DESC, p.xp DESC
             """, nativeQuery = true)
     List<ArenaLeaderboardProjection> findTopPlayersWithUserDetails(Pageable pageable);
@@ -60,8 +61,8 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 FROM user_arena_profiles
                 WHERE user_id = :userId
             ) u
-            WHERE p.rating > u.rating
-               OR (p.rating = u.rating AND p.xp > u.xp)
+            WHERE p.user_id != '00000000-0000-0000-0000-000000000000'
+              AND (p.rating > u.rating OR (p.rating = u.rating AND p.xp > u.xp))
             """, nativeQuery = true)
     Integer findRankByUserId(@Param("userId") UUID userId);
 

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import React from 'react';
-import BackToTop from "@/app/components/ui/backtotop";
 import { 
   Code2, 
   Cpu, 
@@ -347,7 +346,6 @@ const AboutSection = () => {
 
       </div>
       <Footer />
-      <BackToTop/>
     </>
   );
 };

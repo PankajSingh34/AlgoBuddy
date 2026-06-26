@@ -1,5 +1,4 @@
 import Footer from "@/app/components/footer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 
 export function createVisualizerPaths(...segments) {
@@ -30,6 +29,7 @@ export default function VisualizerPageLayout({
   code,
   quiz,
   moduleCard,
+  srsWidget,
   exploreOther,
   extraSections = [],
   animationSectionClassName = "px-6",
@@ -99,12 +99,17 @@ export default function VisualizerPageLayout({
           {moduleCard}
         </VisualizerPageSection>
 
+        {srsWidget && (
+          <VisualizerPageSection className={exploreSectionClassName}>
+            {srsWidget}
+          </VisualizerPageSection>
+        )}
+
         <VisualizerPageSection className={exploreSectionClassName}>
           {exploreOther}
         </VisualizerPageSection>
       </div>
 
-      <BackToTop />
       <Footer />
     </>
   );

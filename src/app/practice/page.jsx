@@ -25,7 +25,6 @@ import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
 import PracticeNotebook from "@/app/components/practice/PracticeNotebook";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 
 import { practiceData } from "@/lib/practiceData";
@@ -1398,7 +1397,6 @@ export default function PracticePage() {
         topicSlug={selectedProblem ? selectedProblem.topic.toLowerCase() : null}
       />
 
-      <BackToTop />
       <Footer />
     </div>
   );

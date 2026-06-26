@@ -635,14 +635,6 @@ export default function ProfilePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    console.log("Saving:", formData);
-
-    const sanitized = sanitizeProfileLinks(formData);
-    if (sanitized.error) {
-      toast.error(sanitized.error);
-      return;
-    }
-
     setSaving(true);
 
     try {
@@ -656,8 +648,6 @@ export default function ProfilePage() {
       };
 
       const { data, error } = await supabase.auth.updateUser({ data: nextProfileData });
-
-      console.log("Updated user:", data?.user?.user_metadata);
 
       if (error) throw error;
 
