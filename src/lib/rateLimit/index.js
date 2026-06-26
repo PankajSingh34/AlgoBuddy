@@ -36,7 +36,7 @@ function markRedisOffline(err) {
 function markRedisOnline() {
   if (isRedisOffline) {
     isRedisOffline = false;
-    console.log("[rateLimit] Redis connection restored, resuming Redis-based rate limiting.");
+    
   }
 }
 
