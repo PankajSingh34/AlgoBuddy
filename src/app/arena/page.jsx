@@ -27,7 +27,8 @@ import {
   Play,
   ChevronRight,
   TrendingUp,
-  Target
+  Target,
+  ChevronLeft
 } from "lucide-react";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
@@ -64,9 +65,10 @@ export default function ArenaPage() {
   const { progress, getStatus, streakData } = useSheetProgress();
 
   const ensureLoggedIn = () => {
+    if (loading) return false; 
     if (!user) {
       toast.error("Please login to use this feature!");
-      router.push("/login");
+      router.push("/login?next=/arena");
       return false;
     }
     return true;
@@ -91,7 +93,8 @@ export default function ArenaPage() {
       const protectedTabs = ["ranked", "friend", "streak", "badges", "history"];
       
       if (validTabs.includes(hash)) {
-        if (protectedTabs.includes(hash) && !user) {
+        // Don't redirect while auth session is still resolving — user may be logged in
+        if (protectedTabs.includes(hash) && !loading && !user) {
           router.push("/arena");
           setActiveTab("home");
           return;
@@ -108,7 +111,7 @@ export default function ArenaPage() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [user, router]);
+  }, [user, loading, router]);
 
   // Live Matches polling
   const [liveMatches, setLiveMatches] = useState([]);
@@ -116,9 +119,10 @@ export default function ArenaPage() {
   useEffect(() => {
     const fetchLiveMatches = async () => {
       try {
-        const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
-          ? `http://${window.location.hostname}:4000`
-          : "https://algobuddy-socket-server.onrender.com";
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
+          (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
+            ? `http://${window.location.hostname}:4000`
+            : "https://algobuddy-socket-server.onrender.com");
           
         const res = await fetch(`${socketUrl}/api/matches/active`);
         if (res.ok) {
@@ -285,57 +289,29 @@ export default function ArenaPage() {
               </nav>
             </div>
 
-            {/* Rank Card */}
+            {/* XP Progress */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-xl">
-                  <Shield size={20} />
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-widest font-bold">
-                    Current Rank
-                  </span>
-                  <div className="text-lg font-extrabold text-slate-800 dark:text-neutral-100 flex items-center gap-1.5 leading-none mt-0.5">
-                    #{currentUserStats.rank}
-                    {profile?.rankChange && (
-                      <span className={`text-xs font-semibold flex items-center ${profile.rankChange > 0 ? "text-emerald-500" : "text-red-500"}`}>
-                        {profile.rankChange > 0 ? "▲" : "▼"} {Math.abs(profile.rankChange)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+                  XP Progress
+                </h3>
+                <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
+                  Level {currentUserStats.level}
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-neutral-800/60 pt-4 mb-4 text-center">
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-neutral-500 block uppercase font-medium">Rating</span>
-                  <span className="text-base font-bold text-slate-850 dark:text-neutral-200">{currentUserStats.rating}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 dark:text-neutral-500 block uppercase font-medium">XP</span>
-                  <span className="text-base font-bold text-slate-850 dark:text-neutral-200">{currentUserStats.xp}</span>
-                </div>
+              <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-500"
+                  style={{ width: `${calculateLevelProgress(currentUserStats.xp)}%` }}
+                />
               </div>
 
-              <div className="space-y-1 mb-4">
-                <div className="flex justify-between text-[10px] text-slate-400 dark:text-neutral-500">
-                  <span>Next Level: {1000 - (currentUserStats.xp % 1000)} XP</span>
-                  <span>{currentUserStats.xp % 1000}/1000</span>
-                </div>
-                <div className="w-full bg-slate-100 dark:bg-neutral-900 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: `${calculateLevelProgress(currentUserStats.xp)}%` }} />
-                </div>
+              <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
+                <span>{currentUserStats.xp % 1000} / 1000 XP</span>
               </div>
-
-              <button
-                onClick={() => {
-                  openMatchmakingModal();
-                }}
-                className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition shadow-md shadow-primary/10"
-              >
-                Find Match
-              </button>
             </div>
+
           </aside>
 
           {/* ─── Column 2: Main Panel ───────────────────────────────────────────── */}
@@ -461,192 +437,62 @@ export default function ArenaPage() {
                   </div>
                 </div>
 
-                {/* Sub-grid 1: Live Battles & Today's Challenge */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Live Battles */}
-                  <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 shrink-0">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 shrink-0">Live Battles</h3>
-                        <span className="ml-1 px-2 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-extrabold uppercase animate-pulse shrink-0">
-                          Live
-                        </span>
-                      </div>
-                      <span
-                        onClick={() => handleTabChange("live")}
-                        className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
-                      >
-                        View All
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {liveMatches.length > 0 ? liveMatches.slice(0, 2).map((b) => {
-                        const p1 = b.players?.[0]?.name || "Player 1";
-                        const p2 = b.players?.[1]?.name || "Player 2";
-                        return (
-                        <div key={b.matchId} className="flex items-center justify-between p-3 border border-slate-100 dark:border-neutral-900/60 bg-slate-50/20 dark:bg-neutral-900/20 rounded-xl gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 truncate">
-                                {p1} vs {p2}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-neutral-500">
-                              <span className="flex items-center gap-1">
-                                <span className={`w-1.5 h-1.5 rounded-full ${b.difficulty === "Easy" ? "bg-green-500" : b.difficulty === "Hard" ? "bg-red-500" : "bg-amber-500"
-                                  }`} />
-                                {b.topic} ({b.difficulty})
-                              </span>
-                            </div>
+                {/* Your Stats Card */}
+                <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200 mb-4">Your Stats</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {[
+                      { label: "Battles Won", value: profile?.battlesWon || 0, icon: Swords, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+                      { label: "Win Rate", value: profile?.battlesWon && (profile?.battlesWon + profile?.battlesLost) > 0 ? `${Math.round((profile.battlesWon / (profile.battlesWon + profile.battlesLost)) * 100)}%` : "0%", icon: TrendingUp, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+                      { label: "Problems Solved", value: profile?.totalProblemsSolved || 0, icon: Target, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
+                      { label: "Current Rating", value: profile?.rating || 1200, icon: Trophy, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
+                      { label: "Current Rank", value: `#${currentUserStats.rank}`, icon: Shield, color: "text-slate-500 bg-slate-500/10 border-slate-500/20" },
+                    ].map((stat, idx) => {
+                      const Icon = stat.icon;
+                      return (
+                        <div key={idx} className="p-3 border border-slate-100 dark:border-neutral-900 bg-slate-50/20 dark:bg-neutral-900/20 rounded-xl text-center">
+                          <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center border ${stat.color} mb-2`}>
+                            <Icon size={14} />
                           </div>
-                          <button
-                            onClick={() => handleWatchLive(b)}
-                            className="px-3 py-1.5 border border-primary/20 dark:border-purple-500/20 text-primary dark:text-purple-400 hover:bg-primary hover:text-white dark:hover:bg-purple-500 rounded-lg text-xs font-bold transition shrink-0"
-                          >
-                            Watch Live
-                          </button>
+                          <span className="text-[9px] text-slate-400 dark:text-neutral-500 block truncate font-medium uppercase tracking-wider">{stat.label}</span>
+                          <span className="text-sm font-bold text-slate-850 dark:text-neutral-100 block mt-0.5">{stat.value}</span>
                         </div>
-                      )}) : (
-                        <div className="text-xs text-slate-500 p-2 text-center">No active battles right now.</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Today's Challenge */}
-                  <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Today's Challenge</h3>
-                        <span className="text-xs text-slate-400 dark:text-neutral-500 font-semibold cursor-default">
-                          Daily
-                        </span>
-                      </div>
-
-                      {dailyChallenge ? (
-                        <>
-                          <div className="flex gap-3.5 items-start p-3 bg-slate-50/50 dark:bg-neutral-900/30 border border-slate-100 dark:border-neutral-800/40 rounded-xl mb-3">
-                            <div className="p-2.5 bg-primary/10 text-primary dark:text-purple-400 rounded-lg shrink-0 font-mono text-sm font-extrabold">
-                              &lt;/&gt;
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-100 truncate">
-                                  {dailyChallenge.title}
-                                </h4>
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                                  dailyChallenge.difficulty === "Easy" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
-                                  dailyChallenge.difficulty === "Medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                                  "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                }`}>
-                                  {dailyChallenge.difficulty}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-400 dark:text-neutral-500 leading-normal truncate">
-                                {dailyChallenge.description}
-                              </p>
-                              <div className="text-[10px] text-primary dark:text-purple-400 font-semibold mt-1">
-                                Reward: +{dailyChallenge.xpAward} XP
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <a
-                            href={dailyChallenge.practiceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold text-center transition block shadow-md shadow-primary/10"
-                          >
-                            Solve Now
-                          </a>
-                        </>
-                      ) : (
-                        <div className="p-6 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">
-                          {loadingProfile ? "Loading today's challenge..." : "Wow, you've completed all problems! 🎉"}
-                        </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Sub-grid 2: Global Leaderboard & Upcoming Tournament */}
+                {/* Sub-grid 2: Achievement Showcase & Upcoming Tournament */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Leaderboard Table */}
+                  {/* Badges Grid */}
                   <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-                          🏆 Global Learning Leaderboard
-                        </h3>
-
-                        <p className="text-xs text-slate-400 dark:text-neutral-500">
-                          Compete with top learners and improve your rank.
-                        </p>
-                      </div>
-                      <span
-                        onClick={() => handleTabChange("leaderboard")}
-                        className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
-                      >
-                        View All
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+                        Achievement Showcase
+                      </h3>
+                      <span className="text-xs text-primary">
+                        {ACHIEVEMENT_BADGES.length} Earned
                       </span>
                     </div>
 
-                    <div className="space-y-2.5">
-                      {leaderboard && leaderboard.length > 0 ? (
-                        leaderboard.map((row, idx) => {
-                          const rank = row.rank || idx + 1;
-                          const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
-                          const isCurrentUser = name === currentUserStats.name;
-                          return (
-                            <div
-                              key={rank}
-                              className={`flex items-center justify-between 
-                              text-xs px-3 py-3 rounded-xl mb-2 transition
-
-                              ${
-                                isCurrentUser
-                                ? "bg-purple-100 dark:bg-purple-900/30 border border-purple-400"
-                                : "hover:bg-slate-50 dark:hover:bg-neutral-900"
-                              }
-                              `}
-                              >
-                              <div className="flex items-center gap-3">
-                                <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
-                                  }`}>
-                                  {rank}
-                                </span>
-                                {/* Avatar Circle */}
-                                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0">
-                                  {row.avatarUrl ? (
-                                    <img 
-                                      src={row.avatarUrl} 
-                                      alt={name} 
-                                      referrerPolicy="no-referrer"
-                                      className="w-full h-full object-cover" 
-                                    />
-                                  ) : (
-                                    getInitials(name)
-                                  )}
-                                </div>
-                                <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
-                              </div>
-                              <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="p-4 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                          Leaderboard is currently empty.
+                    <div className="grid grid-cols-2 gap-3">
+                      {ACHIEVEMENT_BADGES.map((badge, index) => (
+                        <div
+                          key={index}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-neutral-700 text-center"
+                        >
+                          <div className="text-2xl">{badge.icon}</div>
+                          <p className="text-[10px] font-medium mt-1">
+                            {badge.title}
+                          </p>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
 
-                  {/* Tournament Component */}
+                  {/* Upcoming Tournament */}
                   <UpcomingTournament />
                 </div>
-
-                {/* Recent Battles */}
                 <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Recent Battles</h3>
@@ -854,48 +700,64 @@ export default function ArenaPage() {
                   );
                 })}
               </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
-                <span>Longest Streak</span>
-                <span className="font-bold text-slate-800 dark:text-neutral-200">{streakData?.best || 0} Days</span>
-              </div>
-              <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-  <div className="flex items-center justify-between">
-    <span className="text-xs font-semibold text-slate-700 dark:text-neutral-200">
-      📊 Consistency Score
-    </span>
-    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-      {streakData?.consistencyScore || 0}%
-    </span>
-  </div>
-
-  <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-1">
-    Active on {Math.round(((streakData?.consistencyScore || 0) / 100) * 30)} of the last 30 days.
-  </p>
-</div>
             </div>
-
-            {/* Detailed Stats */}
+            
+            {/* Leaderboard Table */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 mb-4">Your Stats</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: "Battles Won", value: profile?.battlesWon || 0, icon: Swords, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-                  { label: "Win Rate", value: profile?.battlesWon && (profile?.battlesWon + profile?.battlesLost) > 0 ? `${Math.round((profile.battlesWon / (profile.battlesWon + profile.battlesLost)) * 100)}%` : "0%", icon: TrendingUp, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
-                  { label: "Problems Solved", value: profile?.totalProblemsSolved || 0, icon: Target, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
-                  { label: "Current Rating", value: profile?.rating || 1200, icon: Trophy, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" }
-                ].map((stat, idx) => {
-                  const Icon = stat.icon;
-                  return (
-                    <div key={idx} className="p-3 border border-slate-100 dark:border-neutral-900 bg-slate-50/20 dark:bg-neutral-900/20 rounded-xl text-center">
-                      <div className={`mx-auto w-8 h-8 rounded-lg flex items-center justify-center border ${stat.color} mb-2`}>
-                        <Icon size={14} />
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">
+                    🏆 Global Leaderboard
+                  </h3>
+                </div>
+                <span
+                  onClick={() => handleTabChange("leaderboard")}
+                  className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
+                >
+                  View All
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {leaderboard && leaderboard.length > 0 ? (
+                  leaderboard.slice(0, 10).map((row, idx) => {
+                    const rank = row.rank || idx + 1;
+                    const name = row.name || (row.userId ? `User ${row.userId.substring(0, 4)}` : "Unknown");
+                    const isCurrentUser = name === currentUserStats.name;
+                    return (
+                      <div
+                        key={rank}
+                        className={`flex items-center justify-between 
+                        text-xs px-3 py-2.5 rounded-xl transition
+                        ${isCurrentUser
+                            ? "bg-purple-100 dark:bg-purple-900/30"
+                            : "hover:bg-slate-50 dark:hover:bg-neutral-700/50"
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
+                            }`}>
+                            {rank}
+                          </span>
+                          <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0">
+                            {row.avatarUrl ? (
+                              <img src={row.avatarUrl} alt={name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                            ) : (
+                              getInitials(name)
+                            )}
+                          </div>
+                          <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                        </div>
+                        <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
                       </div>
-                      <span className="text-[9px] text-slate-400 dark:text-neutral-500 block truncate font-medium uppercase tracking-wider">{stat.label}</span>
-                      <span className="text-sm font-bold text-slate-850 dark:text-neutral-100 block mt-0.5">{stat.value}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                    Leaderboard is currently empty.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -903,63 +765,8 @@ export default function ArenaPage() {
   onClick={() => setShowXPWidget(!showXPWidget)}
   className="text-xs text-primary font-semibold"
 >
-  {showXPWidget ? "Hide XP Widget" : "Show XP Widget"}
+  {showXPWidget ? "Hide XP Widget (deprecated)" : "Show XP Widget (deprecated)"}
 </button>
-
-            {/* XP Progress */}
-{showXPWidget && (
-  <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-    <div className="flex justify-between items-center mb-3">
-      <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
-        XP Progress
-      </h3>
-      <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
-        Level {currentUserStats.level}
-      </span>
-    </div>
-
-    <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
-      <div
-        className="bg-primary h-full rounded-full transition-all duration-500"
-        style={{ width: `${calculateLevelProgress(currentUserStats.xp)}%` }}
-      />
-    </div>
-
-    <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
-      <span>{currentUserStats.xp % 1000} / 1000 XP</span>
-      <span className="font-semibold text-slate-700 dark:text-neutral-300">
-        Next Reward: Level {currentUserStats.level + 1} 🎁
-      </span>
-    </div>
-  </div>
-)}
-
-
-            {/* Badges Grid */}
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
-      Achievement Showcase
-    </h3>
-    <span className="text-xs text-primary">
-      {ACHIEVEMENT_BADGES.length} Earned
-    </span>
-  </div>
-
-  <div className="grid grid-cols-2 gap-3">
-    {ACHIEVEMENT_BADGES.map((badge, index) => (
-      <div
-        key={index}
-        className="p-3 rounded-xl border border-slate-200 dark:border-neutral-700 text-center"
-      >
-        <div className="text-2xl">{badge.icon}</div>
-        <p className="text-[10px] font-medium mt-1">
-          {badge.title}
-        </p>
-      </div>
-    ))}
-  </div>
-</div>
           </aside>
 
         </div>

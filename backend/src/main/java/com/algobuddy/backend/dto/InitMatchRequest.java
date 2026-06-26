@@ -13,7 +13,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class InitMatchRequest {
     private String matchId;
-    private UUID opponentId;
     private String topic;
     private String difficulty;
 }

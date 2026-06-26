@@ -32,19 +32,10 @@ const BackToTop = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          onClick={() => {
-            if (isNearBottom) {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          } else {
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: "smooth",
-          });
-          }
-          }}
-          aria-label={isNearBottom ? "Back to top" : "Scroll to bottom"}
-          style={{ position: 'fixed', bottom:  '96px', right: '20px' }}
-          className="z-[9999] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#a435f0] text-white shadow-lg flex items-center justify-center hover:bg-[#8f2cd6] group"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          style={{ position: 'fixed', bottom: bottomPos, right: '20px' }}
+          className="z-[9990] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#a435f0] text-white shadow-lg flex items-center justify-center hover:bg-[#8f2cd6] group"
         >
           <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap">
             {isNearBottom ? "Back to top" : "Scroll to bottom"}

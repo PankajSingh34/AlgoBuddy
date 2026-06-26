@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 function springBootBase() {
+  if (process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL) {
+    return process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL;
+  }
   if (typeof window !== "undefined") {
     if (
       window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168.")
     ) {
-      return "http://localhost:8080";
+      return `http://${window.location.hostname}:8080`;
     }
   }
   return "https://algobuddy-backend-7iwv.onrender.com";

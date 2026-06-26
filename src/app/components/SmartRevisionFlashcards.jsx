@@ -8,11 +8,15 @@ const flashcards = {
       topic: "Array",
       question: "What is an Array?",
       answer: "A collection of elements stored in contiguous memory.",
+      explanation:
+        "Arrays store elements sequentially in memory, allowing direct access using indexes in O(1) time."
     },
     {
       topic: "Stack",
       question: "Which principle does Stack follow?",
       answer: "LIFO (Last In First Out).",
+      explanation:
+        "The last element inserted into the stack is the first one removed."
     },
   ],
 
@@ -21,11 +25,15 @@ const flashcards = {
       topic: "Binary Search",
       question: "What is the time complexity of Binary Search?",
       answer: "O(log n)",
+      explanation:
+        "Binary Search repeatedly divides the search space into two halves."
     },
     {
       topic: "Merge Sort",
       question: "What is the average time complexity of Merge Sort?",
       answer: "O(n log n)",
+      explanation:
+        "Merge Sort uses divide and conquer and merges sorted subarrays."
     },
   ],
 
@@ -34,11 +42,15 @@ const flashcards = {
       topic: "AVL Tree",
       question: "What is the purpose of AVL Tree rotations?",
       answer: "To keep the tree balanced after insertions and deletions.",
+      explanation:
+        "Rotations maintain balance factors and keep operations O(log n)."
     },
     {
       topic: "Dynamic Programming",
       question: "What is memoization?",
       answer: "Storing results of expensive computations to avoid recalculation.",
+      explanation:
+        "Memoization saves previously computed results to avoid repeated work."
     },
   ],
 };
@@ -397,27 +409,32 @@ const timeSpent = Math.floor(
 </div>
 
       <div
-  onClick={() => setShowAnswer(!showAnswer)}
-  className="
-    bg-slate-800
-    p-5
-    rounded-lg
-    min-h-[180px]
-    cursor-pointer
-    transition-all
-    duration-500
-    hover:scale-105
-    flex
-    flex-col
-    justify-center
-    items-center
-    text-center
-  "
->
+        onClick={() => setShowAnswer(!showAnswer)}
+        className={`
+          bg-slate-800
+          p-5
+          rounded-lg
+          min-h-[180px]
+          cursor-pointer
+          transition-all
+          duration-500
+          hover:scale-105
+          flex
+          flex-col
+          justify-center
+          items-center
+          text-center
+          ${showAnswer ? "scale-105 shadow-lg" : ""}
+        `}
+      >
   <div className="flex justify-between items-center w-full mb-3">
   <h3 className="text-lg font-bold">
     {currentCards[index].topic}
   </h3>
+
+  <p className="text-xs text-gray-400">
+    Card {index + 1} of {currentCards.length}
+  </p>
 
   <button
     onClick={(e) => {
@@ -441,16 +458,26 @@ const timeSpent = Math.floor(
       </p>
     </>
   ) : (
-    <>
-      <p className="text-green-400 text-lg font-semibold">
-        {currentCards[index].answer}
-      </p>
+  <>
+    <p className="text-green-400 text-lg font-semibold">
+      {currentCards[index].answer}
+    </p>
 
-      <p className="mt-4 text-sm text-gray-400">
-        Click card to see question
+    <div className="mt-4 p-3 bg-slate-700 rounded-lg">
+      <h4 className="font-semibold text-purple-300 mb-2">
+        Detailed Explanation
+      </h4>
+
+      <p className="text-sm text-gray-200">
+        {currentCards[index].explanation}
       </p>
-    </>
-  )}
+    </div>
+
+    <p className="mt-4 text-sm text-gray-400">
+      Click card to see question
+    </p>
+  </>
+)}
 </div>
 
 <div className="mt-5">
@@ -749,6 +776,8 @@ const timeSpent = Math.floor(
 
       <div className="mt-4 text-sm text-gray-400">
         Progress: {index + 1}/{currentCards.length} cards completed
+        {" • "}
+        {Math.round(((index + 1) / currentCards.length) * 100)}%
       </div>
     </div>
   );

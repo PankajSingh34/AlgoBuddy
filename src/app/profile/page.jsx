@@ -14,6 +14,7 @@ import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import CodingProfilesModal from "@/app/components/CodingProfilesModal";
+import ManageProjectsModal from "@/app/components/ManageProjectsModal";
 
 // const badgeStyles = [
 //   "from-violet-600 to-indigo-700",
@@ -151,6 +152,7 @@ export default function ProfilePage() {
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCodingProfilesOpen, setIsCodingProfilesOpen] = useState(false);
+  const [isManageProjectsOpen, setIsManageProjectsOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     branch: "",
@@ -350,26 +352,13 @@ export default function ProfilePage() {
   const badges = unlockedBadges.filter(([, unlocked]) => unlocked).slice(0, 4);
   const visibleBadges = badges.length > 0 ? badges : [["Start Solving", true]];
 
-  const projects = [
-    {
-      title: "AlgoBuddy",
-      subtitle: "Full Stack DSA Platform",
-      tags: ["Next.js", "Supabase", "Tailwind"],
-      preview: "bg-[linear-gradient(135deg,#190f4f,#25116d_45%,#5338f2)]",
-    },
-    {
-      title: "Convox Chat App",
-      subtitle: "Real-time Chat App",
-      tags: ["React", "Firebase", "Tailwind"],
-      preview: "bg-[linear-gradient(135deg,#dff8ea,#f2fff7)] dark:bg-[linear-gradient(135deg,#064e3b,#0f172a)]",
-    },
-    {
-      title: "AI Summarizer",
-      subtitle: "Summarize Articles using AI",
-      tags: ["Python", "OpenAI", "Streamlit"],
-      preview: "bg-[linear-gradient(135deg,#eef2ff,#f7f5ff)] dark:bg-[linear-gradient(135deg,#312e81,#111827)]",
-    },
-  ];
+  const projects = useMemo(
+    ()=>
+      Array.isArray(user?.user_metadata?.projects)
+    ? user.user_metadata.projects.slice(0,3)
+    : [],
+    [user]
+  );
 
   const profiles = [
     {
@@ -748,8 +737,24 @@ export default function ProfilePage() {
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)] transition-colors dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-black">My Projects</h2>
-              <button className="text-xs font-black text-violet-600 dark:text-violet-300">View All Projects -&gt;</button>
+              <button
+                type="button"
+                onClick={() => setIsManageProjectsOpen(true)}
+                className="text-xs font-black text-violet-600 dark:text-violet-300 hover:underline"
+              >
+                Manage Projects -&gt;
+              </button>
             </div>
+            {projects.length == 0 ? (
+              <div className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-violet-200 bg-violet-50/60 text-center dark:border-violet-900/60 dark:bg-violet-950/20">
+                <div>
+                  <p className="text-sm font-black text-violet-700 dark:text-violet-200">No projects yet</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                    CLick Manage Projects to add yours
+                  </p>
+                </div>
+              </div>
+            ) : (
             <div className="grid gap-3 sm:grid-cols-3">
               {projects.map((project) => (
                 <div
@@ -757,13 +762,17 @@ export default function ProfilePage() {
                   className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
                 >
                   <div className={`relative h-24 ${project.preview}`}>
-                    <button
-                      type="button"
-                      className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-slate-700 shadow-sm dark:bg-neutral-900/90 dark:text-neutral-200"
-                      aria-label={`Open ${project.title}`}
-                    >
-                      <LinkIcon className="h-3.5 w-3.5" />
-                    </button>
+                    {project.url &&(
+                       <a
+                       href={project.url}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-slate-700 shadow-sm dark:bg-neutral-900/90 dark:text-neutral-200"
+                       aria-label={`Open ${project.title}`}
+                     >
+                       <LinkIcon className="h-3.5 w-3.5" />
+                     </a>
+                    )}
                   </div>
                   <div className="p-3">
                     <h3 className="truncate text-sm font-black text-[#111331] dark:text-white">
@@ -786,7 +795,9 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
+            )}
           </div>
+          
 
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)] transition-colors dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none">
             <div className="mb-4 flex items-center justify-between">
@@ -924,6 +935,10 @@ export default function ProfilePage() {
         isOpen={isCodingProfilesOpen}
         onClose={() => setIsCodingProfilesOpen(false)}
         />
+      <ManageProjectsModal
+        isOpen={isManageProjectsOpen}
+        onClose={() => setIsManageProjectsOpen(false)}
+      />
     </main>
     <Footer />
     </>

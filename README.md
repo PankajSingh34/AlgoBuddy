@@ -376,6 +376,8 @@ cd AlgoBuddy
 npm install
 ```
 
+> **⚠️ Note:** This project uses `isolated-vm` for secure code execution. If you encounter build errors, ensure you have Python and a C++ compiler installed (required for native addon compilation).
+
 ### 3️⃣ Configure Database Schema
 
 Run the following SQL in the Supabase SQL Editor to enable user progress tracking and avatar storage:

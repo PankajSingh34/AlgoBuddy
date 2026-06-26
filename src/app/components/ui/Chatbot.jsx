@@ -404,6 +404,7 @@ export default function Chatbot() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const previousMessageCount = useRef(messages.length);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -429,15 +430,26 @@ export default function Chatbot() {
     setShowScrollBtn(distFromBottom > 120);
   };
 
-  // ── Unread badge ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isOpen && messages.length > 1) {
-      const assistantMessages = messages.filter((m) => m.role === "assistant" && m.id !== "welcome");
-      setUnreadCount(assistantMessages.length);
-    } else {
-      setUnreadCount(0);
-    }
-  }, [isOpen, messages]);
+  if (
+    !isOpen &&
+    messages.length > previousMessageCount.current
+  ) {
+    const lastMessage = messages[messages.length - 1];
+
+    if (
+  lastMessage?.role === "assistant" &&
+  lastMessage.id !== "welcome" &&
+  !lastMessage.isStreaming &&
+  !lastMessage.isError
+) {
+  setUnreadCount((prev) => prev + 1);
+}
+  }
+
+  previousMessageCount.current = messages.length;
+}, [messages, isOpen]);
+
 
   // ── Focus on open ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -577,6 +589,8 @@ const res = await fetch("/api/chatbot", {
     setMessages([WELCOME_MESSAGE]);
     setHasInteracted(false);
     setIsStreaming(false);
+    setUnreadCount(0);
+    previousMessageCount.current = 1;
   };
 
   const handleTextareaChange = (e) => {
@@ -771,7 +785,17 @@ const res = await fetch("/api/chatbot", {
       {/* ── Floating Trigger Button ─────────────────────────────────────────────── */}
       <div className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
         <motion.button
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={() => {
+            setIsOpen((v) => {
+              const next = !v;
+
+              if (next) {
+                setUnreadCount(0);
+              }
+
+              return next;
+            });
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 20 }}

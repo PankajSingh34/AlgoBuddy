@@ -52,6 +52,7 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  serverExternalPackages: ["isolated-vm"],
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
