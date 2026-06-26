@@ -635,6 +635,12 @@ export default function ProfilePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const sanitized = sanitizeProfileLinks(formData);
+    if (sanitized.error) {
+      toast.error(sanitized.error);
+      return;
+    }
+
     setSaving(true);
 
     try {
