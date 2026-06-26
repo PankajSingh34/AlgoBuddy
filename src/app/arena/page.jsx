@@ -93,7 +93,8 @@ export default function ArenaPage() {
       const protectedTabs = ["ranked", "friend", "streak", "badges", "history"];
       
       if (validTabs.includes(hash)) {
-        if (protectedTabs.includes(hash) && !user) {
+        // Don't redirect while auth session is still resolving — user may be logged in
+        if (protectedTabs.includes(hash) && !loading && !user) {
           router.push("/arena");
           setActiveTab("home");
           return;
@@ -110,7 +111,7 @@ export default function ArenaPage() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange);
     };
-  }, [user, router]);
+  }, [user, loading, router]);
 
   // Live Matches polling
   const [liveMatches, setLiveMatches] = useState([]);
