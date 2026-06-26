@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, User, LogIn, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -30,6 +30,8 @@ export default function AuthForm({ isLogin = true }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("next") || "/";
   const { setUser } = useUser();
 
   const validateEmail = (value) => {
@@ -106,7 +108,7 @@ export default function AuthForm({ isLogin = true }) {
           data: { user },
         } = await supabase.auth.getUser();
         setUser(user || null);
-        router.push("/arena");
+        router.push(redirectTo);
       } else {
         const data = await api.request("/api/auth", {
           method: "POST",
@@ -124,10 +126,14 @@ export default function AuthForm({ isLogin = true }) {
   };
 
   const handleGoogleSignIn = async () => {
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (redirectTo && redirectTo !== "/") {
+      callbackUrl.searchParams.set("next", redirectTo);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
         queryParams: {
           access_type: "offline",
           prompt: "consent",

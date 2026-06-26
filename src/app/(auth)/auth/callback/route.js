@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function GET(request) {
   const code = request.nextUrl.searchParams.get('code');
-  const next = request.nextUrl.searchParams.get('next') ?? '/arena';
+  const next = request.nextUrl.searchParams.get('next') ?? '/';
 
   if (code) {
     const cookieStore = await cookies();

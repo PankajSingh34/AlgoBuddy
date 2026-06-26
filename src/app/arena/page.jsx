@@ -68,7 +68,7 @@ export default function ArenaPage() {
     if (loading) return false; 
     if (!user) {
       toast.error("Please login to use this feature!");
-      router.push("/login");
+      router.push("/login?next=/arena");
       return false;
     }
     return true;
