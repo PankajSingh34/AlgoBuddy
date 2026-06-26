@@ -384,19 +384,19 @@ export default function HeapAnimation() {
               disabled={isAnimating}
               className="w-36 rounded-xl border border-[#d1d5db] dark:border-[#333] bg-white dark:bg-[#111] px-3 py-2 text-sm"
             />
-            <button onClick={insertValue} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#a435f0] text-white text-sm font-semibold inline-flex items-center gap-2">
+            <button type="button" onClick={insertValue} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#a435f0] text-white text-sm font-semibold inline-flex items-center gap-2">
               <ArrowDownToLine className="w-4 h-4" /> Insert
             </button>
-            <button onClick={extractRoot} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#7e22ce] text-white text-sm font-semibold inline-flex items-center gap-2">
+            <button type="button" onClick={extractRoot} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#7e22ce] text-white text-sm font-semibold inline-flex items-center gap-2">
               <ArrowUpToLine className="w-4 h-4" /> {heapType === "min" ? "Extract Min" : "Extract Max"}
             </button>
-            <button onClick={peekRoot} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#9333ea] text-white text-sm font-semibold inline-flex items-center gap-2">
+            <button type="button" onClick={peekRoot} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#9333ea] text-white text-sm font-semibold inline-flex items-center gap-2">
               <Eye className="w-4 h-4" /> Peek
             </button>
-            <button onClick={manualHeapify} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#6d28d9] text-white text-sm font-semibold inline-flex items-center gap-2">
+            <button type="button" onClick={manualHeapify} disabled={isAnimating} className="px-3 py-2 rounded-xl bg-[#6d28d9] text-white text-sm font-semibold inline-flex items-center gap-2">
               <Layers className="w-4 h-4" /> Heapify
             </button>
-            <button onClick={reset} disabled={isAnimating} className="px-3 py-2 rounded-xl border border-[#a435f0]/40 text-[#7e22ce] dark:text-[#d8b4fe] text-sm font-semibold inline-flex items-center gap-2">
+            <button type="button" onClick={reset} disabled={isAnimating} className="px-3 py-2 rounded-xl border border-[#a435f0]/40 text-[#7e22ce] dark:text-[#d8b4fe] text-sm font-semibold inline-flex items-center gap-2">
               <Repeat className="w-4 h-4" /> Reset
             </button>
           </div>

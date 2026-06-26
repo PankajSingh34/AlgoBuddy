@@ -157,7 +157,7 @@ export default function SegmentAnimation() {
       <VisualizerCard>
         <div className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl w-fit dark:bg-gray-800">
           {[["query", "Range Query"], ["update", "Point Update"]].map(([val, label]) => (
-            <button key={val} onClick={() => { setMode(val); engine.reset(); }}
+            <button type="button" key={val} onClick={() => { setMode(val); engine.reset(); }}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${mode === val ? "bg-[#a435f0] text-white shadow-md" : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"}`}
             >
               {label}
@@ -195,7 +195,7 @@ export default function SegmentAnimation() {
           </div>
           
           <div className="flex justify-end gap-2 items-start">
-            <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
+            <button type="button" onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-500 text-red-500 px-4 py-2 transition-colors hover:bg-red-500 hover:text-white h-[42px]">
               <RefreshCw className="w-4 h-4" /> Reset
             </button>
           </div>

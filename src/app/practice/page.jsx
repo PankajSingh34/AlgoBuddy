@@ -863,7 +863,7 @@ export default function PracticePage() {
                 <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
                   <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-neutral-850">
                     <h3 className="text-base font-black text-slate-800 dark:text-white">Community Discussion</h3>
-                    <button className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-black transition">
+                    <button type="button" className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-black transition">
                       Post Comment
                     </button>
                   </div>

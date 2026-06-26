@@ -357,9 +357,9 @@ Please explain exactly what is happening in this step in detail.`;
           <h3 className="text-lg font-bold mb-3">🧠 Quick Challenge</h3>
           <p className="mb-3">What is the time complexity of Sliding Window?</p>
           <div className="flex gap-3 flex-wrap">
-            <button className="px-4 py-2 rounded-lg bg-gray-200">O(n²)</button>
-            <button className="px-4 py-2 rounded-lg bg-green-500 text-white">O(n)</button>
-            <button className="px-4 py-2 rounded-lg bg-gray-200">O(log n)</button>
+            <button type="button" className="px-4 py-2 rounded-lg bg-gray-200">O(n²)</button>
+            <button type="button" className="px-4 py-2 rounded-lg bg-green-500 text-white">O(n)</button>
+            <button type="button" className="px-4 py-2 rounded-lg bg-gray-200">O(log n)</button>
           </div>
         </div>
       )}
@@ -374,7 +374,7 @@ Please explain exactly what is happening in this step in detail.`;
             className="w-full p-3 border rounded-lg"
             rows={4}
           />
-          <button className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg">
+          <button type="button" className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg">
             Post Discussion
           </button>
         </div>

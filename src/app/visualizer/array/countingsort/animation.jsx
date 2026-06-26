@@ -258,10 +258,10 @@ Please explain exactly what is happening in this step in detail.`;
               <CustomArrayInput onUseCustomArray={(newArray) => { setArray(newArray); handleReset(); }} disabled={engine.isPlaying} className="w-full" currentArray={array} />
             </div>
             <div className="flex flex-col gap-2 justify-between">
-              <button onClick={handleStart} disabled={!array.length} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
+              <button type="button" onClick={handleStart} disabled={!array.length} className="w-full disabled:opacity-75 bg-none bg-[#a435f0] hover:bg-[#8f2cd6] px-4 py-2 rounded shadow-sm transition-all duration-300 text-sm sm:text-base text-white">
                 {engine.isPlaying ? "Sorting..." : currentStepData?.sorted ? "Restart" : "Start Counting Sort"}
               </button>
-              <button onClick={handleReset} disabled={engine.isPlaying} className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base">
+              <button type="button" onClick={handleReset} disabled={engine.isPlaying} className="w-full bg-none text-[#a435f0] border border-[#a435f0] hover:bg-[#f3e8ff] dark:hover:bg-[#a435f0]/20 px-4 py-2 rounded transition-colors text-sm sm:text-base">
                 Reset All
               </button>
             </div>

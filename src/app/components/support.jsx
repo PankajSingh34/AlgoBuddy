@@ -348,7 +348,7 @@ const ContactSupportPopup = () => {
                       </div>
                     </div>
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <button type="button" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                         View all help articles <FiChevronRight />
                       </button>
                     </div>

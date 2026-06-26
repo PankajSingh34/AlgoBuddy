@@ -8,7 +8,7 @@ export default function SignupPage() {
         <link rel="stylesheet" href="/styles/dark-mode.css" />
       </Head>
       <AuthForm isLogin={false} />
-      <button className="toggle" id="theme-toggle">🌙 Dark mode</button>
+      <button type="button" className="toggle" id="theme-toggle">🌙 Dark mode</button>
       <script
         dangerouslySetInnerHTML={{
           __html: `

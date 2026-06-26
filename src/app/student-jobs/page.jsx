@@ -374,7 +374,7 @@ export default function StudentJobsPage() {
           <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Confirm Application</h3>
-              <button onClick={() => setConfirmJob(null)} className="p-1 text-gray-400 hover:text-gray-600">
+              <button type="button" onClick={() => setConfirmJob(null)} className="p-1 text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
               </button>
             </div>
