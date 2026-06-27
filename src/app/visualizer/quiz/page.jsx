@@ -74,6 +74,13 @@ export default function QuizPage() {
         href: "/visualizer/array/countingsort/quiz",
         color: "bg-emerald-600 hover:bg-emerald-700",
     },
+    {
+      title: "Basic Recursion Quiz",
+      description:
+        "Test your understanding of Basic Recursion with multiple-choice questions.",
+      href: "/visualizer/recursion/basic-recursion/quiz",
+      color: "bg-teal-600 hover:bg-teal-700",
+    },
   ];
 
   return (
