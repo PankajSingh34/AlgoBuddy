@@ -270,49 +270,43 @@ public class ArenaService {
                     ? existingMatch.getPlayer2Id()
                     : existingMatch.getPlayer1Id();
 
-                UUID firstId = requestingUserId.compareTo(opponentId) < 0 ? requestingUserId : opponentId;
-                UUID secondId = requestingUserId.compareTo(opponentId) < 0 ? opponentId : requestingUserId;
+                UserArenaProfile requestingUserProfile = profileRepository.findById(requestingUserId)
+                        .orElseGet(() -> createDefaultProfile(requestingUserId));
+                UserArenaProfile opponentProfile = profileRepository.findById(opponentId)
+                        .orElseGet(() -> createDefaultProfile(opponentId));
 
-                UserArenaProfile firstProfile = profileRepository.findById(firstId)
-                        .orElseGet(() -> createDefaultProfile(firstId));
-                UserArenaProfile secondProfile = profileRepository.findById(secondId)
-                        .orElseGet(() -> createDefaultProfile(secondId));
+                int requestingUserRatingChange = isWinner ? 25 : -15;
+                int opponentRatingChange = isWinner ? -15 : 25;
 
-                UserArenaProfile p1Profile = requestingUserId.equals(firstId) ? firstProfile : secondProfile;
-                UserArenaProfile p2Profile = opponentId.equals(firstId) ? firstProfile : secondProfile;
+                int requestingUserXp = isWinner ? 50 : 10;
+                int opponentXp = isWinner ? 10 : 50;
 
-                int p1RatingChange = isWinner ? 25 : -15;
-                int p2RatingChange = isWinner ? -15 : 25;
+                requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
+                requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
+                requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
+                requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (isWinner ? 1 : 0));
+                if (isWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
+                else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
 
-                int p1XpAwarded = isWinner ? 50 : 10;
-                int p2XpAwarded = isWinner ? 10 : 50;
+                opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
+                opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
+                opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+                opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!isWinner ? 1 : 0));
+                if (!isWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
+                else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
 
-                p1Profile.setRating(Math.max(0, p1Profile.getRating() + p1RatingChange));
-                p1Profile.setXp(p1Profile.getXp() + p1XpAwarded);
-                p1Profile.setLevel((p1Profile.getXp() / 1000) + 1);
-                p1Profile.setTotalProblemsSolved(p1Profile.getTotalProblemsSolved() + (isWinner ? 1 : 0));
-                if (isWinner) p1Profile.setBattlesWon(p1Profile.getBattlesWon() + 1);
-                else p1Profile.setBattlesLost(p1Profile.getBattlesLost() + 1);
-
-                p2Profile.setRating(Math.max(0, p2Profile.getRating() + p2RatingChange));
-                p2Profile.setXp(p2Profile.getXp() + p2XpAwarded);
-                p2Profile.setLevel((p2Profile.getXp() / 1000) + 1);
-                p2Profile.setTotalProblemsSolved(p2Profile.getTotalProblemsSolved() + (!isWinner ? 1 : 0));
-                if (!isWinner) p2Profile.setBattlesWon(p2Profile.getBattlesWon() + 1);
-                else p2Profile.setBattlesLost(p2Profile.getBattlesLost() + 1);
-
-                profileRepository.save(firstProfile);
-                profileRepository.save(secondProfile);
+                profileRepository.save(requestingUserProfile);
+                profileRepository.save(opponentProfile);
 
                 existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
                 existingMatch.setEndTime(java.time.LocalDateTime.now());
                 existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
 
                 boolean isReqUserPlayer1 = requestingUserId.equals(existingMatch.getPlayer1Id());
-                existingMatch.setRatingChangeP1(isReqUserPlayer1 ? p1RatingChange : p2RatingChange);
-                existingMatch.setRatingChangeP2(isReqUserPlayer1 ? p2RatingChange : p1RatingChange);
-                existingMatch.setXpAwardedP1(isReqUserPlayer1 ? p1XpAwarded : p2XpAwarded);
-                existingMatch.setXpAwardedP2(isReqUserPlayer1 ? p2XpAwarded : p1XpAwarded);
+                existingMatch.setRatingChangeP1(isReqUserPlayer1 ? requestingUserRatingChange : opponentRatingChange);
+                existingMatch.setRatingChangeP2(isReqUserPlayer1 ? opponentRatingChange : requestingUserRatingChange);
+                existingMatch.setXpAwardedP1(isReqUserPlayer1 ? requestingUserXp : opponentXp);
+                existingMatch.setXpAwardedP2(isReqUserPlayer1 ? opponentXp : requestingUserXp);
 
                 matchRepository.save(existingMatch);
 
