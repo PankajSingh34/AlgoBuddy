@@ -11,6 +11,7 @@ import ChallengeModePanel, {
 } from "@/app/visualizer/array/components/ChallengeMode";
 import { bubbleSortGenerator } from "@/features/algorithms/array/bubbleSortLogic";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import CodeExplanationPanel from "./CodeExplanationPanel";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -188,10 +189,23 @@ const BubbleSortVisualizer = () => {
         gsap.to(bar1, { x: "+=40", duration: 0.2, yoyo: true });
         gsap.to(bar2, { x: "-=40", duration: 0.2, yoyo: true });
       }
+    }
+  }, []);
+
+  const [speed, setSpeed] = useState(500);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: speed });
+
+  // Keep engine speed in sync with speed state
+  useEffect(() => {
+    if (engine?.setSpeed) {
+      engine.setSpeed(speed);
+    }
+  }, [speed, engine]);
 
   // Timer logic
   useEffect(() => {
-    if (engine.isPlaying) {
+    if (engine?.isPlaying) {
       const startTime = Date.now() - elapsedTime * 1000;
       timerRef.current = setInterval(() => {
         setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
@@ -200,7 +214,7 @@ const BubbleSortVisualizer = () => {
       clearInterval(timerRef.current);
     }
     return () => clearInterval(timerRef.current);
-  }, [engine.isPlaying]);
+  }, [engine?.isPlaying, elapsedTime, engine]);
 
   const currentStepData = steps[engine.currentStep];
 
@@ -225,9 +239,9 @@ const BubbleSortVisualizer = () => {
 
   useVisualizerKeyboard({
     onStart: handleStart, onReset: handleReset,
-    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onSpeedChange: (s) => setSpeed(s * 500),
     onTogglePlayPause: engine.isPlaying ? engine.pause : handleStart,
-    speed: engine.speed / 500,
+    speed: speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.sorted || false,
   });
@@ -311,8 +325,8 @@ Please explain exactly what is happening in this step in detail.`;
             <PlaybackControls
               isPlaying={engine.isPlaying}
               onPlayPause={engine.isPlaying ? engine.pause : handleStart}
-              speed={engine.speed / 500}
-              onSpeedChange={(s) => engine.setSpeed(s * 500)}
+              speed={speed / 500}
+              onSpeedChange={(s) => setSpeed(s * 500)}
               onStepForward={engine.stepForward}
               onStepBackward={engine.stepBackward}
               onReset={engine.reset}
@@ -326,11 +340,11 @@ Please explain exactly what is happening in this step in detail.`;
               <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
               <input
                 type="range" min="0.5" max="5" step="0.5"
-                value={engine.speed / 500}
-                onChange={(e) => engine.setSpeed(parseFloat(e.target.value) * 500)}
+                value={speed / 500}
+                onChange={(e) => setSpeed(parseFloat(e.target.value) * 500)}
                 className="w-24 sm:w-32"
               />
-              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{engine.speed / 500}x</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed / 500}x</span>
             </div>
           )}
 
@@ -388,19 +402,69 @@ Please explain exactly what is happening in this step in detail.`;
           </div>
         </div>
 
-      {/* Speed Control */}
-      <div className="flex items-center gap-3 mb-6 text-sm text-gray-400">
-        <span>Fast</span>
-        <input
-          type="range"
-          min={100}
-          max={1000}
-          step={100}
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-          className="accent-purple-500"
+        <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Array Visualization</h2>
+          {(currentStepData?.array || array).length > 0 ? (
+            <div className="flex flex-wrap gap-2 sm:gap-4 justify-center">
+              {((currentStepData?.array) || array).map((value, index) => {
+                const isComparing = index === visualState.currentIndices.i || index === visualState.currentIndices.j;
+                const isSorted = visualState.sorted;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div
+                      className={`bar w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg border-2 shadow-md dark:shadow-blue-900 transition-all duration-300 ${getFontSize(value)} font-bold
+                        ${isComparing
+                          ? "bg-yellow-400 dark:bg-yellow-400 border-yellow-600 dark:border-yellow-600 dark:text-gray-900"
+                          : isSorted
+                          ? "bg-green-400 dark:bg-green-400 border-green-600 dark:border-green-600 dark:text-gray-900"
+                          : "bg-primary/80 dark:bg-primary/80 border-primary dark:border-primary dark:text-gray-900"
+                        }`}
+                    >
+                      {value}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-700 dark:text-[#c27cf7] font-semibold">
+                      {index === visualState.currentIndices.i && "i"}
+                      {index === visualState.currentIndices.j && "j"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+              {engine.isPlaying ? "Sorting..." : "Generate or enter an array to begin"}
+            </div>
+          )}
+        </div>
+
+        {/* Code Explanation Panel */}
+        <CodeExplanationPanel
+          currentStep={engine.currentStep}
+          iValues={{
+            i: visualState.currentIndices.i,
+            j: visualState.currentIndices.j,
+            array: currentStepData?.array || array,
+          }}
         />
-        <span>Slow</span>
+
+        {/* Speed Control */}
+        <div className="flex items-center gap-3 mt-6 mb-6 text-sm text-gray-400 justify-center">
+          <span>Fast</span>
+          <input
+            type="range"
+            min={100}
+            max={1000}
+            step={100}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="accent-purple-500"
+          />
+          <span>Slow</span>
+        </div>
+
       </div>
+    </main>
+  );
+};
 
 export default BubbleSortVisualizer;
