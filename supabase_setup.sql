@@ -144,3 +144,34 @@ ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
   USING (true) WITH CHECK (true);
 
+-- ====================================================================
+-- badges_dictionary and user_badges for Gamification
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS badges_dictionary (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  icon_url TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_badges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  badge_id TEXT REFERENCES badges_dictionary(id),
+  earned_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, badge_id)
+);
+
+ALTER TABLE badges_dictionary ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read badges_dictionary" ON badges_dictionary FOR SELECT USING (true);
+
+ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can read own badges" ON user_badges FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Service role can insert user_badges" ON user_badges FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service role can update user_badges" ON user_badges FOR UPDATE USING (true);
+
+INSERT INTO badges_dictionary (id, name, description, icon_url) VALUES
+('7_day_streak', '7-Day Streak', 'Maintain a learning streak for 7 days', '/badges/streak7.png'),
+('mastered_sorting', 'Mastered Sorting', 'Solve all sorting algorithm challenges', '/badges/sorting.png'),
+('first_bug_found', 'First Bug Found', 'Report your first bug', '/badges/bug.png')
+ON CONFLICT (id) DO NOTHING;
