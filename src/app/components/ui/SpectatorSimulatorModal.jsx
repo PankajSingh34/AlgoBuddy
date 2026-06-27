@@ -275,20 +275,33 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
                   </h4>
                   
                   {/* Test Case Progress Box */}
-                  <div className="mt-6 w-full max-w-sm bg-white dark:bg-[#15151a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Test Progress</span>
-                      <span className="text-[10px] font-semibold text-slate-500">{p1TotalTests > 0 ? `${(p1Progress/100*p1TotalTests).toFixed(0)}/${p1TotalTests} Passed` : "Not Submitted"}</span>
-                    </div>
-                    <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
-                      <motion.div 
-                        className="h-full bg-emerald-500"
-                        animate={{ width: `${p1Progress}%` }}
-                      />
-                    </div>
-                    {p1Failed > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 px-2 py-1 rounded w-fit mx-auto border border-red-500/20">
-                        <AlertCircle size={14} /> Failed Attempts: {p1Failed}
+                  <div className="mt-6 w-full max-w-sm bg-white dark:bg-[#15151a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm min-h-[88px] flex flex-col justify-center">
+                    {p1TotalTests > 0 || p1Failed > 0 ? (
+                      <>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Test Progress</span>
+                          <span className="text-[10px] font-semibold text-slate-500">{p1TotalTests > 0 ? `${(p1Progress/100*p1TotalTests).toFixed(0)}/${p1TotalTests} Passed` : "Not Submitted"}</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
+                          <motion.div 
+                            className="h-full bg-emerald-500"
+                            animate={{ width: `${p1Progress}%` }}
+                          />
+                        </div>
+                        {p1Failed > 0 && (
+                          <div className="flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 px-2 py-1 rounded w-fit mx-auto border border-red-500/20 mt-2">
+                            <AlertCircle size={14} /> Failed Attempts: {p1Failed}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center opacity-70">
+                        <span className="text-xs font-bold text-slate-500">Waiting for submission</span>
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -341,20 +354,33 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
                   </h4>
                   
                   {/* Test Case Progress Box */}
-                  <div className="mt-6 w-full max-w-sm bg-white dark:bg-[#15151a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Test Progress</span>
-                      <span className="text-[10px] font-semibold text-slate-500">{p2TotalTests > 0 ? `${(p2Progress/100*p2TotalTests).toFixed(0)}/${p2TotalTests} Passed` : "Not Submitted"}</span>
-                    </div>
-                    <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
-                      <motion.div 
-                        className="h-full bg-emerald-500"
-                        animate={{ width: `${p2Progress}%` }}
-                      />
-                    </div>
-                    {p2Failed > 0 && (
-                      <div className="flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 px-2 py-1 rounded w-fit mx-auto border border-red-500/20">
-                        <AlertCircle size={14} /> Failed Attempts: {p2Failed}
+                  <div className="mt-6 w-full max-w-sm bg-white dark:bg-[#15151a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm min-h-[88px] flex flex-col justify-center">
+                    {p2TotalTests > 0 || p2Failed > 0 ? (
+                      <>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Test Progress</span>
+                          <span className="text-[10px] font-semibold text-slate-500">{p2TotalTests > 0 ? `${(p2Progress/100*p2TotalTests).toFixed(0)}/${p2TotalTests} Passed` : "Not Submitted"}</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
+                          <motion.div 
+                            className="h-full bg-emerald-500"
+                            animate={{ width: `${p2Progress}%` }}
+                          />
+                        </div>
+                        {p2Failed > 0 && (
+                          <div className="flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 px-2 py-1 rounded w-fit mx-auto border border-red-500/20 mt-2">
+                            <AlertCircle size={14} /> Failed Attempts: {p2Failed}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center opacity-70">
+                        <span className="text-xs font-bold text-slate-500">Waiting for submission</span>
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     )}
                   </div>
