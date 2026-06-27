@@ -48,3 +48,37 @@ export function validateCsrfToken(token) {
     return false;
   }
 }
+
+export async function validateCsrfTokenEdge(token) {
+  if (!token || typeof token !== "string") return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [randomValue, signature] = parts;
+  const secret = getSecret();
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(randomValue));
+  const expected = Array.from(new Uint8Array(sigBytes))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  if (signature.length !== expected.length) return false;
+  try {
+    const sigBuf = new Uint8Array(
+      signature.match(/.{1,2}/g).map((b) => parseInt(b, 16)),
+    );
+    const expBuf = new Uint8Array(
+      expected.match(/.{1,2}/g).map((b) => parseInt(b, 16)),
+    );
+    if (sigBuf.length !== expBuf.length) return false;
+    const result = sigBuf.reduce((acc, byte, i) => acc | (byte ^ expBuf[i]), 0);
+    return result === 0;
+  } catch {
+    return false;
+  }
+}

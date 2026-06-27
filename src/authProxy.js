@@ -7,6 +7,7 @@ import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
 } from "@/lib/csrf";
+import { validateCsrfTokenEdge } from "@/lib/csrfToken";
 
 const SUPABASE_ENV_ERROR =
   "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.local and add your Supabase project URL and anon key.";
@@ -101,7 +102,21 @@ export async function proxy(request) {
     const headerToken = request.headers.get(CSRF_HEADER_NAME);
     const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
 
-    if (!headerToken || !cookieToken || headerToken !== cookieToken) {
+    if (!headerToken || !cookieToken) {
+      return NextResponse.json(
+        { error: "CSRF validation failed: token missing" },
+        { status: 403 },
+      );
+    }
+
+    if (!(await validateCsrfTokenEdge(cookieToken))) {
+      return NextResponse.json(
+        { error: "CSRF validation failed: invalid token signature" },
+        { status: 403 },
+      );
+    }
+
+    if (headerToken !== cookieToken) {
       return NextResponse.json(
         { error: "CSRF validation failed: token mismatch" },
         { status: 403 },
