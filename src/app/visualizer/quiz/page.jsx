@@ -67,6 +67,13 @@ export default function QuizPage() {
         href: "/visualizer/array/radixsort/quiz",
         color: "bg-cyan-600 hover:bg-cyan-700",
     },
+    {
+        title: "Counting Sort Quiz",
+        description:
+        "Test your understanding of Counting Sort with multiple-choice questions.",
+        href: "/visualizer/array/countingsort/quiz",
+        color: "bg-emerald-600 hover:bg-emerald-700",
+    },
   ];
 
   return (
