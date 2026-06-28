@@ -12,14 +12,14 @@ import {
   FaTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
+import toast from 'react-hot-toast'
 
 
 
 const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
-  const [newsletterSuccess, setNewsletterSuccess] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   const validateEmail = (value, isSubmit = false) => {
     if (!value) {
@@ -46,25 +46,28 @@ const Footer = () => {
       return;
     }
     
-    setIsSubmitting(true);
+    setIsSubscribing(true);
+    setNewsletterEmailError("");
+
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
+      const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: newsletterEmail }),
       });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setNewsletterEmailError(data.error || "Subscription failed");
-      } else {
-        setNewsletterSuccess(data.message || "Successfully subscribed!");
-        setNewsletterEmail("");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to subscribe');
       }
+
+      toast.success(data.message || 'Successfully subscribed!');
+      setNewsletterEmail("");
     } catch (error) {
-      setNewsletterEmailError("Network error. Please try again.");
+      setNewsletterEmailError(error.message);
+      toast.error(error.message);
     } finally {
-      setIsSubmitting(false);
+      setIsSubscribing(false);
     }
   };
 
@@ -161,8 +164,12 @@ const Footer = () => {
                     }}
                     className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500 disabled:opacity-50"
                   />
-                  <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50">
-                    {isSubmitting ? "..." : "Subscribe"}
+                  <button 
+                    type="submit" 
+                    disabled={isSubscribing}
+                    className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {isSubscribing ? 'Subscribing...' : 'Subscribe'}
                   </button>
                 </div>
                 {newsletterEmailError && (
@@ -170,11 +177,7 @@ const Footer = () => {
                     {newsletterEmailError}
                   </p>
                 )}
-                {newsletterSuccess && (
-                  <p className="text-green-500 text-xs mt-2" role="alert">
-                    {newsletterSuccess}
-                  </p>
-                )}
+
               </form>
             </div>
 
