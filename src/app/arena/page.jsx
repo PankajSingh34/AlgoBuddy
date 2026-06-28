@@ -621,12 +621,57 @@ export default function ArenaPage() {
                 )}
 
                 {activeTab === "friend" && (
-                  <button
-                    onClick={openCreateDuelModal}
-                    className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition"
-                  >
-                    Create Custom Lobby
-                  </button>
+                  <div className="w-full text-left space-y-6">
+                    <div>
+                      <h4 className="text-xl font-extrabold text-slate-800 dark:text-neutral-200 mb-1">Play with Friends</h4>
+                      <p className="text-xs text-slate-500 dark:text-neutral-400">Create a private lobby and invite your friends to a custom code duel.</p>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Lobby Settings</h5>
+                          
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Difficulty</label>
+                            <div className="flex gap-2">
+                              {["Easy", "Medium", "Hard"].map(diff => (
+                                <button key={diff} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${diff === "Medium" ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}>
+                                  {diff}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Time Limit</label>
+                            <div className="flex gap-2">
+                              {["15m", "30m", "60m"].map(time => (
+                                <button key={time} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${time === "30m" ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}>
+                                  {time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 flex flex-col">
+                          <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Invite Players</h5>
+                          
+                          <div className="flex-1 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl p-4 flex flex-col items-center justify-center text-center space-y-3">
+                            <Users size={32} className="text-slate-300 dark:text-neutral-600" />
+                            <p className="text-[10px] text-slate-500 max-w-[150px]">Create the lobby to generate an invite code.</p>
+                            <button
+                              onClick={openCreateDuelModal}
+                              className="w-full py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md shadow-primary/20 transition"
+                            >
+                              Generate Invite Link
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {activeTab === "leaderboard" && (
