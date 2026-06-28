@@ -8,12 +8,12 @@ import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,19 +26,19 @@ public class LeaderboardService {
     private final UserProfileRepository profileRepository;
 
     public List<LeaderboardEntryDto> getGlobalStreakLeaderboard() {
-        List<UserPracticeStats> stats = statsRepository.findAll(Sort.by(Sort.Direction.DESC, "currentStreak"));
+        List<UserPracticeStats> stats = statsRepository.findTop100ByOrderByCurrentStreakDesc();
         return mapToStreakEntries(stats);
     }
 
     public List<LeaderboardEntryDto> getGlobalArenaLeaderboard() {
-        List<UserArenaProfile> profiles = arenaRepository.findAll(Sort.by(Sort.Direction.DESC, "rating"));
+        List<UserArenaProfile> profiles = arenaRepository.findTop100ByOrderByRatingDesc();
         return mapToArenaEntries(profiles);
     }
 
     private List<LeaderboardEntryDto> mapToStreakEntries(List<UserPracticeStats> statsList) {
-        List<UUID> userIds = statsList.stream().map(UserPracticeStats::getUserId).toList();
+        Set<UUID> userIds = statsList.stream().map(UserPracticeStats::getUserId).collect(Collectors.toSet());
         Map<UUID, UserProfile> profileMap = profileRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(UserProfile::getUserId, p -> p));
+                .collect(Collectors.toMap(UserProfile::getUserId, p -> p, (a, b) -> a));
 
         List<LeaderboardEntryDto> result = new ArrayList<>();
         int rank = 1;
@@ -56,9 +56,9 @@ public class LeaderboardService {
     }
 
     private List<LeaderboardEntryDto> mapToArenaEntries(List<UserArenaProfile> profilesList) {
-        List<UUID> userIds = profilesList.stream().map(UserArenaProfile::getUserId).toList();
+        Set<UUID> userIds = profilesList.stream().map(UserArenaProfile::getUserId).collect(Collectors.toSet());
         Map<UUID, UserProfile> profileMap = profileRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(UserProfile::getUserId, p -> p));
+                .collect(Collectors.toMap(UserProfile::getUserId, p -> p, (a, b) -> a));
 
         List<LeaderboardEntryDto> result = new ArrayList<>();
         int rank = 1;
