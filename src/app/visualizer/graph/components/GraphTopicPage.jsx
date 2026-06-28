@@ -1,5 +1,4 @@
 import Footer from "@/app/components/footer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ExploreOther from "@/app/components/ui/exploreOther";
@@ -87,7 +86,6 @@ export default function GraphTopicPage({ topic, Animation, startNode }) {
           />
         </section>
       </main>
-      <BackToTop />
       <Footer />
     </>
   );

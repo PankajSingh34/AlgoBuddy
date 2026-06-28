@@ -26,7 +26,7 @@ const faqData = {
   "Getting Started": [
     { question: "How do I create an account?", answer: "You can create an account by clicking the 'Sign Up' button in the top right corner. You can use your email or sign in directly with Google or GitHub." },
     { question: "Do I need to install anything?", answer: "No, AlgoBuddy runs entirely in your web browser. There's no need to install any software or configure local environments." },
-    { question: "Where should I start?", answer: "If you're new, we recommend checking out the 'Getting Started' tutorial series in the Dashboard, which introduces basic arrays and loops." }
+    { question: "Where should I start?", answer: "If you're new, we recommend starting with the Practice page and the beginner tutorial series, which introduce basic arrays and loops." }
   ],
   "Visualizers": [
     { question: "How do visualizers work?", answer: "Visualizers take abstract code execution and render it graphically step-by-step. You can control the speed, pause, step forward, or step backward to understand exactly how variables and structures change." },
@@ -34,7 +34,7 @@ const faqData = {
     { question: "Are new algorithms being added?", answer: "Absolutely. We constantly update our library. If there's a specific algorithm you want to see, let us know in the community Discord!" }
   ],
   "Practice": [
-    { question: "How can I track my progress?", answer: "Once logged in, your progress is automatically saved. You can view your completed problems, current streak, and mastery level in your personal Dashboard." },
+    { question: "How can I track my progress?", answer: "Once logged in, your progress is automatically saved. You can view your completed problems, current streak, and mastery level on your profile." },
     { question: "Does the code editor support multiple languages?", answer: "Currently, our integrated code editor supports JavaScript, Python, Java, and C++. We are working on adding more languages soon." }
   ],
   "Arena": [
@@ -72,7 +72,7 @@ const FAQSection = () => {
   // Handle Search Filtering
   const filteredFAQs = useMemo(() => {
     if (!searchQuery.trim()) return faqData[activeCategory];
-    
+
     const lowerQuery = searchQuery.toLowerCase();
     // If searching, search across all categories to make it useful
     const allFaqs = [];
@@ -89,7 +89,7 @@ const FAQSection = () => {
   return (
     <>
       <section className="relative min-h-screen bg-udemy-surface dark:bg-udemy-dark-bg overflow-hidden font-sans">
-        
+
         {/* Background Gradients */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-20 dark:opacity-30 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-udemy-purple via-udemy-purple-light to-transparent blur-3xl rounded-full mix-blend-multiply dark:mix-blend-screen transform -translate-y-1/2"></div>
@@ -137,7 +137,7 @@ const FAQSection = () => {
           </div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            
+
             {/* Sidebar / Categories */}
             <div className="lg:col-span-3">
               <div className="sticky top-24">
@@ -154,11 +154,10 @@ const FAQSection = () => {
                         setSearchQuery("");
                         setActiveIndex(null);
                       }}
-                      className={`whitespace-nowrap flex-shrink-0 lg:w-full text-left px-4 lg:px-5 py-3 rounded-xl transition-all duration-200 font-medium ${
-                        activeCategory === category && !searchQuery
+                      className={`whitespace-nowrap flex-shrink-0 lg:w-full text-left px-4 lg:px-5 py-3 rounded-xl transition-all duration-200 font-medium ${activeCategory === category && !searchQuery
                           ? "bg-udemy-purple text-white shadow-md"
                           : "bg-white/50 dark:bg-udemy-dark-surface/50 text-udemy-text dark:text-udemy-dark-text hover:bg-udemy-purple/10 hover:text-udemy-purple dark:hover:text-udemy-purple-light"
-                      }`}
+                        }`}
                     >
                       {category}
                     </button>
@@ -186,7 +185,7 @@ const FAQSection = () => {
                   <p className="text-lg text-udemy-muted dark:text-udemy-dark-muted">
                     No FAQs found matching "{searchQuery}"
                   </p>
-                  <button 
+                  <button
                     onClick={() => setSearchQuery("")}
                     className="mt-4 text-udemy-purple hover:underline"
                   >
@@ -201,11 +200,10 @@ const FAQSection = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       key={index}
-                      className={`bg-white dark:bg-udemy-dark-surface border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden transition-all duration-300 ${
-                        activeIndex === index 
-                          ? "shadow-md ring-1 ring-udemy-purple/20" 
+                      className={`bg-white dark:bg-udemy-dark-surface border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden transition-all duration-300 ${activeIndex === index
+                          ? "shadow-md ring-1 ring-udemy-purple/20"
                           : "shadow-sm hover:shadow-md hover:border-udemy-purple/30 dark:hover:border-udemy-purple/50"
-                      }`}
+                        }`}
                     >
                       <button
                         className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
@@ -273,7 +271,7 @@ const FAQSection = () => {
           <div className="max-w-6xl mx-auto mt-24">
             <div className="bg-gradient-to-br from-udemy-purple to-udemy-purple-dark rounded-3xl p-8 lg:p-12 text-white shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-              
+
               <div className="relative z-10 text-center max-w-2xl mx-auto">
                 <h3 className="text-3xl font-bold font-serif mb-4">
                   Still need help?
@@ -281,7 +279,7 @@ const FAQSection = () => {
                 <p className="text-purple-100 text-lg mb-10">
                   Can't find the answer you're looking for? Reach out to our community or support team.
                 </p>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
                   <Link href="mailto:support@algobuddy.com" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -289,13 +287,13 @@ const FAQSection = () => {
                     </div>
                     <span className="font-semibold">Contact Support</span>
                   </Link>
-                  <Link href="https://github.com/PankajSingh34/AlgoBuddy/issues" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
+                  <Link href="https://github.com/PankajSingh34/AlgoBuddy/issues" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                       <FiGithub className="w-5 h-5" />
                     </div>
                     <span className="font-semibold">GitHub Issues</span>
                   </Link>
-                  <Link href="https://discord.gg/Gv2N4U3KAc" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
+                  <Link href="https://discord.gg/Gv2N4U3KAc" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                       <FiMessageCircle className="w-5 h-5" />
                     </div>
@@ -305,7 +303,7 @@ const FAQSection = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Support component backward compatibility */}
           <div className="hidden">
             <Support />

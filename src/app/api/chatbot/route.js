@@ -54,7 +54,7 @@ AlgoBuddy is a completely FREE open-source platform (no paid plans, no ads). Exp
   - Editorial solutions for learning the optimal approach
   - Problems tagged by topic (Arrays, Trees, DP, Graphs, etc.)
 
-### 📊 Progress Dashboard
+### 📊 Profile Progress
 - **What it is (simple):** Your personal report card and learning map.
 - **Features:**
   - Track every problem you've solved

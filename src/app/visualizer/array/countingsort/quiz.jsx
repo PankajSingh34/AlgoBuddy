@@ -1,78 +1,197 @@
-import React from "react";
+"use client";
 
-const questions = [
-  {
-    question: "What is the main advantage of Counting Sort compared to comparison-based sorts?",
-    options: [
-      "It can handle any range of values with the same performance.",
-      "It sorts in place without extra memory.",
-      "It sorts in linear time when the value range is small.",
-      "It only works for negative numbers.",
-    ],
-    answer: "It sorts in linear time when the value range is small.",
-  },
-  {
-    question: "Which step comes first in the Counting Sort algorithm?",
-    options: [
-      "Reverse the input array.",
-      "Build the count array from input values.",
-      "Swap adjacent elements.",
-      "Merge two sorted halves.",
-    ],
-    answer: "Build the count array from input values.",
-  },
-  {
-    question: "Why does Counting Sort compute a prefix sum over the count array?",
-    options: [
-      "To determine the number of distinct values.",
-      "To find the maximum value in the array.",
-      "To compute final positions for each value in the output.",
-      "To sort the output array in reverse order.",
-    ],
-    answer: "To compute final positions for each value in the output.",
-  },
-  {
-    question: "What is a key limitation of Counting Sort?",
-    options: [
-      "It requires the input to be already sorted.",
-      "It only works with integer values in a bounded range.",
-      "It cannot be made stable.",
-      "It always uses O(n^2) time.",
-    ],
-    answer: "It only works with integer values in a bounded range.",
-  },
-  {
-    question: "During placement, why does Counting Sort iterate the input array in reverse order?",
-    options: [
-      "To make the algorithm unstable.",
-      "To preserve the original relative order of equal elements.",
-      "To reduce memory usage.",
-      "To avoid computing counts twice.",
-    ],
-    answer: "To preserve the original relative order of equal elements.",
-  },
-];
+import React from "react";
+import QuizEngine from "@/app/components/ui/QuizEngine";
 
 const CountingSortQuiz = () => {
+  const questions = [
+    {
+      question: "What is the basic idea behind Counting Sort?",
+      options: [
+        "Compare adjacent elements repeatedly",
+        "Count the occurrences of each value",
+        "Divide the array into smaller arrays",
+        "Build a binary heap",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Counting Sort works by counting how many times each value appears and then reconstructing the sorted array.",
+    },
+    {
+      question: "Counting Sort is most efficient when:",
+      options: [
+        "The input values are within a small range",
+        "The array is already sorted",
+        "The array contains floating-point numbers",
+        "The array has no duplicate values",
+      ],
+      correctAnswer: 0,
+      explanation:
+        "Counting Sort performs best when the range of input values is relatively small.",
+    },
+    {
+      question: "What is the average time complexity of Counting Sort?",
+      options: [
+        "O(n²)",
+        "O(n log n)",
+        "O(n + k)",
+        "O(log n)",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "Counting Sort has a time complexity of O(n + k), where n is the number of elements and k is the range of input values.",
+    },
+    {
+      question: "What does 'k' represent in the complexity O(n + k)?",
+      options: [
+        "Number of comparisons",
+        "Range of input values",
+        "Number of recursive calls",
+        "Output array size",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "k represents the range of possible input values.",
+    },
+    {
+      question: "Counting Sort belongs to which category?",
+      options: [
+        "Comparison-based sorting",
+        "Non-comparison sorting",
+        "Divide and Conquer",
+        "Recursive sorting",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Counting Sort is a non-comparison sorting algorithm.",
+    },
+    {
+      question: "Which auxiliary data structure is used in Counting Sort?",
+      options: [
+        "Stack",
+        "Queue",
+        "Count Array",
+        "Binary Heap",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "A Count Array stores the frequency of each value in the input.",
+    },
+    {
+      question: "Why is Counting Sort considered stable?",
+      options: [
+        "Because it uses recursion",
+        "Because equal elements preserve their relative order",
+        "Because it performs comparisons",
+        "Because it sorts in-place",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "A stable sorting algorithm keeps equal elements in the same relative order as the input.",
+    },
+    {
+      question: "What is the auxiliary space complexity of Counting Sort?",
+      options: [
+        "O(1)",
+        "O(log n)",
+        "O(n + k)",
+        "O(n²)",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "Extra memory is needed for the count array and output array.",
+    },
+    {
+      question: "What is the first step of Counting Sort?",
+      options: [
+        "Choose a pivot",
+        "Build the count array",
+        "Swap adjacent elements",
+        "Reverse the array",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "The algorithm first counts the frequency of each element.",
+    },
+    {
+      question: "Why are prefix sums calculated in Counting Sort?",
+      options: [
+        "To remove duplicates",
+        "To determine the final position of each element",
+        "To reduce memory usage",
+        "To compare elements faster",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Prefix sums determine the correct index of each value in the sorted output.",
+    },
+    {
+      question: "Counting Sort becomes inefficient when:",
+      options: [
+        "The array is already sorted",
+        "The range of values is very large",
+        "The array contains duplicate values",
+        "The array is small",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "A large value range requires a large count array, increasing memory usage.",
+    },
+    {
+      question: "Counting Sort is mainly designed for:",
+      options: [
+        "Strings",
+        "Floating-point numbers",
+        "Integers within a bounded range",
+        "Graphs",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "Counting Sort is designed primarily for integers within a limited range.",
+    },
+    {
+      question: "Can standard Counting Sort directly handle negative integers?",
+      options: [
+        "Yes",
+        "No",
+        "Only if the array is sorted",
+        "Only if duplicates are removed",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Standard Counting Sort assumes non-negative integers. Negative values require shifting the range.",
+    },
+    {
+      question: "Which algorithm commonly uses Counting Sort as a subroutine?",
+      options: [
+        "Heap Sort",
+        "Quick Sort",
+        "Radix Sort",
+        "Merge Sort",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "Radix Sort relies on Counting Sort because it is stable.",
+    },
+    {
+      question: "Which statement about Counting Sort is correct?",
+      options: [
+        "It compares every pair of elements",
+        "It sorts elements by counting their occurrences",
+        "It always runs in O(n²)",
+        "It only works for sorted arrays",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Counting Sort sorts values based on their frequencies instead of comparing elements.",
+    },
+  ];
+
   return (
-    <div className="bg-white dark:bg-neutral-950 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-8">
-      <h2 className="text-2xl font-semibold mb-4">Counting Sort Quiz</h2>
-      <div className="space-y-5">
-        {questions.map((item, index) => (
-          <div key={index} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-neutral-900 p-4">
-            <p className="font-medium mb-3">{index + 1}. {item.question}</p>
-            <ul className="list-disc list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              {item.options.map((option, optionIndex) => (
-                <li key={optionIndex}>{option}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 text-sm text-gray-500 dark:text-gray-400">
-        Answers are available once you complete the exercise.
-      </div>
-    </div>
+    <QuizEngine
+      title="Counting Sort Quiz Challenge"
+      questions={questions}
+    />
   );
 };
 

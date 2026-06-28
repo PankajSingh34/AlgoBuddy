@@ -3,7 +3,10 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 // GET /api/progress
-// Returns all problem progress for the authenticated user as a flat array
+// Returns all problem progress for the authenticated user as a flat array,
+// along with currentStreak and longestStreak from user_practice_stats so that
+// the client always has an authoritative server-side streak value and does not
+// have to fall back to the per-device localStorage counter.
 export async function GET(request) {
   try {
     const authResult = await getAuthenticatedUser();
@@ -15,16 +18,25 @@ export async function GET(request) {
     }
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("problem_id, status, updated_at")
-      .eq("user_id", authResult.user.id);
 
-    if (error) return jsonResponse({ error: error.message }, 500);
+    // Fetch progress rows and streak stats in parallel.
+    const [progressResult, statsResult] = await Promise.all([
+      supabase
+        .from("user_progress")
+        .select("problem_id, status, updated_at")
+        .eq("user_id", authResult.user.id),
+      supabase
+        .from("user_practice_stats")
+        .select("current_streak, longest_streak")
+        .eq("user_id", authResult.user.id)
+        .maybeSingle(),
+    ]);
+
+    if (progressResult.error) return jsonResponse({ error: progressResult.error.message }, 500);
 
     // Return as map: { [problemId]: { status, updatedAt } }
     const progressMap = {};
-    (data || []).forEach((row) => {
+    (progressResult.data || []).forEach((row) => {
       if (row.problem_id) {
         progressMap[row.problem_id] = {
           status: row.status,
@@ -33,7 +45,12 @@ export async function GET(request) {
       }
     });
 
-    return jsonResponse({ progress: progressMap });
+    const stats = statsResult.data;
+    return jsonResponse({
+      progress: progressMap,
+      currentStreak: stats?.current_streak ?? 0,
+      longestStreak: stats?.longest_streak ?? 0,
+    });
   } catch (error) {
     return errorResponse(error);
   }

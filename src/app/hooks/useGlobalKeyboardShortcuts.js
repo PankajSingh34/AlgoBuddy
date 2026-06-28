@@ -8,15 +8,14 @@ export function useGlobalKeyboardShortcuts() {
   useEffect(() => {
     function handleKeyDown(e) {
       const activeElement = document.activeElement;
-      if (
-        activeElement &&
-        (activeElement.tagName === "INPUT" ||
-          activeElement.tagName === "TEXTAREA" ||
-          activeElement.isContentEditable)
-      ) {
-        if (e.key !== "Escape") {
-          return;
-        }
+      
+        const isTyping =
+        activeElement?.tagName === "INPUT" ||
+        activeElement?.tagName === "TEXTAREA" ||
+        activeElement?.isContentEditable;
+
+      if (isTyping && e.key !== "Escape") {
+        return;
       }
 
       if (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {

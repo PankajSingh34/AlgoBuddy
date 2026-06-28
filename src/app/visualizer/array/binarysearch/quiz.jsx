@@ -58,7 +58,62 @@ const BinarySearchQuiz = () => {
       ],
       correctAnswer: 3,
       explanation: "When the target isn't found, binary search typically returns a special value (like -1 or 'not found') to indicate this."
-    }
+    },
+    {
+  question: "Why is binary search faster than linear search for large sorted arrays?",
+  options: [
+    "It checks every element",
+    "It divides the search space in half each step",
+    "It uses recursion only",
+    "It sorts the array during searching"
+  ],
+  correctAnswer: 1,
+  explanation: "Binary search halves the remaining search space after every comparison, resulting in O(log n) time complexity."
+},
+{
+  question: "Which data structure is most suitable for binary search?",
+  options: [
+    "Unsorted Array",
+    "Sorted Array",
+    "Queue",
+    "Graph"
+  ],
+  correctAnswer: 1,
+  explanation: "Binary search requires the data to be sorted so that half of the search space can be discarded after each comparison."
+},
+{
+  question: "If a sorted array has 16 elements, what is the maximum number of comparisons needed in binary search?",
+  options: [
+    "4",
+    "8",
+    "16",
+    "5"
+  ],
+  correctAnswer: 0,
+  explanation: "Since log₂(16) = 4, binary search requires at most 4 comparisons in the ideal implementation."
+},
+{
+  question: "What happens if binary search is applied to an unsorted array?",
+  options: [
+    "It always works correctly",
+    "It may return incorrect results",
+    "It sorts the array automatically",
+    "It becomes O(1)"
+  ],
+  correctAnswer: 1,
+  explanation: "Binary search assumes the array is sorted. On unsorted data, the search decisions become invalid."
+},
+{
+  question: "Which algorithm generally performs better on large sorted datasets?",
+  options: [
+    "Linear Search",
+    "Binary Search",
+    "Bubble Sort",
+    "Selection Sort"
+  ],
+  correctAnswer: 1,
+  explanation: "Binary Search has O(log n) complexity, making it much faster than Linear Search on large sorted datasets."
+}
   ];
 
   return <QuizEngine title="Binary Search Quiz Challenge" questions={questions} />;

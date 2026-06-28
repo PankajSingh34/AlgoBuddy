@@ -2,8 +2,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, User, LogIn, UserPlus, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, User, LogIn, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -27,7 +27,11 @@ export default function AuthForm({ isLogin = true }) {
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("next") || "/";
   const { setUser } = useUser();
 
   const validateEmail = (value) => {
@@ -44,39 +48,18 @@ export default function AuthForm({ isLogin = true }) {
     return true;
   };
 
-  // Password requirements
-  const passwordRequirements = [
-    { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
-    { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
-    { label: "One lowercase letter", test: (pw) => /[a-z]/.test(pw) },
-    { label: "One number", test: (pw) => /\d/.test(pw) },
-    {
-      label: "One special character",
-      test: (pw) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw),
-    },
-  ];
-
-  const getPasswordValidation = (pw) => {
-    return passwordRequirements.map((req) => ({
-      ...req,
-      met: req.test(pw),
-    }));
-  };
-
-  const passwordValidation = getPasswordValidation(password);
-
-  const allRequirementsMet = passwordValidation.every((req) => req.met);
+  const allRequirementsMet = password !== "";
   const passwordsMatch = password === confirmPassword && password !== "";
 
   // Real-time validation
-  const validatePasswords = () => {
-    if (password && !allRequirementsMet) {
-      setPasswordError("Password does not meet all requirements");
-    } else {
-      setPasswordError("");
-    }
+  const validatePasswords = (passVal, confirmVal) => {
+    setPasswordError("");
 
-    if (confirmPassword && !passwordsMatch) {
+    const currentPass = passVal !== undefined ? passVal : password;
+    const currentConfirm = confirmVal !== undefined ? confirmVal : confirmPassword;
+    const match = currentPass === currentConfirm && currentPass !== "";
+
+    if (currentConfirm && !match) {
       setConfirmError("Passwords do not match");
     } else {
       setConfirmError("");
@@ -125,7 +108,7 @@ export default function AuthForm({ isLogin = true }) {
           data: { user },
         } = await supabase.auth.getUser();
         setUser(user || null);
-        router.push("/arena");
+        router.push(redirectTo);
       } else {
         const data = await api.request("/api/auth", {
           method: "POST",
@@ -143,10 +126,14 @@ export default function AuthForm({ isLogin = true }) {
   };
 
   const handleGoogleSignIn = async () => {
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (redirectTo && redirectTo !== "/") {
+      callbackUrl.searchParams.set("next", redirectTo);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
         queryParams: {
           access_type: "offline",
           prompt: "consent",
@@ -256,38 +243,34 @@ export default function AuthForm({ isLogin = true }) {
                 <Lock size={18} className="text-gray-400 dark:text-gray-500" />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 aria-label="Password"
                 disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                className="w-full pl-10 pr-10 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => {
-                  setPassword(e.target.value);
-                  validatePasswords();
+                  const val = e.target.value;
+                  setPassword(val);
+                  validatePasswords(val, confirmPassword);
                 }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
 
             {/* Password Requirements */}
-            {!isLogin && (
+            {!isLogin && passwordError && (
               <div className="text-sm space-y-1 pl-1">
-                {passwordValidation.map((req, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-2 ${req.met ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
-                  >
-                    <span className="text-base leading-none">
-                      {req.met ? "✓" : "○"}
-                    </span>
-                    <span>{req.label}</span>
-                  </div>
-                ))}
-                {passwordError && (
-                  <p className="text-red-600 dark:text-red-400 mt-1">
-                    {passwordError}
-                  </p>
-                )}
+                <p className="text-red-600 dark:text-red-400 mt-1">
+                  {passwordError}
+                </p>
               </div>
             )}
 
@@ -301,17 +284,26 @@ export default function AuthForm({ isLogin = true }) {
                   />
                 </div>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   aria-label="Confirm Password"
                   disabled={loading}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                  className="w-full pl-10 pr-10 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    validatePasswords();
+                    const val = e.target.value;
+                    setConfirmPassword(val);
+                    validatePasswords(password, val);
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
                 {confirmError && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {confirmError}

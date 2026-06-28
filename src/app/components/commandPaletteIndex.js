@@ -84,7 +84,6 @@ const PAGES = [
   { name: "Practice",     path: "/practice",      category: "Page" },
   { name: "Arena",        path: "/arena",          category: "Page" },
   { name: "Community",    path: "/community",      category: "Page" },
-  { name: "Dashboard",    path: "/dashboard",      category: "Page" },
   { name: "Blog",         path: "/blog",           category: "Blog" },
   { name: "Roadmaps",     path: "/roadmaps",       category: "Page" },
   { name: "Cheatsheets",  path: "/cheatsheets",    category: "Page" },

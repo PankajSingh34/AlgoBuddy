@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import Chatbot from "@/app/components/ui/Chatbot";
 import Navbar from "@/app/components/navbar";
 import { CommandPalette } from "@/app/components/CommandPalette";
-import FloatingNotesAssistant from "@/app/components/FloatingNotesAssistant";
 import { useGlobalKeyboardShortcuts } from "@/app/hooks/useGlobalKeyboardShortcuts";
 import GlobalShortcutsModal from "@/app/components/ui/GlobalShortcutsModal";
 
@@ -20,11 +19,6 @@ export default function ClientLayoutWrapper({ children }) {
       <Toaster position="top-right" />
       {!isAuthPage && <Navbar />}
       {children}
-      {!isAuthPage && (
-        <Suspense fallback={null}>
-          <FloatingNotesAssistant />
-        </Suspense>
-      )}
       {!isAuthPage && <Chatbot />}
       {!isAuthPage && <CommandPalette />}
       <GlobalShortcutsModal />

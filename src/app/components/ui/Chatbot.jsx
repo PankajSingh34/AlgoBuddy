@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { api } from "@/lib/apiClient";
+import { CSRF_HEADER_NAME } from "@/lib/csrf";
 
 // ─── Custom Robot Icon matching AlgoBuddy Theme ──────────────────────────────
 
@@ -402,6 +404,7 @@ export default function Chatbot() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const previousMessageCount = useRef(messages.length);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -427,15 +430,26 @@ export default function Chatbot() {
     setShowScrollBtn(distFromBottom > 120);
   };
 
-  // ── Unread badge ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isOpen && messages.length > 1) {
-      const assistantMessages = messages.filter((m) => m.role === "assistant" && m.id !== "welcome");
-      setUnreadCount(assistantMessages.length);
-    } else {
-      setUnreadCount(0);
-    }
-  }, [isOpen, messages]);
+  if (
+    !isOpen &&
+    messages.length > previousMessageCount.current
+  ) {
+    const lastMessage = messages[messages.length - 1];
+
+    if (
+  lastMessage?.role === "assistant" &&
+  lastMessage.id !== "welcome" &&
+  !lastMessage.isStreaming &&
+  !lastMessage.isError
+) {
+  setUnreadCount((prev) => prev + 1);
+}
+  }
+
+  previousMessageCount.current = messages.length;
+}, [messages, isOpen]);
+
 
   // ── Focus on open ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -480,12 +494,22 @@ export default function Chatbot() {
       abortControllerRef.current = new AbortController();
 
       try {
-        const res = await fetch("/api/chatbot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
-          signal: abortControllerRef.current.signal,
-        });
+        const csrfToken = await api.getCsrfToken();
+
+const headers = {
+  "Content-Type": "application/json",
+};
+
+if (csrfToken) {
+  headers[CSRF_HEADER_NAME] = csrfToken;
+}
+
+const res = await fetch("/api/chatbot", {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ messages: history }),
+  signal: abortControllerRef.current.signal,
+});
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -565,6 +589,8 @@ export default function Chatbot() {
     setMessages([WELCOME_MESSAGE]);
     setHasInteracted(false);
     setIsStreaming(false);
+    setUnreadCount(0);
+    previousMessageCount.current = 1;
   };
 
   const handleTextareaChange = (e) => {
@@ -759,7 +785,17 @@ export default function Chatbot() {
       {/* ── Floating Trigger Button ─────────────────────────────────────────────── */}
       <div className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
         <motion.button
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={() => {
+            setIsOpen((v) => {
+              const next = !v;
+
+              if (next) {
+                setUnreadCount(0);
+              }
+
+              return next;
+            });
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 20 }}

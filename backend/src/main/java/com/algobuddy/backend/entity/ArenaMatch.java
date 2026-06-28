@@ -58,7 +58,19 @@ public class ArenaMatch {
     @Column(name = "xp_awarded_p2")
     private Integer xpAwardedP2;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private MatchStatus status = MatchStatus.PENDING;
+
     @Version
     @Column(name = "version")
     private Integer version;
+
+    public enum MatchStatus {
+        PENDING,
+        ACTIVE,
+        COMPLETED,
+        EXPIRED
+    }
 }

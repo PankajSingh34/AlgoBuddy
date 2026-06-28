@@ -14,4 +14,5 @@ public class MySheetRequestDto {
     @NotBlank(message = "problemId is required")
     private String problemId;
     private String note;
+    private Boolean isPublic;
 }

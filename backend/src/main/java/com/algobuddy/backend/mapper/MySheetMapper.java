@@ -14,6 +14,8 @@ public class MySheetMapper {
         return MySheetDto.builder()
                 .problemId(mySheet.getProblemId())
                 .note(mySheet.getNote())
+                .isPublic(mySheet.isPublic())
+                .sharedNotes(mySheet.isSharedNotes())
                 .addedAt(mySheet.getAddedAt())
                 .build();
     }

@@ -3,7 +3,6 @@ import { algorithmRegistry } from "@/config/algorithms";
 import { sections } from "@/lib/visualizerSections";
 import CategoryClient from "@/app/visualizer/components/CategoryClient";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
-import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 
 export async function generateStaticParams() {
@@ -63,7 +62,6 @@ export default async function DynamicRouterPage({ params }) {
           <main className="flex-1 max-w-[1100px] w-full mx-auto px-5 pt-4 pb-20">
             <CategoryClient section={section} />
           </main>
-          <BackToTop />
           <Footer />
         </div>
       );

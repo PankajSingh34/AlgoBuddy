@@ -257,7 +257,7 @@ export default function SerializationAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {(isActive || isDeserializingActive) && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#fcd34d" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {(isActive || isDeserializingActive) && <circle cx={node.x} cy={node.y} r="32" fill="none" className="stroke-yellow-300 dark:stroke-yellow-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle cx={node.x} cy={node.y} r="26" fill={fill} stroke={stroke} strokeWidth="2.5" className="shadow-sm transition-all duration-500 dark:stroke-slate-600" />
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={isActive || isDeserializingActive ? textFill : "var(--foreground)"} fontSize="14" fontWeight="bold" className="transition-all duration-500">{node.val}</text>
                 </g>
@@ -273,9 +273,9 @@ export default function SerializationAnimation() {
                         const dy = 50;
                         return (
                             <>
-                                <line x1={parentNode.x} y1={parentNode.y + 20} x2={parentNode.x + dx} y2={parentNode.y + dy} stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,4" className="animate-pulse"/>
-                                <circle cx={parentNode.x + dx} cy={parentNode.y + dy} r="15" fill="var(--background)" stroke="#f59e0b" strokeWidth="2" />
-                                <text x={parentNode.x + dx} y={parentNode.y + dy + 4} textAnchor="middle" fill="#f59e0b" fontSize="12" fontWeight="bold" fontFamily="monospace">N</text>
+                                <line x1={parentNode.x} y1={parentNode.y + 20} x2={parentNode.x + dx} y2={parentNode.y + dy} className="stroke-amber-500 dark:stroke-amber-400" strokeWidth="2" strokeDasharray="4,4" className="animate-pulse"/>
+                                <circle cx={parentNode.x + dx} cy={parentNode.y + dy} r="15" fill="var(--background)" className="stroke-amber-500 dark:stroke-amber-400" strokeWidth="2" />
+                                <text x={parentNode.x + dx} y={parentNode.y + dy + 4} textAnchor="middle" className="fill-amber-500 dark:fill-amber-400" fontSize="12" fontWeight="bold" fontFamily="monospace">N</text>
                             </>
                         )
                     })()}

@@ -25,6 +25,12 @@ public class MySheet {
     @Column(name = "note")
     private String note;
 
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
+    @Column(name = "shared_notes", nullable = false)
+    private boolean sharedNotes = false;
+
     @Column(name = "added_at", insertable = false, updatable = false)
     private OffsetDateTime addedAt;
 }

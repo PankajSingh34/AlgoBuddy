@@ -8,24 +8,33 @@ import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class ArenaServiceUnitTest {
 
     private UserArenaProfileRepository profileRepository;
     private ArenaMatchRepository matchRepository;
+    private CacheManager cacheManager;
+    private Cache cache;
     private ArenaService arenaService;
 
     @BeforeEach
     public void setUp() {
         profileRepository = mock(UserArenaProfileRepository.class);
         matchRepository = mock(ArenaMatchRepository.class);
-        arenaService = new ArenaService(profileRepository, matchRepository);
+        cacheManager = mock(CacheManager.class);
+        cache = mock(Cache.class);
+        when(cacheManager.getCache(anyString())).thenReturn(cache);
+        arenaService = new ArenaService(profileRepository, matchRepository, cacheManager);
     }
 
     @Test

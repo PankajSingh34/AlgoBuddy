@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseServerClient, getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
 import { sendEmail } from "@/lib/email";
 
 export async function PATCH(request, { params }) {
@@ -10,18 +9,27 @@ export async function PATCH(request, { params }) {
       return jsonResponse({ error: "Authentication required" }, 401);
     }
 
+    const adminClient = getSupabaseAdmin();
+
+    const { data: profile } = await adminClient
+      .from("user_profiles")
+      .select("role")
+      .eq("id", authResult.user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin") {
+      return jsonResponse({ error: "Admin access required" }, 403);
+    }
+
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const { status } = body;
 
-    if (!status || !["accepted", "rejected"].includes(status)) {
-      return jsonResponse({ error: "Status must be 'accepted' or 'rejected'" }, 400);
+    if (!status || !["accepted", "rejected", "reviewing"].includes(status)) {
+      return jsonResponse({ error: "Invalid status value" }, 400);
     }
 
-    const cookieStore = await cookies();
-    const supabase = getSupabaseServerClient(cookieStore);
-
-    const { data: application, error: fetchError } = await supabase
+    const { data: application, error: fetchError } = await adminClient
       .from("applications")
       .select("*, job:job_id(title, company)")
       .eq("id", id)
@@ -36,11 +44,10 @@ export async function PATCH(request, { params }) {
     }
 
     const oldStatus = application.status;
-    const adminClient = getSupabaseAdmin();
 
     const { error: updateError } = await adminClient
       .from("applications")
-      .update({ status })
+      .update({ status, updated_at: new Date().toISOString() })
       .eq("id", id);
 
     if (updateError) {

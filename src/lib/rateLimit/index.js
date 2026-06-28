@@ -2,24 +2,52 @@ import { Redis } from "@upstash/redis";
 import { jwtVerify } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
-const RATE_LIMIT_KEY_PREFIX = "rl:";
-const store = new Map();
+const RATE_LIMIT_KEY_PREFIX = "rl";
+const MAX_IN_MEMORY_ENTRIES = 10000;
+const MEMORY_SWEEP_INTERVAL_MS = 60000;
+const stores = []; // { store: Map, keyPrefix: string }
 
-function gc() {
-  if (Math.random() < 0.05) {
+let memorySweepTimer = null;
+function startMemorySweeper() {
+  if (memorySweepTimer) return;
+  memorySweepTimer = setInterval(() => {
     const now = Date.now();
-    for (const [key, bucket] of store.entries()) {
-      if (bucket.resetAt <= now) {
-        store.delete(key);
+    for (const entry of stores) {
+      const store = entry.store;
+      let expired = 0;
+      for (const [key, bucket] of store.entries()) {
+        if (bucket.resetAt <= now) {
+          store.delete(key);
+          expired++;
+        }
+      }
+      if (store.size > MAX_IN_MEMORY_ENTRIES) {
+        const toEvict = store.size - MAX_IN_MEMORY_ENTRIES;
+        const iter = store.keys();
+        for (let i = 0; i < toEvict; i++) {
+          const k = iter.next().value;
+          if (k !== undefined) store.delete(k);
+        }
+        console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
+      }
+      if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
+        console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
       }
     }
-  }
+  }, MEMORY_SWEEP_INTERVAL_MS);
+  if (memorySweepTimer.unref) memorySweepTimer.unref();
 }
+
+const REDIS_REQUIRED = process.env.REDIS_REQUIRED === "true";
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? Redis.fromEnv()
     : null;
+
+if (!redis && REDIS_REQUIRED) {
+  console.error("[rateLimit] REDIS_REQUIRED is set but Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are missing. Rate limiting will fail requests.");
+}
 
 let isRedisOffline = false;
 let redisOfflineUntil = 0;
@@ -28,7 +56,12 @@ const COOLDOWN_MS = 10000;
 function markRedisOffline(err) {
   if (!isRedisOffline) {
     isRedisOffline = true;
-    console.error(`[rateLimit] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`);
+    const msg = `[rateLimit] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`;
+    if (REDIS_REQUIRED) {
+      console.error(`[rateLimit] REDIS_REQUIRED=true — rate limiting will now reject requests until Redis recovers. ${msg}`);
+    } else {
+      console.error(msg);
+    }
   }
   redisOfflineUntil = Date.now() + COOLDOWN_MS;
 }
@@ -68,12 +101,15 @@ async function resolveIdentityKey(request) {
 }
 
 export function createRateLimiter(options) {
-  const { maxRequests, windowSeconds } = options;
+  const { maxRequests, windowSeconds, prefix = "" } = options;
+  const store = new Map();
+  const keyPrefix = `${RATE_LIMIT_KEY_PREFIX}:${prefix}:`;
+  stores.push({ store, keyPrefix });
 
   async function check(key) {
     const now = Date.now();
     const windowMs = windowSeconds * 1000;
-    const redisKey = `${RATE_LIMIT_KEY_PREFIX}${key}`;
+    const redisKey = `${keyPrefix}${key}`;
 
     if (shouldTryRedis()) {
       try {
@@ -105,11 +141,18 @@ export function createRateLimiter(options) {
       }
     }
 
+    if (REDIS_REQUIRED) {
+      const msg = `REDIS_REQUIRED=true and Redis is unavailable (offline=${isRedisOffline}, cooldown=${redisOfflineUntil > Date.now() ? Math.ceil((redisOfflineUntil - Date.now()) / 1000) + 's' : 'expired'}).`;
+      console.error(`[rateLimit] ${msg}`);
+      const retryAfter = 60;
+      return { allowed: false, remaining: 0, retryAfter, resetAt: Date.now() + retryAfter * 1000 };
+    }
+
     if (process.env.NODE_ENV === "production" && !redis) {
       console.warn("Critical: Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are not configured in production. Using in-memory fallback.");
     }
 
-    gc();
+    startMemorySweeper();
 
     const isOutage = redis && (isRedisOffline || Date.now() < redisOfflineUntil);
     const limit = isOutage ? Math.max(1, Math.floor(maxRequests * 0.5)) : maxRequests;
@@ -156,10 +199,10 @@ export function createRateLimiter(options) {
   return { check, checkRequest };
 }
 
-export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
-export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
-export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
-export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
+export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60, prefix: "auth" });
+export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60, prefix: "api" });
+export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "sandbox" });
+export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "chatbot" });
 
 export async function checkRateLimit(key) {
   return apiLimiter.check(key);
@@ -170,15 +213,17 @@ export async function checkChatbotRateLimit(key) {
 }
 
 export async function resetKey(key) {
-  if (shouldTryRedis()) {
-    try {
-      await redis.del(`${RATE_LIMIT_KEY_PREFIX}${key}`);
-      markRedisOnline();
-    } catch (err) {
-      markRedisOffline(err);
+  for (const entry of stores) {
+    entry.store.delete(key);
+    if (shouldTryRedis()) {
+      try {
+        await redis.del(`${entry.keyPrefix}${key}`);
+        markRedisOnline();
+      } catch (err) {
+        markRedisOffline(err);
+      }
     }
   }
-  store.delete(key);
 }
 
 export async function resetAll({ scope = "rate-limit" } = {}) {
@@ -193,7 +238,7 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
       const keysToDelete = [];
       do {
         const result = await redis.scan(cursor, {
-          match: `${RATE_LIMIT_KEY_PREFIX}*`,
+          match: `${RATE_LIMIT_KEY_PREFIX}:*`,
           count: 100,
         });
         cursor = Number(result[0]);
@@ -210,7 +255,9 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
       markRedisOffline(err);
     }
   }
-  store.clear();
+  for (const entry of stores) {
+    entry.store.clear();
+  }
 }
 
 let localSmtpCounter = 0;

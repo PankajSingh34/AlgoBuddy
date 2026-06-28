@@ -224,13 +224,13 @@ export default function HuffmanAnimation() {
                 <line 
                   x1={edge.source.x} y1={edge.source.y + 20}
                   x2={edge.target.x} y2={edge.target.y - 20}
-                  stroke="#94a3b8" strokeWidth="2"
+                  className="stroke-slate-400 dark:stroke-slate-400" strokeWidth="2"
                   className="transition-all duration-500 dark:stroke-slate-700"
                 />
                 <text 
                   x={(edge.source.x + edge.target.x) / 2} 
                   y={(edge.source.y + edge.target.y) / 2 - 5} 
-                  fill="#a435f0" fontSize="14" fontWeight="bold"
+                  className="fill-purple-600 dark:fill-purple-500" fontSize="14" fontWeight="bold"
                 >
                   {edge.label}
                 </text>
@@ -242,7 +242,7 @@ export default function HuffmanAnimation() {
               const isActive = activeIds.includes(node.id);
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isActive && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle 
                     cx={node.x} cy={node.y} r="24" 
                     fill={node.char ? "var(--background)" : "#a435f0"} 
@@ -259,7 +259,7 @@ export default function HuffmanAnimation() {
                     {node.val}
                   </text>
                   {node.char && (
-                    <text x={node.x} y={node.y + 40} textAnchor="middle" fill="#a435f0" fontSize="14" fontWeight="bold">
+                    <text x={node.x} y={node.y + 40} textAnchor="middle" className="fill-purple-600 dark:fill-purple-500" fontSize="14" fontWeight="bold">
                       {node.char}
                     </text>
                   )}

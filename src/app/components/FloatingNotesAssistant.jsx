@@ -41,23 +41,23 @@ const mdComponents = {
   code({ inline, className, children, ...props }) {
     if (inline) {
       return (
-        <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-purple-600 dark:text-purple-300 font-mono text-xs font-semibold" {...props}>
+        <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-neutral-800 text-purple-600 dark:text-purple-300 font-mono text-sm font-semibold" {...props}>
           {children}
         </code>
       );
     }
     return (
-      <pre className="overflow-x-auto p-3 rounded-xl bg-neutral-950 text-neutral-200 text-xs font-mono my-2 border border-neutral-800/80">
+      <pre className="overflow-x-auto p-3 rounded-xl bg-neutral-950 text-neutral-200 text-sm font-mono my-2 border border-neutral-800/80">
         <code>{children}</code>
       </pre>
     );
   },
-  h1: ({ children }) => <h3 className="text-sm font-extrabold text-slate-800 dark:text-white mt-2.5 mb-1">{children}</h3>,
-  h2: ({ children }) => <h3 className="text-xs font-bold text-slate-850 dark:text-neutral-200 mt-2 mb-1">{children}</h3>,
-  h3: ({ children }) => <h4 className="text-[11px] font-bold text-slate-800 dark:text-neutral-300 mt-1.5 mb-0.5">{children}</h4>,
-  p: ({ children }) => <p className="text-xs text-slate-600 dark:text-neutral-400 leading-relaxed mb-2 last:mb-0 whitespace-pre-wrap">{children}</p>,
-  ul: ({ children }) => <ul className="my-2 pl-4 list-disc space-y-1 text-xs text-slate-600 dark:text-neutral-400">{children}</ul>,
-  ol: ({ children }) => <ol className="my-2 pl-4 list-decimal space-y-1 text-xs text-slate-600 dark:text-neutral-400">{children}</ol>,
+  h1: ({ children }) => <h3 className="text-lg sm:text-xl font-extrabold text-slate-800 dark:text-white mt-2.5 mb-1">{children}</h3>,
+  h2: ({ children }) => <h3 className="text-base sm:text-lg font-bold text-slate-850 dark:text-neutral-200 mt-2 mb-1">{children}</h3>,
+  h3: ({ children }) => <h4 className="text-sm sm:text-base font-bold text-slate-800 dark:text-neutral-300 mt-1.5 mb-0.5">{children}</h4>,
+  p: ({ children }) => <p className="text-base text-slate-600 dark:text-neutral-400 leading-relaxed mb-2 last:mb-0 whitespace-pre-wrap">{children}</p>,
+  ul: ({ children }) => <ul className="my-2 pl-4 list-disc space-y-1 text-base text-slate-600 dark:text-neutral-400">{children}</ul>,
+  ol: ({ children }) => <ol className="my-2 pl-4 list-decimal space-y-1 text-base text-slate-600 dark:text-neutral-400">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed whitespace-pre-wrap">{children}</li>,
   strong: ({ children }) => <strong className="font-bold text-slate-850 dark:text-white">{children}</strong>,
   a: ({ href, children }) => (
@@ -75,7 +75,6 @@ const preprocessMarkdown = (text) => {
 
 export default function FloatingNotesAssistant() {
   const [open, setOpen] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
   const [editMode, setEditMode] = useState("write"); // 'write' or 'preview'
   const [copied, setCopied] = useState(false);
 
@@ -96,16 +95,6 @@ export default function FloatingNotesAssistant() {
     updateNote,
     deleteNote
   } = useNotesManager();
-
-  // Scroll detection to adjust positioning dynamically
-  useEffect(() => {
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > 300);
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Format Helper for markdown tags
   const insertFormatting = (prefix, suffix = "") => {
@@ -160,9 +149,7 @@ export default function FloatingNotesAssistant() {
     window.dispatchEvent(event);
   };
 
-  const buttonPosition = hasScrolled
-    ? "bottom-36 right-3 sm:bottom-44 sm:right-6"
-    : "bottom-20 right-3 sm:bottom-24 sm:right-6";
+  const buttonPosition = "bottom-[152px] right-3 sm:right-6";
 
   const panelPosition = "bottom-[80px] right-4 left-4 sm:bottom-[92px] sm:right-[88px] sm:left-auto";
 
@@ -330,8 +317,8 @@ export default function FloatingNotesAssistant() {
                         onClick={() => setEditMode("write")}
                         className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
                           editMode === "write"
-                            ? "bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-white"
-                            : "text-slate-400 hover:text-slate-650"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-slate-400 hover:text-slate-650 dark:text-neutral-500 dark:hover:text-neutral-300"
                         }`}
                       >
                         Write
@@ -340,8 +327,8 @@ export default function FloatingNotesAssistant() {
                         onClick={() => setEditMode("preview")}
                         className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
                           editMode === "preview"
-                            ? "bg-slate-100 dark:bg-neutral-800 text-slate-800 dark:text-white"
-                            : "text-slate-400 hover:text-slate-650"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-slate-400 hover:text-slate-650 dark:text-neutral-500 dark:hover:text-neutral-300"
                         }`}
                       >
                         Preview
@@ -391,10 +378,10 @@ export default function FloatingNotesAssistant() {
                         value={activeNote.content}
                         onChange={(e) => updateNote(activeNote.id, { content: e.target.value })}
                         placeholder="Write note contents... (Supports Markdown)"
-                        className="w-full h-full p-3 rounded-xl border border-slate-100 dark:border-neutral-800/80 bg-slate-50/20 dark:bg-neutral-900/30 text-xs sm:text-sm resize-none outline-none focus:border-primary/45 transition dark:text-neutral-200"
+                        className="w-full h-full p-3 rounded-xl border border-slate-100 dark:border-neutral-800/80 bg-slate-50/20 dark:bg-neutral-900/30 text-base leading-relaxed resize-none outline-none focus:border-primary/45 transition dark:text-neutral-200"
                       />
                     ) : (
-                      <div className="w-full h-full p-4 rounded-xl border border-slate-50 dark:border-neutral-800 bg-slate-50/20 dark:bg-neutral-950/10 overflow-y-auto text-left leading-relaxed text-xs">
+                      <div className="w-full h-full p-4 rounded-xl border border-slate-50 dark:border-neutral-800 bg-slate-50/20 dark:bg-neutral-950/10 overflow-y-auto text-left leading-relaxed text-base">
                         {activeNote.content.trim() ? (
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                             {preprocessMarkdown(activeNote.content)}

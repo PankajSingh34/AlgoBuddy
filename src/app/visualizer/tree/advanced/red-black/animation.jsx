@@ -236,13 +236,13 @@ export default function RedBlackAnimation() {
                 <g key={node.id} className="transition-all duration-300">
                   {style.glow && <circle cx={node.x} cy={node.y} r="28" fill="none" stroke={style.stroke} strokeWidth="1.5" strokeDasharray="4,2" className="opacity-60 animate-pulse" />}
                   <circle cx={node.x} cy={node.y} r="20" fill={style.fill} stroke={style.stroke} strokeWidth="2.5" className="transition-all duration-300 shadow-xl" />
-                  <text x={node.x} y={node.y + 4.5} textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="bold">{node.value}</text>
+                  <text x={node.x} y={node.y + 4.5} textAnchor="middle" className="fill-white dark:fill-slate-800" fontSize="11" fontWeight="bold">{node.value}</text>
                   <text x={node.x} y={node.y - 26} textAnchor="middle" fill={node.color === "RED" ? "#f87171" : "#64748b"} fontSize="7.5" fontWeight="bold">{node.color}</text>
                 </g>
               );
             })}
             {nodes.length === 0 && (
-              <text x="400" y="180" textAnchor="middle" fill="#475569" fontSize="14">Insert a value to start the Red-Black Tree visualization</text>
+              <text x="400" y="180" textAnchor="middle" className="fill-slate-600 dark:fill-slate-400" fontSize="14">Insert a value to start the Red-Black Tree visualization</text>
             )}
           </svg>
         </div>

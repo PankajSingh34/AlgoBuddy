@@ -22,7 +22,7 @@ export default function ClientVisualizer() {
         moduleCard={
           <ModuleCard
             moduleId={MODULE_MAPS.astar}
-            description="Mark A* Search as done and view it on your dashboard"
+            description="Mark A* Search as done and view it in your progress"
             initialDone={false}
           />
         }

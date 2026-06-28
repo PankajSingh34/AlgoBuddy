@@ -58,7 +58,62 @@ const LinearSearchQuiz = () => {
       ],
       correctAnswer: 3,
       explanation: "When the target isn't found, linear search typically returns a special value (like -1 or 'not found') to indicate this."
-    }
+    },
+    {
+  question: "Can linear search be used on an unsorted array?",
+  options: [
+    "Yes",
+    "No",
+    "Only if the array has unique elements",
+    "Only for integer arrays"
+  ],
+  correctAnswer: 0,
+  explanation: "Linear search works on both sorted and unsorted arrays because it checks each element sequentially."
+},
+{
+  question: "Which of the following is an advantage of linear search?",
+  options: [
+    "Requires the array to be sorted",
+    "Simple to implement and works on unsorted data",
+    "Always runs in O(log n)",
+    "Uses recursion by default"
+  ],
+  correctAnswer: 1,
+  explanation: "Linear search is easy to implement and does not require the data to be sorted."
+},
+{
+  question: "What is the average time complexity of linear search?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n log n)"
+  ],
+  correctAnswer: 2,
+  explanation: "On average, linear search checks about half of the elements before finding the target, giving O(n) complexity."
+},
+{
+  question: "If an array contains duplicate values, what happens during a standard linear search?",
+  options: [
+    "It returns the last occurrence",
+    "It returns the first matching occurrence",
+    "It returns all occurrences automatically",
+    "It throws an error"
+  ],
+  correctAnswer: 1,
+  explanation: "A standard linear search stops as soon as it finds the first matching element."
+},
+{
+  question: "Which scenario is most suitable for using linear search?",
+  options: [
+    "A very large sorted dataset",
+    "A small or unsorted dataset",
+    "A balanced binary search tree",
+    "A hash table"
+  ],
+  correctAnswer: 1,
+  explanation: "Linear search is ideal for small datasets or when the data is unsorted and sorting isn't worthwhile."
+}
   ];
 
   return <QuizEngine title="Linear Search Quiz Challenge" questions={questions} />;
