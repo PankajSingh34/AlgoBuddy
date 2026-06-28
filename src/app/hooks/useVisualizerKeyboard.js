@@ -64,6 +64,7 @@ export default function useVisualizerKeyboard({
         case "R":
           if (!sorting) {
             onReset?.();
+            window.dispatchEvent(new CustomEvent("visualizer:reset-input"));
           }
           break;
 

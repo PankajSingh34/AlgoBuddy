@@ -1,7 +1,11 @@
 import React from 'react';
 
 const ResetButton = ({ onReset, onClick, isAnimating, disabled }) => {
-  const handleClick = onReset || onClick;
+  const handleClick = (e) => {
+    if (onReset) onReset(e);
+    if (onClick) onClick(e);
+    window.dispatchEvent(new CustomEvent("visualizer:reset-input"));
+  };
   return (
     <button
       type="button"

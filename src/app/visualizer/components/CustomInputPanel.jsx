@@ -57,18 +57,17 @@ export function CustomInputPanel({ inputType, onApply, currentData }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const parser = INPUT_PARSERS[inputType] || INPUT_PARSERS.array;
+
   useEffect(() => {
     const handleGlobalReset = () => {
       setValue("");
       setError("");
       setSuccess(false);
-      onApply(null);
     };
-    window.addEventListener("visualizer-reset", handleGlobalReset);
-    return () => window.removeEventListener("visualizer-reset", handleGlobalReset);
-  }, [onApply]);
-
-  const parser = INPUT_PARSERS[inputType] || INPUT_PARSERS.array;
+    window.addEventListener("visualizer:reset-input", handleGlobalReset);
+    return () => window.removeEventListener("visualizer:reset-input", handleGlobalReset);
+  }, []);
 
   function handleApply() {
     try {
