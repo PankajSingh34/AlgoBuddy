@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
+import { supabase } from "@/lib/supabase";
 import { practiceData } from "@/lib/practiceData";
 
 // Mock live battles feed is removed, we use liveMatches
@@ -116,22 +117,53 @@ export default function ArenaPage() {
 
   // Live Matches polling
   const [liveMatches, setLiveMatches] = useState([]);
+  const [liveMatchesState, setLiveMatchesState] = useState("loading");
 
   useEffect(() => {
     let timeoutId;
+    let cancelled = false;
     let isOffline = false;
 
     const fetchLiveMatches = async () => {
+      let delay = 5000;
+
       try {
+        if (loading) {
+          delay = 5000;
+          return;
+        }
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) {
+          setLiveMatches([]);
+          setLiveMatchesState("auth");
+          delay = 60000;
+          return;
+        }
+
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
           (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
             ? `http://${window.location.hostname}:4000`
             : "https://algobuddy-socket-server.onrender.com");
           
-        const res = await fetch(`${socketUrl}/api/matches/active`);
+        const res = await fetch(`${socketUrl}/api/matches/active`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          setLiveMatches([]);
+          setLiveMatchesState("auth");
+          delay = 60000;
+          return;
+        }
+
         if (res.ok) {
           const data = await res.json();
           setLiveMatches(data.matches || []);
+          setLiveMatchesState("ready");
           if (isOffline) {
             isOffline = false;
             console.log("Live matches server is back online.");
@@ -142,18 +174,24 @@ export default function ArenaPage() {
       } catch (err) {
         if (!isOffline) {
           isOffline = true;
+          setLiveMatchesState("offline");
           console.warn("Live matches server is offline. Real-time updates disabled. Retrying less frequently.");
         }
+        delay = 60000;
       } finally {
-        // Schedule next poll: 5 seconds if online, 60 seconds if offline
-        const delay = isOffline ? 60000 : 5000;
-        timeoutId = setTimeout(fetchLiveMatches, delay);
+        if (!cancelled) {
+          // Schedule next poll: 5 seconds if online, 60 seconds if offline
+          timeoutId = setTimeout(fetchLiveMatches, delay);
+        }
       }
     };
 
     fetchLiveMatches();
-    return () => clearTimeout(timeoutId);
-  }, []);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [loading, user]);
 
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
@@ -599,7 +637,13 @@ export default function ArenaPage() {
                         </button>
                       </div>
                     )}) : (
-                      <div className="text-center text-xs text-slate-500">No active battles right now.</div>
+                      <div className="text-center text-xs text-slate-500">
+                        {liveMatchesState === "auth"
+                          ? "Sign in to view live battles."
+                          : liveMatchesState === "offline"
+                            ? "Live battles are temporarily unavailable."
+                            : "No active battles right now."}
+                      </div>
                     )}
                   </div>
                 )}

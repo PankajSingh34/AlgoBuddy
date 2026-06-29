@@ -309,6 +309,15 @@ function verifyAuthToken(token) {
   });
 }
 
+async function getAuthenticatedHttpUserId(req) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+
+  const payload = await verifyAuthToken(token);
+  return payload ? (payload.sub || payload.id || null) : null;
+}
+
 // Connection rate limiting to prevent JWT brute-forcing
 const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
@@ -815,6 +824,7 @@ async function getRedisAggregateStats() {
 
 // Rate limiter for debug endpoint to prevent brute-force discovery of debug key
 const debugRequestCounts = new BoundedMap(10000);
+const activeMatchesRequestCounts = new BoundedMap(10000);
 
 function isDebugRateLimited(ip) {
   const now = Date.now();
@@ -923,23 +933,60 @@ async function scanRedisKeys(pattern) {
 
 app.get("/api/matches/active", async (req, res) => {
   try {
+    const authenticatedUserId = await getAuthenticatedHttpUserId(req);
+    if (!authenticatedUserId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const clientIp = req.ip || req.connection.remoteAddress || "unknown";
+    if (isActiveMatchesRateLimited(clientIp)) {
+      return res.status(429).json({ error: "Too many requests" });
+    }
+
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
     for (const key of matchKeys) {
       if (key.endsWith(":completed")) continue;
       const matchStr = await redisClient.get(key);
-      if (matchStr) {
-        const match = JSON.parse(matchStr);
-        if (match.status === "in-progress") {
-          activeMatches.push(match);
-        }
-      }
+      if (!matchStr) continue;
+
+      const match = JSON.parse(matchStr);
+      if (match.status !== "in-progress") continue;
+
+      activeMatches.push({
+        matchId: match.matchId,
+        topic: match.topic,
+        difficulty: match.difficulty,
+        status: match.status,
+        players: Array.isArray(match.players)
+          ? match.players.map((player) => ({
+              userId: player.userId,
+              name: player.name,
+              rating: player.rating ?? null,
+              level: player.level ?? null,
+            }))
+          : [],
+      });
     }
+
     res.json({ matches: activeMatches });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+function isActiveMatchesRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60000;
+  const maxRequests = 10;
+  const entry = activeMatchesRequestCounts.get(ip);
+  if (!entry || now > entry.resetTime) {
+    activeMatchesRequestCounts.set(ip, { count: 1, resetTime: now + windowMs });
+    return false;
+  }
+  entry.count++;
+  return entry.count > maxRequests;
+}
 
 server.listen(PORT, () => {
   console.log(`Arena Socket Server running on port ${PORT}`);
