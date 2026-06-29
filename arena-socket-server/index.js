@@ -309,6 +309,14 @@ function verifyAuthToken(token) {
   });
 }
 
+async function getAuthenticatedHttpUserId(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  const payload = await verifyAuthToken(token);
+  return payload ? (payload.sub || payload.id || null) : null;
+}
+
 // Connection rate limiting to prevent JWT brute-forcing
 const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
@@ -863,6 +871,14 @@ app.get("/debug", async (req, res) => {
 app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const authenticatedUserId = await getAuthenticatedHttpUserId(req);
+    if (!authenticatedUserId) {
+      return res.status(401).json({ verified: false, error: "Authentication required" });
+    }
+    if (authenticatedUserId !== userId) {
+      return res.status(403).json({ verified: false, error: "Forbidden" });
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
@@ -888,6 +904,14 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
 app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const authenticatedUserId = await getAuthenticatedHttpUserId(req);
+    if (!authenticatedUserId) {
+      return res.status(401).json({ verified: false, winnerId: null, error: "Authentication required" });
+    }
+    if (authenticatedUserId !== userId) {
+      return res.status(403).json({ verified: false, winnerId: null, error: "Forbidden" });
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
