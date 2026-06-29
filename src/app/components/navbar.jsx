@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 import { supabase } from "@/lib/supabase";
 import {
   Search,
@@ -176,17 +177,23 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("algobuddy_practice_progress");
-      localStorage.removeItem("algobuddy_current_streak");
-      localStorage.removeItem("algobuddy_best_streak");
-      localStorage.removeItem("algobuddy_last_active_date");
-      localStorage.removeItem("PROBLEM_BOOKMARKS");
+    try {
+      await api.request("/api/v1/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.warn("Failed to revoke the backend session during logout", error);
+    } finally {
+      await supabase.auth.signOut();
+      setUser(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("algobuddy_practice_progress");
+        localStorage.removeItem("algobuddy_current_streak");
+        localStorage.removeItem("algobuddy_best_streak");
+        localStorage.removeItem("algobuddy_last_active_date");
+        localStorage.removeItem("PROBLEM_BOOKMARKS");
+      }
+      setMenuOpen(false);
+      window.location.href = "/";
     }
-    setMenuOpen(false);
-    window.location.href = "/";
   };
 
   const isActive = (href) => {
