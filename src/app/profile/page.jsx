@@ -170,6 +170,7 @@ export default function ProfilePage() {
   const [fetchingProfile, setFetchingProfile] = useState({});
   const [importingRepos, setImportingRepos] = useState(false);
   const [githubRepos, setGithubRepos] = useState([]);
+  const [dbBadges, setDbBadges] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     branch: "",
@@ -200,6 +201,36 @@ export default function ProfilePage() {
     }
 
     if (user) {
+      const fetchBadges = async () => {
+        try {
+          const res = await fetch('/api/badges');
+          if (res.ok) {
+            const data = await res.json();
+            const fetchedBadges = data.badges || [];
+            
+            const prevEarnedStr = localStorage.getItem('earnedBadges');
+            const prevEarned = prevEarnedStr ? JSON.parse(prevEarnedStr) : [];
+            const newlyEarned = fetchedBadges.filter(b => b.earned && !prevEarned.includes(b.id));
+            
+            if (newlyEarned.length > 0) {
+              newlyEarned.forEach(b => {
+                toast.success(`New Badge Unlocked: ${b.name} 🎉`, { icon: '🏅' });
+              });
+              const currentEarned = fetchedBadges.filter(b => b.earned).map(b => b.id);
+              localStorage.setItem('earnedBadges', JSON.stringify(currentEarned));
+            } else if (!prevEarnedStr) {
+              const currentEarned = fetchedBadges.filter(b => b.earned).map(b => b.id);
+              localStorage.setItem('earnedBadges', JSON.stringify(currentEarned));
+            }
+            
+            setDbBadges(fetchedBadges);
+          }
+        } catch (err) {
+          console.error("Failed to fetch badges", err);
+        }
+      };
+      fetchBadges();
+
       const meta = user.user_metadata || {};
       setFormData({
         name: meta.name || "",
@@ -331,7 +362,9 @@ export default function ProfilePage() {
     arenaProfile?.battlesWon ??
     matchHistory.filter((match) => match.result === "Victory").length;
   const arenaRating = arenaProfile?.rating || 0;
-  const totalBadges = unlockedBadges.filter(([, unlocked]) => unlocked).length;
+  const totalBadges = dbBadges.length > 0 
+    ? dbBadges.filter(b => b.earned).length 
+    : unlockedBadges.filter(([, unlocked]) => unlocked).length;
   const activeProjects = Array.isArray(user?.user_metadata?.projects)
     ? user.user_metadata.projects.length
     : 0;
@@ -379,7 +412,7 @@ export default function ProfilePage() {
       icon: Award,
       value: formatNumber(totalBadges),
       label: "Badges",
-      note: `${unlockedBadges.length} available`,
+      note: dbBadges.length > 0 ? `${dbBadges.length} available` : `${unlockedBadges.length} available`,
       color: "text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
     },
   ];
@@ -864,19 +897,42 @@ export default function ProfilePage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-black">Top Badges</h2>
+                <h2 className="text-sm font-black">My Badges</h2>
               </div>
-              <div className="mt-4 flex min-h-[110px] items-center justify-center rounded-xl border border-dashed border-violet-200 bg-violet-50/60 text-center dark:border-violet-900/60 dark:bg-violet-950/20">
-              <div>
-                <Award className="mx-auto h-7 w-7 text-violet-600 dark:text-violet-300" />
-                <p className="mt-2 text-sm font-black text-violet-700 dark:text-violet-200">
-                  Coming Soon
-                </p>
-                <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                  Badges will appear here after achievements are live.
-                </p>
+              <div className="mt-4">
+                {dbBadges.length === 0 ? (
+                  <div className="flex min-h-[110px] items-center justify-center rounded-xl border border-dashed border-violet-200 bg-violet-50/60 text-center dark:border-violet-900/60 dark:bg-violet-950/20">
+                    <div>
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-400 border-t-transparent mx-auto"></div>
+                      <p className="mt-2 text-sm font-black text-violet-700 dark:text-violet-200">
+                        Loading Badges...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {dbBadges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className={`flex flex-col items-center justify-center rounded-xl border p-3 text-center transition-all ${
+                          badge.earned
+                            ? "border-violet-200 bg-violet-50 shadow-sm dark:border-violet-900/50 dark:bg-violet-950/30"
+                            : "border-slate-100 bg-slate-50/50 grayscale dark:border-neutral-800 dark:bg-neutral-900/50"
+                        }`}
+                      >
+                        <img
+                          src={badge.icon_url}
+                          alt={badge.name}
+                          className={`h-10 w-10 ${!badge.earned && "opacity-40"}`}
+                        />
+                        <p className={`mt-2 text-xs font-black ${badge.earned ? "text-violet-900 dark:text-violet-100" : "text-slate-500 dark:text-neutral-400"}`}>
+                          {badge.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
             </div>
           </div>
         </section>
