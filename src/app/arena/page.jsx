@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useUser } from "@/features/user/UserContext";
+import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
@@ -120,11 +121,24 @@ export default function ArenaPage() {
         const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
           ? `http://${window.location.hostname}:4000`
           : "https://algobuddy-socket-server.onrender.com";
-          
-        const res = await fetch(`${socketUrl}/api/matches/active`);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+        if (!accessToken) {
+          setLiveMatches([]);
+          return;
+        }
+
+        const res = await fetch(`${socketUrl}/api/matches/active`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           setLiveMatches(data.matches || []);
+        } else if (res.status === 401) {
+          setLiveMatches([]);
         }
       } catch (err) {
         console.error("Failed to fetch live matches:", err);
