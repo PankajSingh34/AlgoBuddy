@@ -838,8 +838,8 @@ app.get("/debug", async (req, res) => {
 
     const debugKey = process.env.DEBUG_KEY;
     const providedKey = req.headers['x-debug-key'];
-    if (debugKey && providedKey !== debugKey) {
-      return res.status(403).json({ error: "Forbidden" });
+    if (!debugKey || providedKey !== debugKey) {
+      return res.status(404).json({ error: "Not found" });
     }
 
     const clientIp = req.ip || req.connection.remoteAddress;
