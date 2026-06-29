@@ -9,7 +9,7 @@ import {
   FaEnvelope,
   FaDiscord,
   FaYoutube,
-  FaTwitter,
+  FaXTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
 
@@ -284,7 +284,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-surface-500 dark:text-gray-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-300 text-sm"
                 >
-                  <FaTwitter className="w-4 h-4" /> Twitter
+                  <FaXTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
             </div>
