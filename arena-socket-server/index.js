@@ -39,6 +39,11 @@ class BoundedMap {
 }
 
 const app = express();
+
+// Determine if the server is running in development mode.
+// LAN and loopback wildcard origins are only permitted in development.
+const isDev = (process.env.NODE_ENV || "development") !== "production";
+
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -46,6 +51,13 @@ const ALLOWED_ORIGINS = [
   "https://www.algobuddy.me",
   "https://algobuddy.me"
 ];
+
+// Support an optional comma-separated list of additional allowed origins
+// for staging or other explicitly configured environments.
+const EXTRA_ORIGINS = (process.env.SOCKET_EXTRA_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 function isAllowedVercelOrigin(origin) {
   try {
@@ -61,13 +73,17 @@ function isAllowedVercelOrigin(origin) {
 function isOriginAllowed(origin, callback) {
   // Allow requests with no origin (Render health checks, server-to-server)
   if (!origin) return callback(null, true);
-  
+
   if (
-    ALLOWED_ORIGINS.includes(origin) || 
+    ALLOWED_ORIGINS.includes(origin) ||
+    EXTRA_ORIGINS.includes(origin) ||
     isAllowedVercelOrigin(origin) ||
-    origin.startsWith("http://localhost:") ||
-    origin.startsWith("http://127.0.0.1:") ||
-    origin.startsWith("http://192.168.")
+    // Wildcard loopback and LAN origins are only safe in local development.
+    (isDev && (
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:") ||
+      origin.startsWith("http://192.168.")
+    ))
   ) {
     callback(null, true);
   } else {
