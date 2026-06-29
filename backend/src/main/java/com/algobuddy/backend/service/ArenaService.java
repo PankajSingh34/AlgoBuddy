@@ -21,6 +21,10 @@ import org.springframework.cache.annotation.Cacheable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -74,9 +78,18 @@ public class ArenaService {
     @Transactional(readOnly = true)
     public List<ArenaMatchResponse> getMatchHistory(UUID userId) {
         List<ArenaMatch> recentMatches = matchRepository.findRecentMatchesByUserId(userId, PageRequest.of(0, 5));
-        
+        Set<UUID> opponentIds = recentMatches.stream()
+                .map(match -> match.getPlayer1Id().equals(userId) ? match.getPlayer2Id() : match.getPlayer1Id())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Map<UUID, String> opponentNames = new LinkedHashMap<>();
+        if (!opponentIds.isEmpty()) {
+            profileRepository.findProfilesWithUserDetailsByUserIdIn(opponentIds).forEach(projection ->
+                    opponentNames.put(projection.getUserId(), projection.getName()));
+        }
+
         return recentMatches.stream()
-                .map(match -> mapToMatchResponse(match, userId))
+                .map(match -> mapToMatchResponse(match, userId, opponentNames))
                 .collect(Collectors.toList());
     }
 
@@ -113,14 +126,14 @@ public class ArenaService {
                 .build();
     }
 
-    private ArenaMatchResponse mapToMatchResponse(ArenaMatch match, UUID requestingUserId) {
+    private ArenaMatchResponse mapToMatchResponse(ArenaMatch match, UUID requestingUserId, Map<UUID, String> opponentNames) {
         boolean isPlayer1 = match.getPlayer1Id().equals(requestingUserId);
         UUID opponentId = isPlayer1 ? match.getPlayer2Id() : match.getPlayer1Id();
-        
-        // Fetch opponent name from db if present, default to "User [id]"
-        String opponentName = profileRepository.findProfileWithUserDetails(opponentId)
-                .map(ArenaLeaderboardProjection::getName)
-                .orElse("User " + opponentId.toString().substring(0, 4));
+
+        String opponentName = opponentNames.getOrDefault(
+                opponentId,
+                "User " + opponentId.toString().substring(0, 4)
+        );
         
         String result = "In Progress";
         if (match.getWinnerId() != null) {
