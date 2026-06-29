@@ -309,6 +309,19 @@ function verifyAuthToken(token) {
   });
 }
 
+// Express middleware: require a valid Supabase JWT in the Authorization header.
+// On success, attaches the decoded payload to req.auth.
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"] || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const payload = await verifyAuthToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  req.auth = payload;
+  next();
+}
+
 // Connection rate limiting to prevent JWT brute-forcing
 const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
@@ -921,8 +934,29 @@ async function scanRedisKeys(pattern) {
   return keys;
 }
 
-app.get("/api/matches/active", async (req, res) => {
+// Rate limiter for active-matches endpoint to prevent expensive Redis scan abuse
+const activeMatchesRequestCounts = new BoundedMap(10000);
+
+function isActiveMatchesRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60000;
+  const maxRequests = 10;
+  const entry = activeMatchesRequestCounts.get(ip);
+  if (!entry || now > entry.resetTime) {
+    activeMatchesRequestCounts.set(ip, { count: 1, resetTime: now + windowMs });
+    return false;
+  }
+  entry.count++;
+  return entry.count > maxRequests;
+}
+
+app.get("/api/matches/active", requireAuth, async (req, res) => {
   try {
+    const clientIp = req.ip || req.connection.remoteAddress;
+    if (isActiveMatchesRateLimited(clientIp)) {
+      return res.status(429).json({ error: "Too many requests" });
+    }
+
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
     for (const key of matchKeys) {
@@ -931,7 +965,14 @@ app.get("/api/matches/active", async (req, res) => {
       if (matchStr) {
         const match = JSON.parse(matchStr);
         if (match.status === "in-progress") {
-          activeMatches.push(match);
+          // Return only spectator-safe public metadata — omit socketId from players
+          activeMatches.push({
+            matchId: match.matchId,
+            topic: match.topic,
+            difficulty: match.difficulty,
+            status: match.status,
+            players: (match.players || []).map(({ userId, name }) => ({ userId, name })),
+          });
         }
       }
     }
