@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { api } from "@/lib/apiClient";
 
 function springBootBase() {
   if (process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL) {
@@ -36,34 +36,19 @@ export function useArenaProfile(user) {
       }
       try {
         setLoadingProfile(true);
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-
-        if (!token) {
-          throw new Error("No access token found");
-        }
-
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        };
-
-        const res = await fetch(`${springBootBase()}/api/v1/arena/profile`, { headers });
-        if (!res.ok) {
-          throw new Error(`Error fetching profile: ${res.statusText}`);
-        }
-        
-        const data = await res.json();
+        const data = await api.request("/api/v1/arena/profile", {
+          baseUrl: springBootBase(),
+        });
         setProfile(data);
 
         // Fetch match history
         try {
           setLoadingHistory(true);
-          const historyRes = await fetch(`${springBootBase()}/api/v1/arena/history`, { headers });
-          if (historyRes.ok) {
-            const historyData = await historyRes.json();
-            setMatchHistory(historyData);
-          }
+          const historyData = await api.request("/api/v1/arena/history", {
+            baseUrl: springBootBase(),
+            silent: true,
+          });
+          setMatchHistory(historyData);
         } catch (historyErr) {
           console.warn("Failed to fetch match history:", historyErr.message);
         } finally {
@@ -72,11 +57,11 @@ export function useArenaProfile(user) {
 
         // Fetch daily challenge
         try {
-          const dailyRes = await fetch(`${springBootBase()}/api/v1/arena/daily-challenge`, { headers });
-          if (dailyRes.ok) {
-            const dailyData = await dailyRes.json();
-            setDailyChallenge(dailyData);
-          }
+          const dailyData = await api.request("/api/v1/arena/daily-challenge", {
+            baseUrl: springBootBase(),
+            silent: true,
+          });
+          setDailyChallenge(dailyData);
         } catch (dailyErr) {
           console.warn("Failed to fetch daily challenge:", dailyErr.message);
         }
@@ -96,22 +81,10 @@ export function useArenaProfile(user) {
     async function fetchLeaderboard() {
       try {
         setLoadingLeaderboard(true);
-        // Leaderboard might be public, but let's send token if we have it
-        const headers = {
-          "Content-Type": "application/json",
-        };
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const res = await fetch(`${springBootBase()}/api/v1/arena/leaderboard`, { headers });
-        if (!res.ok) {
-          throw new Error(`Error fetching leaderboard: ${res.statusText}`);
-        }
-        
-        const data = await res.json();
+        const data = await api.request("/api/v1/arena/leaderboard", {
+          baseUrl: springBootBase(),
+          silent: true,
+        });
         setLeaderboard(data);
       } catch (err) {
         console.warn("Failed to fetch leaderboard:", err.message);

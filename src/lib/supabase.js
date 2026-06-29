@@ -62,6 +62,7 @@ function createMissingAuthClient() {
   return {
     getUser: async () => ({ data: { user: null }, error: new Error(SUPABASE_ENV_ERROR) }),
     getSession: async () => ({ data: { session: null }, error: new Error(SUPABASE_ENV_ERROR) }),
+    refreshSession: async () => ({ data: { session: null }, error: new Error(SUPABASE_ENV_ERROR) }),
     signOut: missing,
     signInWithOAuth: missing,
     signInWithPassword: missing,

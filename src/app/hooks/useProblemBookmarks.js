@@ -3,40 +3,23 @@ import { useState, useEffect, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { persistence } from "@/lib/persistence";
+import { api } from "@/lib/apiClient";
 
-import { supabase } from "@/lib/supabase";
+function isSpringBoot() {
+  return process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
+}
 
-async function apiFetch(url, options = {}) {
-  let finalUrl = url;
-  const headers = { "Content-Type": "application/json", ...options.headers };
+function springBootBase() {
+  return process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
+}
 
-  if (process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true") {
-    const baseUrl = process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
-    finalUrl = baseUrl + url.replace("/api/bookmarks", "/api/v1/bookmarks");
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-    }
-  }
-
-  const response = await fetch(finalUrl, {
+async function bookmarkApiRequest(url, options = {}) {
+  const baseUrl = isSpringBoot() ? springBootBase() : "";
+  const normalizedUrl = isSpringBoot() ? url.replace("/api/bookmarks", "/api/v1/bookmarks") : url;
+  return api.request(normalizedUrl, {
     ...options,
-    headers,
+    baseUrl,
   });
-  
-  // Spring Boot POST/DELETE returns empty body
-  if (response.status === 200 && response.headers.get("content-length") === "0") {
-    return {};
-  }
-  
-  const text = await response.text();
-  let data = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch (e) {}
-
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
 }
 
 export function useProblemBookmarks() {
@@ -62,7 +45,7 @@ export function useProblemBookmarks() {
 
       if (user) {
         try {
-          const data = await apiFetch("/api/bookmarks");
+          const data = await bookmarkApiRequest("/api/bookmarks");
           const dbBookmarks = (data || []).map((row) => ({
             id: row.problem_id || row.problemId,
             topicSlug: row.topic_slug || row.topicSlug,
@@ -75,9 +58,9 @@ export function useProblemBookmarks() {
           const localOnly = localBookmarks.filter((b) => !dbIds.has(b.id));
           for (const b of localOnly) {
             try {
-              await apiFetch("/api/bookmarks", {
+              await bookmarkApiRequest("/api/bookmarks", {
                 method: "POST",
-                body: JSON.stringify({ problemId: b.id, topicSlug: b.topicSlug }),
+                body: { problemId: b.id, topicSlug: b.topicSlug },
               });
             } catch (_) {}
           }
@@ -109,7 +92,7 @@ export function useProblemBookmarks() {
 
       if (user) {
         try {
-          await apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" });
+          await bookmarkApiRequest(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" });
           toast.success("Bookmark removed.");
         } catch (e) {
           console.error("Failed to delete bookmark:", e);
@@ -125,9 +108,9 @@ export function useProblemBookmarks() {
 
       if (user) {
         try {
-          await apiFetch("/api/bookmarks", {
+          await bookmarkApiRequest("/api/bookmarks", {
             method: "POST",
-            body: JSON.stringify({ problemId, topicSlug }),
+            body: { problemId, topicSlug },
           });
           toast.success("Problem bookmarked successfully!");
         } catch (e) {
