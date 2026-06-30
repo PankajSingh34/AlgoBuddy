@@ -14,11 +14,20 @@ const TRUSTED_ORIGINS = (() => {
   return origins;
 })();
 
+function normalizeOrigin(value) {
+  if (!value) return "";
+  try {
+    return new URL(value).origin;
+  } catch {
+    return String(value).replace(/\/+$/, "");
+  }
+}
+
 export function validateCsrfOrigin(request) {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
   const source = origin || referer || "";
-  const normalized = source.replace(/\/+$/, "");
+  const normalized = normalizeOrigin(source);
   return TRUSTED_ORIGINS.has(normalized);
 }
 
