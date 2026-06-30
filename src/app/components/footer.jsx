@@ -186,7 +186,7 @@ const Footer = () => {
                   Home
                 </Link>
                 <Link href="/visualizer" className={footerLink}>
-                  Visualizations
+                  Visualizer
                 </Link>
                 {/* <Link href="/data-structures" className={footerLink}>
                   Data Structures
