@@ -88,7 +88,7 @@ const CookieConsent = () => {
               traffic, and serve personalized content. By clicking "Accept All",
               you consent to our use of cookies. Read our{" "}
               <a
-                href="/cookie-policy"
+                href="/cookie"
                 target="_blank"
                 rel="noopener noreferrer"
               >
