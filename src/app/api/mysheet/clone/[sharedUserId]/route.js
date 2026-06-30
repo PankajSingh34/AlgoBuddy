@@ -1,5 +1,6 @@
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAnonClient, getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSharedNote } from "@/lib/mySheetSharedNotes";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,7 +25,7 @@ export async function POST(request, { params }) {
     // Fetch shared user's public sheet items (no auth needed — RLS allows public reads)
     const { data: sharedData, error: fetchError } = await anon
       .from("my_sheet")
-      .select("problem_id, note")
+      .select("problem_id, note, shared_notes")
       .eq("user_id", sharedUserId)
       .eq("is_public", true);
 
@@ -51,7 +52,7 @@ export async function POST(request, { params }) {
       .map(item => ({
         user_id: authResult.user.id,
         problem_id: item.problem_id,
-        note: item.note || "",
+        note: getSharedNote(item),
         added_at: new Date().toISOString()
       }));
 
