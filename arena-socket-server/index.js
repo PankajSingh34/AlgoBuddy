@@ -39,6 +39,11 @@ class BoundedMap {
 }
 
 const app = express();
+const isDev = process.env.NODE_ENV !== "production";
+const extraSocketOrigins = (process.env.SOCKET_EXTRA_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -61,13 +66,16 @@ function isAllowedVercelOrigin(origin) {
 function isOriginAllowed(origin, callback) {
   // Allow requests with no origin (Render health checks, server-to-server)
   if (!origin) return callback(null, true);
-  
+
   if (
-    ALLOWED_ORIGINS.includes(origin) || 
+    ALLOWED_ORIGINS.includes(origin) ||
     isAllowedVercelOrigin(origin) ||
-    origin.startsWith("http://localhost:") ||
-    origin.startsWith("http://127.0.0.1:") ||
-    origin.startsWith("http://192.168.")
+    extraSocketOrigins.includes(origin) ||
+    (isDev && (
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:") ||
+      origin.startsWith("http://192.168.")
+    ))
   ) {
     callback(null, true);
   } else {
