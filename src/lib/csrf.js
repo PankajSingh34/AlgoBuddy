@@ -17,9 +17,14 @@ const TRUSTED_ORIGINS = (() => {
 export function validateCsrfOrigin(request) {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
-  const source = origin || referer || "";
-  const normalized = source.replace(/\/+$/, "");
-  return TRUSTED_ORIGINS.has(normalized);
+  const source = origin || referer;
+  if (!source) return false;
+
+  try {
+    return TRUSTED_ORIGINS.has(new URL(source).origin);
+  } catch {
+    return false;
+  }
 }
 
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
