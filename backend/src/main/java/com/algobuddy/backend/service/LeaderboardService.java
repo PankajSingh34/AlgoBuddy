@@ -8,6 +8,7 @@ import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,11 +26,13 @@ public class LeaderboardService {
     private final UserArenaProfileRepository arenaRepository;
     private final UserProfileRepository profileRepository;
 
+    @Cacheable(value = "globalStreakLeaderboard", unless = "#result == null")
     public List<LeaderboardEntryDto> getGlobalStreakLeaderboard() {
         List<UserPracticeStats> stats = statsRepository.findTop100ByOrderByCurrentStreakDesc();
         return mapToStreakEntries(stats);
     }
 
+    @Cacheable(value = "globalArenaLeaderboard", unless = "#result == null")
     public List<LeaderboardEntryDto> getGlobalArenaLeaderboard() {
         List<UserArenaProfile> profiles = arenaRepository.findTop100ByOrderByRatingDesc();
         return mapToArenaEntries(profiles);

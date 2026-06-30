@@ -9,6 +9,7 @@ import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
 
 import org.springframework.lang.NonNull;
@@ -131,6 +132,7 @@ public class PracticeService {
     }
 
     @Transactional
+    @CacheEvict(value = "globalStreakLeaderboard", allEntries = true)
     public void updateStreak(@NonNull UUID userId) {
         statsRepository.insertStatsIfNotExists(userId);
 

@@ -34,6 +34,12 @@ public class CacheConfig {
             .withCacheConfiguration("arenaLeaderboard",
                 RedisCacheConfiguration.defaultCacheConfig()
                     .entryTtl(Duration.ofMinutes(5)))
+            .withCacheConfiguration("globalStreakLeaderboard",
+                RedisCacheConfiguration.defaultCacheConfig()
+                    .entryTtl(Duration.ofSeconds(60)))
+            .withCacheConfiguration("globalArenaLeaderboard",
+                RedisCacheConfiguration.defaultCacheConfig()
+                    .entryTtl(Duration.ofSeconds(60)))
             .withCacheConfiguration("mysheet",
                 RedisCacheConfiguration.defaultCacheConfig()
                     .entryTtl(Duration.ofMinutes(30)))
@@ -47,7 +53,7 @@ public class CacheConfig {
     @ConditionalOnProperty(name = "app.cache.redis.enabled", havingValue = "false", matchIfMissing = true)
     public CacheManager concurrentMapCacheManager() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
-        cacheManager.setCacheNames(Arrays.asList("arenaProfile", "arenaLeaderboard", "mysheet", "bookmarks"));
+        cacheManager.setCacheNames(Arrays.asList("arenaProfile", "arenaLeaderboard", "globalStreakLeaderboard", "globalArenaLeaderboard", "mysheet", "bookmarks"));
         return cacheManager;
     }
 }
