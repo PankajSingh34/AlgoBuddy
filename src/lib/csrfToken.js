@@ -1,7 +1,8 @@
 const CSRF_TOKEN_LENGTH = 32;
 const CSRF_SECRET_ENV = "CSRF_SECRET";
 
-let devSecret = null;
+const DEV_CSRF_FALLBACK_SECRET = "algobuddy-dev-csrf-secret-v1";
+let warnedAboutDevFallback = false;
 
 function getSecret() {
   const secret = process.env[CSRF_SECRET_ENV];
@@ -11,18 +12,14 @@ function getSecret() {
       "CSRF_SECRET must be set in production for CSRF token signing.",
     );
   }
-  if (!devSecret) {
-    const array = new Uint8Array(32);
-    globalThis.crypto.getRandomValues(array);
-    devSecret = Array.from(array)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+  if (!warnedAboutDevFallback) {
+    warnedAboutDevFallback = true;
     console.warn(
       "CSRF_SECRET not set. Using a fallback development secret. " +
       "Set CSRF_SECRET in .env.local for persistence and security in production.",
     );
   }
-  return devSecret;
+  return DEV_CSRF_FALLBACK_SECRET;
 }
 
 export async function generateCsrfToken() {
