@@ -7,6 +7,7 @@ import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
 import { insertAVL, deleteAVL } from "./avlUtils";
 import { Info, Layers, AlertCircle } from "lucide-react";
+import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 
 const nodeRadius = 21;
 
@@ -82,6 +83,23 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
     setInputValue("");
     setMessage("AVL tree cleared.");
   }, [resetPlayback]);
+
+  const handleCustomTreeInput = useCallback((parsedArray) => {
+    if (parsedArray === null) {
+      clearTree();
+    } else {
+      resetPlayback();
+      let newRoot = null;
+      parsedArray.forEach(val => {
+        const nextSteps = [];
+        const result = insertAVL(newRoot, val, nextSteps);
+        newRoot = result.root;
+      });
+      setRoot(newRoot);
+      setTargetTreeRoot(newRoot);
+      setMessage(`Generated custom AVL tree with ${parsedArray.length} nodes.`);
+    }
+  }, [clearTree, resetPlayback]);
 
   const applySteps = useCallback((nextRoot, nextSteps, label) => {
     if (!nextSteps || nextSteps.length === 0) {
@@ -354,127 +372,137 @@ export default function TreeAVLVisualizer({ initialMode = "avl" }) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
-          {showBanner && (
-            <div
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-4xl w-[calc(100%-2rem)] border rounded-2xl px-4 py-3 shadow-lg shadow-black/30"
-              style={bannerStyle}
-            >
-              <div className="text-[11px] uppercase tracking-[0.2em] font-bold mb-1">AVL Balance Update</div>
-              <div className="text-sm font-semibold leading-relaxed">{currentStep?.explanation}</div>
-            </div>
-          )}
-
-          {!activeTree ? (
-            <div className="flex flex-col items-center gap-2.5 text-slate-400 dark:text-slate-500 py-12">
-              <AlertCircle className="w-10 h-10 text-slate-400 dark:text-slate-600" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workspace Empty</span>
-              <span className="text-xs max-w-xs text-center text-slate-500 dark:text-slate-400">
-                Enter a value and click Insert or Delete to begin.
-              </span>
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 800 520"
-                className="overflow-visible"
-                style={{ minHeight: "440px" }}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 shadow-inner relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+            {showBanner && (
+              <div
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-4xl w-[calc(100%-2rem)] border rounded-2xl px-4 py-3 shadow-lg shadow-black/30"
+                style={bannerStyle}
               >
-                <defs>
-                  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.35" />
-                  </filter>
-                </defs>
+                <div className="text-[11px] uppercase tracking-[0.2em] font-bold mb-1">AVL Balance Update</div>
+                <div className="text-sm font-semibold leading-relaxed">{currentStep?.explanation}</div>
+              </div>
+            )}
 
-                {renderEdges.map((edge, idx) => (
-                  <line
-                    key={`edge-${idx}`}
-                    x1={edge.x1}
-                    y1={edge.y1}
-                    x2={edge.x2}
-                    y2={edge.y2}
-                    stroke="#334155"
-                    strokeWidth="2.5"
-                    className="transition-all duration-300"
-                  />
-                ))}
+            {!activeTree ? (
+              <div className="flex flex-col items-center gap-2.5 text-slate-400 dark:text-slate-500 py-12">
+                <AlertCircle className="w-10 h-10 text-slate-400 dark:text-slate-600" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Workspace Empty</span>
+                <span className="text-xs max-w-xs text-center text-slate-500 dark:text-slate-400">
+                  Enter a value and click Insert or Delete to begin.
+                </span>
+              </div>
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <svg
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 800 520"
+                  className="overflow-visible"
+                  style={{ minHeight: "440px" }}
+                >
+                  <defs>
+                    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.35" />
+                    </filter>
+                  </defs>
 
-                {renderNodes.map((node, idx) => {
-                  const { fillHex, strokeHex } = getNodeColors(node);
-                  const displayValue = swapValues && isSwapPhase
-                    ? (node.value === swapValues.targetValue
-                        ? swapValues.successorValue
-                        : node.value === swapValues.successorValue
-                          ? swapValues.targetValue
-                          : node.value)
-                    : node.value;
-                  const bfAbs = Math.abs(node.balanceFactor || 0);
-                  const bfFill = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-700)";
-                  const bfStroke = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-500)";
-                  const bfText = bfAbs > 1 || bfAbs === 1 ? "var(--color-neutral-950)" : "var(--color-neutral-50)";
+                  {renderEdges.map((edge, idx) => (
+                    <line
+                      key={`edge-${idx}`}
+                      x1={edge.x1}
+                      y1={edge.y1}
+                      x2={edge.x2}
+                      y2={edge.y2}
+                      className="stroke-slate-300 dark:stroke-slate-700"
+                      strokeWidth="2.5"
+                      className="transition-all duration-300"
+                    />
+                  ))}
 
-                  return (
-                    <g key={`node-${idx}`} className="transition-all duration-300">
-                      {(node.state === "visiting" || node.state === "found" || node.state === "inserted" || node.state === "deleted" || node.state === "predecessor") && (
+                  {renderNodes.map((node, idx) => {
+                    const { fillHex, strokeHex } = getNodeColors(node);
+                    const displayValue = swapValues && isSwapPhase
+                      ? (node.value === swapValues.targetValue
+                          ? swapValues.successorValue
+                          : node.value === swapValues.successorValue
+                            ? swapValues.targetValue
+                            : node.value)
+                      : node.value;
+                    const bfAbs = Math.abs(node.balanceFactor || 0);
+                    const bfFill = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-700)";
+                    const bfStroke = bfAbs > 1 ? "var(--color-danger)" : bfAbs === 1 ? "var(--color-warning)" : "var(--color-neutral-500)";
+                    const bfText = bfAbs > 1 || bfAbs === 1 ? "var(--color-neutral-950)" : "var(--color-neutral-50)";
+
+                    return (
+                      <g key={`node-${idx}`} className="transition-all duration-300">
+                        {(node.state === "visiting" || node.state === "found" || node.state === "inserted" || node.state === "deleted" || node.state === "predecessor") && (
+                          <circle
+                            cx={node.x}
+                            cy={node.y}
+                            r="28"
+                            fill="none"
+                            stroke={strokeHex}
+                            strokeWidth="1.5"
+                            strokeDasharray="4,2"
+                            className="opacity-60"
+                          />
+                        )}
+
+                        <g transform={`translate(${node.x - 18}, ${node.y - 44})`}>
+                          <rect width="36" height="18" rx="6" fill={bfFill} stroke={bfStroke} strokeWidth="1" />
+                          <text x="18" y="12.5" fill={bfText} fontSize="9" fontWeight="700" textAnchor="middle">
+                            BF {node.balanceFactor}
+                          </text>
+                        </g>
+
                         <circle
                           cx={node.x}
                           cy={node.y}
-                          r="28"
-                          fill="none"
+                          r="21"
+                          fill={fillHex}
                           stroke={strokeHex}
-                          strokeWidth="1.5"
-                          strokeDasharray="4,2"
-                          className="opacity-60"
+                          strokeWidth="2.5"
+                          filter="url(#shadow)"
+                          className="transition-all duration-300"
                         />
-                      )}
 
-                      <g transform={`translate(${node.x - 18}, ${node.y - 44})`}>
-                        <rect width="36" height="18" rx="6" fill={bfFill} stroke={bfStroke} strokeWidth="1" />
-                        <text x="18" y="12.5" fill={bfText} fontSize="9" fontWeight="700" textAnchor="middle">
-                          BF {node.balanceFactor}
+                        <text
+                          x={node.x}
+                          y={node.y + 4.5}
+                          textAnchor="middle"
+                          className="fill-white dark:fill-slate-800"
+                          fontSize="12"
+                          fontWeight="bold"
+                        >
+                          {displayValue}
+                        </text>
+
+                        <text
+                          x={node.x}
+                          y={node.y + 39}
+                          textAnchor="middle"
+                          className="fill-slate-400 dark:fill-slate-400"
+                          fontSize="9"
+                          fontWeight="700"
+                        >
+                          h {node.height}
                         </text>
                       </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            )}
+          </div>
 
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r="21"
-                        fill={fillHex}
-                        stroke={strokeHex}
-                        strokeWidth="2.5"
-                        filter="url(#shadow)"
-                        className="transition-all duration-300"
-                      />
-
-                      <text
-                        x={node.x}
-                        y={node.y + 4.5}
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        fontSize="12"
-                        fontWeight="bold"
-                      >
-                        {displayValue}
-                      </text>
-
-                      <text
-                        x={node.x}
-                        y={node.y + 39}
-                        textAnchor="middle"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        fontWeight="700"
-                      >
-                        h {node.height}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-          )}
+          <div className="lg:col-span-1">
+            <CustomInputPanel
+              inputType="array"
+              onApply={handleCustomTreeInput}
+              currentData={[]}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

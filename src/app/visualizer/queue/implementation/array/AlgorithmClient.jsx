@@ -21,7 +21,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.queueArray}
-          description="Mark Queue implementation using Array as done and view it on your dashboard"
+          description="Mark Queue implementation using Array as done and track your progress"
           initialDone={false}
         />
       }

@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, Check } from "lucide-react";
+import { FiUsers, FiCheck } from "react-icons/fi";
 import { useUser } from "@/features/user/UserContext";
-import { supabase } from "@/lib/supabase";
 
 const DISCORD_INVITE = "https://discord.gg/PqnazRxPc";
 
@@ -18,12 +17,9 @@ export default function JoinCommunityButton() {
 
   useEffect(() => {
     if (!user?.id) return;
-    supabase
-      .from("user_profiles")
-      .select("joined_community")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
+    fetch("/api/community/join")
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.joined_community) setJoined(true);
       })
       .catch(() => {});
@@ -31,11 +27,14 @@ export default function JoinCommunityButton() {
 
   const handleClick = async () => {
     if (user?.id && !joined) {
-      await supabase
-        .from("user_profiles")
-        .upsert({ id: user.id, joined_community: true }, { onConflict: "id" })
-        .catch(() => {});
-      setJoined(true);
+      try {
+        await fetch("/api/community/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ joined: true }),
+        });
+        setJoined(true);
+      } catch {}
     }
     window.open(DISCORD_INVITE, "_blank", "noopener,noreferrer");
   };
@@ -43,14 +42,14 @@ export default function JoinCommunityButton() {
   return (
     <motion.button
       onClick={handleClick}
-      className={`btn-base gap-2 bg-[var(--udemy-purple)] text-white hover:bg-[var(--udemy-purple-dark)] ${
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 ${
         joined ? "opacity-90" : ""
       }`}
       initial={mounted ? undefined : { scale: 1 }}
       animate={
         mounted && !joined
           ? {
-              scale: [1, 1.05, 1],
+              scale: [1, 1.02, 1],
               transition: {
                 duration: 2,
                 repeat: Infinity,
@@ -60,10 +59,10 @@ export default function JoinCommunityButton() {
             }
           : { scale: 1 }
       }
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
     >
-      {joined ? <Check size={18} /> : <UserPlus size={18} />}
+      {joined ? <FiCheck className="w-4 h-4" /> : <FiUsers className="w-4 h-4" />}
       {joined ? "Community Joined" : "Join Community"}
     </motion.button>
   );

@@ -3,7 +3,6 @@ import React from "react";
 import BinarySearchAnimation from "./animation";
 import BinarySearchCode from "./codeBlock";
 import BinarySearchContent from "./content";
-import BinarySearchQuiz from "./quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
@@ -20,7 +19,6 @@ export default function BinarySearchClient() {
       animation={<BinarySearchAnimation />}
       content={<BinarySearchContent />}
       code={<BinarySearchCode />}
-      quiz={<BinarySearchQuiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionBinarySearch}

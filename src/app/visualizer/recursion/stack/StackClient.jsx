@@ -2,7 +2,6 @@
 import React from "react";
 import FactorialAnimation from "../factorial/animation";
 import Code from "../factorial/codeBlock";
-import Quiz from "../factorial/quiz";
 import Content from "../factorial/content";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -20,7 +19,6 @@ export default function StackClient() {
       animation={<FactorialAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionFactorial}

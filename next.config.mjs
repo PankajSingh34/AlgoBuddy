@@ -44,7 +44,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: https://*.googlesyndication.com",
-      "connect-src 'self' https://*.supabase.co https://*.googlesyndication.com https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.tagassistant.google.com https://*.cloudflare.com",
+      "connect-src 'self' http://localhost:8080 ws://localhost:4000 http://localhost:4000 ws://127.0.0.1:4000 http://127.0.0.1:4000 https://algobuddy-backend-7iwv.onrender.com https://algobuddy-backend.onrender.com https://algobuddy-socket-server.onrender.com wss://algobuddy-socket-server.onrender.com https://*.supabase.co https://*.googlesyndication.com https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com https://*.tagassistant.google.com https://*.cloudflare.com",
       "frame-src https://challenges.cloudflare.com https://*.googleads.g.doubleclick.net https://*.google.com",
       "frame-ancestors 'none'",
     ].join("; "),
@@ -52,13 +52,27 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  serverExternalPackages: ["isolated-vm"],
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   devIndicators: false,
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "api.dicebear.com",
-        pathname: "/8.x/initials/**",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.producthunt.com",
+        pathname: "/**",
       },
     ],
   },

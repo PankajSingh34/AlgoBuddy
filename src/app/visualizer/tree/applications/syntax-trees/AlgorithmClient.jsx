@@ -23,7 +23,7 @@ export default function SyntaxTreesPage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.syntaxTrees}
-          description="Mark Syntax Trees as done and view it on your dashboard"
+          description="Mark Syntax Trees as done and track your progress"
           initialDone={false}
         />
       }

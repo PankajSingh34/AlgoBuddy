@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.hashmapInsert}
-          description="Mark HashMap : Insert as done and view it on your dashboard"
+          description="Mark HashMap : Insert as done and track your progress"
           initialDone={false}
         />
       }

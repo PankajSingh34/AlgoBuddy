@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
 function escapeHtml(value) {
   return String(value)
@@ -30,52 +30,33 @@ export async function POST(request) {
   try {
     const ip = getClientIp(request.headers);
 
-    // checkRateLimit uses a global Redis sliding-window counter in production
-    // so the limit is enforced across all serverless instances, not just the
-    // current one. Falls back to an in-memory check in local development.
     const { allowed, remaining, resetAt } =
-      await checkRateLimit(`contact:${ip}`);
+      await checkRateLimit(`review:${ip}`);
     if (!allowed) {
-  const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-
-  return Response.json(
-    { message: "Too many requests. Please try again later." },
-    {
-      status: 429,
-      headers: {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+      return jsonResponse({ message: "Too many requests. Please try again later." }, 429, {
         "Retry-After": retryAfter.toString(),
         "X-RateLimit-Limit": "5",
         "X-RateLimit-Remaining": "0",
-      },
+      });
     }
-  );
-}
 
     let body;
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
     }
 
     const { name, email, review, rating, captchaToken } = body || {};
 
     if (!captchaToken) {
-      return NextResponse.json(
-        { success: false, error: "Captcha token missing" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Captcha token missing" }, 400);
     }
 
     const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
-      return NextResponse.json(
-        { success: false, error: captcha.error },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: captcha.error }, 400);
     }
 
     const trimmedName = String(name || "").trim().slice(0, 80);
@@ -84,38 +65,39 @@ export async function POST(request) {
     const safeRating = clampInt(rating, 1, 5);
 
     if (!trimmedName) {
-      return NextResponse.json(
-        { success: false, error: "Name is required" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Name is required" }, 400);
     }
     if (!isValidEmail(trimmedEmail)) {
-      return NextResponse.json(
-        { success: false, error: "Valid email is required" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Valid email is required" }, 400);
     }
     if (!trimmedReview) {
-      return NextResponse.json(
-        { success: false, error: "Review is required" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Review is required" }, 400);
     }
     if (!safeRating) {
-      return NextResponse.json(
-        { success: false, error: "Rating must be an integer between 1 and 5" },
-        { status: 400 }
-      );
+      return jsonResponse({ success: false, error: "Rating must be an integer between 1 and 5" }, 400);
     }
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Server misconfigured: email credentials missing",
-        },
-        { status: 500 }
-      );
+      return jsonResponse({ success: false, error: "Server misconfigured: email credentials missing" }, 500);
+    }
+
+    const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
+      parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
+    );
+    if (!smtpAllowed) {
+      console.warn("[review] SMTP daily quota exceeded. Persisting message to pending_messages.");
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from("pending_messages").insert({
+          type: "review",
+          payload: { name: trimmedName, email: trimmedEmail, review: trimmedReview, rating: safeRating },
+        });
+      } catch (dbErr) {
+        console.error("[review] Failed to persist pending message:", dbErr);
+      }
+      return jsonResponse({
+        message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
+      }, 503);
     }
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
@@ -147,19 +129,12 @@ export async function POST(request) {
 
     await transporter.sendMail(mailOptions);
 
-    return Response.json(
-  { message: "Email sent successfully" },
-  {
-    headers: {
+    return jsonResponse({ message: "Email sent successfully" }, 200, {
       "X-RateLimit-Limit": "5",
       "X-RateLimit-Remaining": remaining.toString(),
-    },
-  }
-);
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: "Failed to send email" },
-      { status: 500 }
-    );
+    console.error("Review API error:", error);
+    return errorResponse(error);
   }
 }

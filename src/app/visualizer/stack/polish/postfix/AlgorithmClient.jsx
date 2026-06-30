@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/stack/polish/postfix/animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/stack/polish/postfix/content";
-import Quiz from "@/app/visualizer/stack/polish/postfix/quiz";
 import Code from "@/app/visualizer/stack/polish/postfix/codeBlock";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
@@ -21,11 +20,10 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.postfix}
-          description="Mark Polish : postfix as done and view it on your dashboard"
+          description="Mark Polish : postfix as done and track your progress"
           initialDone={false}
         />
       }

@@ -9,6 +9,7 @@ import usePlayback from "@/app/hooks/usePlayback";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { generateDiameterSteps } from "@/features/algorithms/tree/diameterLogic";
 
 const NODES = [
   { id: "A", x: 400, y: 50, parent: null },
@@ -50,11 +51,6 @@ export default function DiameterAnimation() {
   const diameterPathEdges = currentStep ? currentStep.diameterPathEdges : [];
   const diameterPathNodes = currentStep ? currentStep.diameterPathNodes : [];
 
-  // Diameter path is explicitly: F-D-B-E-H-I
-  const finalDiameterNodes = ["F", "D", "B", "E", "H", "I"];
-  const finalDiameterEdges = ["D-F", "B-D", "B-E", "E-H", "H-I"];
-  const finalMaxDiameter = 5;
-
 
   useEffect(() => {
     if (currentStep) {
@@ -88,35 +84,7 @@ export default function DiameterAnimation() {
   const handleFindDiameter = () => {
     setAnimating(false);
 
-    const seq = [
-      { msg: "Computing heights of leaves (F, G, I, C)...", nodes: ["F", "G", "I", "C"], heights: {"F":1, "G":1, "I":1, "C":1}, maxD: 0 },
-      { msg: "Computing heights of H and D...", nodes: ["H", "D"], heights: {"F":1, "G":1, "I":1, "C":1, "H":2, "D":2}, maxD: 2 },
-      { msg: "Computing height of E...", nodes: ["E"], heights: {"F":1, "G":1, "I":1, "C":1, "H":2, "D":2, "E":3}, maxD: 2 },
-      { msg: "Computing height of B... updating Max Diameter!", nodes: ["B"], heights: {"F":1, "G":1, "I":1, "C":1, "H":2, "D":2, "E":3, "B":4}, maxD: 5 },
-      { msg: "Computing height of Root A...", nodes: ["A"], heights: {"F":1, "G":1, "I":1, "C":1, "H":2, "D":2, "E":3, "B":4, "A":5}, maxD: 5 },
-    ];
-
-    const newSteps = [];
-    
-    for (const curr of seq) {
-      newSteps.push({
-        activeNodes: curr.nodes,
-        calculatedHeights: curr.heights,
-        maxDiameter: curr.maxD,
-        message: curr.msg,
-        diameterPathEdges: [],
-        diameterPathNodes: []
-      });
-    }
-
-    newSteps.push({
-      activeNodes: [],
-      calculatedHeights: seq[seq.length - 1].heights,
-      maxDiameter: finalMaxDiameter,
-      message: `Complete! The maximum diameter is ${finalMaxDiameter}. (Highlighted path)`,
-      diameterPathEdges: finalDiameterEdges,
-      diameterPathNodes: finalDiameterNodes
-    });
+    const newSteps = generateDiameterSteps();
 
     setSteps(newSteps);
     setCurrentStepIdx(0);
@@ -243,8 +211,8 @@ export default function DiameterAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#22d3ee" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#06b6d4" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" strokeWidth="2" className="stroke-cyan-400 opacity-80 animate-ping dark:stroke-cyan-400" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
@@ -255,7 +223,7 @@ export default function DiameterAnimation() {
                   
                   {/* Height Indicator Label */}
                   {h !== undefined && (
-                    <text x={node.x + 28} y={node.y + 4} fill="#06b6d4" fontSize="12" fontWeight="bold">h:{h}</text>
+                    <text x={node.x + 28} y={node.y + 4} fontSize="12" fontWeight="bold" className="fill-cyan-500 dark:fill-cyan-400">h:{h}</text>
                   )}
                 </g>
               );

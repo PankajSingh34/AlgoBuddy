@@ -80,7 +80,62 @@ const SelectionSortQuiz = () => {
       ],
       correctAnswer: 1,
       explanation: "Selection Sort's O(n) swaps make it useful when memory writes are expensive, even though it still requires O(n²) comparisons."
-    }
+    },
+    {
+    question: "What is the basic idea behind Selection Sort?",
+    options: [
+      "Swap adjacent elements repeatedly",
+      "Select the smallest element and place it in the correct position",
+      "Divide the array into halves",
+      "Insert elements into a sorted portion"
+    ],
+    correctAnswer: 1,
+    explanation: "Selection Sort repeatedly finds the smallest element from the unsorted portion and places it at the beginning."
+  },
+  {
+    question: "What is the worst-case time complexity of Selection Sort?",
+    options: [
+      "O(log n)",
+      "O(n)",
+      "O(n²)",
+      "O(n log n)"
+    ],
+    correctAnswer: 2,
+    explanation: "Selection Sort always performs O(n²) comparisons regardless of the initial order of the elements."
+  },
+  {
+    question: "How many swaps does Selection Sort perform in the worst case?",
+    options: [
+      "n²",
+      "n",
+      "n-1",
+      "1"
+    ],
+    correctAnswer: 2,
+    explanation: "Selection Sort performs at most n−1 swaps, making it efficient in terms of swap operations."
+  },
+  {
+    question: "Is Selection Sort a stable sorting algorithm?",
+    options: [
+      "Yes",
+      "No",
+      "Only for integers",
+      "Only for sorted arrays"
+    ],
+    correctAnswer: 1,
+    explanation: "Standard Selection Sort is not stable because swapping can change the relative order of equal elements."
+  },
+  {
+    question: "Which statement about Selection Sort is correct?",
+    options: [
+      "It requires additional memory",
+      "It always performs the same number of comparisons",
+      "It only works on sorted arrays",
+      "It is faster than Merge Sort for large datasets"
+    ],
+    correctAnswer: 1,
+    explanation: "Selection Sort performs the same number of comparisons regardless of whether the array is sorted or unsorted."
+  }
   ];
 
   return <QuizEngine title="Selection Sort Quiz Challenge" questions={questions} />;

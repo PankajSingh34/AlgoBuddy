@@ -1,150 +1,94 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
-import { Users } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { FiUsers, FiUserCheck } from "react-icons/fi";
 
-const MOCK_CONTRIBUTORS = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  name: `Contributor ${i + 1}`,
-  avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=contributor${i + 1}`,
-  role: "Contributor",
-  github_url: "https://github.com",
-}));
+const contributorsList = [
+  { name: "Harsh Patel", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Neha Yadav", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Sarthak Jain", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Muskan Rathi", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Ayush Kumar", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Kunal Verma", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Ishika Tiwari", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Ritik Sharma", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Simran Kaur", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Devansh Shah", avatar: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Aman Gupta", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Tanmay Joshi", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Riya Singh", avatar: "https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&w=128&h=128&q=80" },
+  { name: "Mohit Rawat", avatar: "https://images.unsplash.com/photo-1489980508314-941910ded1f4?auto=format&fit=crop&w=128&h=128&q=80" },
+];
 
-const gridVariants = {
+const containerVariants = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.05 },
+    transition: { staggerChildren: 0.03 },
   },
 };
 
-const contributorVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.92 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
 };
 
-function ContributorSkeleton() {
-  return (
-    <div className="flex flex-col items-center gap-3 p-4">
-      <div className="skeleton-shimmer h-16 w-16 rounded-full" />
-      <div className="skeleton-shimmer h-4 w-24" />
-      <div className="skeleton-shimmer h-3 w-20" />
-    </div>
-  );
-}
-
-function ContributorCard({ contributor }) {
-  return (
-    <motion.a
-      href={contributor.github_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      variants={contributorVariants}
-      aria-label={`${contributor.name}'s GitHub profile`}
-      className="card-surface flex flex-col items-center gap-3 p-4 transition-shadow duration-[var(--motion-fast)] hover:shadow-[var(--shadow-card-hover)] focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
-    >
-      <Image
-        src={contributor.avatar_url}
-        alt={`${contributor.name}'s avatar`}
-        width={64}
-        height={64}
-        unoptimized
-        className="h-16 w-16 rounded-full object-cover"
-      />
-      <span className="text-sm font-semibold text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]">
-        {contributor.name}
-      </span>
-      <span className="text-xs text-[var(--color-muted)]">{contributor.role}</span>
-    </motion.a>
-  );
-}
-
 export default function ContributorsSection() {
-  const [contributors, setContributors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchContributors() {
-      try {
-        const res = await fetch("/api/community/contributors?limit=12&offset=0");
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        if (!cancelled) {
-          setContributors(data.contributors || []);
-          setTotalCount(data.total || data.contributors?.length || 0);
-        }
-      } catch {
-        if (!cancelled) {
-          setContributors(MOCK_CONTRIBUTORS);
-          setTotalCount(80);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    fetchContributors();
-    return () => { cancelled = true; };
-  }, []);
-
-  const displayed = showAll ? contributors : contributors.slice(0, 12);
-
   return (
-    <section className="section-app">
-      <div className="container-app">
-        <div className="mb-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)]">
-              Contributors
-            </h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Awesome developers who contribute to AlgoBuddy
-            </p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--udemy-purple)]/10 px-3 py-1 text-sm font-medium text-[var(--udemy-purple)]">
-            <Users size={14} />
-            {totalCount}+ contributors and counting
-          </span>
+    <div className="w-full">
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="text-purple-600 dark:text-purple-400">
+          <FiUsers className="w-6 h-6" />
         </div>
-
-        {loading ? (
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <ContributorSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={showAll ? "all" : "initial"}
-              variants={gridVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6"
-            >
-              {displayed.map((c) => (
-                <ContributorCard key={c.id} contributor={c} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        {!loading && contributors.length > 12 && (
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => setShowAll((prev) => !prev)}
-              aria-live="polite"
-              className="btn-base border-2 border-[var(--udemy-purple)] text-[var(--udemy-purple)] hover:bg-[var(--udemy-purple)] hover:text-white focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
-            >
-              <Users size={16} />
-              {showAll ? "Show Less" : `View All Contributors (${contributors.length})`}
-            </button>
-          </div>
-        )}
+        <div>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white leading-none">Contributors</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            Awesome developers who contribute to AlgoBuddy
+          </p>
+        </div>
       </div>
-    </section>
+
+      {/* Grid of Contributors */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-4 justify-items-center"
+      >
+        {contributorsList.map((c) => (
+          <motion.div
+            key={c.name}
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            className="flex flex-col items-center text-center p-2"
+          >
+            <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-slate-100 dark:ring-neutral-700 bg-slate-50 dark:bg-neutral-800 mb-2">
+              <Image
+                src={c.avatar}
+                alt={`${c.name}'s avatar`}
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-[11px] font-bold text-slate-850 dark:text-white leading-tight text-center">
+              {c.name}
+            </span>
+            <span className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+              Contributor
+            </span>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* View All Button */}
+      <div className="mt-8 text-center">
+        <button className="inline-flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-purple-300 dark:hover:border-purple-900/50 text-purple-600 dark:text-purple-400 font-semibold px-5 py-2.5 rounded-xl text-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-200">
+          <FiUserCheck className="w-4 h-4" />
+          View All Contributors
+        </button>
+      </div>
+    </div>
   );
 }

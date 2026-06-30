@@ -2,11 +2,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
-import { Moon, Sun, Menu, X, ChevronDown, Swords, LogOut } from "lucide-react";
+import {
+  Search,
+  Moon,
+  Sun,
+  Menu,
+  X,
+  ChevronDown,
+  ArrowRight,
+  Swords,
+  LogOut,
+  Bell,
+} from "lucide-react";
+
 import { NAV_LINKS } from "./navLinks";
+import NotificationDropdown from "./notifications/NotificationDropdown";
+import ProfileProgress from "./ui/ProfileProgress";
+import BottomNav from "./BottomNav";
+
+const MAX_AVATAR_URL_LENGTH = 512;
 
 function getStoredTheme() {
   if (typeof window === "undefined") return "light";
@@ -37,6 +54,12 @@ function getInitials(name) {
   return parts[0].slice(0, 2).toUpperCase();
 }
 
+function safeAvatarUrl(value) {
+  if (typeof value !== "string") return "";
+  if (value.startsWith("data:")) return "";
+  if (value.length > MAX_AVATAR_URL_LENGTH) return "";
+  return value;
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,11 +67,15 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState("light");
   const [themeMounted, setThemeMounted] = useState(false);
-
   const pathname = usePathname();
   const router = useRouter();
+ 
   const { user, setUser } = useUser();
   const userRef = useRef(null);
+  const avatarSrc = safeAvatarUrl(
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture
+  );
+  const displayName = user?.user_metadata?.name || "AlgoBuddy User";
 
   useEffect(() => {
     const currentTheme = getStoredTheme();
@@ -103,6 +130,7 @@ export default function Navbar() {
     const handleEscape = (e) => {
       if (e.key === "Escape") {
         setMenuOpen(false);
+        setUserMenuOpen(false);
       }
     };
 
@@ -113,6 +141,19 @@ export default function Navbar() {
         "keydown",
         handleEscape
       );
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalEscape = () => {
+      setUserMenuOpen(false);
+      setMenuOpen(false);
+    };
+
+    window.addEventListener("global-escape", handleGlobalEscape);
+
+    return () => {
+      window.removeEventListener("global-escape", handleGlobalEscape);
+    };
   }, []);
 
   // FIX: Prevent background scrolling when mobile menu is open
@@ -131,11 +172,19 @@ export default function Navbar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    router.push("/");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("algobuddy_practice_progress");
+      localStorage.removeItem("algobuddy_current_streak");
+      localStorage.removeItem("algobuddy_best_streak");
+      localStorage.removeItem("algobuddy_last_active_date");
+      localStorage.removeItem("PROBLEM_BOOKMARKS");
+    }
     setMenuOpen(false);
+    window.location.href = "/";
   };
 
   const isActive = (href) => {
+    if (!pathname) return false;
     if (href.startsWith("http")) return false;
 
     if (href.startsWith("/#")) {
@@ -167,7 +216,7 @@ export default function Navbar() {
           {/* Desktop Links with Auth Interception */}
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -175,9 +224,9 @@ export default function Navbar() {
                   href={dynamicHref}
                   data-text={l.label}
                   aria-current={isActive(l.href) ? "page" : undefined}
-                  className={`relative text-[15px] flex flex-col items-center justify-center transition-colors duration-150 focus-ring after:block after:content-[attr(data-text)] after:invisible after:font-semibold after:h-0 after:overflow-hidden ${isActive(l.href)
-                      ? "text-primary dark:text-primary font-semibold"
-                      : "text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white"
+                  className={`relative pb-2 text-[15px] flex flex-col items-center justify-center border-b-2 transition-colors duration-150 focus-ring ${isActive(l.href)
+                      ? "border-primary text-primary dark:text-primary font-semibold"
+                      : "border-transparent text-surface-600 dark:text-surface-400 font-medium hover:text-surface-900 dark:hover:text-white hover:border-surface-300 dark:hover:border-surface-600"
                     }`}
                 >
                   {l.label}
@@ -190,6 +239,8 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <NotificationDropdown />
+
             {user ? (
               <div
                 ref={userRef}
@@ -199,11 +250,13 @@ export default function Navbar() {
                   onClick={() =>
                     setUserMenuOpen((o) => !o)
                   }
-                  className="flex items-center gap-2 rounded-full px-3 py-1.5 border border-surface-200 dark:border-surface-700 hover:border-primary transition-colors focus-ring"
+                  className="flex items-center gap-2 rounded-full px-2 py-1.5 text-surface-700 dark:text-surface-200 hover:text-primary dark:hover:text-primary-light hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+                  aria-label="Open account menu"
+                  aria-expanded={userMenuOpen}
                 >
-                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                  {avatarSrc ? (
                     <Image
-                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      src={avatarSrc}
                       alt="avatar"
                       width={28}
                       height={28}
@@ -212,42 +265,78 @@ export default function Navbar() {
                     />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-[11px] font-bold">
-                      {getInitials(user.user_metadata?.name || user.email)}
+                      {getInitials(displayName || user.email)}
                     </div>
                   )}
 
+                  <span className="max-w-28 truncate text-sm font-semibold">
+                    {displayName}
+                  </span>
                   <ChevronDown className="w-3.5 h-3.5 text-surface-500" />
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] w-52 bg-white dark:bg-udemy-dark-surface border border-surface-200 dark:border-surface-700 shadow-elevated rounded-xl z-[9999] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-surface-100 dark:border-udemy-dark-border">
-                      <p className="text-[13px] text-surface-500 dark:text-[#737373] truncate">
-                        {user.email}
-                      </p>
-                    </div>
-
+                  <div className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white/95 dark:bg-udemy-dark-surface/95 backdrop-blur-md border border-surface-200/80 dark:border-surface-700/80 shadow-elevated rounded-2xl z-[9999] overflow-hidden transition-all duration-200 ease-out origin-top-right">
                     <Link
-                      href="/arena"
+                      href="/profile"
                       onClick={() =>
                         setUserMenuOpen(false)
                       }
-                      className="flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-surface-900 dark:text-[#f5f5f5] hover:bg-surface-50 dark:hover:bg-udemy-dark-border transition-colors focus-ring"
+                      className="group mx-2 mt-2 mb-1 px-3 py-3 rounded-xl bg-surface-50/50 dark:bg-neutral-900/30 flex items-center gap-3 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
+                      aria-label="Go to profile"
                     >
-                      <Swords className="w-4 h-4 text-surface-500" />
-                      Arena
+                      {avatarSrc ? (
+                        <Image
+                          src={avatarSrc}
+                          alt="avatar"
+                          width={36}
+                          height={36}
+                          unoptimized
+                          className="w-9 h-9 rounded-full object-cover ring-2 ring-primary/10"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center text-xs font-bold ring-2 ring-primary/10">
+                          {getInitials(displayName || user.email)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <p className="text-sm font-semibold text-surface-900 dark:text-white truncate">
+                          {displayName}
+                        </p>
+                        <p className="text-xs text-surface-500 dark:text-[#9e9e9e] truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 shrink-0 text-surface-400 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0 group-hover:text-primary dark:group-hover:text-primary-light transition-all duration-150" />
                     </Link>
 
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setUserMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[14px] font-medium text-danger hover:bg-danger/10 dark:hover:bg-[#2a1515] transition-colors border-t border-surface-100 dark:border-udemy-dark-border focus-ring"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Log out
-                    </button>
+                    <ProfileProgress compact={true} />
+
+                    <div className="py-1.5 px-1.5 flex flex-col gap-0.5">
+                      <Link
+                        href="/arena"
+                        onClick={() =>
+                          setUserMenuOpen(false)
+                        }
+                        className="group flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-surface-700 dark:text-[#f5f5f5] rounded-lg hover:text-primary dark:hover:text-primary-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all duration-150 focus-ring"
+                      >
+                        <Swords className="w-4 h-4 text-surface-400 group-hover:text-primary dark:group-hover:text-primary-light group-hover:scale-105 transition-all duration-150" />
+                        Arena
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-surface-100 dark:border-udemy-dark-border px-1.5 py-1.5">
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setUserMenuOpen(false);
+                        }}
+                        className="group w-full flex items-center gap-3 px-3 py-2 text-[14px] font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-150 focus-ring"
+                      >
+                        <LogOut className="w-4 h-4 text-red-500 group-hover:scale-105 transition-all duration-150" />
+                        Log out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -281,21 +370,45 @@ export default function Navbar() {
             </button>
           </div>
 
-          <button
-            onClick={() =>
-              setMenuOpen((o) => !o)
-            }
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            className="md:hidden w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
-          >
-            {menuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 md:hidden">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              aria-label="Search site"
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={toggleTheme}
+              aria-label={
+                themeMounted
+                  ? `Switch to ${theme === "light" ? "dark" : "light"} mode`
+                  : "Toggle theme"
+              }
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              {!themeMounted || theme === "light" ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </button>
+            <button
+              onClick={() =>
+                setMenuOpen((o) => !o)
+              }
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              className="hidden"
+            >
+              {menuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -307,7 +420,7 @@ export default function Navbar() {
         >
           <div className="py-2">
             {NAV_LINKS.map((l) => {
-              const dynamicHref = (l.href === "/arena" && !user) ? "/login" : l.href;
+              const dynamicHref = l.href;
 
               return (
                 <Link
@@ -370,6 +483,16 @@ export default function Navbar() {
                 </p>
 
                 <Link
+                  href="/profile"
+                  onClick={() =>
+                    setMenuOpen(false)
+                  }
+                  className="h-[44px] flex items-center justify-center text-[15px] font-semibold border border-surface-300 dark:border-udemy-dark-border rounded-full text-surface-900 dark:text-white hover:border-primary hover:text-primary transition-all focus-ring"
+                >
+                  Profile
+                </Link>
+
+                <Link
                   href="/arena"
                   onClick={() =>
                     setMenuOpen(false)
@@ -401,6 +524,7 @@ export default function Navbar() {
         </div>
       )}
 
+      <BottomNav />
       <div className="h-[72px]" />
     </>
   );

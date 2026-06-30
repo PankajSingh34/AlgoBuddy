@@ -301,7 +301,7 @@ export default function HeapSortAnimation() {
               const isSorted = sortedIndices.includes(i);
               return (
                 <g key={i} className={`transition-all duration-500 ${isSorted ? "opacity-60" : ""}`}>
-                  {activeIndices.includes(i) && <circle cx={positions[i].x} cy={positions[i].y} r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {activeIndices.includes(i) && <circle cx={positions[i].x} cy={positions[i].y} r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle 
                     cx={positions[i].x} cy={positions[i].y} r="24" 
                     fill={getNodeColor(i)} 

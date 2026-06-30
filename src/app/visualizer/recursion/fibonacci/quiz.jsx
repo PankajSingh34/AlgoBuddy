@@ -58,7 +58,128 @@ const FibonacciQuiz = () => {
       ],
       correctAnswer: 0,
       explanation: "Memoization caches the results of function calls so that when the same inputs occur again, the cached value can be returned instantly, optimizing time complexity to O(N)."
-    }
+    },
+    {
+  question: "What are the base cases of the Fibonacci recursive function?",
+  options: [
+    "n == 0 and n == 1",
+    "n == 1 and n == 2",
+    "n == 2 only",
+    "n == 0 only"
+  ],
+  correctAnswer: 0,
+  explanation:
+    "The Fibonacci sequence starts with fib(0) = 0 and fib(1) = 1, which are the base cases."
+},
+{
+  question: "Which recursive formula is used to compute Fibonacci numbers?",
+  options: [
+    "fib(n) = fib(n - 1)",
+    "fib(n) = fib(n - 1) + fib(n - 2)",
+    "fib(n) = n × fib(n - 1)",
+    "fib(n) = fib(n / 2)"
+  ],
+  correctAnswer: 1,
+  explanation:
+    "Each Fibonacci number is the sum of the previous two Fibonacci numbers."
+},
+{
+  question: "Why does the recursion tree grow rapidly for larger values of n?",
+  options: [
+    "Each function call creates two more recursive calls",
+    "The compiler duplicates the function",
+    "The stack stores duplicate values",
+    "The array size doubles"
+  ],
+  correctAnswer: 0,
+  explanation:
+    "Every non-base call generates two recursive calls, causing exponential growth."
+},
+{
+  question: "What is the approximate time complexity of the naive recursive Fibonacci algorithm?",
+  options: [
+    "O(log N)",
+    "O(N)",
+    "O(2^N)",
+    "O(N²)"
+  ],
+  correctAnswer: 2,
+  explanation:
+    "The recursion tree grows exponentially because of repeated calculations."
+},
+{
+  question: "Which value is returned by fib(6)?",
+  options: [
+    "5",
+    "8",
+    "13",
+    "21"
+  ],
+  correctAnswer: 1,
+  explanation:
+    "The sequence is 0, 1, 1, 2, 3, 5, 8. Therefore fib(6) = 8."
+},
+{
+  question: "Which traversal best represents recursive execution in Fibonacci?",
+  options: [
+    "Depth-First Search (DFS)",
+    "Breadth-First Search (BFS)",
+    "Binary Search",
+    "Linear Search"
+  ],
+  correctAnswer: 0,
+  explanation:
+    "Recursive calls are executed depth-first using the call stack."
+},
+{
+  question: "Why is memoization effective for Fibonacci recursion?",
+  options: [
+    "It reduces stack size to O(1)",
+    "It avoids recalculating the same Fibonacci values",
+    "It removes recursion completely",
+    "It increases recursion depth"
+  ],
+  correctAnswer: 1,
+  explanation:
+    "Memoization stores previously computed Fibonacci values, eliminating duplicate work."
+},
+{
+  question: "Which data structure is naturally used during recursive execution?",
+  options: [
+    "Queue",
+    "Stack",
+    "Heap",
+    "Linked List"
+  ],
+  correctAnswer: 1,
+  explanation:
+    "Recursive function calls are managed using the call stack."
+},
+{
+  question: "Which statement is TRUE about multiple recursive calls?",
+  options: [
+    "Only one recursive call is made",
+    "The function calls itself multiple times before returning",
+    "Recursion is replaced by loops",
+    "The function never reaches a base case"
+  ],
+  correctAnswer: 1,
+  explanation:
+    "Multiple recursive calls occur when a function invokes itself more than once in a single execution."
+},
+{
+  question: "Which algorithm is the classic example of multiple recursive calls?",
+  options: [
+    "Linear Search",
+    "Bubble Sort",
+    "Fibonacci Recursion",
+    "Insertion Sort"
+  ],
+  correctAnswer: 2,
+  explanation:
+    "The Fibonacci recursive algorithm is one of the most common examples of multiple recursive calls."
+},
+
   ];
 
   return <QuizEngine title="Fibonacci Recursion Quiz" questions={questions} />;

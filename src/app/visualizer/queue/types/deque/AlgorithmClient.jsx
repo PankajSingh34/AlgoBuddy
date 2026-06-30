@@ -25,7 +25,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.doubleEnded}
-          description="Mark Double Ended Queue as done and view it on your dashboard"
+          description="Mark Double Ended Queue as done and track your progress"
           initialDone={false}
         />
       }

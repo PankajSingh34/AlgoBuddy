@@ -12,6 +12,8 @@ const baseRelatedLinks = [
   { key: "bfs", text: "BFS", url: "/visualizer/graph/bfs" },
   { key: "dfs", text: "DFS", url: "/visualizer/graph/dfs" },
   { key: "dijkstra", text: "Dijkstra", url: "/visualizer/graph/dijkstra" },
+  { key: "bellman-ford", text: "Bellman-Ford", url: "/visualizer/graph/bellman-ford" },
+  { key: "kosaraju", text: "Kosaraju", url: "/visualizer/graph/kosaraju" },
   {
     key: "floyd-warshall",
     text: "Floyd-Warshall",
@@ -23,6 +25,26 @@ const baseRelatedLinks = [
     key: "topological-sort",
     text: "Topological Sort",
     url: "/visualizer/graph/topological-sort",
+  },
+  {
+    key: "kosaraju",
+    text: "Kosaraju's Algorithm",
+    url: "/visualizer/graph/kosaraju",
+  },
+  {
+    key: "tarjan",
+    text: "Tarjan's Algorithm",
+    url: "/visualizer/graph/tarjan",
+  },
+  {
+    key: "a-star",
+    text: "A* Search",
+    url: "/visualizer/graph/a-star",
+  },
+  {
+    key: "ford-fulkerson",
+    text: "Ford-Fulkerson",
+    url: "/visualizer/graph/ford-fulkerson",
   },
 ];
 
@@ -126,7 +148,7 @@ export const graphTopics = {
   dijkstra: {
     key: "dijkstra",
     title: "Dijkstra's Algorithm",
-    category: "Graph Algorithm",
+    category: "Advanced Graphs",
     description:
       "Find shortest paths from one source to all vertices in a weighted graph with non-negative edge weights.",
     animationType: "dijkstra",
@@ -246,6 +268,127 @@ export const graphTopics = {
       { label: "Requires", value: "DAG" },
     ],
   },
+
+  "bellman-ford": {
+    key: "bellman-ford",
+    title: "Bellman-Ford Algorithm",
+    category: "Graph Algorithm",
+    description:
+      "Find shortest paths from a source vertex to all others, handling negative weight edges and detecting negative weight cycles.",
+    animationType: "bellman-ford",
+    summary: [
+      "Bellman-Ford relaxes all edges V-1 times, where V is the number of vertices.",
+      "Unlike Dijkstra, it correctly handles negative weight edges.",
+      "A final extra pass over all edges detects negative weight cycles.",
+      "If any distance still improves in the final pass, a negative cycle exists.",
+    ],
+    steps: [
+      "Set distance to source as 0 and all other distances to infinity.",
+      "Repeat V-1 times: for every edge (u, v, w), if dist[u] + w < dist[v], update dist[v].",
+      "Run one more pass over all edges.",
+      "If any distance improves, a negative cycle is present in the graph.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V * E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Negative weight edges / cycle detection" },
+    ],
+  },
+  kosaraju: {
+    key: "kosaraju",
+    title: "Kosaraju's Algorithm",
+    category: "Strongly Connected Components",
+    description:
+      "Find Strongly Connected Components (SCCs) in a directed graph using two passes of Depth-First Search (DFS).",
+    animationType: "kosaraju",
+    summary: [
+      "Kosaraju's algorithm uses two DFS passes.",
+      "First pass finds the finishing times of nodes in the original graph.",
+      "Second pass runs DFS on the transposed (reversed) graph in order of decreasing finishing time.",
+    ],
+    steps: [
+      "Run DFS on the original graph and push finished nodes to a stack.",
+      "Reverse the direction of all edges to create a transposed graph.",
+      "Pop nodes from the stack and run DFS on unvisited nodes in the transposed graph.",
+      "Each resulting DFS forest is a Strongly Connected Component.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V + E)" },
+      { label: "Space", value: "O(V + E)" },
+      { label: "Best for", value: "Finding SCCs efficiently" },
+    ],
+  },
+  tarjan: {
+    key: "tarjan",
+    title: "Tarjan's Algorithm",
+    category: "Strongly Connected Components",
+    description:
+      "Find Strongly Connected Components (SCCs) in a single pass using a stack and tracking low-link values.",
+    animationType: "tarjan",
+    summary: [
+      "Tarjan's algorithm finds SCCs in a single DFS pass.",
+      "It maintains an id, a low-link value, and a boolean for whether a node is on the current stack.",
+      "An SCC is found when a node's id matches its low-link value after returning from its descendants.",
+    ],
+    steps: [
+      "Run DFS, assigning IDs and low-link values, pushing nodes to a stack.",
+      "Update a node's low-link value based on descendants and back-edges to nodes on the stack.",
+      "If a node's ID equals its low-link value, it is the root of an SCC.",
+      "Pop the stack to extract all nodes in this newly discovered SCC.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(V + E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Single-pass SCC finding" },
+    ],
+  },
+  "a-star": {
+    key: "a-star",
+    title: "A* Search Algorithm",
+    category: "Pathfinding",
+    description: "Find the shortest path using a heuristic to guide the search efficiently.",
+    animationType: "a-star",
+    summary: [
+      "A* is an informed search algorithm.",
+      "It uses f(n) = g(n) + h(n) where g is the cost from start and h is the estimated cost to goal.",
+      "It is optimal if the heuristic is admissible."
+    ],
+    steps: [
+      "Initialize open set with the start node.",
+      "Pick the node with the lowest f(n).",
+      "If it's the goal, reconstruct the path.",
+      "Otherwise, expand neighbors and update their g and f scores."
+    ],
+    complexity: [
+      { label: "Time", value: "O(E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Shortest path with heuristic" }
+    ],
+  },
+  "ford-fulkerson": {
+    key: "ford-fulkerson",
+    title: "Ford-Fulkerson Algorithm",
+    category: "Network Flow",
+    description: "Find the maximum flow in a flow network by finding augmenting paths.",
+    animationType: "ford-fulkerson",
+    summary: [
+      "Ford-Fulkerson computes the maximum flow in a network.",
+      "It repeatedly finds an augmenting path from source to sink in the residual graph.",
+      "The Edmonds-Karp implementation uses BFS to guarantee O(V E^2) time."
+    ],
+    steps: [
+      "Initialize flow to 0 on all edges.",
+      "Find an augmenting path using BFS.",
+      "Find the bottleneck capacity on this path.",
+      "Augment the flow by this capacity and update residual edges.",
+      "Repeat until no augmenting path exists."
+    ],
+    complexity: [
+      { label: "Time", value: "O(V E^2)" },
+      { label: "Space", value: "O(V^2)" },
+      { label: "Best for", value: "Maximum Flow / Minimum Cut" }
+    ],
+  }
 };
 
 export function getGraphRelatedLinks(currentKey) {

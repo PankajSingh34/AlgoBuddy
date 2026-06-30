@@ -23,7 +23,7 @@ export default function BTreePage() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.bTree}
-          description="Mark B-Tree as done and view it on your dashboard"
+          description="Mark B-Tree as done and track your progress"
           initialDone={false}
         />
       }

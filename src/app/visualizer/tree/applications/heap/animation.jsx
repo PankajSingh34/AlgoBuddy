@@ -428,7 +428,7 @@ export default function HeapAnimation() {
                       y1={node.y + 25}
                       x2={nodes[l].x}
                       y2={nodes[l].y - 25}
-                      stroke="#8b5cf6"
+                      className="stroke-violet-500 dark:stroke-violet-400"
                       strokeOpacity="0.45"
                       strokeWidth="2"
                     />
@@ -439,7 +439,7 @@ export default function HeapAnimation() {
                       y1={node.y + 25}
                       x2={nodes[r].x}
                       y2={nodes[r].y - 25}
-                      stroke="#8b5cf6"
+                      className="stroke-violet-500 dark:stroke-violet-400"
                       strokeOpacity="0.45"
                       strokeWidth="2"
                     />
@@ -465,7 +465,7 @@ export default function HeapAnimation() {
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={isActive || isSwap ? "#fff" : "#4c1d95"} fontSize="15" fontWeight="700">
                     {node.value}
                   </text>
-                  <text x={node.x} y={node.y + 42} textAnchor="middle" fill="#7c3aed" fontSize="11" fontWeight="600">
+                  <text x={node.x} y={node.y + 42} textAnchor="middle" className="fill-violet-600 dark:fill-violet-500" fontSize="11" fontWeight="600">
                     idx {node.index}
                   </text>
                 </g>

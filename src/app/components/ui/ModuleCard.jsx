@@ -1,42 +1,31 @@
 "use client";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-import { useEffect } from "react";
-
+import { api } from "@/lib/apiClient";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
-  const { user } = useUser();
+  const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
-  
+
   useEffect(() => {
-  const fetchUserProgress = async () => {
-    if (!user) return;
+    if (!user) {
+      setIsDone(initialDone ?? false);
+      return;
+    }
 
-    const { data, error } = await supabase
-      .from("user_progress")
-      .select("is_done")
-      .eq("user_id", user.id)
-      .eq("module_id", moduleId)
-      .maybeSingle();
-
-    if (error) {
-  console.error("Error fetching user progress:", error);
-
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database is not configured.");
-  }
-
-  return;
-}
-
-    setIsDone(data?.is_done ?? false);
-  };
-
-  fetchUserProgress();
-}, [user, moduleId]);
+    const fetchUserProgress = async () => {
+      try {
+        const data = await api.request("/api/progress");
+        const status = data.progress?.[moduleId]?.status;
+        setIsDone(status === "Completed");
+      } catch (e) {
+        console.error("Error fetching user progress:", e);
+      }
+    };
+    fetchUserProgress();
+  }, [user, moduleId, initialDone]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -71,39 +60,18 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
     }
 
     try {
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert(
-          {
-            user_id: user.id,
-            module_id: moduleId,
-            is_done: !isDone,
-            updated_at: new Date(),
-          },
-          { onConflict: ["user_id", "module_id"] }
-        );
-
-      if (error) {
-  console.error(
-    "Error updating progress:",
-    error.message,
-    error.details
-  );
-
-  if (error.code === "PGRST205") {
-    toast.error("Progress tracking database table is missing.");
-  } else {
-    toast.error(`Failed to update progress: ${error.message}`);
-  }
-
-  return;
-}
-
+      const nextStatus = isDone ? "Not Started" : "Completed";
+      await api.request("/api/progress", {
+        method: "POST",
+        body: { problemId: moduleId, status: nextStatus },
+      });
       setIsDone(!isDone);
-      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
+      toast.success(
+        isDone ? "Module marked as incomplete." : "Module marked as completed!"
+      );
     } catch (err) {
-      console.error("Unexpected error during progress update:", err);
-      toast.error("Unexpected error. Please try again.");
+      console.error("Error updating progress:", err);
+      toast.error("Failed to update progress. Please try again.");
     }
   }
 

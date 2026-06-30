@@ -2,13 +2,14 @@
 import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, User, LogIn, UserPlus, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, User, LogIn, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -18,12 +19,19 @@ const Turnstile = dynamic(
 export default function AuthForm({ isLogin = true }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("next") || "/";
   const { setUser } = useUser();
 
   const validateEmail = (value) => {
@@ -40,6 +48,24 @@ export default function AuthForm({ isLogin = true }) {
     return true;
   };
 
+  const allRequirementsMet = password !== "";
+  const passwordsMatch = password === confirmPassword && password !== "";
+
+  // Real-time validation
+  const validatePasswords = (passVal, confirmVal) => {
+    setPasswordError("");
+
+    const currentPass = passVal !== undefined ? passVal : password;
+    const currentConfirm = confirmVal !== undefined ? confirmVal : confirmPassword;
+    const match = currentPass === currentConfirm && currentPass !== "";
+
+    if (currentConfirm && !match) {
+      setConfirmError("Passwords do not match");
+    } else {
+      setConfirmError("");
+    }
+  };
+
   const handleAuth = async (event) => {
     event?.preventDefault();
     setLoading(true);
@@ -50,40 +76,44 @@ export default function AuthForm({ isLogin = true }) {
       return;
     }
 
-    try {
-      if (!captchaToken) throw new Error("Please complete captcha");
+    if (!isLogin) {
+      if (!allRequirementsMet) {
+        setPasswordError("Please meet all password requirements");
+        setLoading(false);
+        return;
+      }
 
+      if (!passwordsMatch) {
+        setConfirmError("Passwords do not match");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (!captchaToken) {
+      setError("Please complete captcha");
+      setLoading(false);
+      return;
+    }
+
+    try {
       if (isLogin) {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "login",
-          }),
+          body: { email, password, captchaToken, action: "login" },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Login failed");
 
-        // The API route set the session as cookies.
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user || null);
-        router.push("/arena");
+        router.push(redirectTo);
       } else {
-        const res = await fetch("/api/auth", {
+        const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            captchaToken,
-            action: "signup",
-            name,
-          }),
+          body: { email, password, captchaToken, action: "signup", name },
         });
-        const data = await res.json();
         if (!data.success) throw new Error(data.message || "Signup failed");
         toast.success(data.message || "Account created! Please sign in.");
         router.push("/login");
@@ -96,19 +126,26 @@ export default function AuthForm({ isLogin = true }) {
   };
 
   const handleGoogleSignIn = async () => {
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (redirectTo && redirectTo !== "/") {
+      callbackUrl.searchParams.set("next", redirectTo);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) setError(error.message);
   };
 
-  // Safe Turnstile sitekey fallback for testing/dev environments
   const turnstileSiteKey =
-    (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
-      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key")
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY &&
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== "Your Cloudfare Captcha Key"
       ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
       : "1x00000000000000000000AA";
 
@@ -122,24 +159,19 @@ export default function AuthForm({ isLogin = true }) {
         {/* Header */}
         <div className="bg-udemy-purple p-6 text-white">
           <div className="mb-4 text-white hover:text-white/80 hover:-translate-x-1 transition cursor-pointer">
-            <Link href="/">
-              ← Back To Home
-            </Link>
+            <Link href="/">← Back To Home</Link>
           </div>
           <div>
             <h1 className="text-2xl font-bold font-sans">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-purple-200 text-sm mt-1">
-              {isLogin
-                ? "Sign in to access Arena"
-                : "Join us to get started"}
+              {isLogin ? "Sign in to access Arena" : "Join us to get started"}
             </p>
           </div>
         </div>
 
         <div className="flex justify-center items-center p-6">
-          {/* Google OAuth */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -177,12 +209,14 @@ export default function AuthForm({ isLogin = true }) {
             </motion.div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleAuth} noValidate className="space-y-4">
             <div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 w-10 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-gray-400 dark:text-gray-500" />
+                  <Mail
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
                 </div>
                 <input
                   type="email"
@@ -209,34 +243,76 @@ export default function AuthForm({ isLogin = true }) {
                 <Lock size={18} className="text-gray-400 dark:text-gray-500" />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 aria-label="Password"
                 disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                className="w-full pl-10 pr-10 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPassword(val);
+                  validatePasswords(val, confirmPassword);
+                }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
 
-            {!isLogin && (
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User size={18} className="text-gray-400 dark:text-gray-500" />
-                </div>
-                <input
-                  type="text"
-                  aria-label="Full name"
-                  disabled={loading}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
-                  placeholder="Full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+            {/* Password Requirements */}
+            {!isLogin && passwordError && (
+              <div className="text-sm space-y-1 pl-1">
+                <p className="text-red-600 dark:text-red-400 mt-1">
+                  {passwordError}
+                </p>
               </div>
             )}
 
-            {/* Turnstile for both login and signup */}
+            {/* Confirm Password - Only for Signup */}
+            {!isLogin && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock
+                    size={18}
+                    className="text-gray-400 dark:text-gray-500"
+                  />
+                </div>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  aria-label="Confirm Password"
+                  disabled={loading}
+                  className="w-full pl-10 pr-10 py-3 rounded-lg border border-udemy-border dark:border-udemy-dark-border focus:outline-none focus:ring-2 focus:ring-udemy-purple bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setConfirmPassword(val);
+                    validatePasswords(password, val);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+                {confirmError && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {confirmError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Turnstile */}
             <div className="flex justify-center">
               <Turnstile
                 siteKey={turnstileSiteKey}
@@ -246,11 +322,22 @@ export default function AuthForm({ isLogin = true }) {
 
             <button
               type="submit"
-              disabled={loading || !captchaToken || (email && emailError)}
-              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${loading || !captchaToken || (email && emailError)
+              disabled={
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
+              }
+              className={`w-full flex items-center justify-center py-3 px-4 rounded text-white font-bold transition-all ${
+                loading ||
+                !captchaToken ||
+                (email && emailError) ||
+                (!isLogin && !allRequirementsMet) ||
+                (!isLogin && !passwordsMatch)
                   ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
                   : "bg-udemy-purple hover:bg-udemy-purple-dark shadow-md hover:shadow-lg"
-                }`}
+              }`}
             >
               {loading ? (
                 <>
@@ -263,7 +350,7 @@ export default function AuthForm({ isLogin = true }) {
                 </>
               ) : (
                 <>
-                  <UserPlus size={18} className="mr-2" /> Continue
+                  <UserPlus size={18} className="mr-2" /> Create Account
                 </>
               )}
             </button>

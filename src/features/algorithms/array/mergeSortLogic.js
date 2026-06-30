@@ -1,26 +1,24 @@
 /**
  * Pure generator function for Merge Sort algorithm.
  * Yields frames representing the state of the sort.
- * 
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
+ *
  * @param {number[]} initialArray - The array to sort.
  * @returns {Generator<{type: string, payload: any}, void, unknown>}
  */
 export function* mergeSortGenerator(initialArray) {
-  let arr = [...initialArray];
-  let n = arr.length;
+  const arr = [...initialArray];
+  const n = arr.length;
   let comparisons = 0;
-  let merges = 0; // mapped to 'swaps' in the UI
+  let merges = 0;
   let step = 0;
   const totalSteps = Math.floor(n * Math.ceil(Math.log2(n || 1)));
 
-  yield {
-    type: 'init',
-    payload: { totalSteps }
-  };
+  yield { type: 'init', payload: { totalSteps } };
 
   yield* mergeSortHelper(arr, 0, n - 1, 0, []);
 
-  yield { type: 'completed', payload: { arr, comparisons, merges } };
+  yield { type: 'completed', payload: { arr, comparisons, swaps: merges } };
 
   function* mergeSortHelper(arr, l, r, level, path) {
     if (l >= r) return;
@@ -38,14 +36,11 @@ export function* mergeSortGenerator(initialArray) {
   }
 
   function* merge(arr, l, m, r) {
-    let n1 = m - l + 1;
-    let n2 = r - m;
+    const n1 = m - l + 1;
+    const n2 = r - m;
 
-    let L = new Array(n1);
-    let R = new Array(n2);
-
-    for (let i = 0; i < n1; i++) L[i] = arr[l + i];
-    for (let j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+    const L = arr.slice(l, l + n1);
+    const R = arr.slice(m + 1, m + 1 + n2);
 
     let i = 0, j = 0, k = l;
 
@@ -60,7 +55,15 @@ export function* mergeSortGenerator(initialArray) {
 
       yield {
         type: 'comparing',
-        payload: { l, m, r, k, leftCompareIdx: l + i, rightCompareIdx: m + 1 + j, LVal: L[i], RVal: R[j], arr: [...arr], comparisons, merges, step, totalSteps }
+        payload: {
+          l, m, r, k,
+          leftCompareIdx: l + i,
+          rightCompareIdx: m + 1 + j,
+          LVal: L[i],
+          RVal: R[j],
+          arr: [...arr],
+          comparisons, merges, step, totalSteps
+        }
       };
 
       if (L[i] <= R[j]) {

@@ -28,29 +28,29 @@ const DecisionTreesContent = () => {
           </h2>
           <div className="flex justify-center my-6">
             <svg width="500" height="280" viewBox="0 0 500 280" className="drop-shadow-lg">
-              <line x1="250" y1="50" x2="150" y2="130" stroke="#475569" strokeWidth="2" />
-              <line x1="250" y1="50" x2="350" y2="130" stroke="#475569" strokeWidth="2" />
-              <line x1="350" y1="130" x2="280" y2="210" stroke="#475569" strokeWidth="2" />
-              <line x1="350" y1="130" x2="420" y2="210" stroke="#475569" strokeWidth="2" />
+              <line x1="250" y1="50" x2="150" y2="130" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="250" y1="50" x2="350" y2="130" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="350" y1="130" x2="280" y2="210" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="350" y1="130" x2="420" y2="210" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
 
-              <text x="180" y="80" fill="#a855f7" fontSize="14" fontWeight="bold">Yes</text>
-              <text x="310" y="80" fill="#a855f7" fontSize="14" fontWeight="bold">No</text>
-              <text x="300" y="160" fill="#a855f7" fontSize="14" fontWeight="bold">&lt; 30</text>
-              <text x="390" y="160" fill="#a855f7" fontSize="14" fontWeight="bold">&gt;= 30</text>
+              <text x="180" y="80" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">Yes</text>
+              <text x="310" y="80" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">No</text>
+              <text x="300" y="160" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">&lt; 30</text>
+              <text x="390" y="160" className="fill-purple-500 dark:fill-purple-400" fontSize="14" fontWeight="bold">&gt;= 30</text>
 
-              <rect x="170" y="30" width="160" height="40" rx="20" fill="#4c1d95" stroke="#a855f7" strokeWidth="2" />
+              <rect x="170" y="30" width="160" height="40" rx="20" className="fill-purple-100 dark:fill-purple-900 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="250" y="55" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Is it raining?</text>
               
-              <rect x="70" y="110" width="160" height="40" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <rect x="70" y="110" width="160" height="40" rx="8" className="fill-purple-50 dark:fill-indigo-950 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="150" y="135" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Stay Indoors</text>
               
-              <rect x="270" y="110" width="160" height="40" rx="20" fill="#4c1d95" stroke="#a855f7" strokeWidth="2" />
+              <rect x="270" y="110" width="160" height="40" rx="20" className="fill-purple-100 dark:fill-purple-900 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="350" y="135" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Temperature?</text>
 
-              <rect x="200" y="190" width="160" height="40" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <rect x="200" y="190" width="160" height="40" rx="8" className="fill-purple-50 dark:fill-indigo-950 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="280" y="215" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Play Tennis</text>
               
-              <rect x="370" y="190" width="100" height="40" rx="8" fill="#1e1b4b" stroke="#a855f7" strokeWidth="2" />
+              <rect x="370" y="190" width="100" height="40" rx="8" className="fill-purple-50 dark:fill-indigo-950 stroke-purple-500 dark:stroke-purple-400" strokeWidth="2" />
               <text x="420" y="215" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Go Swimming</text>
             </svg>
           </div>

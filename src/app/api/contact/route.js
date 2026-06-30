@@ -1,7 +1,9 @@
 import nodemailer from "nodemailer";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
+import { RATE_LIMITS } from "@/config/rateLimits";
 
 function escapeHtml(value) {
   return String(value)
@@ -21,52 +23,33 @@ export async function POST(req) {
   try {
     const ip = getClientIp(req.headers);
 
-    // checkRateLimit uses a global Redis sliding-window counter in production
-    // so the limit is enforced across all serverless instances, not just the
-    // current one. Falls back to an in-memory check in local development.
     const { allowed, remaining, resetAt } =
       await checkRateLimit(`contact:${ip}`);
     if (!allowed) {
-  const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-
-  return Response.json(
-    { message: "Too many requests. Please try again later." },
-    {
-      status: 429,
-      headers: {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+      return jsonResponse({ message: "Too many requests. Please try again later." }, 429, {
         "Retry-After": retryAfter.toString(),
-        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
         "X-RateLimit-Remaining": "0",
-      },
+      });
     }
-  );
-}
 
     let body;
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ message: "Invalid JSON body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Invalid JSON body" }, 400);
     }
 
     const { name, email, subject, message, captchaToken } = body || {};
 
     if (!captchaToken) {
-      return new Response(JSON.stringify({ message: "Captcha token missing" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Captcha token missing" }, 400);
     }
 
     const captcha = await verifyTurnstile(String(captchaToken), { ip });
     if (!captcha.ok) {
-      return new Response(JSON.stringify({ message: captcha.error }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: captcha.error }, 400);
     }
 
     const trimmedName = String(name || "").trim().slice(0, 80);
@@ -75,38 +58,39 @@ export async function POST(req) {
     const trimmedMessage = String(message || "").trim().slice(0, 4000);
 
     if (!trimmedName) {
-      return new Response(JSON.stringify({ message: "Name is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Name is required" }, 400);
     }
     if (!isValidEmail(trimmedEmail)) {
-      return new Response(JSON.stringify({ message: "Valid email is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Valid email is required" }, 400);
     }
     if (!trimmedSubject) {
-      return new Response(JSON.stringify({ message: "Subject is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Subject is required" }, 400);
     }
     if (!trimmedMessage) {
-      return new Response(JSON.stringify({ message: "Message is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonResponse({ message: "Message is required" }, 400);
     }
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      return new Response(
-        JSON.stringify({ message: "Server misconfigured: email credentials missing" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return jsonResponse({ message: "Server misconfigured: email credentials missing" }, 500);
+    }
+
+    const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
+      RATE_LIMITS.SMTP.DAILY_QUOTA
+    );
+    if (!smtpAllowed) {
+      console.warn("[contact] SMTP daily quota exceeded. Persisting message to pending_messages.");
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from("pending_messages").insert({
+          type: "contact",
+          payload: { name: trimmedName, email: trimmedEmail, subject: trimmedSubject, message: trimmedMessage },
+        });
+      } catch (dbErr) {
+        console.error("[contact] Failed to persist pending message:", dbErr);
+      }
+      return jsonResponse({
+        message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
+      }, 503);
     }
 
     const transporter = nodemailer.createTransport({
@@ -140,19 +124,12 @@ export async function POST(req) {
 
     await transporter.sendMail(mailOptions);
 
-    return Response.json(
-  { message: "Email sent successfully" },
-  {
-    headers: {
-      "X-RateLimit-Limit": "5",
+    return jsonResponse({ message: "Email sent successfully" }, 200, {
+      "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
       "X-RateLimit-Remaining": remaining.toString(),
-    },
-  }
-);
-  } catch (error) {
-    return new Response(JSON.stringify({ message: "Error sending email" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
     });
+  } catch (error) {
+    console.error("Contact API error:", error);
+    return errorResponse(error);
   }
 }

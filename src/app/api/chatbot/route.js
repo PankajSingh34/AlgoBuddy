@@ -8,12 +8,14 @@
  * - Conversational memory via full message history array (clamped to 20)
  * - Dual-role system prompt: AlgoBuddy Product Guide + DSA Expert
  * - Complete DSA algorithm knowledge: Basic → Advanced with examples
- * - Provider: Google Gemini (gemini-2.0-flash)
+ * - Provider: Google Gemini (gemini-2.5-flash)
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { checkChatbotRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
+import { jsonResponse } from "@/lib/serverApi";
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are **AlgoBot** 🤖 — the official AI assistant embedded inside **AlgoBuddy** (https://www.algobuddy.me), a free, open-source, interactive platform built to help students and developers master Data Structures & Algorithms (DSA) through visualizations, practice, and progress tracking.
@@ -52,7 +54,7 @@ AlgoBuddy is a completely FREE open-source platform (no paid plans, no ads). Exp
   - Editorial solutions for learning the optimal approach
   - Problems tagged by topic (Arrays, Trees, DP, Graphs, etc.)
 
-### 📊 Progress Dashboard
+### 📊 Profile Progress
 - **What it is (simple):** Your personal report card and learning map.
 - **Features:**
   - Track every problem you've solved
@@ -172,20 +174,23 @@ You are an expert in ALL DSA topics from basic to advanced. For every algorithm/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GENERAL FORMATTING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- **Be concise by default.** Aim for 150–300 words per reply. Never pad answers.
+- For simple questions, answer directly in 2–4 sentences. No preamble.
+- Use bullet points and short paragraphs — avoid long prose blocks.
 - Always respond in well-structured **Markdown**
 - Use headers (##, ###), bold, inline code, and fenced code blocks (\`\`\`python or \`\`\`js)
-- Keep responses focused — no filler padding
-- For code, always include comments explaining each step
-- Always show at least 1 concrete input/output example for algorithms
+- For code, keep examples short (≤ 20 lines) and add inline comments only where non-obvious
+- Always show 1 concrete input/output example for algorithms — keep it brief
+- End with: "Want me to go deeper on any part?" only when the topic has natural extensions
 - If a question is outside DSA or AlgoBuddy: "I'm specialized in DSA and AlgoBuddy — ask me anything in those areas! 🎯"
 - NEVER fabricate AlgoBuddy features that don't exist
-- Be warm, encouraging, and make learning feel fun!`;
+- Be warm and encouraging — but get to the point fast!`;
 
 // ─── Gemini Client ────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const MODEL = "gemini-2.0-flash";
-const MAX_TOKENS = 2048;
+const MODEL = "gemini-2.5-flash";
+const MAX_TOKENS = 1024;
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 function validateMessages(messages) {
@@ -224,37 +229,36 @@ function toGeminiContents(messages) {
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(request) {
+  // Chatbot is open to guest/unauthenticated users as well, so we don't return 401.
+  const authResult = await getAuthenticatedUser().catch(() => ({ success: false }));
+
   const ip = getClientIp(request.headers);
-  const { allowed, resetAt } = await checkRateLimit(`chatbot:${ip}`);
+  const { allowed, resetAt } = await checkChatbotRateLimit(`chatbot:${ip}`);
   if (!allowed) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-    return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-      status: 429,
-      headers: {
-        "Content-Type": "application/json",
-        "Retry-After": retryAfter.toString(),
-      },
+    return jsonResponse({ error: "Too many requests. Please try again later." }, 429, {
+      "Retry-After": retryAfter.toString(),
     });
+  }
+
+  // ─── Configuration Validation ─────────────────────────────────────────────
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[AlgoBot] Missing GEMINI_API_KEY environment variable");
+    return jsonResponse({ error: "AI service is not configured. Please set GEMINI_API_KEY." }, 500);
   }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body." }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
   const { messages } = body;
   const { valid, error } = validateMessages(messages);
 
   if (!valid) {
-    return new Response(JSON.stringify({ error }), {
-      status: 422,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error }, 422);
   }
 
   // Clamp to last 20 turns to manage token budget
@@ -267,42 +271,81 @@ export async function POST(request) {
   }
   const encoder = new TextEncoder();
 
+  const abortController = new AbortController();
+  const STREAM_TIMEOUT_MS = 30000;
+
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (data) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, STREAM_TIMEOUT_MS);
+
       try {
-        // Build Gemini model configuration with direct system instruction context mapping
         const model = genAI.getGenerativeModel({
           model: MODEL,
           systemInstruction: SYSTEM_PROMPT,
-          generationConfig: { maxOutputTokens: MAX_TOKENS },
+          generationConfig: {
+            maxOutputTokens: MAX_TOKENS,
+            // Disable thinking mode for gemini-2.5-flash to keep latency low
+            // and avoid burning thinking token budget on a chat usecase.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         });
 
-        // Pass the fully structured content array to generateContentStream
-        // This avoids history-alternation validation errors with the Welcome message format
         const structuredContents = toGeminiContents(clampedMessages);
         const result = await model.generateContentStream({
           contents: structuredContents,
         });
 
         for await (const chunk of result.stream) {
+          if (abortController.signal.aborted) throw new Error("Stream timeout");
           const text = chunk.text();
           if (text) {
             enqueue({ type: "delta", content: text });
           }
         }
 
+        if (abortController.signal.aborted) throw new Error("Stream timeout");
+
         enqueue({ type: "done" });
       } catch (err) {
-        console.error("[AlgoBot API Error]", err?.message ?? err);
-        enqueue({
-          type: "error",
-          message: "AI service connection error. Please verify your local configuration and try again.",
-        });
+        const message = err?.message ?? String(err);
+        const httpStatus = err?.status ?? err?.httpStatus;
+        console.error("[AlgoBot API Error]", message);
+        if (err?.stack) console.error("[AlgoBot API Error Stack]\n", err.stack);
+
+        let userMessage;
+        if (
+          httpStatus === 429 ||
+          message.includes("429") ||
+          message.includes("Too Many Requests") ||
+          message.includes("Quota exceeded")
+        ) {
+          userMessage =
+            "AlgoBot is handling too many requests right now. Please wait a moment and try again! ⏳";
+        } else if (message.includes("timeout") || message.includes("Stream timeout")) {
+          userMessage = "The response took too long. Please try asking again! ⏰";
+        } else if (message.includes("Failed to parse stream")) {
+          userMessage = "There was a connection hiccup with the AI service. Please try again! 🔄";
+        } else {
+          userMessage =
+            "Something went wrong with the AI service. Please try again in a moment!";
+        }
+
+        try {
+          enqueue({ type: "error", message: userMessage });
+        } catch (error) { 
+          console.error("[Chatbot API] Error enqueueing stream message:", error.message);
+        }
+        // Do NOT call controller.error() — that signals a broken stream pipe to Next.js
+        // and causes a 500 "failed to pipe response". We already sent the error SSE
+        // event above; the finally block will close the stream cleanly.
       } finally {
-        controller.close();
+        clearTimeout(timeoutId);
+        try { controller.close(); } catch (error) { console.error("[Chatbot API] Error closing stream controller:", error.message); }
       }
     },
   });

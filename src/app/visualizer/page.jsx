@@ -107,12 +107,17 @@ const sections = [
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
           },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
+          },
         ],
       },
     ],
   },
   {
     title: "Array",
+    slug: "array",
     desc: "Searching & sorting algorithms on contiguous memory",
     icon: (
       <svg
@@ -151,6 +156,8 @@ const sections = [
           { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort" },
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
         ],
       },
@@ -158,12 +165,14 @@ const sections = [
         title: "Interview Patterns",
         items: [
           { name: "Sliding Window", path: "/visualizer/array/slidingwindow" },
+          { name: "Two Pointers", path: "/visualizer/array/twopointers" },
         ],
       },
     ],
   },
   {
     title: "Recursion",
+    slug: "recursion",
     desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
     icon: (
       <svg
@@ -204,6 +213,7 @@ const sections = [
   },
   {
     title: "Stack",
+    slug: "stack",
     desc: "LIFO operations, polish notations & implementations",
     icon: (
       <svg
@@ -260,6 +270,7 @@ const sections = [
   },
   {
     title: "Queue",
+    slug: "queue",
     desc: "FIFO operations, variants & implementations",
     icon: (
       <svg
@@ -330,6 +341,7 @@ const sections = [
   },
   {
     title: "Linked List",
+    slug: "linkedlist",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -407,12 +419,17 @@ const sections = [
             name: "Comparison",
             path: "/visualizer/linkedlist/operations/comparison",
           },
+          {
+            name: "Sorting",
+            path: "/visualizer/linkedlist/operations/sorting",
+          },
         ],
       },
     ],
   },
   {
     title: "Tree",
+    slug: "tree",
     desc: "BST, AVL, traversals, tries & advanced trees",
     icon: (
       <svg
@@ -551,6 +568,7 @@ const sections = [
   },
   {
     title: "HashMap",
+    slug: "hashmap",
     desc: "Key-value pairs with hash function and collision handling",
     icon: (
       <svg
@@ -586,6 +604,7 @@ const sections = [
   },
   {
     title: "Graph",
+    slug: "graph",
     desc: "BFS, DFS, shortest paths, MST & topological sort",
     icon: (
       <svg
@@ -663,9 +682,49 @@ const sections = [
     ],
   },
   {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+    info: {
+      About:
+        "Dynamic Programming is a method for solving complex problems by breaking them down into simpler subproblems. It is applicable when the problem has overlapping subproblems and optimal substructure.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
+        ],
+      },
+    ],
+  },
+  {
     title: "AI Algorithms",
     slug: "ai",
-    desc: "Search algorithms used in Artificial Intelligence (Min Max, Alpha Beta Pruning, etc.)",
+    desc: "Search algorithms used in Artificial Intelligence, heuristic pathfinding, and game tree decision making",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -684,7 +743,7 @@ const sections = [
     ),
     info: {
       About:
-        "AI algorithms involve search and optimization techniques used to find the best possible moves or paths, often used in game theory like Chess or Tic-Tac-Toe. Examples include Min Max and Alpha Beta Pruning.",
+        "AI algorithms involve search and optimization techniques used to find the best possible moves or paths, often used in game theory like Chess or Tic-Tac-Toe. Examples include Min Max, Alpha Beta Pruning, A* Search, and Monte Carlo Tree Search.",
       Representation: null,
     },
     subsections: [
@@ -700,6 +759,10 @@ const sections = [
             path: "/visualizer/ai/alpha-beta-pruning",
           },
           {
+            name: "A* Search",
+            path: "/visualizer/ai/astar",
+          },
+          {
             name: "Monte Carlo Tree Search (MCTS)",
             path: "/visualizer/ai/mcts",
           },
@@ -710,9 +773,6 @@ const sections = [
 ];
 
 const Visualizer = () => {
-  /* Strip non-serialisable `info` (contains JSX modals) before
-     passing to the client component. Icons are fine — they're
-     plain <svg> elements. */
   const clientSections = sections.map(({ info, ...rest }) => ({
     ...rest,
     slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-")
@@ -725,10 +785,9 @@ const Visualizer = () => {
     >
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
+      <BackToTop />
       <div className="w-full relative">
-        
         <BookmarkSection />
-        <BackToTop />
         <Footer />
       </div>
     </div>
@@ -736,4 +795,3 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
-

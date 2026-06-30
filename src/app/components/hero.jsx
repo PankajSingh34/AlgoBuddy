@@ -53,13 +53,12 @@ const HeroSection = () => {
     <main className="landing-page bg-white dark:bg-surface-900">
       <section className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
         <div className="relative z-10 w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-          {/* ══ LEFT — text ══ */}
+          {/* LEFT — text */}
           <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">
-            {/* headline */}
-            <h1 className="text-[2.8rem] sm:text-[3.5rem] lg:text-[4rem] font-serif font-bold leading-[1.1] tracking-tight text-surface-900 dark:text-surface-50"
-            style={{
-            fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif'
-            }}>
+            <h1
+              className="text-[2.2rem] sm:text-[3.5rem] lg:text-[4rem] font-serif font-bold leading-[1.1] tracking-tight text-surface-900 dark:text-surface-50"
+              style={{ fontFamily: '"Source Serif 4", "Source Serif Pro", Georgia, serif' }}
+            >
               The smartest way
               <br />
               to learn DSA — <span className="text-primary">visually.</span>
@@ -69,7 +68,7 @@ const HeroSection = () => {
             <div className="flex items-center gap-3 h-12">
               <span
                 key={topic.label}
-                className="topic-chip relative inline-flex items-center gap-2 px-5 py-2 rounded-full text-[14px] font-bold backdrop-blur-sm transition-colors transition-opacity duration-300 ease-in-out"
+                className="topic-chip relative inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-[13px] sm:text-[14px] font-bold backdrop-blur-sm transition-colors transition-opacity duration-300 ease-in-out"
                 style={{
                   "--chip-bg": visible ? (isDark ? topic.darkBg : topic.bg) : "transparent",
                   "--chip-bg-hover": visible ? (isDark ? topic.darkColor + "22" : topic.color + "1a") : "transparent",
@@ -101,11 +100,11 @@ const HeroSection = () => {
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-1 w-full sm:w-auto">
               <Link
                 href="/visualizer"
                 onClick={handleStart}
-                className="group inline-flex items-center gap-2 h-[52px] min-h-[44px] px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-colors duration-200"
+                className="group inline-flex items-center justify-center gap-2 h-[52px] min-h-[44px] w-full sm:w-auto px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-colors duration-200"
               >
                 Start Visualizing
                 <ArrowRight className="w-4 h-4" />
@@ -113,23 +112,21 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* ══ RIGHT — DSA visual card ══ */}
-          <div className="flex-shrink-0 flex items-center justify-center w-full lg:w-auto">
-            <div className="group relative w-full max-w-[460px] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
-              {/* ── main card: code editor window ── */}
+          {/* RIGHT — DSA visual card */}
+          <div className="flex-shrink-0 flex items-center justify-center w-full lg:w-auto px-4 sm:px-0">
+            <div className="group relative w-full max-w-[340px] sm:max-w-[460px] transform-gpu will-change-transform transition-all duration-300 ease-in-out">
+              {/* main card */}
               <div className="rounded-2xl border border-[#d1d7dc] dark:border-[#3e4143] bg-[#1c1d1f] shadow-2xl overflow-hidden transition-all duration-300 ease-in-out">
                 {/* title bar */}
                 <div className="flex items-center gap-2 px-4 py-3 bg-[#2d2f31] border-b border-[#3e4143]">
                   <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
                   <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
                   <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-                  <span className="ml-3 text-[12px] text-[#9e9e9e] font-mono">
-                    binarySearch.js
-                  </span>
+                  <span className="ml-3 text-[12px] text-[#9e9e9e] font-mono">binarySearch.js</span>
                 </div>
 
                 {/* code body */}
-                <div className="px-5 py-5 font-mono text-[13px] leading-[1.85] select-none">
+                <div className="px-4 sm:px-5 py-5 font-mono text-[11px] sm:text-[13px] leading-[1.85] select-none overflow-x-auto">
                   <div>
                     <span className="text-[#c792ea]">function</span>{" "}
                     <span className="text-[#82aaff]">binarySearch</span>
@@ -208,40 +205,33 @@ const HeroSection = () => {
                 </div>
 
                 {/* visualizer strip */}
-                <div className="px-5 pb-5">
-                  <div className="rounded-lg bg-[#2d2f31] border border-[#3e4143] p-4">
+                <div className="px-4 sm:px-5 pb-5">
+                  <div className="rounded-lg bg-[#2d2f31] border border-[#3e4143] p-3 sm:p-4">
                     <p className="text-[11px] text-[#9e9e9e] font-mono mb-3 uppercase tracking-wider">
                       Visualization — step 2 of 4
                     </p>
-                    {/* array bars */}
-                    <div className="flex items-end gap-1.5 h-[60px]">
+                    <div className="flex items-end gap-1 sm:gap-1.5 h-[60px]">
                       {[2, 5, 8, 12, 16, 23, 38, 45, 56, 72].map((v, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
                           <div
                             className="w-full rounded-sm transition-colors duration-200"
                             style={{
                               height: `${(v / 72) * 52}px`,
-                              background:
-                                i === 5
-                                  ? "#a435f0"
-                                  : i >= 5
-                                    ? "#3e4143"
-                                    : "#6a6f73",
+                              background: i === 5 ? "#a435f0" : i >= 5 ? "#3e4143" : "#6a6f73",
                             }}
                           />
-                          <span className="text-[9px] text-[#9e9e9e] font-mono">{v}</span>
+                          <span className="text-[8px] sm:text-[9px] text-[#9e9e9e] font-mono">{v}</span>
                         </div>
                       ))}
                     </div>
-                    {/* legend */}
-                    <div className="flex items-center gap-4 mt-3">
-                      <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
+                    <div className="flex items-center gap-3 sm:gap-4 mt-3 flex-wrap">
+                      <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-[#9e9e9e]">
                         <span className="w-2.5 h-2.5 rounded-sm bg-[#a435f0]" /> mid
                       </span>
-                      <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
+                      <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-[#9e9e9e]">
                         <span className="w-2.5 h-2.5 rounded-sm bg-[#6a6f73]" /> active
                       </span>
-                      <span className="flex items-center gap-1.5 text-[11px] text-[#9e9e9e]">
+                      <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-[#9e9e9e]">
                         <span className="w-2.5 h-2.5 rounded-sm bg-[#3e4143]" /> eliminated
                       </span>
                     </div>
@@ -249,9 +239,9 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              {/* Floating status badges (positioned absolutely inside the relative wrapper) */}
+              {/* Floating badges */}
               <div
-                className="absolute -top-3 -right-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-neutral-200 text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                className="absolute -top-3 -right-3 z-30 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full bg-white border border-neutral-200 text-xs sm:text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
                 aria-hidden
               >
                 <span
@@ -262,7 +252,7 @@ const HeroSection = () => {
               </div>
 
               <div
-                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-neutral-200 text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
+                className="absolute -bottom-3 -left-3 z-30 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full bg-white border border-neutral-200 text-xs sm:text-sm text-surface-900 shadow-md transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:scale-105"
                 aria-hidden
               >
                 <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#28c840" }}>
@@ -284,12 +274,10 @@ const HeroSection = () => {
           0% { transform: translateX(-120%); }
           100% { transform: translateX(120%); }
         }
-
         .topic-chip:hover {
           background-color: var(--chip-bg-hover);
           color: var(--chip-text-hover);
         }
-
         .topic-chip:hover > span:last-child {
           opacity: 0.28;
         }

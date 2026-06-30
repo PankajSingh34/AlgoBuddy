@@ -1,188 +1,202 @@
-const vm = require("vm");
-const { Worker } = require("worker_threads");
+const ivm = require("isolated-vm");
 const { EXECUTION_STATUS } = require("./errorCodes");
 const { MAX_TIMEOUT_MS, MAX_MEMORY_MB, MAX_OUTPUT_LENGTH } = require("./sandbox.config");
 
-const MEMORY_LIMIT_BYTES = MAX_MEMORY_MB * 1024 * 1024;
-const MEMORY_POLL_INTERVAL_MS = 30;
+// Sanitize error messages to prevent information leakage
+function sanitizeError(err) {
+  let message = err.message ?? String(err);
+  
+  // Remove file paths from error messages
+  message = message.replace(/[a-zA-Z]:\\[^\\]*/g, "[path]");
+  message = message.replace(/\/[^\/]*/g, "[path]");
+  
+  // Remove internal implementation details
+  message = message.replace(/vm:\d+:\d+/g, "[internal]");
+  message = message.replace(/internal\/[^)]*/g, "[internal]");
+  message = message.replace(/node:[^)]*/g, "[internal]");
+  message = message.replace(/isolated-vm:[^)]*/g, "[internal]");
+  
+  // Remove absolute paths
+  message = message.replace(/c:\\[^\\]*/gi, "[path]");
+  message = message.replace(/\/usr\/[^)]*/g, "[path]");
+  message = message.replace(/home\/[^)]*/g, "[path]");
+  
+  return message;
+}
+
+// Producer-consumer pool for V8 isolates with proper synchronization
+const MAX_ISOLATES = 4;
+const pool = [];
+const waitQueue = [];
+let isShuttingDown = false;
+let activeIsolateCount = 0;
+
+function createIsolate() {
+  activeIsolateCount++;
+  return new ivm.Isolate({ memoryLimit: MAX_MEMORY_MB });
+}
+
+function disposeIsolate(isolate) {
+  activeIsolateCount--;
+  try { isolate.dispose(); } catch {}
+}
+
+async function acquireIsolate() {
+  if (isShuttingDown) throw new Error("Sandbox is shutting down");
+  if (pool.length > 0) return pool.shift();
+  if (activeIsolateCount < MAX_ISOLATES) return createIsolate();
+  return new Promise((resolve) => waitQueue.push(resolve));
+}
+
+function releaseIsolate(isolate) {
+  if (waitQueue.length > 0) {
+    waitQueue.shift()(isolate);
+  } else {
+    pool.push(isolate);
+  }
+}
 
 async function executeCode(code) {
   const startTime = Date.now();
-  const memoryBefore = process.memoryUsage().heapUsed;
+  const executionId = `exec_${Date.now()}_${globalThis.crypto.randomUUID().split('-')[0]}`;
+  let isolate = null;
+  let context = null;
+  let isolateCorrupted = false;
 
-  if (memoryBefore > MEMORY_LIMIT_BYTES) {
+  try {
+    // Audit log: execution started
+    console.log(`[sandbox:audit] Execution started: ${executionId}, codeLength: ${code.length}, isolation: isolated-vm`);
+
+    // Acquire an isolate from the pool
+    isolate = await acquireIsolate();
+
+    // Create a context within the isolate
+    context = await isolate.createContext();
+
+    // Create a copy of the code that wraps console.log to capture output
+    const wrappedCode = `
+      (function() {
+        const outputLines = [];
+        const console = {
+          log: (...args) => {
+            outputLines.push(args.map(String).join(" "));
+          },
+          warn: (...args) => {
+            outputLines.push("[warn] " + args.map(String).join(" "));
+          },
+          error: (...args) => {
+            outputLines.push("[error] " + args.map(String).join(" "));
+          },
+          info: (...args) => {
+            outputLines.push("[info] " + args.map(String).join(" "));
+          },
+        };
+        
+        ${code}
+        
+        return outputLines.join("\\n");
+      })()
+    `;
+
+    // Compile and run the code
+    const script = await isolate.compileScript(wrappedCode, {
+      filename: "user-code.js",
+    });
+
+    const result = await script.run(context, {
+      timeout: MAX_TIMEOUT_MS,
+    });
+
+    // Get the captured output
+    const rawOutput = result ? result.toString() : "";
+    const output = rawOutput.length > MAX_OUTPUT_LENGTH
+      ? rawOutput.slice(0, MAX_OUTPUT_LENGTH) + "\n… (output truncated)"
+      : rawOutput;
+
+    const executionTime = Date.now() - startTime;
+
+    // Audit log: execution completed successfully
+    console.log(`[sandbox:audit] Execution completed: ${executionId}, status: SUCCESS, time: ${executionTime}ms, isolation: isolated-vm`);
+
     return {
-      status: EXECUTION_STATUS.MLE,
-      output: "",
-      error: `Server memory exhausted before execution. Try again later.`,
-      executionTime: 0,
-      memoryUsed: memoryBefore,
+      status: EXECUTION_STATUS.SUCCESS,
+      output,
+      executionTime,
+      memoryUsed: 0, // isolated-vm doesn't provide memory usage in the same way
     };
-  }
 
-  const abortController = new AbortController();
+  } catch (err) {
+    const elapsed = Date.now() - startTime;
+    const sanitizedMessage = sanitizeError(err);
+    isolateCorrupted = true;
 
-  const workerCode = `
-    const vm = require("vm");
-    const { parentPort, workerData } = require("worker_threads");
-    const { code, MAX_TIMEOUT_MS, MAX_OUTPUT_LENGTH } = workerData;
-    const outputLines = [];
-    const startTime = Date.now();
+    // Audit log: execution failed
+    console.log(`[sandbox:audit] Execution failed: ${executionId}, status: ${err.code || 'ERROR'}, time: ${elapsed}ms, error: ${sanitizedMessage}, isolation: isolated-vm`);
 
-    try {
-      const sandbox = Object.create(null);
-      sandbox.console = {
-        log:   (...a) => outputLines.push(a.map(String).join(" ")),
-        warn:  (...a) => outputLines.push("[warn] " + a.map(String).join(" ")),
-        error: (...a) => outputLines.push("[error] " + a.map(String).join(" ")),
-        info:  (...a) => outputLines.push("[info] " + a.map(String).join(" ")),
-      };
-
-      const context = vm.createContext(sandbox);
-
-      vm.runInContext(\`
-        Object.freeze(Object.prototype);
-        Object.freeze(Array.prototype);
-        Object.freeze(Function.prototype);
-      \`, context);
-
-      const script = new vm.Script(code, { filename: "user-code.js" });
-      const memBefore = process.memoryUsage().heapUsed;
-
-      script.runInContext(context, {
-        timeout: MAX_TIMEOUT_MS,
-        breakOnSigint: true,
-      });
-
-      const memAfter = process.memoryUsage().heapUsed;
-      const rawOutput = outputLines.join("\\n");
-      const output = rawOutput.length > MAX_OUTPUT_LENGTH
-        ? rawOutput.slice(0, MAX_OUTPUT_LENGTH) + "\\n… (output truncated)"
-        : rawOutput;
-
-      parentPort.postMessage({
-        status: "success",
-        output,
-        executionTime: Date.now() - startTime,
-        memoryUsed: memAfter - memBefore,
-      });
-    } catch (err) {
-      const elapsed = Date.now() - startTime;
-
-      if (err.code === "ERR_SCRIPT_EXECUTION_TIMEOUT" || err.message?.includes("timed out")) {
-        parentPort.postMessage({
-          status: "tle",
-          output: "",
-          error: \`Your code exceeded the \${MAX_TIMEOUT_MS}ms time limit.\`,
-          executionTime: elapsed,
-          memoryUsed: 0,
-        });
-        return;
-      }
-
-      const memoryErr = (err.message && (
-        err.message.includes("memory") ||
-        err.message.includes("allocation") ||
-        err.message.includes("heap")
-      )) || err.code === "ERR_MEMORY_ALLOCATION_FAILED";
-
-      if (memoryErr) {
-        parentPort.postMessage({
-          status: "mle",
-          output: outputLines.join("\\n"),
-          error: \`Your code used too much memory (exceeded \${MAX_MEMORY_MB} MB).\`,
-          executionTime: elapsed,
-          memoryUsed: process.memoryUsage().heapUsed - memBefore,
-        });
-        return;
-      }
-
-      parentPort.postMessage({
-        status: "runtime_error",
-        output: outputLines.join("\\n"),
-        error: err.message ?? String(err),
-        executionTime: elapsed,
-        memoryUsed: 0,
-      });
-    }
-  `;
-
-  const worker = new Worker(workerCode, {
-    eval: true,
-    workerData: { code, MAX_TIMEOUT_MS, MAX_OUTPUT_LENGTH },
-  });
-
-  return new Promise((resolve) => {
-    const hardKillTimer = setTimeout(() => {
-      abortController.abort();
-      worker.terminate();
-      resolve({
+    if (err.code === "ISOLATED_VM_SCRIPT_TIMEOUT" || err.message?.includes("timed out")) {
+      return {
         status: EXECUTION_STATUS.TLE,
         output: "",
-        error: `Your code exceeded the ${MAX_TIMEOUT_MS}ms time limit and was hard-killed.`,
-        executionTime: Date.now() - startTime,
+        error: `Your code exceeded the ${MAX_TIMEOUT_MS}ms time limit.`,
+        executionTime: elapsed,
         memoryUsed: 0,
-      });
-    }, MAX_TIMEOUT_MS + 3000);
-
-    const memoryPoll = setInterval(() => {
-      const memDelta = process.memoryUsage().heapUsed - memoryBefore;
-      if (memDelta > MEMORY_LIMIT_BYTES) {
-        clearTimeout(hardKillTimer);
-        abortController.abort();
-        worker.terminate();
-        resolve({
-          status: EXECUTION_STATUS.MLE,
-          output: "",
-          error: `Your code used ${Math.round(memDelta / 1024 / 1024)} MB of memory, exceeding the ${MAX_MEMORY_MB} MB limit.`,
-          executionTime: Date.now() - startTime,
-          memoryUsed: memDelta,
-        });
-      }
-    }, MEMORY_POLL_INTERVAL_MS);
-
-    const onMessage = (result) => {
-      clearTimeout(hardKillTimer);
-      clearInterval(memoryPoll);
-      abortController.abort();
-      worker.removeListener("message", onMessage);
-      worker.removeListener("error", onError);
-
-      const statusMap = {
-        success:   EXECUTION_STATUS.SUCCESS,
-        tle:       EXECUTION_STATUS.TLE,
-        mle:       EXECUTION_STATUS.MLE,
-        runtime_error: EXECUTION_STATUS.RUNTIME_ERROR,
       };
+    }
 
-      resolve({
-        status: statusMap[result.status] ?? EXECUTION_STATUS.RUNTIME_ERROR,
-        output: result.output ?? "",
-        error: result.error ?? null,
-        executionTime: result.executionTime,
-        memoryUsed: result.memoryUsed,
-      });
-    };
-
-    const onError = (err) => {
-      clearTimeout(hardKillTimer);
-      clearInterval(memoryPoll);
-      abortController.abort();
-      worker.removeListener("message", onMessage);
-      worker.removeListener("error", onError);
-
-      resolve({
-        status: EXECUTION_STATUS.RUNTIME_ERROR,
+    if (err.code === "ISOLATED_VM_MEMORY_LIMIT_EXCEEDED" || err.message?.includes("memory")) {
+      return {
+        status: EXECUTION_STATUS.MLE,
         output: "",
-        error: `Worker error: ${err.message ?? String(err)}`,
-        executionTime: Date.now() - startTime,
+        error: `Your code used too much memory (exceeded ${MAX_MEMORY_MB} MB).`,
+        executionTime: elapsed,
         memoryUsed: 0,
-      });
-    };
+      };
+    }
 
-    worker.on("message", onMessage);
-    worker.on("error", onError);
-  });
+    let errorMessage = sanitizedMessage;
+    if (err.name && err.name !== "Error" && !errorMessage.startsWith(err.name)) {
+      errorMessage = `${err.name}: ${errorMessage}`;
+    }
+    return {
+      status: EXECUTION_STATUS.RUNTIME_ERROR,
+      output: "",
+      error: errorMessage,
+      executionTime: elapsed,
+      memoryUsed: 0,
+    };
+  } finally {
+    // Clean up context
+    if (context) {
+      try {
+        context.release();
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
+    // Dispose corrupted isolates; return healthy ones to pool
+    if (isolate) {
+      if (isolateCorrupted) {
+        disposeIsolate(isolate);
+        releaseIsolate(createIsolate());
+      } else {
+        releaseIsolate(isolate);
+      }
+    }
+  }
 }
 
-module.exports = { executeCode };
+// Clean up function for graceful shutdown
+async function cleanup() {
+  isShuttingDown = true;
+  // Drain wait queue so waiting acquireIsolate calls throw
+  waitQueue.splice(0).forEach(resolve => {
+    try { resolve(); } catch {}
+  });
+  for (const isolate of pool) {
+    try { isolate.dispose(); } catch {}
+  }
+  pool.length = 0;
+  activeIsolateCount = 0;
+}
+
+module.exports = { executeCode, cleanup };

@@ -1,12 +1,15 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 import { generateReverseFrames } from "@/features/algorithms/recursion/reverseArrayLogic";
+
 const codeLines = [
   { line: 1, code: "function reverse(l, r, arr) {" },
   { line: 2, code: "  if (l >= r) return;" },
@@ -17,19 +20,8 @@ const codeLines = [
 
 const ReverseArrayAnimation = () => {
   const [arrayInput, setArrayInput] = useState("10, 20, 30, 40, 50");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-    useVisualizerReset(() => {
-      setArrayInput("10, 20, 30, 40, 50");
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-      setErrorMsg("");
-    });
 
   const parsedArray = useMemo(() => {
     return arrayInput
@@ -42,20 +34,17 @@ const ReverseArrayAnimation = () => {
 
   const frames = useMemo(() => {
     if (!isVisualizing || parsedArray.length === 0) return [];
-    return generateReverseFrames(parsedArray);
+    return Array.from(generateReverseFrames(parsedArray));
   }, [parsedArray, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setArrayInput("10, 20, 30, 40, 50");
+    setIsVisualizing(false);
+    setErrorMsg("");
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -68,16 +57,15 @@ const ReverseArrayAnimation = () => {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
+    engine.reset();
   };
 
   const generateRandomArray = () => {
@@ -88,46 +76,36 @@ const ReverseArrayAnimation = () => {
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
+      engine.play();
     }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    arr: parsedArray,
-    activeLine: 0,
-    lIndex: -1,
-    rIndex: -1,
-    isSwapping: false,
-    description: "Provide an array and click Visualize Go!",
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
+
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        stack: [],
+        arr: parsedArray,
+        activeLine: 0,
+        lIndex: -1,
+        rIndex: -1,
+        isSwapping: false,
+        description: "Provide an array and click Visualize Go!",
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activeLine = activeFrameData.activeLine;
@@ -189,17 +167,17 @@ const ReverseArrayAnimation = () => {
 
         {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs font-semibold mt-2">{errorMsg}</p>}
 
-        {isVisualizing && (
+        {isVisualizing && frames.length > 0 && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>
@@ -234,7 +212,7 @@ const ReverseArrayAnimation = () => {
                   <div
                     key={frame.id}
                     className={`w-full max-w-[280px] p-3 rounded-lg border flex flex-col items-center transition-all duration-300 ${statusClass} ${
-                      isTop ? "ring-2 ring-primary dark:ring-primary-light ring-offset-2 dark:ring-offset-zinc-950" : ""
+                      isTop ? "ring-2 ring-primary dark:ring-primary-light ring-offset-2 dark:ring-offset-zinc-950 shadow-md" : "scale-[0.98]"
                     }`}
                   >
                     <div className="flex justify-between w-full font-mono text-xs font-semibold">
@@ -262,7 +240,7 @@ const ReverseArrayAnimation = () => {
                 let borderStyle = "border-gray-300 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800";
                 if (active) {
                   borderStyle = isSwapping
-                    ? "border-purple-500 dark:border-purple-400 bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-100 animate-pulse stroke-2"
+                    ? "border-[#a435f0] dark:border-[#a435f0] bg-[#a435f0]/20 dark:bg-[#a435f0]/20 text-[#a435f0] dark:text-[#d8b4fe] animate-pulse stroke-2"
                     : "border-teal-500 dark:border-teal-400 bg-teal-100 dark:bg-teal-950 text-teal-900 dark:text-teal-100 font-bold stroke-2";
                 }
 
@@ -287,18 +265,18 @@ const ReverseArrayAnimation = () => {
 
         {/* Right Side: Code Block Trace */}
         <div className="md:col-span-4 flex flex-col">
-          <div className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-950 font-mono text-xs shadow-inner">
+          <div className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-950 font-mono text-xs shadow-inner h-full flex flex-col">
             <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
               <span className="text-zinc-400 font-semibold">Active Code Trace</span>
             </div>
-            <div className="p-4 text-zinc-300 leading-relaxed">
+            <div className="p-4 text-zinc-300 leading-relaxed flex-1">
               {codeLines.map((ln) => {
                 const isActive = ln.line === activeLine;
                 return (
                   <div
                     key={ln.line}
                     className={`flex gap-4 px-2 py-0.5 rounded transition-colors duration-200 ${
-                      isActive ? "bg-[#0d9488]/20 border-l-4 border-[#0d9488] text-white font-bold" : "border-l-4 border-transparent"
+                      isActive ? "bg-[#a435f0]/20 border-l-4 border-[#a435f0] text-white font-bold" : "border-l-4 border-transparent"
                     }`}
                   >
                     <span className="text-zinc-600 select-none w-4 text-right">{ln.line}</span>

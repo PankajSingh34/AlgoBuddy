@@ -6,8 +6,6 @@ import Print1ToNCode from "../print-1-to-n/codeBlock";
 import PrintNTo1Code from "../print-n-to-1/codeBlock";
 import Print1ToNContent from "../print-1-to-n/content";
 import PrintNTo1Content from "../print-n-to-1/content";
-import Print1ToNQuiz from "../print-1-to-n/quiz";
-import PrintNTo1Quiz from "../print-n-to-1/quiz";
 
 import VisualizerPageLayout, {
   createVisualizerPaths,
@@ -55,7 +53,6 @@ export default function BasicRecursionClient() {
       animation={is1ToN ? <Print1ToNAnimation /> : <PrintNTo1Animation />}
       content={is1ToN ? <Print1ToNContent /> : <PrintNTo1Content />}
       code={is1ToN ? <Print1ToNCode /> : <PrintNTo1Code />}
-      quiz={is1ToN ? <Print1ToNQuiz /> : <PrintNTo1Quiz />}
       exploreOther={
         <ExploreOther
           title="Explore other topics"

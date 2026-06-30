@@ -98,6 +98,18 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "Dynamic Programming": {
+    color: "#0ea5e9",
+    bg: "#f0f9ff",
+    border: "#bae6fd",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </svg>
+    ),
+  },
 };
 
 const getTheme = (t) =>
@@ -132,6 +144,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
         .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-card="Dynamic Programming"] { background: #082f49 !important; border-color: #0284c7 !important; }
 
         .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
@@ -143,6 +156,7 @@ export default function CategoryClient({ section }) {
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
         .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-header="Dynamic Programming"] { background: #0c4a6e !important; border-color: #0284c7 !important; }
       `}</style>
 
       <motion.div
@@ -166,8 +180,8 @@ export default function CategoryClient({ section }) {
             )}
             <div>
               <h1
-                className="text-[2.2rem] sm:text-[3rem] font-black leading-[1.1] tracking-tighter text-surface-900 dark:text-white"
-                style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.03em" }}
+                className="text-[2.2rem] sm:text-[3rem] font-black leading-[1.1] tracking-tighter"
+                style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.03em", color: theme.color }}
               >
                 {section.title}
               </h1>

@@ -1,13 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import ResetButton from "@/app/components/ui/resetButton";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import GoButton from "@/app/components/ui/goButton";
+import ResetButton from "@/app/components/ui/resetButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import usePlayback from "@/app/hooks/usePlayback";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { linearSearchGenerator } from "@/features/algorithms/array/linearSearchLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 const getFontSize = (value) => {
   const len = String(value).length;
@@ -20,63 +18,51 @@ const LinearSearch = () => {
   const [arrayElements, setArrayElements] = useState("");
   const [target, setTarget] = useState("");
   const [array, setArray] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [foundIndex, setFoundIndex] = useState(-1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [targetValue, setTargetValue] = useState(null);
+
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // FIX: "success" | "error" | "warning"
-  const {
-    isPaused,
-    speed,
-    speedRef,
-    setSpeed,
-    togglePlayPause,
-    increaseSpeed,
-    decreaseSpeed,
-    checkPause,
-  } = usePlayback(1);
-  const animationRef = useRef(null);
-  const resolveRef = useRef(null);
-  const isSearchingRef = useRef(false);
-  const formRef = useRef(null);
-  useVisualizerReset(() => {
-    clearTimeout(animationRef.current);
-    setArrayElements("");
-    setTarget("");
-    setArray([]);
-    setCurrentIndex(-1);
-    setFoundIndex(-1);
-    setIsAnimating(false);
-    setMessage("");
-    setMessageType("");
+  const [messageType, setMessageType] = useState("");
+
+  const [visualState, setVisualState] = useState({
+    currentIndex: -1,
+    foundIndex: -1
   });
-  const elementRefs = useRef([]);
+
+  const steps = useMemo(() => {
+    if (array.length === 0 || targetValue === null) return [];
+    return Array.from(linearSearchGenerator(array, targetValue));
+  }, [array, targetValue]);
+
+  const onStep = useCallback((step) => {
+    let msg = "";
+    let msgType = "";
+    
+    if (step.type === 'found') {
+      msg = `Element ${targetValue} found at index ${step.index}!`;
+      msgType = "success";
+    } else if (step.type === 'not_found') {
+      msg = `Element ${targetValue} not found in the array.`;
+      msgType = "error";
+    }
+
+    setVisualState({
+      currentIndex: step.index !== undefined ? step.index : -1,
+      foundIndex: step.type === 'found' ? step.index : -1
+    });
+    
+    if (msg) setMessage(msg);
+    if (msgType) setMessageType(msgType);
+  }, [targetValue]);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 1000 });
+  const isAnimating = engine.isPlaying || engine.currentStep > 0;
 
   const handleReset = () => {
-    isSearchingRef.current = false;
-    clearTimeout(animationRef.current);
-    if (resolveRef.current) {
-      resolveRef.current();
-      resolveRef.current = null;
-    }
-    setArray([]);
-    setCurrentIndex(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType(""); // FIX: reset message type
-    setIsAnimating(false);
-    setArrayElements("");
-    setTarget("");
-    if (formRef.current) formRef.current.reset();
-
-    // Reset GSAP animations
-    elementRefs.current.forEach((ref) => {
-      gsap.to(ref, {
-        backgroundColor: "#E5E7EB",
-        borderColor: "#D1D5DB",
-        duration: 0,
-      });
-    });
+    engine.reset();
+    setArray([]); setTargetValue(null);
+    setMessage(""); setMessageType(""); 
+    setVisualState({ currentIndex: -1, foundIndex: -1 });
+    setArrayElements(""); setTarget("");
   };
 
   const generateRandomArray = () => {
@@ -90,113 +76,44 @@ const LinearSearch = () => {
 
   const handleGo = (e) => {
     e.preventDefault();
-    handleReset();
+    engine.reset();
+    setMessage(""); setMessageType("");
+    setVisualState({ currentIndex: -1, foundIndex: -1 });
 
     if (!arrayElements || !target) {
-      setMessage("Please fill in all fields.");
-      setMessageType("warning"); // FIX: validation error → warning
-      return;
+      setMessage("Please fill in all fields."); setMessageType("warning"); return;
     }
-
     const rawElements = arrayElements.split(",").map((el) => el.trim());
-
-    // FIX: detect decimal/float inputs before parsing and warn the user
-    const hasDecimals = rawElements.some((el) => el.includes("."));
-    if (hasDecimals) {
-      setMessage("Only integers are supported. Please remove decimal values.");
-      setMessageType("warning");
-      return;
+    if (rawElements.some((el) => el.includes("."))) {
+      setMessage("Only integers are supported. Please remove decimal values."); setMessageType("warning"); return;
     }
-
     const elements = rawElements.map((el) => parseInt(el));
-
-    // FIX: also check target for decimal input
-    if (target.includes(".")) {
-    setMessage("Only integers are supported. Please remove decimal values.");
-    setMessageType("warning");
-    return;
+    const targetVal = parseInt(target);
+    if (target.includes(".") || elements.some(isNaN) || isNaN(targetVal)) {
+      setMessage(target.includes(".") ? "Only integers are supported. Please remove decimal values." : "Invalid array elements or target.");
+      setMessageType("warning"); return;
     }
-
-const targetValue = parseInt(target);
-
-    if (elements.some(isNaN) || isNaN(targetValue)) {
-      setMessage("Invalid array elements or target.");
-      setMessageType("warning"); // FIX: validation error → warning
-      return;
-    }
-
+    
+    setTargetValue(targetVal);
     setArray(elements);
-    setIsAnimating(true);
-    setCurrentIndex(-1);
-    setFoundIndex(-1);
-    setMessage("");
-    setMessageType("");
-
-    // start animation
-    animateLinearSearch(elements, targetValue);
+    
+    setTimeout(() => {
+        engine.play();
+    }, 50);
   };
-
-  const cancellableDelay = async () => {
-    await new Promise((resolve) => {
-      resolveRef.current = resolve;
-      animationRef.current = setTimeout(resolve, 1500 / speedRef.current);
-    });
-    await checkPause();
-  };
-
-  const animateLinearSearch = async (arr, targetValue) => {
-    isSearchingRef.current = true;
-    const generator = linearSearchGenerator(arr, targetValue);
-
-    for (const frame of generator) {
-      if (!isSearchingRef.current) return;
-
-      if (frame.type === 'checking') {
-        setCurrentIndex(frame.index);
-        
-        // highlight current
-        elementRefs.current.forEach((ref, idx) => {
-          if (!ref) return;
-          if (idx === frame.index) {
-            gsap.to(ref, { backgroundColor: "#EAB308", borderColor: "#A16207", duration: 0.3 });
-          } else if (idx < frame.index) {
-            gsap.to(ref, { backgroundColor: "#93C5FD", borderColor: "#3B82F6", duration: 0.3 });
-          } else {
-            gsap.to(ref, { backgroundColor: "#E5E7EB", borderColor: "#D1D5DB", duration: 0.3 });
-          }
-        });
-
-        await cancellableDelay();
-      } else if (frame.type === 'found') {
-        setFoundIndex(frame.index);
-        setMessage(`Element ${targetValue} found at index ${frame.index}!`);
-        setMessageType("success"); // FIX: found → green
-        setIsAnimating(false);
-        isSearchingRef.current = false;
-        gsap.to(elementRefs.current[frame.index], { backgroundColor: "#22C55E", borderColor: "#15803D", duration: 0.3 });
-        return;
-      } else if (frame.type === 'not_found') {
-        setMessage(`Element ${targetValue} not found in the array.`);
-        setMessageType("error"); // FIX: search result "not found" → red
-        setIsAnimating(false);
-        isSearchingRef.current = false;
-        return;
-      }
-    }
-  };
-
 
   useVisualizerKeyboard({
-    onStart: () => {}, // Handled by Go button
-    onReset: handleReset,
-    onSpeedChange: setSpeed,
-    onTogglePlayPause: togglePlayPause,
-    speed,
-    sorting: isAnimating,
-    sorted: foundIndex !== -1 || messageType === "error",
+    onTogglePlayPause: engine.isPlaying ? engine.pause : () => {
+        if (array.length > 0) engine.play();
+    },
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    speed: engine.speed / 1000,
+    sorting: engine.isPlaying,
+    sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
   });
 
-  // FIX: derive message box classes from messageType instead of foundIndex
   const messageClass =
     messageType === "success"
       ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
@@ -211,7 +128,6 @@ const targetValue = parseInt(target);
       </p>
 
       <form
-        ref={formRef}
         onSubmit={handleGo}
         className="max-w-4xl mx-auto bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8"
       >
@@ -264,12 +180,20 @@ const targetValue = parseInt(target);
         </div>
 
         {isAnimating && (
-          <PlaybackControls
-            isPaused={isPaused}
-            onTogglePlayPause={togglePlayPause}
-            speed={speed}
-            onSpeedChange={setSpeed}
-          />
+          <div className="mt-4">
+            <PlaybackControls
+                isPlaying={engine.isPlaying}
+                onPlayPause={engine.isPlaying ? engine.pause : () => engine.play()}
+                speed={engine.speed / 1000}
+                onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+                onStepForward={engine.stepForward}
+                onStepBackward={engine.stepBackward}
+                onReset={engine.reset}
+                onExplainStep={() => {}}
+                disabled={steps.length === 0}
+                progressText={`${Math.max(engine.currentStep + 1, 0)} / ${steps.length}`}
+            />
+          </div>
         )}
       </form>
 
@@ -283,25 +207,33 @@ const targetValue = parseInt(target);
         <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 text-center">Array Visualization</h2>
           <div className="flex flex-wrap gap-4 justify-center">
-            {array.map((element, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <div
-                  ref={(el) => (elementRefs.current[index] = el)}
-                  className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium ${
-                    foundIndex === index
-                      ? "bg-green-500 dark:bg-green-600 border-green-700 dark:border-green-400 text-gray-800 dark:text-white"
-                      : currentIndex === index && foundIndex === -1
-                      ? "bg-yellow-500 dark:bg-yellow-600 border-yellow-700 dark:border-yellow-400 text-gray-800 dark:text-white"
-                      : index < currentIndex
-                      ? "bg-[#c27cf7] dark:bg-blue-700 border-primary dark:border-primary/80 text-gray-800 dark:text-white"
-                      : "bg-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white"
-                  }`}
-                >
-                  {element}
-                </div>
-                <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 text-center">[{index}]</div>
-              </div>
-            ))}
+            {array.map((element, index) => {
+                let bgColor = "bg-gray-200 dark:bg-gray-900";
+                let borderColor = "border-gray-300 dark:border-gray-600";
+                let textColor = "text-gray-800 dark:text-white";
+
+                if (visualState.foundIndex === index) {
+                    bgColor = "bg-green-500 dark:bg-green-600";
+                    borderColor = "border-green-700 dark:border-green-400";
+                } else if (visualState.currentIndex === index && visualState.foundIndex === -1) {
+                    bgColor = "bg-yellow-500 dark:bg-yellow-600";
+                    borderColor = "border-yellow-700 dark:border-yellow-400";
+                } else if (index < visualState.currentIndex || (visualState.foundIndex === -1 && visualState.currentIndex === -1 && engine.currentStep === steps.length - 1)) {
+                    bgColor = "bg-[#c27cf7] dark:bg-blue-700";
+                    borderColor = "border-primary dark:border-primary/80";
+                }
+
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div
+                      className={`w-16 h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 ${getFontSize(element)} font-medium ${bgColor} ${borderColor} ${textColor}`}
+                    >
+                      {element}
+                    </div>
+                    <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 text-center">[{index}]</div>
+                  </div>
+                );
+            })}
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">

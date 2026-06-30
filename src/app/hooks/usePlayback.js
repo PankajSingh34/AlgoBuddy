@@ -11,12 +11,11 @@ export default function usePlayback(initialSpeed = 1) {
   const pausePromiseRef = useRef(null);
   const pauseResolveRef = useRef(null);
 
-  const togglePlayPause = useCallback(() => {
+  const internalSetIsPaused = useCallback((nextPaused) => {
     setIsPaused((prev) => {
-      const next = !prev;
+      const next = typeof nextPaused === "function" ? nextPaused(prev) : nextPaused;
       isPausedRef.current = next;
 
-      // If UNPAUSING, resolve the paused promise instantly so the sorting loop resumes
       if (!next && pauseResolveRef.current && pausePromiseRef.current) {
         pauseResolveRef.current();
         pausePromiseRef.current = null;
@@ -25,6 +24,27 @@ export default function usePlayback(initialSpeed = 1) {
       return next;
     });
   }, []);
+
+  const internalSetIsPausedRef = useRef(internalSetIsPaused);
+  internalSetIsPausedRef.current = internalSetIsPaused;
+
+  const internalTogglePlayPause = useCallback(() => {
+    internalSetIsPaused((prev) => !prev);
+  }, [internalSetIsPaused]);
+
+  const internalTogglePlayPauseRef = useRef(internalTogglePlayPause);
+  internalTogglePlayPauseRef.current = internalTogglePlayPause;
+
+  const setSpeedRef = useRef(setSpeed);
+  setSpeedRef.current = setSpeed;
+
+  const setPausedSync = useCallback((val) => {
+    internalSetIsPaused(val);
+  }, [internalSetIsPaused]);
+
+  const togglePlayPause = useCallback(() => {
+    internalTogglePlayPause();
+  }, [internalTogglePlayPause]);
 
   // Async function for sorting algorithms to await between steps
   const checkPause = async () => {
@@ -46,6 +66,10 @@ export default function usePlayback(initialSpeed = 1) {
     setSpeed((s) => Math.max(s - 0.5, 0.5));
   }, []);
 
+  const setSpeedSync = useCallback((val) => {
+    setSpeed((s) => (typeof val === "function" ? val(s) : val));
+  }, []);
+
   // Ensure speed ref is always synced for setTimeout delays
   useEffect(() => {
     speedRef.current = speed;
@@ -53,11 +77,11 @@ export default function usePlayback(initialSpeed = 1) {
 
   return {
     isPaused,
-    setIsPaused,
+    setIsPaused: setPausedSync,
     isPausedRef,
     speed,
     speedRef,
-    setSpeed,
+    setSpeed: setSpeedSync,
     togglePlayPause,
     increaseSpeed,
     decreaseSpeed,

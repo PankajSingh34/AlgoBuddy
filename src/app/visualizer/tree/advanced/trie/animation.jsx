@@ -1,170 +1,198 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import {
-  AlertCircle,
-  Plus,
-  Search
-} from "lucide-react";
-import {
-  VisualizerCard,
-  VisualizerInteractiveLayout,
-} from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import usePlayback from "@/app/hooks/usePlayback";
-import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
-import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { Info, Layers } from "lucide-react";
+import { TrieNode, cloneTrie, insertGenerator, searchGenerator, prefixSearchGenerator } from "@/features/algorithms/tree/trieLogic";
 
-// Internal Trie Node Class for coordinate mapping
-class TrieNode {
-  constructor(char = "", id = "root") {
-    this.id = id;
-    this.char = char;
-    this.children = {}; // char -> TrieNode
-    this.isEndOfWord = false;
-    this.x = 400;
-    this.y = 60;
+const calculateNodeWidth = (node) => {
+  if (!node) return 0;
+  const children = Object.values(node.children).sort((a, b) => a.char.localeCompare(b.char));
+  if (children.length === 0) return 1;
+  let width = 0;
+  for (const child of children) {
+    width += calculateNodeWidth(child);
   }
-}
+  return width;
+};
 
-export default function TrieAnimation() {
-  const [root, setRoot] = useState(null);
-  const [nodeIdCounter, setNodeIdCounter] = useState(0);
-  const [inputValue, setInputValue] = useState("");
-  const [message, setMessage] = useState("Add some words to build your Prefix Tree! Click 'Insert' to start.");
-  const { speed, setSpeed } = usePlayback(1);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [steps, setSteps] = useState([]);
-  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+const layoutTrie = (node, x, y, allocatedWidth, nodesList = [], edgesList = [], currentStep) => {
+  if (!node) return { nodesList, edgesList };
 
-  // Setup initial words for a stunning first-time impression
-  useEffect(() => {
-    let counter = 0;
-    const newRoot = new TrieNode("", "root");
+  const nodeRadius = 24;
+  const yOffset = 80;
 
-    const addWord = (trieRoot, word) => {
-      let node = trieRoot;
-      for (let char of word) {
-        if (!node.children[char]) {
-          counter++;
-          node.children[char] = new TrieNode(char, `node-${counter}`);
-        }
-        node = node.children[char];
-      }
-      node.isEndOfWord = true;
-    };
+  const highlightedState = currentStep?.highlightedNodes?.[node.id] || null;
 
-    addWord(newRoot, "cat");
-    addWord(newRoot, "car");
-    addWord(newRoot, "dog");
-
-    setNodeIdCounter(counter);
-    setRoot(newRoot);
-  }, []);
-
-  const timerRef = useRef(null);
-  useVisualizerReset(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setRoot(null);
-    setNodeIdCounter(0);
-    setInputValue("");
-    setMessage("...");
-    setIsAnimating(false);
-    setSteps([]);
-    setCurrentStepIdx(-1);
+  nodesList.push({
+    id: node.id,
+    char: node.char || "Root",
+    isEndOfWord: node.isEndOfWord,
+    x,
+    y,
+    state: highlightedState,
   });
 
-  // Clean up timers on unmount
+  const children = Object.values(node.children).sort((a, b) => a.char.localeCompare(b.char));
+  if (children.length > 0) {
+    let currentXStart = x - (allocatedWidth / 2);
+    const widthPerUnit = allocatedWidth / calculateNodeWidth(node);
+
+    for (const child of children) {
+      const childWidthUnits = calculateNodeWidth(child);
+      const childAllocatedWidth = childWidthUnits * widthPerUnit;
+      const childX = currentXStart + (childAllocatedWidth / 2);
+      const childY = y + yOffset;
+
+      const edgeState = currentStep?.highlightedEdges?.[`${node.id}->${child.id}`] ? "active" : "default";
+
+      edgesList.push({
+        id: `${node.id}->${child.id}`,
+        x1: x,
+        y1: y + nodeRadius,
+        x2: childX,
+        y2: childY - nodeRadius,
+        state: edgeState
+      });
+
+      layoutTrie(child, childX, childY, childAllocatedWidth, nodesList, edgesList, currentStep);
+      currentXStart += childAllocatedWidth;
+    }
+  }
+
+  return { nodesList, edgesList };
+};
+
+export default function TrieAnimation() {
+  const [mode, setMode] = useState("insertion");
+  const [root, setRoot] = useState(null);
+  const [targetTrieRoot, setTargetTrieRoot] = useState(null);
+  const [inputValue, setInputValue] = useState("");
+  const [steps, setSteps] = useState([]);
+  const [currentStepIdx, setCurrentStepIdx] = useState(-1);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [message, setMessage] = useState("Add words or select a mode to begin.");
+  const [nodeIdCounter, setNodeIdCounter] = useState(0);
+
+  const { speed, setSpeed } = usePlayback(1);
+  const timerRef = useRef(null);
+
+  const resetPlayback = useCallback(() => {
+    setIsAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setSteps([]);
+    setRoot(targetTrieRoot);
+    setMessage("Playback reset. Click Start to begin operations.");
+  }, [targetTrieRoot]);
+
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    // Initial Root node setup
+    const initialRoot = new TrieNode("", "root");
+    setRoot(initialRoot);
+    setTargetTrieRoot(initialRoot);
+    setNodeIdCounter(0);
   }, []);
 
-  // 1. Recursive symmetric layout calculator (Reingold-Tilford style)
-  const computeTreeLayout = (trieRoot) => {
-    if (!trieRoot) return { nodesList: [], edgesList: [] };
+  const handleInsert = () => {
+    const val = inputValue.trim().toLowerCase();
+    if (!val || !/^[a-z]+$/.test(val)) {
+      setMessage("⚠️ Please enter a valid lowercase word (a-z)");
+      return;
+    }
 
-    let leafCount = 0;
-    const nodesList = [];
-    const edgesList = [];
+    resetPlayback();
+    const generator = insertGenerator(targetTrieRoot, val, nodeIdCounter);
+    const preCalculated = [...generator];
+    
+    setSteps(preCalculated);
+    if (preCalculated.length > 0) {
+      const finalStep = preCalculated[preCalculated.length - 1];
+      setTargetTrieRoot(finalStep.tree);
+      setNodeIdCounter(finalStep.newNodeIdCounter);
+    }
+    
+    setCurrentStepIdx(0);
+    setIsAnimating(true);
+    setInputValue("");
+  };
 
-    const layoutDFS = (node, level = 0) => {
-      const childrenKeys = Object.keys(node.children).sort();
-      const childrenList = childrenKeys.map(k => node.children[k]);
+  const handleSearch = () => {
+    const val = inputValue.trim().toLowerCase();
+    if (!val || !/^[a-z]+$/.test(val)) {
+      setMessage("⚠️ Please enter a valid lowercase word (a-z)");
+      return;
+    }
 
-      node.y = 80 + level * 90;
+    resetPlayback();
+    const preCalculated = [...searchGenerator(targetTrieRoot, val)];
+    setSteps(preCalculated);
+    setCurrentStepIdx(0);
+    setIsAnimating(true);
+    setInputValue("");
+  };
 
-      if (childrenList.length === 0) {
-        // Leaf node
-        node.x = 60 + leafCount * 90;
-        leafCount++;
-      } else {
-        // Compute layout for children recursively first
-        childrenList.forEach(child => layoutDFS(child, level + 1));
+  const handlePrefixSearch = () => {
+    const val = inputValue.trim().toLowerCase();
+    if (!val || !/^[a-z]+$/.test(val)) {
+      setMessage("⚠️ Please enter a valid lowercase prefix (a-z)");
+      return;
+    }
 
-        // Parent X is average of its first and last child X coordinates
-        const firstX = childrenList[0].x;
-        const lastX = childrenList[childrenList.length - 1].x;
-        node.x = (firstX + lastX) / 2;
+    resetPlayback();
+    const preCalculated = [...prefixSearchGenerator(targetTrieRoot, val)];
+    setSteps(preCalculated);
+    setCurrentStepIdx(0);
+    setIsAnimating(true);
+    setInputValue("");
+  };
+
+  const handleClear = () => {
+    const initialRoot = new TrieNode("", "root");
+    setRoot(initialRoot);
+    setTargetTrieRoot(initialRoot);
+    setNodeIdCounter(0);
+    setIsAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setCurrentStepIdx(-1);
+    setSteps([]);
+    setMessage("Trie cleared.");
+  };
+
+  const startVisualizer = () => {
+    if (steps.length === 0) {
+      if (mode === "insertion") handleInsert();
+      else if (mode === "searching") handleSearch();
+      else handlePrefixSearch();
+      return;
+    }
+    setIsAnimating(true);
+    let nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
+    setCurrentStepIdx(nextIdx);
+  };
+
+  const pauseVisualizer = () => {
+    setIsAnimating(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const stepForward = () => {
+    setIsAnimating(false);
+    if (currentStepIdx < steps.length - 1) {
+      setCurrentStepIdx(prev => prev + 1);
+      if (currentStepIdx === steps.length - 2 && mode === "insertion") {
+        setRoot(targetTrieRoot);
       }
-
-      // Read visual highlight state
-      const currentStep = steps[currentStepIdx];
-      const state = currentStep?.highlightedNodes?.[node.id] || null;
-
-      nodesList.push({
-        id: node.id,
-        char: node.char,
-        x: node.x,
-        y: node.y,
-        isEndOfWord: node.isEndOfWord,
-        state: state
-      });
-
-      // Map edges to children
-      childrenList.forEach(child => {
-        edgesList.push({
-          x1: node.x,
-          y1: node.y + 20,
-          x2: child.x,
-          y2: child.y - 20,
-          char: child.char,
-          isActive: currentStep?.highlightedEdges?.[`${node.id}->${child.id}`] || false
-        });
-      });
-    };
-
-    layoutDFS(trieRoot, 0);
-    return { nodesList, edgesList };
+    }
   };
 
-  // Render variables
-  const { nodesList: renderNodes, edgesList: renderEdges } = computeTreeLayout(root);
-
-  // Dynamic SVG dimensions for responsive scaling
-  const getSvgDimensions = () => {
-    if (renderNodes.length === 0) return { width: 800, height: 400, offset: 0 };
-    const xCoords = renderNodes.map(n => n.x);
-    const yCoords = renderNodes.map(n => n.y);
-
-    const minX = Math.min(...xCoords);
-    const maxX = Math.max(...xCoords);
-    const maxY = Math.max(...yCoords);
-
-    const padding = 60;
-    const computedWidth = maxX - minX + padding * 2;
-    const computedHeight = maxY + padding * 1.5;
-
-    return {
-      width: Math.max(800, computedWidth),
-      height: Math.max(380, computedHeight),
-      offset: minX - padding
-    };
+  const stepBackward = () => {
+    setIsAnimating(false);
+    if (currentStepIdx > 0) {
+      setCurrentStepIdx(prev => prev - 1);
+    }
   };
 
-  const svgDimensions = getSvgDimensions();
-
-  // Animation logic play loop
   useEffect(() => {
     if (!isAnimating || steps.length === 0) return;
 
@@ -181,622 +209,243 @@ export default function TrieAnimation() {
         setCurrentStepIdx(prev => prev + 1);
       } else {
         setIsAnimating(false);
-        const finalStep = steps[steps.length - 1];
-        setMessage(finalStep.explanation);
+        if (mode === "insertion") {
+          setRoot(targetTrieRoot);
+        }
+        setMessage(currentStep.explanation);
       }
     }, 1800 / speed);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isAnimating, currentStepIdx, steps, speed]);
+  }, [isAnimating, currentStepIdx, steps, speed, targetTrieRoot, mode]);
 
-  // Actions
-  const pauseVisualizer = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
+  const currentStep = steps[currentStepIdx] || null;
+
+  const buildTreeRenderData = () => {
+    const activeTree = (mode === "insertion" && currentStep && currentStep.tree) ? currentStep.tree : root;
+    if (!activeTree) return { renderNodes: [], renderEdges: [] };
+    
+    const treeWidthUnits = calculateNodeWidth(activeTree);
+    const allocatedWidth = Math.max(800, treeWidthUnits * 80);
+    return layoutTrie(activeTree, allocatedWidth / 2, 60, allocatedWidth, [], [], currentStep);
   };
 
-  const startVisualizer = () => {
-    if (steps.length === 0) return;
-    setIsAnimating(true);
-    let nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
-    setCurrentStepIdx(nextIdx);
-  };
+  const { renderNodes, renderEdges } = buildTreeRenderData();
 
-  const stepForward = () => {
-    setIsAnimating(false);
-    if (currentStepIdx < steps.length - 1) {
-      setCurrentStepIdx(prev => prev + 1);
-    }
-  };
+  const getSvgDimensions = () => {
+    if (renderNodes.length === 0) return { width: 800, height: 400, viewBoxOffset: 0 };
+    const xCoords = renderNodes.map(n => n.x);
+    const yCoords = renderNodes.map(n => n.y);
 
-  const stepBackward = () => {
-    setIsAnimating(false);
-    if (currentStepIdx > 0) {
-      setCurrentStepIdx(prev => prev - 1);
-    }
-  };
+    const minX = Math.min(...xCoords);
+    const maxX = Math.max(...xCoords);
+    const maxY = Math.max(...yCoords);
 
-  const resetPlayback = () => {
-    setIsAnimating(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setCurrentStepIdx(-1);
-    setMessage("Playback reset. Click play to begin.");
-  };
+    const padding = 60;
+    const computedWidth = maxX - minX + padding * 2;
+    const computedHeight = maxY + padding * 1.5;
 
-  const handleClearTree = () => {
-    setIsAnimating(false);
-    setCurrentStepIdx(-1);
-    setSteps([]);
-    setRoot(new TrieNode("", "root"));
-    setNodeIdCounter(0);
-    setMessage("Trie cleared. Type a word and click Insert!");
-  };
-
-  // Pre-calculated animation generator for INSERT
-  const triggerInsert = () => {
-    const word = inputValue.trim().toLowerCase();
-    if (!word || !/^[a-z]+$/.test(word)) {
-      setMessage("⚠️ Please enter a valid lowercase word (a-z) without numbers or symbols.");
-      return;
-    }
-
-    setIsAnimating(false);
-    setInputValue("");
-
-    const newSteps = [];
-    let tempRoot = JSON.parse(JSON.stringify(root)); // Deep copy to simulate insertion coordinates
-
-    // Step 0: Starting state
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Begin insertion of word "${word}". Start at the Root node.`
-    });
-
-    let node = tempRoot;
-    let originalNode = root; // pointer to follow real node IDs
-    let counter = nodeIdCounter;
-
-    for (let i = 0; i < word.length; i++) {
-      const char = word[i];
-      const visitedSoFar = word.slice(0, i + 1);
-      const isLast = i === word.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      // Trace back the current path
-      let traceNode = tempRoot;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[word[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
-      }
-
-      // Check if child node exists
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Character '${char}' already exists under node '${node.char || "root"}'. Follow edge to character node '${char}'.`
-        });
-
-        node = childNode;
-      } else {
-        // Node does not exist, create it!
-        counter++;
-        const newChild = new TrieNode(char, `node-${counter}`);
-        node.children[char] = newChild;
-
-        activeHighlights[newChild.id] = "visiting";
-        activeEdges[`${node.id}->${newChild.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Character '${char}' is missing under node '${node.char || "root"}'. Create a new node for '${char}' and link it.`
-        });
-
-        node = newChild;
-      }
-
-      if (isLast) {
-        node.isEndOfWord = true;
-        const finalHighlights = { ...activeHighlights };
-        finalHighlights[node.id] = "matched";
-
-        newSteps.push({
-          highlightedNodes: finalHighlights,
-          highlightedEdges: { ...activeEdges },
-          explanation: `Word "${word}" insertion complete. Mark final character node '${char}' as End of Word (isEndOfWord = true).`
-        });
-      }
-    }
-
-    // Update real tree state
-    const updateRealTree = () => {
-      let rNode = root;
-      let c = nodeIdCounter;
-      for (let char of word) {
-        if (!rNode.children[char]) {
-          c++;
-          rNode.children[char] = new TrieNode(char, `node-${c}`);
-        }
-        rNode = rNode.children[char];
-      }
-      rNode.isEndOfWord = true;
-      setNodeIdCounter(c);
-      setRoot(root);
+    return {
+      width: Math.max(800, computedWidth),
+      height: Math.max(380, computedHeight),
+      viewBoxOffset: minX - padding
     };
-
-    updateRealTree();
-    setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
   };
 
-  // Pre-calculated animation generator for SEARCH
-  const triggerSearch = () => {
-    const word = inputValue.trim().toLowerCase();
-    if (!word || !/^[a-z]+$/.test(word)) {
-      setMessage("⚠️ Please enter a lowercase string to search.");
-      return;
-    }
-
-    setIsAnimating(false);
-    setInputValue("");
-
-    const newSteps = [];
-
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Search for word "${word}". Start matching characters at the Root node.`
-    });
-
-    let node = root;
-    let found = true;
-
-    for (let i = 0; i < word.length; i++) {
-      const char = word[i];
-      const isLast = i === word.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      // Trace highlighted active path
-      let traceNode = root;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[word[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
-      }
-
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Found letter '${char}' under node '${node.char || "root"}'. Matching prefix: "${word.slice(0, i + 1)}".`
-        });
-
-        node = childNode;
-      } else {
-        found = false;
-        // Mark active node as error
-        activeHighlights[node.id] = "error";
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' is missing under node '${node.char || "root"}'. Searching failed: "${word}" is not in the Trie.`
-        });
-        break;
-      }
-
-      if (isLast && found) {
-        const finalHighlights = { ...activeHighlights };
-        if (node.isEndOfWord) {
-          finalHighlights[node.id] = "matched";
-          newSteps.push({
-            highlightedNodes: finalHighlights,
-            highlightedEdges: { ...activeEdges },
-            explanation: `Found letter '${char}' and isEndOfWord = true. Success: Word "${word}" exists in the Trie!`
-          });
-        } else {
-          finalHighlights[node.id] = "error";
-          newSteps.push({
-            highlightedNodes: finalHighlights,
-            highlightedEdges: { ...activeEdges },
-            explanation: `Traversed all letters, but isEndOfWord = false. Word "${word}" is NOT in the Trie (Prefix match only).`
-          });
-        }
-      }
-    }
-
-    setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
-  };
-
-  // Pre-calculated animation generator for PREFIX SEARCH
-  const triggerPrefixSearch = () => {
-    const prefix = inputValue.trim().toLowerCase();
-    if (!prefix || !/^[a-z]+$/.test(prefix)) {
-      setMessage("⚠️ Please enter a lowercase prefix to search.");
-      return;
-    }
-
-    setIsAnimating(false);
-    setInputValue("");
-
-    const newSteps = [];
-
-    newSteps.push({
-      highlightedNodes: { root: "visiting" },
-      highlightedEdges: {},
-      explanation: `Check startsWith prefix "${prefix}". Start at the Root node.`
-    });
-
-    let node = root;
-    let found = true;
-
-    for (let i = 0; i < prefix.length; i++) {
-      const char = prefix[i];
-      const isLast = i === prefix.length - 1;
-
-      const activeHighlights = {};
-      const activeEdges = {};
-
-      let traceNode = root;
-      activeHighlights[traceNode.id] = "active";
-      for (let j = 0; j < i; j++) {
-        const nextNode = traceNode.children[prefix[j]];
-        activeHighlights[nextNode.id] = "active";
-        activeEdges[`${traceNode.id}->${nextNode.id}`] = true;
-        traceNode = nextNode;
-      }
-
-      if (node.children[char]) {
-        const childNode = node.children[char];
-        activeHighlights[childNode.id] = "visiting";
-        activeEdges[`${node.id}->${childNode.id}`] = true;
-
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' matches. Prefix path exists for: "${prefix.slice(0, i + 1)}".`
-        });
-
-        node = childNode;
-      } else {
-        found = false;
-        activeHighlights[node.id] = "error";
-        newSteps.push({
-          highlightedNodes: { ...activeHighlights },
-          highlightedEdges: { ...activeEdges },
-          explanation: `Letter '${char}' missing under node '${node.char || "root"}'. Prefix check failed: "${prefix}" does not exist in the Trie.`
-        });
-        break;
-      }
-
-      if (isLast && found) {
-        const finalHighlights = { ...activeHighlights };
-        finalHighlights[node.id] = "matched";
-        newSteps.push({
-          highlightedNodes: finalHighlights,
-          highlightedEdges: { ...activeEdges },
-          explanation: `All letters in prefix "${prefix}" successfully traversed. Success: Prefix exists in the Trie!`
-        });
-      }
-    }
-
-    setSteps(newSteps);
-    setCurrentStepIdx(0);
-    setIsAnimating(true);
-  };
-
-  useVisualizerKeyboard({
-    onStepForward: stepForward,
-    onStepBackward: stepBackward,
-    onTogglePlay: isAnimating ? pauseVisualizer : startVisualizer,
-    onReset: resetPlayback,
-    onSpeedChange: setSpeed,
-    speed: speed,
-    sorting: isAnimating,
-    sorted: false,
-    enabled: true,
-  });
+  const svgDimensions = getSvgDimensions();
 
   return (
-    <VisualizerInteractiveLayout>
-      <VisualizerCard>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter word (a-z)"
-                className="flex-1 rounded-lg border p-2 transition-all focus:border-transparent focus:ring-2 focus:ring-[#a435f0] dark:bg-gray-700 uppercase"
-                disabled={isAnimating}
-                onKeyDown={(e) => e.key === "Enter" && triggerInsert()}
-              />
-              <button
-                onClick={triggerInsert}
-                disabled={isAnimating}
-                className="flex items-center gap-1 rounded-lg bg-[#a435f0] px-4 py-2 text-white transition-colors hover:bg-[#8f2cd6] disabled:opacity-50"
-              >
-                <Plus className="w-4 h-4" /> Insert
-              </button>
-            </div>
-            
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={triggerSearch}
-                disabled={isAnimating}
-                className="flex flex-1 justify-center items-center gap-1 rounded-lg border border-[#a435f0] text-[#a435f0] px-4 py-2 transition-colors hover:bg-[#a435f0] hover:text-white disabled:opacity-50 dark:hover:bg-[#a435f0] dark:hover:text-white"
-              >
-                <Search className="w-4 h-4" /> Search
-              </button>
-              <button
-                onClick={triggerPrefixSearch}
-                disabled={isAnimating}
-                className="flex flex-1 justify-center items-center gap-1 rounded-lg border border-[#a435f0] text-[#a435f0] px-4 py-2 transition-colors hover:bg-[#a435f0] hover:text-white disabled:opacity-50 dark:hover:bg-[#a435f0] dark:hover:text-white"
-              >
-                Prefix Match
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-2 min-w-[120px]">
-            <button
-              onClick={handleClearTree}
-              className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 h-[42px]"
-            >
-              Clear Trie
-            </button>
-            <div className="w-full h-full flex items-end">
-              <div className="w-full rounded-lg bg-gray-100 p-2 text-center dark:bg-gray-700">
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Nodes</div>
-                <div className="font-bold text-[#a435f0] dark:text-[#d38cff]">{nodeIdCounter}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col gap-6">
+      
+      {/* Mode Selector */}
+      <div className="flex flex-wrap gap-2">
+        {["insertion", "searching", "prefix-search"].map(tab => (
+          <button
+            key={tab}
+            onClick={() => {
+              setMode(tab);
+              resetPlayback();
+            }}
+            className={`px-4 py-2 text-sm font-semibold rounded-xl capitalize transition-all ${
+              mode === tab
+                ? "bg-indigo-600 text-white shadow-md"
+                : "bg-gray-100 text-slate-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            }`}
+          >
+            {tab.replace("-", " ")}
+          </button>
+        ))}
+      </div>
 
-        <div className="mt-6">
-          <PlaybackControls 
-            isPlaying={isAnimating}
-            onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
-            onReset={resetPlayback}
-            speed={speed}
-            onSpeedChange={setSpeed}
-            disabled={steps.length === 0}
-            showPlayPause={true}
+      {/* Controls & Playback Dashboard */}
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] p-5 rounded-2xl flex flex-col md:flex-row gap-5 justify-between items-center shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder={mode === "insertion" ? "Insert word" : mode === "searching" ? "Search exact word" : "Starts with prefix"}
+            className="w-full sm:w-40 px-4 py-2.5 text-sm bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            disabled={isAnimating}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (mode === "insertion") handleInsert();
+                else if (mode === "searching") handleSearch();
+                else handlePrefixSearch();
+              }
+            }}
           />
+          <button
+            onClick={() => {
+              if (mode === "insertion") handleInsert();
+              else if (mode === "searching") handleSearch();
+              else handlePrefixSearch();
+            }}
+            disabled={isAnimating || !inputValue}
+            className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900/50 disabled:opacity-50 text-white rounded-xl transition-all"
+          >
+            {mode === "insertion" ? "Insert" : "Search"}
+          </button>
         </div>
-      </VisualizerCard>
 
-      <VisualizerCard
-        className={
-          message.includes("Success") || message.includes("complete")
-            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
-            : message.includes("failed") || message.includes("missing")
-              ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-              : isAnimating
-                ? "border-[#a435f0]/30 bg-[#a435f0]/10 dark:border-[#a435f0]/50 dark:bg-[#a435f0]/20"
-                : ""
-        }
-      >
-        <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-          <span>Current Action Explanation</span>
-          <span className="font-bold bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+        <PlaybackControls
+          isPlaying={isAnimating}
+          onPlayPause={isAnimating ? pauseVisualizer : startVisualizer}
+          onStepForward={stepForward}
+          onStepBackward={stepBackward}
+          onReset={resetPlayback}
+          onClear={handleClear}
+          clearLabel="Clear Trie"
+          speed={speed}
+          onSpeedChange={setSpeed}
+          disabled={steps.length === 0 && !isAnimating}
+          showPlayPause={true}
+          progressText={`Step ${currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / ${steps.length || 0}`}
+        />
+      </div>
+
+      {/* Explanation Area */}
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl p-5 flex flex-col gap-3">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-slate-600 dark:text-slate-400 font-semibold flex items-center gap-2">
+            <Info className="w-4 h-4 text-indigo-500" /> Action Explanation
+          </span>
+          <span className="text-slate-600 dark:text-slate-400 font-bold bg-gray-100 dark:bg-[#1a1a1a] px-3 py-1 rounded-full border border-gray-300 dark:border-[#333]">
             Step {currentStepIdx !== -1 ? currentStepIdx + 1 : 0} / {steps.length || 0}
           </span>
         </div>
-        <p className="text-center font-medium text-lg min-h-[28px]">{message}</p>
-      </VisualizerCard>
+        <div className="text-base leading-relaxed text-slate-800 dark:text-slate-200 font-medium">
+          {message}
+        </div>
+      </div>
 
-      <VisualizerCard>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Trie Visualization</h2>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="text-gray-500 dark:text-gray-400">Current</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#a435f0]"></span>
-              <span className="text-gray-500 dark:text-gray-400">Match Found</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-              <span className="text-gray-500 dark:text-gray-400">Error</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg">
-              <span className="w-2.5 h-2.5 rounded-full bg-transparent border-2 border-dashed border-[#a435f0]"></span>
-              <span className="text-gray-500 dark:text-gray-400">End of Word</span>
-            </div>
+      {/* SVG Canvas */}
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-3xl p-6 relative overflow-hidden flex flex-col justify-center min-h-[440px] items-center">
+        
+        {/* Legend */}
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 text-xs hidden sm:flex">
+          <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1.5 rounded-xl">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/20"></span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium">Visiting / Traversing</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1.5 rounded-xl">
+            <span className="w-3 h-3 rounded-full border-2 border-indigo-500"></span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium">End of Word</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1.5 rounded-xl">
+            <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/20"></span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium">Matched Success</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] px-2.5 py-1.5 rounded-xl">
+            <span className="w-3 h-3 rounded-full bg-rose-500 shadow-sm shadow-rose-500/20"></span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium">Error / Not Found</span>
           </div>
         </div>
 
-        <div className="flex min-h-[440px] justify-center overflow-auto py-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
-          {renderNodes.length > 0 ? (
-            <div className="relative">
-              <svg
-                width={svgDimensions.width}
-                height={svgDimensions.height}
-                viewBox={`${svgDimensions.offset} 0 ${svgDimensions.width} ${svgDimensions.height}`}
-                className="mx-auto"
-              >
-                {/* Draw Edges */}
-                {renderEdges.map((edge, idx) => {
-                  let strokeColor = "#cbd5e1"; // gray-300
-                  let strokeWidth = "2";
-                  
-                  // In dark mode, base stroke should be darker
-                  let strokeClass = "stroke-gray-300 dark:stroke-gray-600";
-                  
-                  if (edge.isActive) {
-                    strokeColor = "#a435f0";
-                    strokeWidth = "3.5";
-                    strokeClass = ""; // Override class if active
-                  }
+        <div className="w-full h-full overflow-auto custom-scrollbar flex items-center justify-center pt-16">
+          <svg
+            width={svgDimensions.width}
+            height={svgDimensions.height}
+            viewBox={`${svgDimensions.viewBoxOffset} 0 ${svgDimensions.width} ${svgDimensions.height}`}
+            className="transition-all duration-300"
+          >
+            {renderEdges.map((edge) => (
+              <line
+                key={edge.id}
+                x1={edge.x1}
+                y1={edge.y1}
+                x2={edge.x2}
+                y2={edge.y2}
+                strokeWidth={edge.state === "active" ? 4 : 2}
+                className={`transition-all duration-300 ${edge.state === "active" ? "stroke-emerald-500" : "stroke-slate-300 dark:stroke-slate-600"}`}
+                strokeOpacity={edge.state === "active" ? 1 : 0.3}
+              />
+            ))}
+            {renderNodes.map((node) => {
+              let bgClass = "fill-white dark:fill-slate-800";
+              let strokeClass = "stroke-slate-300 dark:stroke-slate-600";
+              let textClass = "fill-slate-700 dark:fill-slate-200";
+              let strokeWidth = 2;
 
-                  return (
-                    <g key={`edge-g-${idx}`}>
-                      <line
-                        x1={edge.x1}
-                        y1={edge.y1}
-                        x2={edge.x2}
-                        y2={edge.y2}
-                        stroke={strokeColor}
-                        strokeWidth={strokeWidth}
-                        className={`transition-all duration-300 ${strokeClass}`}
-                      />
-                      {/* Edge Label character */}
-                      <rect
-                        x={(edge.x1 + edge.x2) / 2 - 8}
-                        y={(edge.y1 + edge.y2) / 2 - 10}
-                        width="16"
-                        height="16"
-                        rx="3"
-                        fill="var(--background)"
-                        className="fill-white dark:fill-gray-900"
-                        stroke={edge.isActive ? "#a435f0" : "#94a3b8"}
-                        strokeWidth="1"
-                      />
-                      <text
-                        x={(edge.x1 + edge.x2) / 2}
-                        y={(edge.y1 + edge.y2) / 2 + 3.5}
-                        textAnchor="middle"
-                        fill={edge.isActive ? "#a435f0" : "#64748b"}
-                        fontSize="10"
-                        fontWeight="bold"
-                        className="uppercase"
-                      >
-                        {edge.char}
-                      </text>
-                    </g>
-                  );
-                })}
+              if (node.state === "visiting" || node.state === "active") {
+                bgClass = "fill-emerald-100 dark:fill-emerald-500/20";
+                strokeClass = "stroke-emerald-500 dark:stroke-emerald-400";
+                textClass = "fill-emerald-700 dark:fill-emerald-400";
+              } else if (node.state === "matched") {
+                bgClass = "fill-amber-100 dark:fill-amber-500/20";
+                strokeClass = "stroke-amber-500 dark:stroke-amber-400";
+                textClass = "fill-amber-700 dark:fill-amber-400";
+              } else if (node.state === "error") {
+                bgClass = "fill-rose-100 dark:fill-rose-500/20";
+                strokeClass = "stroke-rose-500 dark:stroke-rose-400";
+                textClass = "fill-rose-700 dark:fill-rose-400";
+              } else {
+                if (node.isEndOfWord) {
+                  strokeClass = "stroke-indigo-500 dark:stroke-indigo-400";
+                  strokeWidth = 4;
+                }
+              }
 
-                {/* Draw Nodes */}
-                {renderNodes.map((node, idx) => {
-                  const isCurr = node.state === "visiting";
-                  const isMatch = node.state === "matched";
-                  const isError = node.state === "error";
-                  const isActivePath = node.state === "active";
-
-                  // Default classes for standard visualizer looks
-                  let nodeClass = "fill-white stroke-gray-400 dark:fill-gray-800 dark:stroke-gray-600";
-                  let textClass = "fill-gray-800 dark:fill-white";
-                  let strokeWidth = "2";
-
-                  if (isCurr) {
-                    nodeClass = "fill-emerald-50 stroke-emerald-500 dark:fill-emerald-900/30 dark:stroke-emerald-400";
-                    textClass = "fill-emerald-700 dark:fill-emerald-300";
-                    strokeWidth = "3";
-                  } else if (isMatch) {
-                    nodeClass = "fill-[#a435f0]/10 stroke-[#a435f0] dark:fill-[#a435f0]/20 dark:stroke-[#d38cff]";
-                    textClass = "fill-[#a435f0] dark:fill-[#d38cff]";
-                    strokeWidth = "3";
-                  } else if (isError) {
-                    nodeClass = "fill-red-50 stroke-red-500 dark:fill-red-900/30 dark:stroke-red-400";
-                    textClass = "fill-red-700 dark:fill-red-300";
-                    strokeWidth = "3";
-                  } else if (isActivePath) {
-                    nodeClass = "fill-blue-50 stroke-blue-500 dark:fill-blue-900/30 dark:stroke-blue-400";
-                    textClass = "fill-blue-700 dark:fill-blue-300";
-                    strokeWidth = "3";
-                  }
-
-                  return (
-                    <g key={`node-g-${idx}`} className="transition-all duration-300">
-                      {/* Glowing outer rings for active/searching states */}
-                      {(isCurr || isMatch || isError) && (
-                        <circle
-                          cx={node.x}
-                          cy={node.y}
-                          r="25"
-                          fill="none"
-                          className={isCurr ? "stroke-emerald-400" : isMatch ? "stroke-[#a435f0]" : "stroke-red-400"}
-                          strokeWidth="1.5"
-                          strokeDasharray="4,2"
-                        >
-                          <animateTransform
-                            attributeName="transform"
-                            type="rotate"
-                            from={`0 ${node.x} ${node.y}`}
-                            to={`360 ${node.x} ${node.y}`}
-                            dur="4s"
-                            repeatCount="indefinite"
-                          />
-                        </circle>
-                      )}
-
-                      {/* Double stroke ring for end of word */}
-                      {node.isEndOfWord && (
-                        <circle
-                          cx={node.x}
-                          cy={node.y}
-                          r="22"
-                          fill="none"
-                          className={isMatch ? "stroke-[#a435f0]" : "stroke-[#a435f0]/50 dark:stroke-[#a435f0]/70"}
-                          strokeWidth="1.5"
-                          strokeDasharray="4,4"
-                        />
-                      )}
-
-                      {/* Node Core */}
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r="18"
-                        strokeWidth={node.isEndOfWord ? "3" : strokeWidth}
-                        className={`transition-all duration-300 shadow-sm ${nodeClass}`}
-                      />
-
-                      {/* Node Text character */}
-                      <text
-                        x={node.x}
-                        y={node.y + 4.5}
-                        textAnchor="middle"
-                        fontSize="12"
-                        fontWeight="bold"
-                        className={`uppercase ${textClass}`}
-                      >
-                        {node.char || "R"}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
-              <AlertCircle className="w-10 h-10 animate-pulse text-gray-300 dark:text-gray-600" />
-              <span className="text-sm font-medium">Workspace is Empty</span>
-            </div>
-          )}
+              return (
+                <g key={node.id} className="transition-all duration-300">
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={24}
+                    strokeWidth={strokeWidth}
+                    className={`transition-all duration-300 shadow-sm ${bgClass} ${strokeClass}`}
+                  />
+                  <text
+                    x={node.x}
+                    y={node.y}
+                    textAnchor="middle"
+                    dy=".3em"
+                    fontSize="18px"
+                    fontWeight="600"
+                    className={`font-sans ${textClass}`}
+                  >
+                    {node.char}
+                  </text>
+                  {node.isEndOfWord && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={20}
+                      fill="none"
+                      strokeWidth={1}
+                      strokeDasharray="4 2"
+                      opacity={0.5}
+                      className={strokeClass}
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </svg>
         </div>
-      </VisualizerCard>
-    </VisualizerInteractiveLayout>
+      </div>
+    </div>
   );
 }

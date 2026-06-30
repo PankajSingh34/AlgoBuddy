@@ -80,7 +80,62 @@ const MergeSortQuiz = () => {
       ],
       correctAnswer: 1,
       explanation: "Merge Sort's divide-and-conquer approach works well with sequential access patterns needed for external storage, and it can efficiently merge sorted runs from disk."
-    }
+    },
+    {
+  question: "What is the main strategy used by Merge Sort?",
+  options: [
+    "Greedy",
+    "Divide and Conquer",
+    "Dynamic Programming",
+    "Backtracking"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort follows the Divide and Conquer strategy by recursively splitting the array and then merging the sorted halves."
+},
+{
+  question: "What is the worst-case time complexity of Merge Sort?",
+  options: [
+    "O(n²)",
+    "O(n log n)",
+    "O(log n)",
+    "O(n)"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort performs O(n log n) operations in the best, average, and worst cases."
+},
+{
+  question: "What is the extra space complexity of Merge Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 2,
+  explanation: "Merge Sort requires an auxiliary array during merging, resulting in O(n) extra space."
+},
+{
+  question: "Is Merge Sort a stable sorting algorithm?",
+  options: [
+    "Yes",
+    "No",
+    "Only for integers",
+    "Only for linked lists"
+  ],
+  correctAnswer: 0,
+  explanation: "Merge Sort is stable because equal elements preserve their relative order after sorting."
+},
+{
+  question: "Which type of dataset is Merge Sort especially suitable for?",
+  options: [
+    "Very small arrays",
+    "Large datasets requiring stable sorting",
+    "Already sorted arrays only",
+    "Hash tables"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort is efficient for large datasets and guarantees O(n log n) performance with stable sorting."
+}
   ];
 
   return <QuizEngine title="Merge Sort Quiz Challenge" questions={questions} />;

@@ -26,7 +26,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionNQueens}
-          description="Mark N-Queens Placement as done and view it on your dashboard"
+          description="Mark N-Queens Placement as done and track your progress"
           initialDone={false}
         />
       }

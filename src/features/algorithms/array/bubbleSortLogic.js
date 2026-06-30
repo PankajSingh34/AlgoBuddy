@@ -1,19 +1,20 @@
 /**
  * Pure generator function for Bubble Sort algorithm.
  * Yields frames representing the state of the sort.
- * 
+ * No async, no timers — this is deliberately pure.
+ * The caller (useAlgorithmPlayer) owns all timing and abort logic.
+ *
  * @param {number[]} initialArray - The array to sort.
  * @returns {Generator<{type: string, payload: any}, void, unknown>}
  */
 export function* bubbleSortGenerator(initialArray) {
   let arr = [...initialArray];
-  let n = arr.length;
+  const n = arr.length;
   let comparisons = 0;
   let swaps = 0;
   let step = 0;
   const totalSteps = Math.floor((n * (n - 1)) / 2);
 
-  // Yield initial state
   yield {
     type: 'init',
     payload: { totalSteps }
@@ -21,7 +22,7 @@ export function* bubbleSortGenerator(initialArray) {
 
   for (let i = 0; i < n - 1; i++) {
     let swapped = false;
-    
+
     yield {
       type: 'phase_start',
       payload: { pass: i + 1, totalPasses: n - 1 }
@@ -42,7 +43,6 @@ export function* bubbleSortGenerator(initialArray) {
           payload: { j, jNext: j + 1, arr: [...arr], comparisons, swaps, step, totalSteps }
         };
 
-        // Perform the actual array swap in memory
         [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
         swapped = true;
         swaps++;
@@ -58,6 +58,12 @@ export function* bubbleSortGenerator(initialArray) {
         };
       }
     }
+
+    // Mark this pass's last element as fully sorted
+    yield {
+      type: 'sorted_element',
+      payload: { index: n - 1 - i, arr: [...arr] }
+    };
 
     if (!swapped) {
       yield { type: 'early_completion' };

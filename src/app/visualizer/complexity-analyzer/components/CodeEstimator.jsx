@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex min-h-[260px] h-full items-center justify-center bg-neutral-50 dark:bg-neutral-950 text-sm font-semibold text-neutral-400">
+      Loading Editor...
+    </div>
+  ),
+});
 import { useUser } from "@/features/user/UserContext";
 import ReactMarkdown from "react-markdown";
 import { 
@@ -407,7 +416,7 @@ export default function CodeEstimator() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(showOriginalTab ? code : result.optimizedCode)}
-                  className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/50 dark:hover:bg-neutral-850 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition"
+                  className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition"
                   title="Copy code"
                 >
                   <Copy className="h-3.5 w-3.5" />

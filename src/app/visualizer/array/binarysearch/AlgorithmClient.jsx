@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/array/binarysearch/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/array/binarysearch/codeBlock";
-import Quiz from "@/app/visualizer/array/binarysearch/quiz";
 import Content from "@/app/visualizer/array/binarysearch/content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -19,11 +18,10 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.binarySearch}
-          description="Mark binary search as done and view it on your dashboard"
+          description="Mark binary search as done and track your progress"
           initialDone={false}
         />
       }

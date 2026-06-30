@@ -26,7 +26,7 @@ export default function Page() {
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionPalindrome}
-          description="Mark Palindrome Check as done and view it on your dashboard"
+          description="Mark Palindrome Check as done and track your progress"
           initialDone={false}
         />
       }

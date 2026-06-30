@@ -76,6 +76,61 @@ const BubbleSortQuiz = () => {
       explanation:
         "While simple to implement, Bubble Sort's O(n²) time complexity makes it inefficient for large datasets compared to algorithms like QuickSort or MergeSort.",
     },
+    {
+  question: "What is the basic principle of Bubble Sort?",
+  options: [
+    "Divide the array into halves",
+    "Repeatedly compare and swap adjacent elements",
+    "Select the smallest element each time",
+    "Insert elements into their correct position"
+  ],
+  correctAnswer: 1,
+  explanation: "Bubble Sort repeatedly compares adjacent elements and swaps them if they are in the wrong order until the array is sorted."
+},
+{
+  question: "What is the worst-case time complexity of Bubble Sort?",
+  options: [
+    "O(log n)",
+    "O(n)",
+    "O(n log n)",
+    "O(n²)"
+  ],
+  correctAnswer: 3,
+  explanation: "Bubble Sort has a worst-case time complexity of O(n²) because it may need to compare every pair of adjacent elements multiple times."
+},
+{
+  question: "When does Bubble Sort achieve its best-case time complexity?",
+  options: [
+    "When the array is reverse sorted",
+    "When the array is already sorted (with optimization)",
+    "When the array contains duplicate values",
+    "When the array has only odd numbers"
+  ],
+  correctAnswer: 1,
+  explanation: "With the optimized version of Bubble Sort, an already sorted array requires only one pass, giving a best-case complexity of O(n)."
+},
+{
+  question: "After the first complete pass of Bubble Sort, where does the largest element move?",
+  options: [
+    "Beginning of the array",
+    "Middle of the array",
+    "End of the array",
+    "It remains in the same position"
+  ],
+  correctAnswer: 2,
+  explanation: "During the first pass, the largest element 'bubbles up' to the last position."
+},
+{
+  question: "Is Bubble Sort a stable sorting algorithm?",
+  options: [
+    "Yes",
+    "No",
+    "Only for integers",
+    "Only for sorted arrays"
+  ],
+  correctAnswer: 0,
+  explanation: "Bubble Sort is stable because equal elements retain their relative order after sorting."
+}
   ];
 
   return <QuizEngine title="Bubble Sort Quiz Challenge" questions={questions} />;

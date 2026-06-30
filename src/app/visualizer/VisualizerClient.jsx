@@ -3,8 +3,10 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
+import { X } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
-/* ─── colour + icon theme per DS ─── */
+import ShortcutsButton from "@/components/ui/ShortcutsButton";
+
 const DS_THEME = {
   Array: {
     color: "#a435f0",
@@ -98,7 +100,51 @@ const DS_THEME = {
       </svg>
     ),
   },
+  "Dynamic Programming": {
+    color: "#0ea5e9",
+    bg: "#f0f9ff",
+    border: "#bae6fd",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </svg>
+    ),
+  },
+  "Quiz Mode": {
+    color: "#f59e0b",
+    bg: "#fffbeb",
+    border: "#fde68a",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M9 12l2 2 4-4" />
+        <path d="M12 3a9 9 0 100 18 9 9 0 000-18z" />
+      </svg>
+    ),
+  },
+  "Smart Revision": {
+    color: "#8b5cf6",
+    bg: "#f5f3ff",
+    border: "#ddd6fe",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M9 12h6M12 9v6M5 5h14v14H5z" />
+      </svg>
+    ),
+  },
+  "Collaborative Sessions": {
+    color: "#10b981",
+    bg: "#ecfdf5",
+    border: "#a7f3d0",
+    icon: (c) => (
+      <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+        <path d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 00-3-3H10a3 3 0 00-3 3v4m10 0H7m10-12a3 3 0 11-6 0 3 3 0 016 0zm-8 0a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+  },
 };
+
 
 const getTheme = (t) =>
   DS_THEME[t] || {
@@ -112,9 +158,6 @@ const getTheme = (t) =>
     border: "#e5e7eb",
   };
 
-/* ═══════════════════════════════════════
-   Mini Visuals for cards
-   ═══════════════════════════════════════ */
 function ArrayMiniViz({ color }) {
   const bars = [65, 30, 80, 45, 55, 20, 70];
   const highlight = 2;
@@ -295,7 +338,6 @@ function RecursionMiniViz({ color }) {
   );
 }
 
-
 function CustomCodeMiniViz({ color }) {
   const lines = [
     { width: "75%", highlight: true },
@@ -335,6 +377,22 @@ function AIAlgorithmsMiniViz({ color }) {
   );
 }
 
+function DPMiniViz({ color }) {
+  return (
+    <div className="flex flex-col gap-1 items-center justify-center h-[48px] w-full">
+      <div className="flex gap-1">
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "40" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "80" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color }}></div>
+      </div>
+      <div className="flex gap-1">
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "80" }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color }}></div>
+        <div className="w-4 h-4 rounded-sm" style={{ background: color + "40" }}></div>
+      </div>
+    </div>
+  );
+}
 
 const MINI_VIZ = {
   Array: ArrayMiniViz,
@@ -347,11 +405,9 @@ const MINI_VIZ = {
   Recursion: RecursionMiniViz,
   "Code Lab": CustomCodeMiniViz,
   "AI Algorithms": AIAlgorithmsMiniViz,
+  "Dynamic Programming": DPMiniViz,
 };
 
-/* ═══════════════════════════════════════
-   DS Card — homepage-style window card
-   ═══════════════════════════════════════ */
 function DSCard({ section, theme, delay }) {
   const MiniViz = MINI_VIZ[section.title];
   const count = section.subsections
@@ -374,7 +430,6 @@ function DSCard({ section, theme, delay }) {
           style={{ borderColor: theme.border }}
           data-theme-card={section.title || "Custom Code"}
         >
-          {/* title bar */}
           <div
             className="flex items-center gap-2 px-4 py-3 border-b transition-colors duration-300"
             style={{ background: theme.bg, borderColor: theme.border }}
@@ -388,12 +443,10 @@ function DSCard({ section, theme, delay }) {
             </span>
           </div>
 
-          {/* card body */}
           <div
             className="p-5 bg-white transition-colors duration-300 flex-1 flex flex-col"
             data-theme-card={section.title || "Custom Code"}
           >
-            {/* icon + title */}
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center p-2 flex-shrink-0 transition-colors duration-300"
@@ -412,12 +465,10 @@ function DSCard({ section, theme, delay }) {
               </div>
             </div>
 
-            {/* description */}
             <p className="text-[13px] text-surface-600 dark:text-surface-300 leading-relaxed mb-4 transition-colors">
               {section.desc}
             </p>
 
-            {/* mini visualization */}
             {MiniViz && (
               <div
                 className="rounded-lg p-3 mb-4 border transition-colors duration-300"
@@ -428,7 +479,6 @@ function DSCard({ section, theme, delay }) {
               </div>
             )}
 
-            {/* CTA pill */}
             <div
               className="mt-auto inline-flex items-center gap-2 h-[36px] px-5 rounded-full text-[13px] font-bold text-white
                 group-hover:gap-3 transition-all duration-200"
@@ -444,50 +494,46 @@ function DSCard({ section, theme, delay }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   Main Client Component — Grid only
-   ═══════════════════════════════════════ */
 export default function VisualizerClient({ initialSections }) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
-const searchRef = useRef(null);
-const [searchHistory, setSearchHistory] = useState(() => {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
-  } catch { return []; }
-});
-const [showHistory, setShowHistory] = useState(false);
+  const searchRef = useRef(null);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("algobuddy_search_history") || "[]");
+    } catch { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
 
-// Keyboard shortcut Ctrl+K or /
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey && e.key === "k") || e.key === "/") {
-      e.preventDefault();
-      searchRef.current?.focus();
-      setShowHistory(true);
-    }
-    if (e.key === "Escape") {
-      searchRef.current?.blur();
-      setShowHistory(false);
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey && e.key === "k") || e.key === "/") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        setShowHistory(true);
+      }
+      if (e.key === "Escape") {
+        searchRef.current?.blur();
+        setShowHistory(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (val.trim().length > 2) {
+      setSearchHistory((prev) => {
+        const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
+        localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
+        return updated;
+      });
     }
   };
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, []);
 
-// Save search history
-const handleSearchChange = (e) => {
-  const val = e.target.value;
-  setSearch(val);
-  if (val.trim().length > 2) {
-    setSearchHistory((prev) => {
-      const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
-      localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
-      return updated;
-    });
-  }
-};
   const filtered = useMemo(() => {
     if (!search.trim()) return initialSections;
     const q = search.trim().toLowerCase();
@@ -507,17 +553,24 @@ const handleSearchChange = (e) => {
   }, [search, initialSections]);
 
   const flatResults = useMemo(() => {
-    if (!search.trim()) return [];
-    const q = search.trim().toLowerCase();
-    const r = [];
-    initialSections.forEach((sec) =>
-      sec.subsections?.forEach((sub) =>
-        sub.items.forEach((item) => {
-          if (item.name.toLowerCase().includes(q)) r.push({ ...item, ds: sec.title });
-        }),
-      ),
-    );
-    return r;
+    let results = [];
+    initialSections.forEach(section => {
+      section.subsections?.forEach(sub => {
+        sub.items.forEach(item => {
+          results.push({
+            ...item,
+            ds: section.title
+          });
+        });
+      });
+    });
+    if(search){
+      results = results.filter(item =>
+        item.name.toLowerCase()
+        .includes(search.toLowerCase())
+      );
+    }
+    return results;
   }, [search, initialSections]);
 
   return (
@@ -533,6 +586,10 @@ const handleSearchChange = (e) => {
         .dark [data-theme-card="HashMap"] { background: #2e1022 !important; border-color: #9d174d !important; }
         .dark [data-theme-card="Recursion"] { background: #0c231e !important; border-color: #115e59 !important; }
         .dark [data-theme-card="AI Algorithms"] { background: #062d35 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-card="Dynamic Programming"] { background: #082f49 !important; border-color: #0284c7 !important; }
+        .dark [data-theme-card="Quiz Mode"] { background: #2b1a08 !important; border-color: #b45309 !important; }
+        .dark [data-theme-card="Smart Revision"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-card="Collaborative Sessions"] { background: #022c22 !important; border-color: #047857 !important; }
         .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
@@ -543,6 +600,10 @@ const handleSearchChange = (e) => {
         .dark [data-theme-header="HashMap"] { background: #3b132b !important; border-color: #9d174d !important; }
         .dark [data-theme-header="Recursion"] { background: #0f3129 !important; border-color: #115e59 !important; }
         .dark [data-theme-header="AI Algorithms"] { background: #0a3d47 !important; border-color: #0891b2 !important; }
+        .dark [data-theme-header="Dynamic Programming"] { background: #0c4a6e !important; border-color: #0284c7 !important; }
+        .dark [data-theme-header="Quiz Mode"] { background: #3d240a !important; border-color: #b45309 !important; }
+        .dark [data-theme-header="Smart Revision"] { background: #23133d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-header="Collaborative Sessions"] { background: #064e3b !important; border-color: #047857 !important; }
         .dark [data-theme-card="Array"] .mini-viz-inactive { background: #5b21b6 !important; }
         .dark [data-theme-card="Stack"] .mini-viz-inactive { background: #1e3a8a !important; color: #93c5fd !important; }
         .dark [data-theme-card="Queue"] .mini-viz-inactive { background: #166534 !important; color: #86efac !important; }
@@ -558,26 +619,36 @@ const handleSearchChange = (e) => {
         <div className="max-w-[1100px] mx-auto">
           
 
-          <div className="relative max-w-[480px] mx-auto mt-8 mb-14">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
-            <input
-              type="text"
-              ref={searchRef}
-value={search}
-onChange={handleSearchChange}
-onFocus={() => setShowHistory(true)}
-onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-placeholder="Search algorithms... (Press / or Ctrl+K)"
-              className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
-            />
-            {search && (
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-[760px] mx-auto mt-8 mb-10">
+            <div className="relative w-full sm:flex-1">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9ca3af]" />
+              <input
+                type="text"
+                ref={searchRef}
+                value={search}
+                onChange={handleSearchChange}
+                onFocus={() => setShowHistory(true)}
+                onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+                placeholder="Search algorithms... (Press / or Ctrl+K)"
+                className="w-full h-[52px] pl-12 pr-4 rounded-2xl border border-[#e5e7eb] dark:border-[#333] bg-white dark:bg-[#1a1a1a] text-[#1a1a1a] dark:text-white placeholder-[#9ca3af] text-[15px] shadow-sm focus:outline-none focus:border-[#a435f0] focus:ring-2 focus:ring-[#a435f0]/20 transition-all"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Link href="/visualizer/quiz">
               <button
-                onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1a1a1a] dark:hover:text-white transition-colors"
+                className="h-[52px] px-6 rounded-2xl bg-[#a435f0] text-white font-semibold hover:bg-[#8e2de2] transition-all whitespace-nowrap"
               >
-                x
+                🎯 Quiz Mode
               </button>
-            )}
+            </Link>
           </div>
 
           {search.trim() ? (
@@ -609,18 +680,19 @@ placeholder="Search algorithms... (Press / or Ctrl+K)"
                             <span className="block text-[11px] text-surface-500 dark:text-surface-400">{item.ds}</span>
                           </div>
                           <button
-  onClick={(e) => {
-    e.preventDefault();
-    isBookmarked(item.path)
-      ? removeBookmark(item.path)
-      : addBookmark({ name: item.name, path: item.path, category: item.ds });
-  }}
-  className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
->
-  <FiBookmark
-    className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
-  />
-</button>
+                            onClick={(e) => {
+                              e.preventDefault();
+                              isBookmarked(item.path)
+                                ? removeBookmark(item.path)
+                                : addBookmark({ name: item.name, path: item.path, category: item.ds });
+                            }}
+                            className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            aria-label={isBookmarked(item.path) ? `Remove ${item.name} from bookmarks` : `Bookmark ${item.name}`}
+                          >
+                            <FiBookmark
+                              className={`w-4 h-4 ${isBookmarked(item.path) ? "text-purple-500 fill-purple-500" : "text-surface-300"}`}
+                            />
+                          </button>
                           <FiChevronRight className="w-4 h-4 text-surface-300 dark:text-surface-500 group-hover/r:translate-x-1 transition-all" />
                         </Link>
                       );
@@ -653,6 +725,10 @@ placeholder="Search algorithms... (Press / or Ctrl+K)"
           )}
         </div>
       </section>
+
+      <div className="fixed bottom-6 right-6 z-50">
+        <ShortcutsButton position="controls" />
+      </div>
     </div>
   );
 }
