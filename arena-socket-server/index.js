@@ -7,6 +7,25 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const jwksClient = require('jwks-rsa');
 const redisUrl = process.env.REDIS_URL;
+const allowRedisMock = process.env.ALLOW_REDIS_MOCK === "true";
+
+if (!redisUrl) {
+  if (!allowRedisMock) {
+    console.error(
+      "[startup] REDIS_URL is not set. " +
+      "The server cannot start without a real Redis connection. " +
+      "Set REDIS_URL to a valid Redis URL, or set ALLOW_REDIS_MOCK=true " +
+      "to allow ioredis-mock for local development and testing."
+    );
+    process.exit(1);
+  }
+  console.warn(
+    "[startup] WARNING: REDIS_URL is not set. " +
+    "Using ioredis-mock (ALLOW_REDIS_MOCK=true). " +
+    "State is process-local and non-durable. Do NOT use this in production."
+  );
+}
+
 const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
