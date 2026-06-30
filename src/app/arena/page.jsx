@@ -98,6 +98,7 @@ export default function ArenaPage() {
   const [activeTab, setActiveTab] = useState("home"); // home, live, ranked, friend, leaderboard, streak, tournaments, badges, history
   const [leaderboardFilter, setLeaderboardFilter] = useState("Global");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedRow, setExpandedRow] = useState(null);
 
   const handleTabChange = (tabId) => {
     if (["ranked", "friend", "streak", "badges", "history"].includes(tabId)) {
@@ -794,37 +795,58 @@ export default function ArenaPage() {
                             const rank = row.rank || idx + 1;
                             const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
                             const isMe = name === profile?.name || row.userId === profile?.userId;
+                            const isExpanded = expandedRow === rank;
                         return (
                           <div 
                             key={rank} 
                             id={`leaderboard-row-${rank}`}
-                            className={`flex justify-between items-center p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs transition-colors duration-500 ${isMe ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                            className={`flex flex-col p-2.5 border-b border-slate-50 dark:border-neutral-800 text-xs transition-colors duration-500 cursor-pointer ${isMe ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-neutral-800/50'}`}
+                            onClick={() => setExpandedRow(isExpanded ? null : rank)}
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="font-semibold">{rank}.</span>
-                              {/* Avatar Circle */}
-                              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-650 dark:text-neutral-300 overflow-hidden shrink-0">
-                                {row.avatarUrl ? (
-                                  <img 
-                                    src={row.avatarUrl} 
-                                    alt={name} 
-                                    referrerPolicy="no-referrer"
-                                    className="w-full h-full object-cover" 
-                                    />
-                                ) : (
-                                  getInitials(name)
-                                )}
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                <span className="font-semibold">{rank}.</span>
+                                {/* Avatar Circle */}
+                                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-650 dark:text-neutral-300 overflow-hidden shrink-0">
+                                  {row.avatarUrl ? (
+                                    <img 
+                                      src={row.avatarUrl} 
+                                      alt={name} 
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-cover" 
+                                      />
+                                  ) : (
+                                    getInitials(name)
+                                  )}
+                                </div>
+                                <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
                               </div>
-                              <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                              <div className="flex items-center gap-3">
+                                {row.trend === "up" && <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><TrendingUp size={12}/>{row.trendValue}</span>}
+                                {row.trend === "down" && <span className="text-red-500 font-bold flex items-center gap-0.5 text-[10px]"><TrendingDown size={12}/>{row.trendValue}</span>}
+                                {row.trend === "hot" && <span className="text-orange-500 font-bold flex items-center gap-0.5 text-[10px]"><Flame size={12}/>Streak</span>}
+                                {row.trend === "same" && <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><Minus size={12}/></span>}
+                                {row.tier && getTierBadge(row.tier)}
+                                <span className="font-bold text-primary">{row.rating} Rating</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              {row.trend === "up" && <span className="text-emerald-500 font-bold flex items-center gap-0.5 text-[10px]"><TrendingUp size={12}/>{row.trendValue}</span>}
-                              {row.trend === "down" && <span className="text-red-500 font-bold flex items-center gap-0.5 text-[10px]"><TrendingDown size={12}/>{row.trendValue}</span>}
-                              {row.trend === "hot" && <span className="text-orange-500 font-bold flex items-center gap-0.5 text-[10px]"><Flame size={12}/>Streak</span>}
-                              {row.trend === "same" && <span className="text-slate-400 font-bold flex items-center gap-0.5 text-[10px]"><Minus size={12}/></span>}
-                              {row.tier && getTierBadge(row.tier)}
-                              <span className="font-bold text-primary">{row.rating} Rating</span>
-                            </div>
+                            
+                            {isExpanded && (
+                              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800 flex justify-between text-slate-500 dark:text-neutral-400">
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] uppercase font-bold tracking-wider">Win Rate</span>
+                                  <span className="font-semibold text-slate-800 dark:text-neutral-200">{row.winRate || 50}%</span>
+                                </div>
+                                <div className="flex flex-col gap-1 text-right">
+                                  <span className="text-[10px] uppercase font-bold tracking-wider">Top Languages</span>
+                                  <div className="flex gap-1 justify-end">
+                                    {(row.topLanguages || ["JavaScript", "Python"]).map(lang => (
+                                      <span key={lang} className="px-1.5 py-0.5 bg-slate-100 dark:bg-neutral-800 rounded font-semibold text-[10px] text-slate-700 dark:text-neutral-300">{lang}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                           });
