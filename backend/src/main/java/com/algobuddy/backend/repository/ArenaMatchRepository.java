@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +22,10 @@ public interface ArenaMatchRepository extends JpaRepository<ArenaMatch, UUID> {
     List<ArenaMatch> findRecentMatchesByUserId(@Param("userId") UUID userId, Pageable pageable);
 
     java.util.Optional<ArenaMatch> findByMatchId(String matchId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM ArenaMatch m WHERE m.matchId = :matchId")
+    java.util.Optional<ArenaMatch> findByMatchIdForUpdate(@Param("matchId") String matchId);
 
     boolean existsByMatchId(String matchId);
 

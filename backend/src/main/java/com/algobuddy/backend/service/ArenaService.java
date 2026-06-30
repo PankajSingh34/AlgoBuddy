@@ -41,6 +41,8 @@ public class ArenaService {
     private static final Logger log = LoggerFactory.getLogger(ArenaService.class);
     private static final UUID BOT_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
+    private record MatchResultProcessingOutcome(UUID opponentId, boolean opponentBot) {}
+
     private final UserArenaProfileRepository profileRepository;
     private final ArenaMatchRepository matchRepository;
     private final CacheManager cacheManager;
@@ -309,6 +311,8 @@ public class ArenaService {
             isWinner = true;
         }
 
+        final boolean resolvedWinner = isWinner;
+
         final int MAX_RETRIES = 3;
 
         // Execute each retry attempt in an isolated transaction.
@@ -320,92 +324,15 @@ public class ArenaService {
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
 
-                UUID opponentId = retryTransaction.execute(status -> {
+                MatchResultProcessingOutcome outcome = retryTransaction.execute(status ->
+                        processMatchResult(requestingUserId, matchIdStr, resolvedWinner));
 
-                    ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
-                            .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
-
-                    if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
-                        !existingMatch.getPlayer2Id().equals(requestingUserId)) {
-                        throw new SecurityException("User is not a participant in this match");
-                    }
-
-                    if (existingMatch.getStatus() == ArenaMatch.MatchStatus.EXPIRED) {
-                        throw new IllegalStateException("This match has expired and cannot accept results");
-                    }
-
-                    if (existingMatch.getStatus() == ArenaMatch.MatchStatus.COMPLETED) {
-                        return null;
-                    }
-
-                    if (existingMatch.getWinnerId() != null) {
-                        // Match result has already been recorded. We return silently to prevent
-                        // duplicate submission exceptions from throwing 500 errors on the client.
-                        return null;
-                    }
-
-                    UUID opponentId = existingMatch.getPlayer1Id().equals(requestingUserId)
-                        ? existingMatch.getPlayer2Id()
-                        : existingMatch.getPlayer1Id();
-
-                    boolean isOpponentBot = opponentId.equals(BOT_USER_ID);
-
-                    UserArenaProfile requestingUserProfile = profileRepository.findById(requestingUserId)
-                            .orElseGet(() -> createDefaultProfile(requestingUserId));
-                
-                    UserArenaProfile opponentProfile = null;
-                    if (!isOpponentBot) {
-                        opponentProfile = profileRepository.findById(opponentId)
-                                .orElseGet(() -> createDefaultProfile(opponentId));
-                    }
-
-                    int requestingUserRatingChange = isWinner ? 25 : -15;
-                    int opponentRatingChange = isWinner ? -15 : 25;
-
-                    int requestingUserXp = isWinner ? 50 : 10;
-                    int opponentXp = isWinner ? 10 : 50;
-
-                    requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
-                    requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
-                    requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
-                    requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (isWinner ? 1 : 0));
-                    if (isWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
-                    else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
-
-                    if (!isOpponentBot && opponentProfile != null) {
-                        opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
-                        opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
-                        opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
-                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!isWinner ? 1 : 0));
-                        if (!isWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
-                        else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
-                    }
-
-                    profileRepository.save(requestingUserProfile);
-                    if (!isOpponentBot && opponentProfile != null) {
-                        profileRepository.save(opponentProfile);
-                    }
-
-                    existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
-                    existingMatch.setEndTime(java.time.LocalDateTime.now());
-                    existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
-
-                    boolean isReqUserPlayer1 = requestingUserId.equals(existingMatch.getPlayer1Id());
-                    existingMatch.setRatingChangeP1(isReqUserPlayer1 ? requestingUserRatingChange : opponentRatingChange);
-                    existingMatch.setRatingChangeP2(isReqUserPlayer1 ? opponentRatingChange : requestingUserRatingChange);
-                    existingMatch.setXpAwardedP1(isReqUserPlayer1 ? requestingUserXp : opponentXp);
-                    existingMatch.setXpAwardedP2(isReqUserPlayer1 ? opponentXp : requestingUserXp);
-
-                    matchRepository.save(existingMatch);
-
-                    return opponentId;
-                });
-
-                if (opponentId == null) {
+                if (outcome == null) {
                     return;
                 }
 
-                boolean isOpponentBot = opponentId.equals(BOT_USER_ID);
+                UUID opponentId = outcome.opponentId();
+                boolean isOpponentBot = outcome.opponentBot();
 
                 org.springframework.cache.Cache profileCache = cacheManager.getCache("arenaProfile");
                 if (profileCache != null) {
@@ -428,6 +355,86 @@ public class ArenaService {
                 log.warn("Optimistic lock failure recording match result, retry {}/{}", attempt, MAX_RETRIES);
             }
         }
+    }
+
+    private MatchResultProcessingOutcome processMatchResult(UUID requestingUserId, String matchIdStr, boolean isWinner) {
+        ArenaMatch existingMatch = matchRepository.findByMatchIdForUpdate(matchIdStr)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
+
+        if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
+            !existingMatch.getPlayer2Id().equals(requestingUserId)) {
+            throw new SecurityException("User is not a participant in this match");
+        }
+
+        if (existingMatch.getStatus() == ArenaMatch.MatchStatus.EXPIRED) {
+            throw new IllegalStateException("This match has expired and cannot accept results");
+        }
+
+        if (existingMatch.getStatus() == ArenaMatch.MatchStatus.COMPLETED) {
+            return null;
+        }
+
+        if (existingMatch.getWinnerId() != null) {
+            // Match result has already been recorded. We return silently to prevent
+            // duplicate submission exceptions from throwing 500 errors on the client.
+            return null;
+        }
+
+        UUID opponentId = existingMatch.getPlayer1Id().equals(requestingUserId)
+                ? existingMatch.getPlayer2Id()
+                : existingMatch.getPlayer1Id();
+
+        boolean isOpponentBot = opponentId.equals(BOT_USER_ID);
+
+        UserArenaProfile requestingUserProfile = profileRepository.findById(requestingUserId)
+                .orElseGet(() -> createDefaultProfile(requestingUserId));
+
+        UserArenaProfile opponentProfile = null;
+        if (!isOpponentBot) {
+            opponentProfile = profileRepository.findById(opponentId)
+                    .orElseGet(() -> createDefaultProfile(opponentId));
+        }
+
+        int requestingUserRatingChange = isWinner ? 25 : -15;
+        int opponentRatingChange = isWinner ? -15 : 25;
+
+        int requestingUserXp = isWinner ? 50 : 10;
+        int opponentXp = isWinner ? 10 : 50;
+
+        requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
+        requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
+        requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
+        requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (isWinner ? 1 : 0));
+        if (isWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
+        else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
+
+        if (!isOpponentBot && opponentProfile != null) {
+            opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
+            opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
+            opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+            opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!isWinner ? 1 : 0));
+            if (!isWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
+            else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
+        }
+
+        profileRepository.save(requestingUserProfile);
+        if (!isOpponentBot && opponentProfile != null) {
+            profileRepository.save(opponentProfile);
+        }
+
+        existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
+        existingMatch.setEndTime(java.time.LocalDateTime.now());
+        existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
+
+        boolean isReqUserPlayer1 = requestingUserId.equals(existingMatch.getPlayer1Id());
+        existingMatch.setRatingChangeP1(isReqUserPlayer1 ? requestingUserRatingChange : opponentRatingChange);
+        existingMatch.setRatingChangeP2(isReqUserPlayer1 ? opponentRatingChange : requestingUserRatingChange);
+        existingMatch.setXpAwardedP1(isReqUserPlayer1 ? requestingUserXp : opponentXp);
+        existingMatch.setXpAwardedP2(isReqUserPlayer1 ? opponentXp : requestingUserXp);
+
+        matchRepository.save(existingMatch);
+
+        return new MatchResultProcessingOutcome(opponentId, isOpponentBot);
     }
 
     @Transactional(readOnly = true)
