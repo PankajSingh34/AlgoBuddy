@@ -6,6 +6,7 @@ import {
   VisualizerCard,
   VisualizerInteractiveLayout,
 } from "@/app/visualizer/components/VisualizerInteractiveLayout";
+import { createDebouncedResizeHandler } from "@/app/visualizer/components/resizeUtils";
 import { addNodeGenerator } from "@/features/algorithms/linkedlist/circularLinkedListLogic";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
@@ -100,11 +101,13 @@ const CircularLinkedListVisualizer = () => {
     };
 
     const rafId = window.requestAnimationFrame(updateDiagramSize);
-    window.addEventListener("resize", updateDiagramSize);
+    const debouncedUpdateDiagramSize = createDebouncedResizeHandler(updateDiagramSize);
+    window.addEventListener("resize", debouncedUpdateDiagramSize);
 
     return () => {
       window.cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", updateDiagramSize);
+      debouncedUpdateDiagramSize.cancel();
+      window.removeEventListener("resize", debouncedUpdateDiagramSize);
     };
   }, [list]);
 

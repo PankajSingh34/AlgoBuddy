@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import useSwipeGesture from "@/app/hooks/useSwipeGesture";
+import { createDebouncedResizeHandler } from "@/app/visualizer/components/resizeUtils";
 
 /**
  * VisualizerCanvas
@@ -47,8 +48,12 @@ export function VisualizerCanvas({
     }
 
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const debouncedMeasure = createDebouncedResizeHandler(measure);
+    window.addEventListener("resize", debouncedMeasure);
+    return () => {
+      debouncedMeasure.cancel();
+      window.removeEventListener("resize", debouncedMeasure);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchKey]);
 
