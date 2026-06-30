@@ -22,6 +22,10 @@ export default function PlaybackControls({
   onExplainStep,
   stepAnnouncement = "",
 }) {
+  const SPEED_MIN = 0.25;
+  const SPEED_MAX = 2;
+  const SPEED_STEP = 0.25;
+
   // Support both `isPaused`/`onTogglePlayPause` (new) and `isPlaying`/`onPlayPause` (legacy) prop conventions.
   const isPlaying = pausedProp !== undefined ? !pausedProp : (playingProp ?? false);
   const handlePlayPause = toggleProp || playPauseProp || (() => {});
@@ -138,14 +142,14 @@ export default function PlaybackControls({
         {onSpeedChange ? (
           <input
             type="range"
-            min="0.5"
-            max="5"
-            step="0.5"
+            min={SPEED_MIN}
+            max={SPEED_MAX}
+            step={SPEED_STEP}
             value={speed}
             onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
             aria-label={`Animation speed: ${speed}x`}
-            aria-valuemin={0.5}
-            aria-valuemax={5}
+            aria-valuemin={SPEED_MIN}
+            aria-valuemax={SPEED_MAX}
             aria-valuenow={speed}
             aria-valuetext={`${speed} times`}
             className="w-20 sm:w-24 accent-[#a435f0] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#a435f0] focus:ring-offset-1 focus:ring-offset-slate-900"
