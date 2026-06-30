@@ -1,10 +1,12 @@
 import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { isValidNewsletterEmail, normalizeNewsletterEmail } from "@/lib/newsletter";
 
 export async function POST(req) {
   try {
     const { email } = await req.json();
+    const normalizedEmail = normalizeNewsletterEmail(email);
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidNewsletterEmail(normalizedEmail)) {
       return jsonResponse({ error: "Invalid email address" }, 400);
     }
 
@@ -12,7 +14,7 @@ export async function POST(req) {
 
     const { error } = await supabase
       .from('newsletter_subscriptions')
-      .insert([{ email }])
+      .insert([{ email: normalizedEmail }])
       .select()
       .single();
 
