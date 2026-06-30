@@ -146,6 +146,13 @@ export default function QuizPage() {
       href: "/visualizer/stack/quiz",
       color: "bg-violet-600 hover:bg-violet-700",
     },
+    {
+      title: "Polish Notation Evaluation Quiz",
+      description:
+        "Test your understanding of Prefix and Postfix Expression Evaluation.",
+      href: "/visualizer/stack/polish/quiz",
+      color: "bg-indigo-600 hover:bg-indigo-700",
+    },
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
