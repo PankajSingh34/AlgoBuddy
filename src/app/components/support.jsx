@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 // -------------------------------------------------------------------
 // Fix: Added missing FiChevronRight icon import.
 // This resolves ReferenceError when rendering the "View all help articles"
@@ -316,11 +317,16 @@ const ContactSupportPopup = () => {
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Check out our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <Link href="/faq" className="underline" onClick={() => setIsOpen(false)}>
                           FAQs
-                        </a>{" "}
+                        </Link>{" "}
                         or join our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <a
+                          href="https://discord.gg/Gv2N4U3KAc"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
                           community forum
                         </a>
                         .
@@ -332,25 +338,30 @@ const ContactSupportPopup = () => {
                       </h4>
                       <div className="space-y-3">
                         {[
-                          "How do I reset my password?",
-                          "Where can I find documentation?",
-                          "What are your business hours?",
-                          "How do I cancel my subscription?",
-                        ].map((question, index) => (
-                          <a
-                            key={index}
-                            href="javascript:void(0)"
+                          { label: "How do I reset my password?", href: "/login" },
+                          { label: "Where can I find documentation?", href: "/tutorials" },
+                          { label: "What are your business hours?", href: "/contactus" },
+                          { label: "How do I cancel my subscription?", href: "/faq" },
+                        ].map((question) => (
+                          <Link
+                            href={question.href}
+                            onClick={() => setIsOpen(false)}
+                            key={question.label}
                             className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
                           >
-                            {question}
-                          </a>
+                            {question.label}
+                          </Link>
                         ))}
                       </div>
                     </div>
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <Link
+                        href="/faq"
+                        onClick={() => setIsOpen(false)}
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                      >
                         View all help articles <FiChevronRight />
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 )}
