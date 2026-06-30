@@ -493,6 +493,16 @@ ALLOWED_ORIGINS=http://localhost:3000
 APP_ENV=dev
 ```
 
+You can copy the starter file first and then edit it:
+
+```bash
+# macOS / Linux
+cp .env.example .env.local
+
+# Windows (Command Prompt)
+copy .env.example .env.local
+```
+
 > **💡 Tip:** See [`.env.example`](.env.example) for a complete reference of all environment variables.
 
 ### 5️⃣ Start the Development Server

@@ -86,7 +86,11 @@ npm install
 Copy the example env file and fill in the required values:
 
 ```bash
+# macOS / Linux
 cp .env.example .env.local
+
+# Windows (Command Prompt)
+copy .env.example .env.local
 ```
 
 | Variable                           | Description                                      |
@@ -137,7 +141,7 @@ git checkout -b feature/your-feature-name
 **Example**
 
 ```bash
-git checkout -b fix/navbar-responsive-issue
+git checkout -b feature/navbar-responsive-issue
 ```
 
 ---
