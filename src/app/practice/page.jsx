@@ -33,6 +33,7 @@ import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import { useMySheet } from "@/app/hooks/useMySheet";
 import { supabase } from "@/lib/supabase";
+import { filterPracticeProblems } from "@/app/practice/problemFilters";
 
 function isSpringBootApi() {
   return typeof window !== "undefined" && process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
@@ -54,6 +55,7 @@ export default function PracticePage() {
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("All Topics");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All Difficulties");
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -293,41 +295,19 @@ export default function PracticePage() {
 
   // Filtered problems list (mockup table/flat table)
   const filteredProblems = useMemo(() => {
-    let filtered = allProblems.filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.topic.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTopic = selectedTopic === "All Topics" || p.topic === selectedTopic;
-      
-      const matchesCompany = selectedCompanyFilter === "All" || 
-                             (p.companies && p.companies.some(c => c.toLowerCase() === selectedCompanyFilter.toLowerCase()));
-
-      if (activeView === "bookmarks") {
-        return matchesSearch && matchesTopic && matchesCompany && isBookmarked(p.id);
-      }
-      if (activeView === "recent-solved") {
-        return matchesSearch && matchesTopic && matchesCompany && getStatus(p.id) === "Completed";
-      }
-      return matchesSearch && matchesTopic && matchesCompany;
+    return filterPracticeProblems({
+      allProblems,
+      searchQuery,
+      selectedTopic,
+      selectedDifficulty,
+      selectedCompanyFilter,
+      activeView,
+      bookmarks,
+      progress,
+      getStatus,
+      isBookmarked,
     });
-
-    if (activeView === "recent-solved") {
-      filtered.sort((a, b) => {
-        const timeA = progress[a.id]?.updatedAt ? new Date(progress[a.id].updatedAt).getTime() : 0;
-        const timeB = progress[b.id]?.updatedAt ? new Date(progress[b.id].updatedAt).getTime() : 0;
-        return timeB - timeA;
-      });
-    } else if (activeView === "bookmarks") {
-      filtered.sort((a, b) => {
-        const bA = bookmarks.find(x => x.id === a.id);
-        const bB = bookmarks.find(x => x.id === b.id);
-        const timeA = bA?.createdAt ? new Date(bA.createdAt).getTime() : 0;
-        const timeB = bB?.createdAt ? new Date(bB.createdAt).getTime() : 0;
-        return timeB - timeA;
-      });
-    }
-
-    return filtered;
-  }, [allProblems, searchQuery, selectedTopic, selectedCompanyFilter, activeView, bookmarks, progress, getStatus, isBookmarked]);
+  }, [allProblems, searchQuery, selectedTopic, selectedDifficulty, selectedCompanyFilter, activeView, bookmarks, progress, getStatus, isBookmarked]);
 
   // Paginated problems
   const paginatedProblems = useMemo(() => {
@@ -439,6 +419,7 @@ export default function PracticePage() {
             }
             setCurrentPage(1); // Reset page on view change
             setSelectedCompanyFilter("All"); // Reset company filter
+            setSelectedDifficulty("All Difficulties");
             // Push to URL so the browser records a history entry;
             // the searchParams useEffect above will sync activeView in response.
             if (view === "topic-wise") {
@@ -744,6 +725,23 @@ export default function PracticePage() {
                       >
                         {uniqueTopics.map((topic) => (
                           <option key={topic} value={topic}>{topic}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+
+                    {/* Difficulty Filter */}
+                    <div className="relative w-full sm:w-48">
+                      <select
+                        value={selectedDifficulty}
+                        onChange={(e) => {
+                          setSelectedDifficulty(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] text-xs font-bold text-slate-600 dark:text-neutral-300 focus:outline-none focus:border-primary transition shadow-sm appearance-none cursor-pointer"
+                      >
+                        {["All Difficulties", "Easy", "Medium", "Hard"].map((difficulty) => (
+                          <option key={difficulty} value={difficulty}>{difficulty}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
