@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { jsonResponse, errorResponse } from "@/lib/serverApi";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
 function getValidUrl(value) {
   if (!value) return null;
@@ -32,10 +31,8 @@ const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
 
-const supabaseAdmin =
-  supabaseUrl && supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : null;
+let supabaseAdmin = null;
+try { supabaseAdmin = getSupabaseAdmin(); } catch { supabaseAdmin = null; }
 
 const AUTH_RATE_LIMIT_PREFIX = "auth";
 
@@ -324,7 +321,7 @@ export async function POST(req) {
         return jsonResponse({ success: false, message: "Auth server is not configured." }, 500);
       }
 
-      const admin = createClient(supabaseUrl, serviceKey);
+      const admin = getSupabaseAdmin();
 
       const emailConfirm = process.env.AUTO_CONFIRM_EMAIL === "true";
 

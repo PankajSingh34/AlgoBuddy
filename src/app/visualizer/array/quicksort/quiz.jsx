@@ -113,7 +113,62 @@ const QuickSortQuiz = () => {
       ],
       correctAnswer: 1,
       explanation: "The partition step's main goal is to place the pivot in its correct sorted position while arranging other elements to be less than or greater than the pivot."
-    }
+    },
+    {
+  question: "What is the main strategy used by Quick Sort?",
+  options: [
+    "Greedy",
+    "Divide and Conquer",
+    "Dynamic Programming",
+    "Backtracking"
+  ],
+  correctAnswer: 1,
+  explanation: "Quick Sort follows the Divide and Conquer approach by selecting a pivot and partitioning the array around it."
+},
+{
+  question: "What is the average-case time complexity of Quick Sort?",
+  options: [
+    "O(n²)",
+    "O(log n)",
+    "O(n log n)",
+    "O(n)"
+  ],
+  correctAnswer: 2,
+  explanation: "Quick Sort has an average-case time complexity of O(n log n), making it one of the fastest practical sorting algorithms."
+},
+{
+  question: "What is the worst-case time complexity of Quick Sort?",
+  options: [
+    "O(n)",
+    "O(n²)",
+    "O(log n)",
+    "O(n log n)"
+  ],
+  correctAnswer: 1,
+  explanation: "Quick Sort performs O(n²) in the worst case when poor pivot choices repeatedly create highly unbalanced partitions."
+},
+{
+  question: "What is the role of the pivot element in Quick Sort?",
+  options: [
+    "It stores the smallest element",
+    "It divides the array into smaller partitions",
+    "It merges sorted arrays",
+    "It keeps the array balanced"
+  ],
+  correctAnswer: 1,
+  explanation: "The pivot is used to partition the array so that smaller elements are placed before it and larger elements after it."
+},
+{
+  question: "Which statement about Quick Sort is correct?",
+  options: [
+    "It is always stable",
+    "It requires O(n) extra space",
+    "It is generally one of the fastest comparison-based sorting algorithms",
+    "It only works on linked lists"
+  ],
+  correctAnswer: 2,
+  explanation: "Quick Sort is widely used because of its excellent average-case performance, although the standard implementation is not stable."
+}
   ];
 
   return <QuizEngine title="Quick Sort Quiz Challenge" questions={questions} />;

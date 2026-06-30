@@ -143,23 +143,16 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleToggleNotifications = () => {
-      setNotificationsOpen(prev => !prev);
-    };
-    
     const handleGlobalEscape = () => {
-      setNotificationsOpen(false);
       setUserMenuOpen(false);
       setMenuOpen(false);
     };
 
-    window.addEventListener("toggle-notifications", handleToggleNotifications);
     window.addEventListener("global-escape", handleGlobalEscape);
 
     return () => {
-      window.removeEventListener("toggle-notifications", handleToggleNotifications);
       window.removeEventListener("global-escape", handleGlobalEscape);
-    }
+    };
   }, []);
 
   // FIX: Prevent background scrolling when mobile menu is open

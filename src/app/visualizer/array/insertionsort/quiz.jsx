@@ -80,7 +80,62 @@ const InsertionSortQuiz = () => {
       ],
       correctAnswer: 2,
       explanation: "Hybrid algorithms often use Insertion Sort for small subarrays (typically ≤ 10 elements) due to its low overhead and good performance on small datasets."
-    }
+    },
+    {
+  question: "What is the basic idea behind Insertion Sort?",
+  options: [
+    "Repeatedly swap adjacent elements",
+    "Insert each element into its correct position in the sorted portion",
+    "Divide the array into halves",
+    "Always select the largest element first"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort builds a sorted portion of the array by inserting each new element into its correct position."
+},
+{
+  question: "What is the worst-case time complexity of Insertion Sort?",
+  options: [
+    "O(log n)",
+    "O(n)",
+    "O(n log n)",
+    "O(n²)"
+  ],
+  correctAnswer: 3,
+  explanation: "In the worst case (reverse sorted array), each element must be shifted through the sorted portion, giving O(n²) time complexity."
+},
+{
+  question: "When does Insertion Sort achieve its best-case time complexity?",
+  options: [
+    "When the array is already sorted",
+    "When the array is reverse sorted",
+    "When all elements are different",
+    "When the array has duplicates"
+  ],
+  correctAnswer: 0,
+  explanation: "If the array is already sorted, Insertion Sort only performs comparisons, resulting in O(n) time complexity."
+},
+{
+  question: "Is Insertion Sort a stable sorting algorithm?",
+  options: [
+    "Yes",
+    "No",
+    "Only for integers",
+    "Only for sorted arrays"
+  ],
+  correctAnswer: 0,
+  explanation: "Insertion Sort is stable because equal elements retain their original relative order."
+},
+{
+  question: "Which type of dataset is Insertion Sort most suitable for?",
+  options: [
+    "Very large random datasets",
+    "Small or nearly sorted datasets",
+    "Distributed datasets",
+    "Binary trees"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort performs efficiently on small or nearly sorted datasets due to its adaptive nature."
+}
   ];
 
   return <QuizEngine title="Insertion Sort Quiz Challenge" questions={questions} />;

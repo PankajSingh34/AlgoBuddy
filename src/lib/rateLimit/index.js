@@ -38,10 +38,16 @@ function startMemorySweeper() {
   if (memorySweepTimer.unref) memorySweepTimer.unref();
 }
 
+const REDIS_REQUIRED = process.env.REDIS_REQUIRED === "true";
+
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? Redis.fromEnv()
     : null;
+
+if (!redis && REDIS_REQUIRED) {
+  console.error("[rateLimit] REDIS_REQUIRED is set but Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are missing. Rate limiting will fail requests.");
+}
 
 let isRedisOffline = false;
 let redisOfflineUntil = 0;
@@ -50,7 +56,12 @@ const COOLDOWN_MS = 10000;
 function markRedisOffline(err) {
   if (!isRedisOffline) {
     isRedisOffline = true;
-    console.error(`[rateLimit] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`);
+    const msg = `[rateLimit] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`;
+    if (REDIS_REQUIRED) {
+      console.error(`[rateLimit] REDIS_REQUIRED=true — rate limiting will now reject requests until Redis recovers. ${msg}`);
+    } else {
+      console.error(msg);
+    }
   }
   redisOfflineUntil = Date.now() + COOLDOWN_MS;
 }
@@ -125,6 +136,13 @@ export function createRateLimiter(options) {
       } catch (err) {
         markRedisOffline(err);
       }
+    }
+
+    if (REDIS_REQUIRED) {
+      const msg = `REDIS_REQUIRED=true and Redis is unavailable (offline=${isRedisOffline}, cooldown=${redisOfflineUntil > Date.now() ? Math.ceil((redisOfflineUntil - Date.now()) / 1000) + 's' : 'expired'}).`;
+      console.error(`[rateLimit] ${msg}`);
+      const retryAfter = 60;
+      return { allowed: false, remaining: 0, retryAfter, resetAt: Date.now() + retryAfter * 1000 };
     }
 
     if (process.env.NODE_ENV === "production" && !redis) {
