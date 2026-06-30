@@ -397,6 +397,16 @@ function TypingIndicator() {
 
 // ─── Main Chatbot ─────────────────────────────────────────────────────────────
 
+const MAX_HISTORY = 30;
+
+function pruneMessages(messages) {
+  if (messages.length <= MAX_HISTORY) return messages;
+  const welcome = messages.find((m) => m.id === "welcome");
+  const others = messages.filter((m) => m.id !== "welcome");
+  const pruned = others.slice(-(MAX_HISTORY - 1));
+  return welcome ? [welcome, ...pruned] : pruned;
+}
+
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
@@ -477,15 +487,18 @@ export default function Chatbot() {
       const userMsg = { role: "user", content: text, id: `u-${Date.now()}` };
       const assistantId = `a-${Date.now()}`;
 
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        { role: "assistant", content: "", id: assistantId, isStreaming: true },
-      ]);
+      setMessages((prev) => {
+        const next = pruneMessages([
+          ...prev,
+          userMsg,
+          { role: "assistant", content: "", id: assistantId, isStreaming: true },
+        ]);
+        return next;
+      });
       setIsStreaming(true);
 
       // Build history for API (exclude system welcome + placeholders)
-      const history = messages
+      const history = pruneMessages(messages)
         .filter((m) => m.id !== "welcome" && !m.isError && !m.isStreaming)
         .map(({ role, content }) => ({ role, content }));
       history.push({ role: "user", content: text });
