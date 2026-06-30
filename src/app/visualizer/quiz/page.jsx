@@ -37,6 +37,13 @@ export default function QuizPage() {
       href: "/visualizer/stack/polish/quiz",
       color: "bg-indigo-600 hover:bg-indigo-700",
     },
+    {
+      title: "Implementation Quiz",
+      description:
+        "Practice Stack implementation using Array and Linked List.",
+      href: "/visualizer/stack/implementation/quiz",
+      color: "bg-emerald-600 hover:bg-emerald-700",
+    }
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
