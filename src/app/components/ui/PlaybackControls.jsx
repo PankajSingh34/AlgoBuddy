@@ -22,13 +22,16 @@ export default function PlaybackControls({
   onExplainStep,
   stepAnnouncement = "",
 }) {
-  const SPEED_MIN = 0.25;
-  const SPEED_MAX = 2;
-  const SPEED_STEP = 0.25;
+  const SPEED_OPTIONS = [0.5, 1, 2, 4];
 
   // Support both `isPaused`/`onTogglePlayPause` (new) and `isPlaying`/`onPlayPause` (legacy) prop conventions.
   const isPlaying = pausedProp !== undefined ? !pausedProp : (playingProp ?? false);
   const handlePlayPause = toggleProp || playPauseProp || (() => {});
+  const activeSpeed = SPEED_OPTIONS.includes(speed)
+    ? speed
+    : SPEED_OPTIONS.reduce((closest, option) =>
+        Math.abs(option - speed) < Math.abs(closest - speed) ? option : closest
+      , SPEED_OPTIONS[0]);
   return (
     <div
       role="toolbar"
@@ -130,7 +133,7 @@ export default function PlaybackControls({
       <div
         role="group"
         aria-label="Animation speed"
-        className="flex items-center gap-3 bg-slate-950/70 px-5 py-2 rounded-full border border-slate-800/80 shadow-inner h-10"
+        className="flex flex-wrap items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-full border border-slate-800/80 shadow-inner"
       >
         <span
           className="text-slate-400 font-bold text-[10px] sm:text-xs uppercase tracking-widest select-none"
@@ -139,30 +142,36 @@ export default function PlaybackControls({
           SPEED
         </span>
 
-        {onSpeedChange ? (
-          <input
-            type="range"
-            min={SPEED_MIN}
-            max={SPEED_MAX}
-            step={SPEED_STEP}
-            value={speed}
-            onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-            aria-label={`Animation speed: ${speed}x`}
-            aria-valuemin={SPEED_MIN}
-            aria-valuemax={SPEED_MAX}
-            aria-valuenow={speed}
-            aria-valuetext={`${speed} times`}
-            className="w-20 sm:w-24 accent-[#a435f0] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#a435f0] focus:ring-offset-1 focus:ring-offset-slate-900"
-            disabled={disabled}
-          />
-        ) : null}
-
-        <span
-          className="text-[#c084fc] font-black text-xs sm:text-sm min-w-[28px] text-right select-none"
-          aria-hidden="true"
+        <div
+          role="radiogroup"
+          aria-label="Playback speed options"
+          className="flex flex-wrap items-center gap-1.5"
         >
-          {speed}x
-        </span>
+          {SPEED_OPTIONS.map((option) => {
+            const isSelected = activeSpeed === option;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onSpeedChange?.(option)}
+                disabled={disabled || !onSpeedChange}
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={`${option} times playback speed`}
+                className={[
+                  "min-w-14 rounded-full px-3 py-1.5 text-xs font-black transition-all focus:outline-none focus:ring-2 focus:ring-[#a435f0] focus:ring-offset-2 focus:ring-offset-slate-900",
+                  isSelected
+                    ? "bg-[#a435f0] text-white shadow-md shadow-[#a435f0]/30"
+                    : "bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700",
+                  disabled || !onSpeedChange ? "opacity-50 cursor-not-allowed" : "",
+                ].join(" ")}
+              >
+                {option}x
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {progressText && (
