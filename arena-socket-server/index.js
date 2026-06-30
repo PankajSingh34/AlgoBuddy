@@ -309,6 +309,12 @@ function verifyAuthToken(token) {
   });
 }
 
+async function getHttpAuthPayload(req) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  return verifyAuthToken(token);
+}
+
 // Connection rate limiting to prevent JWT brute-forcing
 const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
@@ -923,6 +929,11 @@ async function scanRedisKeys(pattern) {
 
 app.get("/api/matches/active", async (req, res) => {
   try {
+    const authPayload = await getHttpAuthPayload(req);
+    if (!authPayload) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
     for (const key of matchKeys) {
