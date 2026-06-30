@@ -3,8 +3,9 @@ import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
 export async function POST(req) {
   try {
     const { email } = await req.json();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return jsonResponse({ error: "Invalid email address" }, 400);
     }
 
@@ -12,7 +13,7 @@ export async function POST(req) {
 
     const { error } = await supabase
       .from('newsletter_subscriptions')
-      .insert([{ email }])
+      .insert([{ email: normalizedEmail }])
       .select()
       .single();
 
