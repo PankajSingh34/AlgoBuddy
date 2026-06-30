@@ -1,25 +1,47 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { RATE_LIMITS } from "@/config/rateLimits";
+import { getProfileLookupRateLimitKey, isValidProfileLookupUsername, normalizeProfileLookupPlatform } from "@/lib/profileLookup";
 
 // GET /api/coding-profiles/fetch?platform=leetcode&username=shruti
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const platform = searchParams.get("platform");
+  const platform = normalizeProfileLookupPlatform(searchParams.get("platform"));
   const username = searchParams.get("username")?.trim();
 
   if (!platform || !username) {
     return NextResponse.json({ error: "Missing platform or username" }, { status: 400 });
   }
 
+  if (!isValidProfileLookupUsername(platform, username)) {
+    return NextResponse.json({ error: "Invalid username" }, { status: 400 });
+  }
+
   try {
+    const ip = getClientIp(request.headers);
+    const { allowed, remaining, resetAt } = await checkRateLimit(getProfileLookupRateLimitKey(platform, ip));
+    if (!allowed) {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, {
+        status: 429,
+        headers: {
+          "Retry-After": retryAfter.toString(),
+          "X-RateLimit-Limit": RATE_LIMITS.PROFILE_LOOKUP_API.LIMIT.toString(),
+          "X-RateLimit-Remaining": "0",
+        },
+      });
+    }
+
     switch (platform) {
       case "leetcode":
-        return await fetchLeetCode(username);
+        return await fetchLeetCode(username, remaining);
       case "codeforces":
-        return await fetchCodeforces(username);
+        return await fetchCodeforces(username, remaining);
       case "codechef":
-        return await fetchCodeChef(username);
+        return await fetchCodeChef(username, remaining);
       case "github":
-        return await fetchGitHub(username);
+        return await fetchGitHub(username, remaining);
       default:
         return NextResponse.json({ error: "Unknown platform" }, { status: 400 });
     }
@@ -31,7 +53,7 @@ export async function GET(request) {
 
 // ── LeetCode ──────────────────────────────────────────────────────────────────
 // Uses LeetCode's public GraphQL endpoint
-async function fetchLeetCode(username) {
+async function fetchLeetCode(username, remaining) {
   const query = `
     query getUserProfile($username: String!) {
       matchedUser(username: $username) {
@@ -64,12 +86,17 @@ async function fetchLeetCode(username) {
   const allEntry = matchedUser.submitStats?.acSubmissionNum?.find((e) => e.difficulty === "All");
   const solved = allEntry?.count ?? 0;
 
-  return NextResponse.json({ platform: "leetcode", username, value: solved });
+  return NextResponse.json({ platform: "leetcode", username, value: solved }, {
+    headers: {
+      "X-RateLimit-Limit": RATE_LIMITS.PROFILE_LOOKUP_API.LIMIT.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+    },
+  });
 }
 
 // ── Codeforces ────────────────────────────────────────────────────────────────
 // Official public Codeforces API
-async function fetchCodeforces(username) {
+async function fetchCodeforces(username, remaining) {
   const res = await fetch(`https://codeforces.com/api/user.info?handles=${encodeURIComponent(username)}`, {
     next: { revalidate: 3600 },
   });
@@ -81,12 +108,17 @@ async function fetchCodeforces(username) {
   }
 
   const rating = json.result?.[0]?.rating ?? 0;
-  return NextResponse.json({ platform: "codeforces", username, value: rating });
+  return NextResponse.json({ platform: "codeforces", username, value: rating }, {
+    headers: {
+      "X-RateLimit-Limit": RATE_LIMITS.PROFILE_LOOKUP_API.LIMIT.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+    },
+  });
 }
 
 // ── CodeChef ──────────────────────────────────────────────────────────────────
 // Uses community wrapper API (no official public API exists)
-async function fetchCodeChef(username) {
+async function fetchCodeChef(username, remaining) {
   const res = await fetch(`https://codechef-api.vercel.app/handle/${encodeURIComponent(username)}`, {
     next: { revalidate: 3600 },
   });
@@ -105,13 +137,18 @@ async function fetchCodeChef(username) {
   const starsRaw = json.stars ?? "0★";
   const stars = parseInt(starsRaw.replace("★", ""), 10) || 0;
 
-  return NextResponse.json({ platform: "codechef", username, value: stars });
+  return NextResponse.json({ platform: "codechef", username, value: stars }, {
+    headers: {
+      "X-RateLimit-Limit": RATE_LIMITS.PROFILE_LOOKUP_API.LIMIT.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+    },
+  });
 }
 
 // ── GitHub ────────────────────────────────────────────────────────────────────
 // Official GitHub REST API — returns public repo count
 // (contribution graph requires GraphQL + auth token, out of scope here)
-async function fetchGitHub(username) {
+async function fetchGitHub(username, remaining) {
   const headers = { "User-Agent": "AlgoBuddy-App" };
 
   // Use GitHub token from env if available to avoid rate limiting
@@ -133,5 +170,10 @@ async function fetchGitHub(username) {
   const json = await res.json();
   const publicRepos = json.public_repos ?? 0;
 
-  return NextResponse.json({ platform: "github", username, value: publicRepos });
+  return NextResponse.json({ platform: "github", username, value: publicRepos }, {
+    headers: {
+      "X-RateLimit-Limit": RATE_LIMITS.PROFILE_LOOKUP_API.LIMIT.toString(),
+      "X-RateLimit-Remaining": remaining.toString(),
+    },
+  });
 }
