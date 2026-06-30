@@ -1,13 +1,31 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+
+const USERNAME_RE = /^[a-zA-Z0-9_.-]{1,64}$/;
 
 // GET /api/coding-profiles/fetch?platform=leetcode&username=shruti
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get("platform");
   const username = searchParams.get("username")?.trim();
+  const ip = getClientIp(request.headers);
+
+  const { allowed, resetAt } = await checkRateLimit(`coding-profiles:${platform || "unknown"}:${ip}`);
+  if (!allowed) {
+    const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": retryAfter.toString() } }
+    );
+  }
 
   if (!platform || !username) {
     return NextResponse.json({ error: "Missing platform or username" }, { status: 400 });
+  }
+
+  if (!USERNAME_RE.test(username)) {
+    return NextResponse.json({ error: "Invalid username" }, { status: 400 });
   }
 
   try {
@@ -112,6 +130,10 @@ async function fetchCodeChef(username) {
 // Official GitHub REST API — returns public repo count
 // (contribution graph requires GraphQL + auth token, out of scope here)
 async function fetchGitHub(username) {
+  if (!/^[a-zA-Z0-9-]{1,39}$/.test(username) || username.startsWith("-") || username.endsWith("-")) {
+    return NextResponse.json({ error: "Invalid GitHub username" }, { status: 400 });
+  }
+
   const headers = { "User-Agent": "AlgoBuddy-App" };
 
   // Use GitHub token from env if available to avoid rate limiting

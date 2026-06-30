@@ -115,6 +115,12 @@ export async function POST(request) {
       replyTo: trimmedEmail,
       to: inboxEmail,
       subject: `New Review Submission from ${trimmedName}`,
+      text: `
+        Name: ${trimmedName}
+        Email: ${trimmedEmail}
+        Rating: ${safeRating}/5
+        Review: ${trimmedReview}
+      `,
       html: `
         <h2>New Review Received</h2>
         <p><strong>Name:</strong> ${escapeHtml(trimmedName)}</p>

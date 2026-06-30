@@ -1,10 +1,26 @@
 import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+
+const NEWSLETTER_RATE_LIMIT = 5;
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    const ip = getClientIp(req.headers);
+    const { allowed, resetAt } = await checkRateLimit(`newsletter:${ip}`);
+    if (!allowed) {
+      const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+      return jsonResponse({ error: "Too many requests. Please try again later." }, 429, {
+        "Retry-After": retryAfter.toString(),
+        "X-RateLimit-Limit": NEWSLETTER_RATE_LIMIT.toString(),
+        "X-RateLimit-Remaining": "0",
+      });
+    }
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const { email } = await req.json();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return jsonResponse({ error: "Invalid email address" }, 400);
     }
 
@@ -12,7 +28,7 @@ export async function POST(req) {
 
     const { error } = await supabase
       .from('newsletter_subscriptions')
-      .insert([{ email }])
+      .insert([{ email: normalizedEmail }])
       .select()
       .single();
 

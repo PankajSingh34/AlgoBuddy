@@ -224,7 +224,7 @@ export default function CommunityBlogFeed({ loading = false }) {
 
         <div className="mt-8 text-center">
           <a
-            href="/blogs"
+            href="/blog"
             aria-label="View all blog posts"
             className="btn-base border border-[var(--color-border)] text-[var(--udemy-text)] dark:text-[var(--udemy-dark-text)] hover:bg-[var(--color-neutral-100)] dark:hover:bg-[var(--color-neutral-800)] focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
           >
