@@ -333,7 +333,11 @@ export async function POST(req) {
       });
 
       if (error) {
-        return jsonResponse({ success: false, message: error.message }, 400);
+        console.warn("[auth] Signup failed:", error.message || error);
+        return jsonResponse({
+          success: false,
+          message: "Signup could not be completed. Please check your details and try again.",
+        }, 400);
       }
 
       if (emailConfirm) {
