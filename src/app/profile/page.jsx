@@ -10,6 +10,7 @@ import { useUser } from "@/features/user/UserContext";
 import Footer from "@/app/components/footer";
 import { supabase } from "@/lib/supabase";
 import { practiceData } from "@/lib/practiceData";
+import { ALLOWED_AVATAR_ACCEPT_TYPES, isAllowedAvatarFile } from "@/lib/avatarUpload";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
@@ -431,9 +432,9 @@ export default function ProfilePage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (!isAllowedAvatarFile(file)) {
       event.target.value = "";
-      toast.error("Please choose an image file");
+      toast.error("Please upload a JPG, PNG, or WebP image");
       return;
     }
 
@@ -730,7 +731,7 @@ export default function ProfilePage() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept={ALLOWED_AVATAR_ACCEPT_TYPES}
                     className="hidden"
                     onChange={handleAvatarChange}
                   />
