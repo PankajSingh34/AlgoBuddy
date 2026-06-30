@@ -820,8 +820,8 @@ export default function ArenaPage() {
                       </div>
                       <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
                         <Calendar size={32} className="mx-auto mb-2 text-indigo-500" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">14</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Days Active</div>
+                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.streakFreezes ?? 1}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Streak Freezes</div>
                       </div>
                     </div>
 
@@ -863,6 +863,9 @@ export default function ArenaPage() {
                   <div className="text-xl font-black leading-none">{streakData?.current || 0} Days</div>
                   <span className="text-[10px] text-slate-500 dark:text-amber-500/80 block mt-1 font-semibold">
                     Keep it up! Next milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)} days
+                  </span>
+                  <span className="text-[10px] text-violet-500 dark:text-violet-300 block mt-1 font-semibold">
+                    Freezes left: {streakData?.streakFreezes ?? 1}
                   </span>
                 </div>
               </div>

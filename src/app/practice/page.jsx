@@ -73,6 +73,7 @@ export default function PracticePage() {
   const { progress, getStatus, updateProgress, streakData, loading: progressLoading, error: progressError } = useSheetProgress();
   const currentStreak = streakData.current;
   const longestStreak = streakData.best;
+  const streakFreezes = streakData.streakFreezes ?? 1;
 
   // My Sheet hook
   const { sheet, isInSheet, addToSheet, removeFromSheet, sheetCount } = useMySheet();
@@ -456,6 +457,7 @@ export default function PracticePage() {
           monthlyGoal={50}
           streakDays={currentStreak}
           bestStreak={longestStreak}
+          streakFreezes={streakFreezes}
           mySheetCount={sheetCount}
           onBackToPractice={() => router.push("/")}
           onBackToSessions={() => setActiveView("problem-list")}
@@ -477,6 +479,7 @@ export default function PracticePage() {
               monthlyGoal={50}
               streakDays={currentStreak}
               bestStreak={longestStreak}
+              streakFreezes={streakFreezes}
               solved={stats.solved}
               attempted={stats.attempted}
               remaining={stats.remaining}

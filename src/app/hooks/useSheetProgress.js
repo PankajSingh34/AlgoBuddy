@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 const LOCAL_KEY = "algobuddy_practice_progress";
 const STREAK_KEY = "algobuddy_current_streak";
 const BEST_STREAK_KEY = "algobuddy_best_streak";
+const FREEZE_KEY = "algobuddy_streak_freezes";
 const LAST_ACTIVE_KEY = "algobuddy_last_active_date";
 
 function readLocal() {
@@ -98,12 +99,13 @@ async function postProgressToServer(problemId, status) {
   }
 
   // Supabase path
-  await fetch("/api/progress", {
+  const res = await fetch("/api/progress", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ problemId, status }),
   });
-  return null;
+  if (!res.ok) return null;
+  return await res.json();
 }
 
 /** Bulk-sync items that exist locally but not on the server */
@@ -140,7 +142,8 @@ async function bulkSyncToServer(items) {
 function readLocalStreak() {
   const current = parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
   const best = parseInt(localStorage.getItem(BEST_STREAK_KEY) || "0", 10);
-  return { current, best };
+  const streakFreezes = parseInt(localStorage.getItem(FREEZE_KEY) || "1", 10);
+  return { current, best, streakFreezes };
 }
 
 function updateLocalStreak(currentStreak) {
@@ -149,12 +152,32 @@ function updateLocalStreak(currentStreak) {
   if (lastActive === today) return currentStreak; // already updated today
 
   const yesterday = new Date(Date.now() - 86400000).toDateString();
-  let next = lastActive === yesterday ? currentStreak + 1 : 1;
+  const freezes = parseInt(localStorage.getItem(FREEZE_KEY) || "1", 10);
+  let next = currentStreak;
+  let nextFreezes = freezes;
+
+  if (lastActive === yesterday) {
+    next = currentStreak + 1;
+  } else if (lastActive) {
+    const lastActiveDate = new Date(lastActive);
+    const daysSince = Math.round((new Date(today).getTime() - lastActiveDate.getTime()) / 86400000);
+    if (daysSince === 2 && freezes > 0) {
+      nextFreezes = freezes - 1;
+      localStorage.setItem(FREEZE_KEY, String(nextFreezes));
+      localStorage.setItem(LAST_ACTIVE_KEY, yesterday);
+      return currentStreak;
+    }
+    next = 1;
+  } else {
+    next = 1;
+  }
+
   const best = Math.max(parseInt(localStorage.getItem(BEST_STREAK_KEY) || "0", 10), next);
 
   localStorage.setItem(STREAK_KEY, String(next));
   localStorage.setItem(BEST_STREAK_KEY, String(best));
   localStorage.setItem(LAST_ACTIVE_KEY, today);
+  localStorage.setItem(FREEZE_KEY, String(nextFreezes));
   return next;
 }
 
@@ -187,6 +210,7 @@ export function useSheetProgress() {
   const [streakData, setStreakData] = useState({
     current: 0,
     best: 0,
+    streakFreezes: 1,
     dailySolved: 0,
     weeklySolved: 0,
     monthlySolved: 0,
@@ -272,6 +296,7 @@ export function useSheetProgress() {
             setStreakData({
               current: serverData.currentStreak || 0,
               best: serverData.longestStreak || 0,
+              streakFreezes: serverData.streakFreezes ?? 1,
               dailySolved: serverData.dailySolved || 0,
               weeklySolved: serverData.weeklySolved || 0,
               monthlySolved: serverData.monthlySolved || 0,
@@ -314,14 +339,15 @@ export function useSheetProgress() {
       // Update local streak on completion only for guests.
       // Authenticated users get their streak from the server after the sync
       // below, so updating localStorage here would cause divergence.
-      if (newStatus === "Completed" && !user) {
-        const next = updateLocalStreak(streakData.current);
-        setStreakData((prev) => ({
-          ...prev,
-          current: next,
-          best: Math.max(prev.best, next),
-        }));
-      }
+        if (newStatus === "Completed" && !user) {
+          const next = updateLocalStreak(streakData.current);
+          setStreakData((prev) => ({
+            ...prev,
+            current: next,
+            best: Math.max(prev.best, next),
+            streakFreezes: prev.streakFreezes ?? 1,
+          }));
+        }
 
       // Sync to server asynchronously
       if (user) {
@@ -333,6 +359,7 @@ export function useSheetProgress() {
             setStreakData({
               current: fresh.currentStreak || 0,
               best: fresh.longestStreak || 0,
+              streakFreezes: fresh.streakFreezes ?? 1,
               dailySolved: fresh.dailySolved || 0,
               weeklySolved: fresh.weeklySolved || 0,
               monthlySolved: fresh.monthlySolved || 0,

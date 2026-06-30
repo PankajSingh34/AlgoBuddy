@@ -98,6 +98,7 @@ public class PracticeServiceUnitTest {
                     sharedStats.getLastActiveDate(),
                     sharedStats.getVisualizedCount()
             );
+            currentStatsState.setStreakFreezes(sharedStats.getStreakFreezes());
             return Optional.of(currentStatsState);
         });
 
@@ -110,6 +111,7 @@ public class PracticeServiceUnitTest {
             sharedStats.setLongestStreak(savedStats.getLongestStreak());
             sharedStats.setLastActiveDate(savedStats.getLastActiveDate());
             sharedStats.setVisualizedCount(savedStats.getVisualizedCount());
+            sharedStats.setStreakFreezes(savedStats.getStreakFreezes());
 
             // Decrement active threads holding lock
             activeThreadsInCriticalSection.decrementAndGet();
@@ -150,5 +152,22 @@ public class PracticeServiceUnitTest {
         assertEquals(1, maxConcurrentThreadsInCriticalSection.get(), "Pessimistic lock simulation failed to serialize transactions");
         assertEquals(6, sharedStats.getCurrentStreak(), "Final streak should be 6");
         assertEquals(LocalDate.now(), sharedStats.getLastActiveDate(), "Last active date should be today");
+    }
+
+    @Test
+    public void testUpdateStreakConsumesFreezeAfterOneMissedDay() {
+        UUID userId = UUID.randomUUID();
+        UserPracticeStats stats = new UserPracticeStats(userId, 10, 10, LocalDate.now().minusDays(2), 0);
+        stats.setStreakFreezes(2);
+
+        doNothing().when(statsRepository).insertStatsIfNotExists(userId);
+        when(statsRepository.findAndLockByUserId(userId)).thenReturn(Optional.of(stats));
+
+        practiceService.updateStreak(userId);
+
+        assertEquals(11, stats.getCurrentStreak(), "Streak should continue after consuming a freeze");
+        assertEquals(10, stats.getStreakFreezes(), "Freeze count should decrement");
+        assertEquals(LocalDate.now(), stats.getLastActiveDate(), "Last active date should move to today");
+        verify(statsRepository, times(1)).save(stats);
     }
 }

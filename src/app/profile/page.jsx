@@ -851,6 +851,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-xl font-black">{streakData?.current || 0}</p>
                   <p className="text-xs font-bold text-slate-500 dark:text-neutral-400">Day Streak</p>
+                  <p className="text-[10px] font-bold text-violet-500 dark:text-violet-300">Freezes left: {streakData?.streakFreezes ?? 1}</p>
                 </div>
               </div>
               <div className="flex items-center justify-center gap-3">
@@ -944,6 +945,7 @@ export default function ProfilePage() {
               {[
                 [Code2, formatNumber(realStats.solvedCount), "Solved Problems", "text-violet-600 bg-violet-50 dark:bg-violet-950/40 dark:text-violet-300"],
                 [Flame, `${streakData?.best || 0} days`, "Longest Streak", "text-orange-600 bg-orange-50 dark:bg-orange-950/40 dark:text-orange-300"],
+                [ShieldCheck, `${streakData?.streakFreezes ?? 1}`, "Streak Freezes", "text-violet-600 bg-violet-50 dark:bg-violet-950/40 dark:text-violet-300"],
                 [Calendar, formatNumber(activitySummary.activeDays), "Active Days", "text-slate-700 bg-slate-50 dark:bg-neutral-800 dark:text-neutral-200"],
               ].map(([Icon, value, label, color]) => (
                 <div key={label} className="flex items-center gap-3">

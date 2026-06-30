@@ -11,6 +11,7 @@ public class ProgressResponse {
     private Map<String, ProgressDetail> progress;
     private Integer currentStreak;
     private Integer longestStreak;
+    private Integer streakFreezes;
     private Integer visualizedCount;
     private Integer dailySolved;
     private Integer weeklySolved;

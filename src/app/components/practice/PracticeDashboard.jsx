@@ -25,6 +25,7 @@ export default function PracticeDashboard({
   monthlyGoal = 50,
   streakDays = 0,
   bestStreak = 0,
+  streakFreezes = 1,
   solved = 0,
   attempted = 0,
   remaining = 0,
@@ -225,6 +226,7 @@ export default function PracticeDashboard({
               <span className="text-2xl font-black text-slate-800 dark:text-white">{streakDays}</span>
             </div>
             <span className="text-[10px] font-bold text-slate-400 mt-auto">Best: {bestStreak} days</span>
+            <span className="text-[10px] font-bold text-violet-500 dark:text-violet-400 mt-1">Freezes left: {streakFreezes}</span>
           </div>
 
           {/* Weekly Goal */}

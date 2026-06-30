@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,8 +36,10 @@ public class PracticeService {
     private PracticeService self;
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProgressResponse getUserProgress(@NonNull UUID userId) {
+        statsRepository.insertStatsIfNotExists(userId);
+
         List<UserProgress> progressList = progressRepository.findByUserId(userId);
         
         Map<String, ProgressResponse.ProgressDetail> progressMap = progressList.stream()
@@ -47,6 +50,9 @@ public class PracticeService {
 
         UserPracticeStats stats = statsRepository.findById(userId)
                 .orElse(new UserPracticeStats(userId, 0, 0, null, 0));
+
+        reconcileStreakWithFreeze(stats, LocalDate.now());
+        statsRepository.save(stats);
 
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime startOfDay = now.toLocalDate().atStartOfDay(now.getOffset()).toOffsetDateTime();
@@ -61,6 +67,7 @@ public class PracticeService {
                 .progress(progressMap)
                 .currentStreak(stats.getCurrentStreak())
                 .longestStreak(stats.getLongestStreak())
+                .streakFreezes(stats.getStreakFreezes())
                 .visualizedCount(stats.getVisualizedCount())
                 .dailySolved(dailySolved)
                 .weeklySolved(weeklySolved)
@@ -138,6 +145,7 @@ public class PracticeService {
                 .orElseThrow(() -> new IllegalStateException("UserPracticeStats should exist for user: " + userId));
 
         LocalDate today = LocalDate.now();
+        reconcileStreakWithFreeze(stats, today);
         LocalDate lastActive = stats.getLastActiveDate();
 
         if (lastActive == null) {
@@ -157,6 +165,26 @@ public class PracticeService {
 
         stats.setLastActiveDate(today);
         statsRepository.save(stats);
+    }
+
+    private void reconcileStreakWithFreeze(UserPracticeStats stats, LocalDate today) {
+        if (stats == null || stats.getLastActiveDate() == null) {
+            return;
+        }
+
+        long daysSinceLastActive = ChronoUnit.DAYS.between(stats.getLastActiveDate(), today);
+        if (daysSinceLastActive < 2) {
+            return;
+        }
+
+        Integer freezes = stats.getStreakFreezes();
+        if (daysSinceLastActive == 2 && freezes != null && freezes > 0) {
+            stats.setStreakFreezes(freezes - 1);
+            stats.setLastActiveDate(today.minusDays(1));
+            return;
+        }
+
+        stats.setCurrentStreak(0);
     }
 
     public void updateStreakWithRetry(@NonNull UUID userId) {
