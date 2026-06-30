@@ -126,6 +126,13 @@ export default function QuizPage() {
       color: "bg-slate-600 hover:bg-slate-700",
     },
     {
+      title: "Monotonic Stack Quiz",
+      description:
+        "Test your understanding of monotonic stack techniques with the Largest Rectangle in Histogram quiz.",
+      href: "/visualizer/stack/monotonic/largestrectangle/quiz",
+      color: "bg-amber-600 hover:bg-amber-700",
+    },
+    {
       title: "Recursive Binary Search Quiz",
       description:
         "Test your understanding of Recursive Binary Search with multiple-choice questions.",
