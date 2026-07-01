@@ -33,7 +33,6 @@ export async function GET(request) {
 
     if (error) {
       // Supabase error is harmless here (table doesn't exist yet)
-      // console.error("[/api/notifications GET] Supabase error:", error.message);
       return jsonResponse({ notifications: [], totalPages: 0, currentPage: page, totalUnread: 0 });
     }
 
