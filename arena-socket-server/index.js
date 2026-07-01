@@ -309,6 +309,19 @@ function verifyAuthToken(token) {
   });
 }
 
+// Express middleware: require a valid Supabase JWT in the Authorization header.
+// On success, attaches the decoded payload to req.auth.
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"] || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const payload = await verifyAuthToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  req.auth = payload;
+  next();
+}
+
 // Connection rate limiting to prevent JWT brute-forcing
 const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
@@ -860,9 +873,16 @@ app.get("/debug", async (req, res) => {
   }
 });
 
-app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
+app.get("/api/verify-match/:matchId/:userId", requireAuth, async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+
+    // Confirm the token subject matches the requested userId
+    const tokenUserId = req.auth.sub || req.auth.id;
+    if (tokenUserId !== userId) {
+      return res.status(403).json({ verified: false, error: "Forbidden" });
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
@@ -885,9 +905,16 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
   }
 });
 
-app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
+app.get("/api/verify-match-result/:matchId/:userId", requireAuth, async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+
+    // Confirm the token subject matches the requested userId
+    const tokenUserId = req.auth.sub || req.auth.id;
+    if (tokenUserId !== userId) {
+      return res.status(403).json({ verified: false, winnerId: null, error: "Forbidden" });
+    }
+
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
