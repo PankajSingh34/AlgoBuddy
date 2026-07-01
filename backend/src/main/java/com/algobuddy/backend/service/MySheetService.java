@@ -97,7 +97,7 @@ public class MySheetService {
                 MySheet newItem = new MySheet();
                 newItem.setUserId(targetUserId);
                 newItem.setProblemId(sharedItem.getProblemId());
-                newItem.setNote(null);
+                newItem.setNote(sharedItem.isSharedNotes() ? sharedItem.getNote() : "");
                 newItem.setPublic(false);
                 newItem.setSharedNotes(false);
                 toSave.add(newItem);
