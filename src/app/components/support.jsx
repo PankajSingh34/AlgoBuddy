@@ -132,7 +132,9 @@ const ContactSupportPopup = () => {
                   {activeTab === "contact" ? "Contact Us" : "Support Center"}
                 </h3>
                 <button
+                  type="button"
                   onClick={() => setIsOpen(false)}
+                  aria-label="Close support popup"
                   className="text-white hover:text-white/80 transition-colors"
                   disabled={isLoading}
                 >
