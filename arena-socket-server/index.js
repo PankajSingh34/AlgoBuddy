@@ -87,6 +87,39 @@ const pubClient = redisUrl ? new Redis(redisUrl) : new Redis();
 const subClient = pubClient.duplicate();
 const redisClient = pubClient.duplicate();
 
+function getBearerToken(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization || "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : null;
+}
+
+async function requireArenaUser(req, res, userId) {
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+
+  try {
+    const user = await verifySupabaseToken(token);
+    if (!user || !user.id) {
+      res.status(401).json({ error: "Unauthorized" });
+      return null;
+    }
+
+    if (userId && user.id !== userId) {
+      res.status(403).json({ error: "Forbidden" });
+      return null;
+    }
+
+    return user;
+  } catch (err) {
+    console.error("[arena-auth] Error:", err.message);
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+}
+
 // Phase 1: Atomically pop an opponent from the queue WITHOUT creating match state
 const ATOMIC_POP_OPPONENT_SCRIPT = `
   local function sanitize(str)
@@ -863,6 +896,8 @@ app.get("/debug", async (req, res) => {
 app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const user = await requireArenaUser(req, res, userId);
+    if (!user) return;
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
@@ -888,6 +923,8 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
 app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
+    const user = await requireArenaUser(req, res, userId);
+    if (!user) return;
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
