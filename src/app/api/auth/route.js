@@ -333,7 +333,8 @@ export async function POST(req) {
       });
 
       if (error) {
-        return jsonResponse({ success: false, message: error.message }, 400);
+        console.error("[auth signup] Supabase error:", error.message);
+        return jsonResponse({ success: false, message: genericAuthError() }, 400);
       }
 
       if (emailConfirm) {
