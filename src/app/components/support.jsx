@@ -1,5 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 // -------------------------------------------------------------------
 // Fix: Added missing FiChevronRight icon import.
@@ -28,6 +30,7 @@ const ContactSupportPopup = () => {
   const [error, setError] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null);
   const popupRef = useRef(null);
+  const router = useRouter();
 
   // Close popup when clicking outside
   useEffect(() => {
@@ -316,13 +319,13 @@ const ContactSupportPopup = () => {
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Check out our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <Link href="/faq" className="underline">
                           FAQs
-                        </a>{" "}
+                        </Link>{" "}
                         or join our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <Link href="/community" className="underline">
                           community forum
-                        </a>
+                        </Link>
                         .
                       </p>
                     </div>
@@ -337,18 +340,23 @@ const ContactSupportPopup = () => {
                           "What are your business hours?",
                           "How do I cancel my subscription?",
                         ].map((question, index) => (
-                          <a
+                          <button
                             key={index}
-                            href="javascript:void(0)"
-                            className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
+                            type="button"
+                            onClick={() => router.push("/faq")}
+                            className="block w-full p-3 text-left bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
                           >
                             {question}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => router.push("/faq")}
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                      >
                         View all help articles <FiChevronRight />
                       </button>
                     </div>
