@@ -712,7 +712,7 @@ const res = await fetch("/api/chatbot", {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   onClick={() => scrollToBottom()}
-                  className="absolute bottom-[92px] right-6 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 
+                  className="absolute bottom-[132px] right-6 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600
                     flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-lg"
                 >
                   <ChevronDown size={16} />
@@ -796,7 +796,7 @@ const res = await fetch("/api/chatbot", {
       </AnimatePresence>
 
       {/* ── Floating Trigger Button ─────────────────────────────────────────────── */}
-      <div className={`fixed bottom-[75px] right-3 sm:bottom-6 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
+      <div className={`fixed bottom-[104px] right-4 sm:bottom-8 sm:right-8 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
         <motion.button
           onClick={() => {
             setIsOpen((v) => {
