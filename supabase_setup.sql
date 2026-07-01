@@ -137,3 +137,48 @@ ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
   USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- Atomic streak increment function (fixes TOCTOU race condition)
+-- ====================================================================
+CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID)
+RETURNS TABLE (current_streak INT, longest_streak INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_current INT;
+  v_longest INT;
+  v_last_active DATE;
+  v_today DATE := CURRENT_DATE;
+  v_yesterday DATE := CURRENT_DATE - 1;
+BEGIN
+  SELECT current_streak, longest_streak, last_active_date::DATE
+  INTO v_current, v_longest, v_last_active
+  FROM user_practice_stats
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
+    VALUES (p_user_id, 1, 1, v_today, 0)
+    RETURNING current_streak, longest_streak INTO v_current, v_longest;
+    RETURN QUERY SELECT v_current, v_longest;
+    RETURN;
+  END IF;
+
+  IF v_last_active = v_yesterday THEN
+    v_current := v_current + 1;
+    IF v_current > v_longest THEN
+      v_longest := v_current;
+    END IF;
+  ELSIF v_last_active IS NULL OR v_last_active < v_yesterday THEN
+    v_current := 1;
+  END IF;
+
+  UPDATE user_practice_stats
+  SET current_streak = v_current, longest_streak = v_longest, last_active_date = v_today
+  WHERE user_id = p_user_id;
+
+  RETURN QUERY SELECT v_current, v_longest;
+END;
+$$;
