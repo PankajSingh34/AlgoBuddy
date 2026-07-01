@@ -165,6 +165,20 @@ export default function QuizPage() {
       btnBg:
         "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600",
     },
+    {
+      title: "Tree Data Structure Quiz",
+      description:
+        "Test your understanding of Tree Data Structures including Binary Trees, BSTs, Traversals, and more.",
+      href: "/visualizer/tree/quiz",
+      icon: Network,
+      filename: "tree_data_structure_quiz.js",
+      cardBorder: "border-lime-500/20 dark:border-lime-500/30",
+      topBarBg: "bg-lime-500/10 dark:bg-lime-500/20",
+      iconStyle:
+        "bg-lime-500/10 border border-lime-500/20 dark:border-lime-500/30 text-lime-600 dark:text-lime-400",
+      btnBg:
+        "bg-lime-600 hover:bg-lime-700 dark:bg-lime-500 dark:hover:bg-lime-600",
+    },
   ];
 
   return (
