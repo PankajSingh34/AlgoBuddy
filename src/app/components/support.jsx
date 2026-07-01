@@ -316,11 +316,11 @@ const ContactSupportPopup = () => {
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Check out our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <a href="/faq" className="underline">
                           FAQs
                         </a>{" "}
                         or join our{" "}
-                        <a href="javascript:void(0)" className="underline">
+                        <a href="/contact" className="underline">
                           community forum
                         </a>
                         .
@@ -337,20 +337,20 @@ const ContactSupportPopup = () => {
                           "What are your business hours?",
                           "How do I cancel my subscription?",
                         ].map((question, index) => (
-                          <a
+                          <button
                             key={index}
-                            href="javascript:void(0)"
-                            className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
+                            type="button"
+                            className="block w-full text-left p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
                           >
                             {question}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className="pt-2">
-                      <button className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                      <a href="/faq" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                         View all help articles <FiChevronRight />
-                      </button>
+                      </a>
                     </div>
                   </div>
                 )}
