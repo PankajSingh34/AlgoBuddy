@@ -48,6 +48,14 @@ export async function proxy(request) {
     if (process.env.NODE_ENV !== "production") {
       console.warn(SUPABASE_ENV_ERROR);
     }
+
+    if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      url.searchParams.set("reason", "missing-auth-config");
+      return NextResponse.redirect(url);
+    }
+
     return supabaseResponse;
   }
 
@@ -78,7 +86,6 @@ export async function proxy(request) {
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
       const url = new URL("/login", request.url);
