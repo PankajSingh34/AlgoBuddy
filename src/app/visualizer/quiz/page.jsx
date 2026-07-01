@@ -31,9 +31,9 @@ export default function QuizPage() {
     {
       title: "Array-Interview Patterns Quiz",
       description: "Practice all Interview Patterns algorithms including Sliding Window, Two Pointers.",
-      href: "/visualizer/array/Sliding Window/quiz",
+      href: "/visualizer/array/Interview-Patterns/quiz",
       icon: Terminal,
-      filename: "Interview_Patterns_quiz.js",
+      filename: "Interview-Patterns_quiz.js",
       cardBorder: "border-indigo-500/20 dark:border-indigo-500/30",
       topBarBg: "bg-indigo-500/10 dark:bg-indigo-500/20",
       iconStyle: "bg-indigo-500/10 border border-indigo-500/20 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400",
