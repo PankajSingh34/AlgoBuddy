@@ -341,20 +341,23 @@ setInterval(async () => {
       for (const key of result[1]) {
         const elements = await redisClient.lrange(key, 0, -1);
         let changed = false;
+        let remainingCount = elements.length;
         for (const el of elements) {
           const parsed = JSON.parse(el);
           if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
             await redisClient.lrem(key, 0, el);
             changed = true;
+            remainingCount--;
             continue;
           }
           const socket = io.sockets.sockets.get(parsed.socketId);
           if (!socket || !socket.connected) {
             await redisClient.lrem(key, 0, el);
             changed = true;
+            remainingCount--;
           }
         }
-        if (changed && elements.length === 0) {
+        if (changed && remainingCount === 0) {
           await redisClient.expire(key, 60);
         }
       }
