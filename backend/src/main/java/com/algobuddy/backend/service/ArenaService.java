@@ -300,25 +300,23 @@ public class ArenaService {
         }
 
         boolean isWinner = request.isWinner();
-
-        if (!matchIdStr.startsWith("mock-match-")) {
-            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
-            if (!verifiedWinnerId.equals(requestingUserId)) {
-                throw new SecurityException("Match result conflict: verified winner does not match claim");
-            }
-            isWinner = true;
-        }
-        final boolean finalIsWinner = isWinner;
         final int MAX_RETRIES = 3;
-
-        // Execute each retry attempt in an isolated transaction.
-        final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
-
-        // Ensure every retry starts a new transaction.
-        retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
+
+                if (!matchIdStr.startsWith("mock-match-")) {
+                    UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+                    if (!verifiedWinnerId.equals(requestingUserId)) {
+                        throw new SecurityException("Match result conflict: verified winner does not match claim");
+                    }
+                    isWinner = true;
+                }
+                final boolean finalIsWinner = isWinner;
+
+                // Execute each retry attempt in an isolated transaction.
+                final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
+                retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
                 UUID opponentId = retryTransaction.execute(status -> {
 
@@ -425,7 +423,9 @@ public class ArenaService {
                     log.error("Failed to record match result after {} attempts", MAX_RETRIES, e);
                     throw e;
                 }
-                log.warn("Optimistic lock failure recording match result, retry {}/{}", attempt, MAX_RETRIES);
+                log.warn("Lock failure, retrying {}/{} with fresh verification", attempt, MAX_RETRIES);
+            } catch (SecurityException e) {
+                throw e;
             }
         }
     }

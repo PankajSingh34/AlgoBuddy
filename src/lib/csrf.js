@@ -44,7 +44,12 @@ export function validateCsrf(request) {
     .update(`${random}:${timestamp}`)
     .digest("hex");
 
-  if (hmac !== expectedHmac) {
+  const hmacBuffer = Buffer.from(hmac, 'hex');
+  const expectedBuffer = Buffer.from(expectedHmac, 'hex');
+  if (hmacBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+  if (!crypto.timingSafeEqual(hmacBuffer, expectedBuffer)) {
     return false;
   }
 
