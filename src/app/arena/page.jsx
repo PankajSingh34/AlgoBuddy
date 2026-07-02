@@ -1026,11 +1026,11 @@ export default function ArenaPage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 bg-amber-500/10 p-3.5 border border-amber-500/20 rounded-xl mb-4 text-amber-500">
+              <div className="flex items-center gap-3 bg-purple-500/10 p-3.5 border border-purple-500/20 rounded-xl mb-4 text-purple-500">
                 <Flame size={28} className={(streakData?.current || 0) > 0 ? "animate-pulse" : "opacity-50"} />
                 <div>
                   <div className="text-xl font-black leading-none">{streakData?.current || 0} Days</div>
-                  <span className="text-[10px] text-slate-500 dark:text-amber-500/80 block mt-1 font-semibold">
+                  <span className="text-[10px] text-slate-500 dark:text-purple-500/80 block mt-1 font-semibold">
                     Keep it up! Next milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)} days
                   </span>
                 </div>
@@ -1049,9 +1049,9 @@ export default function ArenaPage() {
                   
                   return (
                     <div key={day} className="flex flex-col items-center">
-                      <span className={`text-[9px] block mb-1 font-semibold ${diff === 0 ? "text-amber-500 dark:text-amber-400" : "text-slate-400 dark:text-neutral-500"}`}>{day[0]}</span>
+                      <span className={`text-[9px] block mb-1 font-semibold ${diff === 0 ? "text-purple-500 dark:text-purple-400" : "text-slate-400 dark:text-neutral-500"}`}>{day[0]}</span>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive
-                          ? "bg-amber-500 text-white shadow-sm"
+                          ? "bg-purple-500 text-white shadow-sm"
                           : isFuture ? "bg-slate-50 dark:bg-neutral-900/50 text-slate-300 dark:text-neutral-700" : "bg-slate-100 dark:bg-neutral-900 text-slate-400 dark:text-neutral-600"
                         }`}>
                         {isActive ? "🔥" : "•"}
