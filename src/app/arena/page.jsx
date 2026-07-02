@@ -994,6 +994,40 @@ export default function ArenaPage() {
                       </div>
                     </div>
 
+                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden">
+                      <div className="absolute -right-4 -top-4 opacity-5 text-amber-500 pointer-events-none">
+                        <Award size={120} />
+                      </div>
+                      <div className="flex justify-between items-end mb-4 relative z-10">
+                        <div>
+                          <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Next Milestone</h5>
+                          <p className="text-[10px] text-slate-500 mt-1">Unlock your next badge and XP bonus!</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-black text-amber-500">{streakData?.current || 0}</span>
+                          <span className="text-xs font-bold text-slate-400 dark:text-neutral-500"> / {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)} Days</span>
+                        </div>
+                      </div>
+                      
+                      {(() => {
+                        const current = streakData?.current || 0;
+                        const target = Math.max(10, Math.ceil((current + 1) / 10) * 10);
+                        const prevTarget = target === 10 ? 0 : target - 10;
+                        const progress = ((current - prevTarget) / (target - prevTarget)) * 100;
+                        
+                        return (
+                          <div className="relative h-4 bg-slate-200 dark:bg-neutral-800 rounded-full overflow-hidden shadow-inner z-10">
+                            <div 
+                              className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-1000 ease-out"
+                              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                            >
+                              <div className="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
                     <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5">
                       <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200 mb-4">Activity Heatmap (Last 30 Days)</h5>
                       <div className="grid grid-cols-7 gap-2">
