@@ -977,20 +977,23 @@ export default function ArenaPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Flame size={32} className="mx-auto mb-2 text-amber-500 animate-pulse" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.current || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Current Streak</div>
+                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <Flame size={32} className="mx-auto mb-2 text-amber-500 animate-pulse group-hover:scale-110 transition-transform" />
+                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{streakData?.current || 0}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Current Streak</div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Trophy size={32} className="mx-auto mb-2 text-primary" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.longest || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Longest Streak</div>
+                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <Trophy size={32} className="mx-auto mb-2 text-primary group-hover:scale-110 transition-transform" />
+                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{streakData?.longest || streakData?.best || 0}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Longest Streak</div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Calendar size={32} className="mx-auto mb-2 text-indigo-500" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">14</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Days Active</div>
+                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <Calendar size={32} className="mx-auto mb-2 text-indigo-500 group-hover:scale-110 transition-transform" />
+                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{(streakData?.longest || streakData?.best || 0) + (streakData?.current || 0)}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Total Days Active</div>
                       </div>
                     </div>
 
