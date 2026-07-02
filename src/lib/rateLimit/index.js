@@ -204,7 +204,14 @@ export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60,
 export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "sandbox" });
 export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "chatbot" });
 
+export function shouldBypassRateLimit() {
+  return process.env.DISABLE_RATE_LIMIT === "true";
+}
+
 export async function checkRateLimit(key) {
+  if (shouldBypassRateLimit()) {
+    return { allowed: true, remaining: 999, retryAfter: 0 };
+  }
   return apiLimiter.check(key);
 }
 

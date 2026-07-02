@@ -9,7 +9,7 @@ export function useRecentlyViewed() {
 
   useEffect(() => {
     persistence.get('RECENTLY_VIEWED').then((stored) => {
-      if (stored) setRecentlyViewed(stored);
+      if (stored) setRecentlyViewed(prev => prev.length === 0 ? stored : prev);
     });
   }, []);
 

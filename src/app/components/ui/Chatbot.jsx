@@ -38,7 +38,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/apiClient";
-import { CSRF_HEADER_NAME } from "@/lib/csrf";
+import { CSRF_HEADER_NAME } from "@/lib/csrfConstants";
 
 // ─── Custom Robot Icon matching AlgoBuddy Theme ──────────────────────────────
 

@@ -351,6 +351,8 @@ export default function Navbar() {
 
             <button
               onClick={toggleTheme}
+              
+              suppressHydrationWarning 
               aria-label={
                 themeMounted
                   ? `Switch to ${theme === "light"
@@ -512,9 +514,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
+                onClick={() => setMenuOpen(false)}
                 className="h-[44px] flex items-center justify-center text-[15px] font-semibold text-surface-900 dark:text-white border border-surface-300 dark:border-udemy-dark-border rounded-full hover:border-primary hover:text-primary transition-all focus-ring"
               >
                 Sign in
@@ -522,6 +522,7 @@ export default function Navbar() {
             )}
           </div>
         </div>
+        
       )}
 
       <BottomNav />
@@ -529,3 +530,4 @@ export default function Navbar() {
     </>
   );
 }
+

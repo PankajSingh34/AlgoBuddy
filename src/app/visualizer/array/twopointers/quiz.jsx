@@ -57,7 +57,62 @@ const twoPointersQuestions = [
     ],
     correctAnswer: 1,
     explanation: "Each pointer traverses the array at most once in a single direction. Total steps = at most 2N, which simplifies to O(N)."
-  }
+  },
+  {
+  question: "Which type of problems is the Two Pointers technique most commonly used for?",
+  options: [
+    "Graph traversal",
+    "Problems involving sorted arrays or linked lists",
+    "Tree balancing",
+    "Dynamic programming only"
+  ],
+  correctAnswer: 1,
+  explanation: "The Two Pointers technique is most effective for sorted arrays, linked lists, and problems requiring simultaneous traversal from two positions."
+},
+{
+  question: "In the Pair Sum problem on a sorted array, what should you do if the current sum is smaller than the target?",
+  options: [
+    "Move the left pointer to the right",
+    "Move the right pointer to the left",
+    "Move both pointers inward",
+    "Restart the search"
+  ],
+  correctAnswer: 0,
+  explanation: "Moving the left pointer to the right increases the sum because the array is sorted in ascending order."
+},
+{
+  question: "Which pointer usually moves faster in the Fast and Slow Pointer technique used for cycle detection?",
+  options: [
+    "Slow pointer",
+    "Fast pointer",
+    "Both move at the same speed",
+    "Neither pointer moves"
+  ],
+  correctAnswer: 1,
+  explanation: "The fast pointer typically moves two steps while the slow pointer moves one step, allowing cycle detection."
+},
+{
+  question: "Which famous algorithm uses the Fast and Slow Pointer technique?",
+  options: [
+    "Dijkstra's Algorithm",
+    "Floyd's Cycle Detection Algorithm",
+    "Kruskal's Algorithm",
+    "Prim's Algorithm"
+  ],
+  correctAnswer: 1,
+  explanation: "Floyd's Cycle Detection Algorithm (Tortoise and Hare) uses fast and slow pointers to detect cycles efficiently."
+},
+{
+  question: "What is the main idea behind the Two Pointers technique?",
+  options: [
+    "Use recursion to divide the problem",
+    "Traverse the data structure simultaneously using two indices or pointers",
+    "Sort the array after every iteration",
+    "Use extra memory to store visited elements"
+  ],
+  correctAnswer: 1,
+  explanation: "The Two Pointers technique solves problems efficiently by moving two pointers strategically through the data structure."
+}
 ];
 
 const Quiz = () => {

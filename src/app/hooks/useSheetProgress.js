@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/apiClient";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -78,9 +79,12 @@ async function fetchProgressFromServer() {
   }
 
   // Supabase path via Next.js API route
-  const res = await fetch("/api/progress");
-  if (!res.ok) return null;
-  return await res.json(); // { progress: { [id]: { status, updatedAt } } }
+  try {
+    const data = await api.request("/api/progress");
+    return data || null;
+  } catch {
+    return null;
+  }
 }
 
 /** Update a single problem's status */
@@ -98,13 +102,15 @@ async function postProgressToServer(problemId, status) {
   }
 
   // Supabase path
-  const res = await fetch("/api/progress", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ problemId, status }),
-  });
-  if (!res.ok) return null;
-  return await res.json(); // now returns currentStreak, longestStreak, etc.
+  try {
+    const fresh = await api.request("/api/progress", {
+      method: "POST",
+      body: { problemId, status },
+    });
+    return fresh || null;
+  } catch {
+    return null;
+  }
 }
 
 /** Bulk-sync items that exist locally but not on the server */
@@ -125,11 +131,12 @@ async function bulkSyncToServer(items) {
 
   // Supabase path: sequential POSTs
   for (const item of items) {
-    await fetch("/api/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ problemId: item.problemId, status: item.status }),
-    }).catch(() => {});
+    try {
+      await api.request("/api/progress", {
+        method: "POST",
+        body: { problemId: item.problemId, status: item.status },
+      });
+    } catch {}
   }
   return null;
 }

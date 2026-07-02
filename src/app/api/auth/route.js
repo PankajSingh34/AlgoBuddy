@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, shouldBypassRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
@@ -352,7 +352,7 @@ export async function POST(req) {
     }
 
     if (action === "login") {
-      if (await isEmailLocked(normalizedEmail)) {
+      if (!shouldBypassRateLimit() && await isEmailLocked(normalizedEmail)) {
         return jsonResponse({ success: false, message: "Too many failed login attempts. Please try again later." }, 429);
       }
 

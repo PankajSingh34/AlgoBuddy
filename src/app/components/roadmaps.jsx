@@ -171,7 +171,7 @@ const ROADMAP_STAGES = [
           "Solve common interview problems",
         ],
         resources: [
-          { label: "Linked List Visualizer", href: "/visualizer/linkedlist" },
+          { label: "Linked List Visualizer", href: "/visualizer/linked-list" },
         ],
         practiceLinks: [],
       },

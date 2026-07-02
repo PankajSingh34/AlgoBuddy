@@ -341,7 +341,7 @@ const sections = [
   },
   {
     title: "Linked List",
-    slug: "linkedlist",
+    slug: "linked-list",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -402,10 +402,6 @@ const sections = [
           {
             name: "Deletion",
             path: "/visualizer/linkedlist/operations/deletion",
-          },
-          {
-            name: "Searching",
-            path: "/visualizer/linkedlist/operations/search",
           },
           {
             name: "Reverse",

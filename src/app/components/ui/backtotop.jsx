@@ -28,10 +28,11 @@ const BackToTop = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          style={{ position: 'fixed', bottom: '152px', right: '20px' }}
-          className="z-[9990] w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#a435f0] text-white shadow-lg flex items-center justify-center hover:bg-[#8f2cd6] group"
+          className="fixed bottom-[147px] right-3 sm:bottom-24 sm:right-6 z-[9990] w-14 h-14 rounded-2xl bg-[#a435f0] text-white shadow-lg flex items-center justify-center hover:bg-[#8f2cd6] transition-colors group"
         >
           <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap">
             Back to top

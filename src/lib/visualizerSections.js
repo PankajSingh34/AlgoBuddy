@@ -165,7 +165,6 @@ export const sections = [
           { name: "Traversal", path: "/visualizer/linkedlist/operations/traversal" },
           { name: "Insertion", path: "/visualizer/linkedlist/operations/insertion" },
           { name: "Deletion", path: "/visualizer/linkedlist/operations/deletion" },
-          { name: "Searching", path: "/visualizer/linkedlist/operations/search" },
           { name: "Reverse", path: "/visualizer/linkedlist/operations/reverse" },
           { name: "Merge", path: "/visualizer/linkedlist/operations/merge" },
           { name: "Comparison", path: "/visualizer/linkedlist/operations/comparison" },

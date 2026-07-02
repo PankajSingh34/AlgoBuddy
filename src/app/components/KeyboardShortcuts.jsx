@@ -14,7 +14,7 @@ export default function KeyboardShortcuts() {
       }
 
       // Reset visualization
-      if (event.key.toLowerCase() === "r") {
+      if (event.key?.toLowerCase() === "r") {
         console.log("Reset shortcut triggered");
       }
 
@@ -29,13 +29,13 @@ export default function KeyboardShortcuts() {
       }
 
       // Open search
-      if (event.ctrlKey && event.key.toLowerCase() === "k") {
+      if (event.ctrlKey && event.key?.toLowerCase() === "k") {
         event.preventDefault();
         console.log("Search shortcut triggered");
       }
 
       // Toggle focus mode
-      if (event.key.toLowerCase() === "f") {
+      if (event.key?.toLowerCase() === "f") {
         setFocusMode((prev) => !prev);
       }
     };
