@@ -182,3 +182,63 @@ BEGIN
   RETURN QUERY SELECT v_current, v_longest;
 END;
 $$;
+
+-- ====================================================================
+-- Combined function: upsert progress and update streak atomically
+-- Wraps both operations in a single transaction to prevent partial failures
+-- ====================================================================
+CREATE OR REPLACE FUNCTION upsert_progress_and_update_streak(
+  p_user_id UUID,
+  p_problem_id TEXT,
+  p_status TEXT,
+  p_updated_at TIMESTAMPTZ
+)
+RETURNS TABLE (current_streak INT, longest_streak INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_current INT;
+  v_longest INT;
+  v_last_active DATE;
+  v_today DATE := CURRENT_DATE;
+  v_yesterday DATE := CURRENT_DATE - 1;
+BEGIN
+  -- Upsert progress
+  INSERT INTO user_progress (user_id, problem_id, status, updated_at)
+  VALUES (p_user_id, p_problem_id, p_status, p_updated_at)
+  ON CONFLICT (user_id, problem_id)
+  DO UPDATE SET status = p_status, updated_at = p_updated_at;
+
+  -- Only update streak if completed
+  IF p_status = 'Completed' THEN
+    SELECT current_streak, longest_streak, last_active_date::DATE
+    INTO v_current, v_longest, v_last_active
+    FROM user_practice_stats
+    WHERE user_id = p_user_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+      INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
+      VALUES (p_user_id, 1, 1, v_today, 0)
+      RETURNING current_streak, longest_streak INTO v_current, v_longest;
+      RETURN QUERY SELECT v_current, v_longest;
+      RETURN;
+    END IF;
+
+    IF v_last_active = v_yesterday THEN
+      v_current := v_current + 1;
+      IF v_current > v_longest THEN
+        v_longest := v_current;
+      END IF;
+    ELSIF v_last_active IS NULL OR v_last_active < v_yesterday THEN
+      v_current := 1;
+    END IF;
+
+    UPDATE user_practice_stats
+    SET current_streak = v_current, longest_streak = v_longest, last_active_date = v_today
+    WHERE user_id = p_user_id;
+  END IF;
+
+  RETURN QUERY SELECT COALESCE(v_current, 0), COALESCE(v_longest, 0);
+END;
+$$;

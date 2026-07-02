@@ -81,28 +81,30 @@ export async function POST(request) {
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase.from("user_progress").upsert(
-      {
-        user_id: authResult.user.id,
-        problem_id: problemId,
-        status: status,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: ["user_id", "problem_id"] }
-    );
-
-    if (error) return jsonResponse({ error: error.message }, 500);
-
-    // Atomic streak update via Supabase RPC (fixes TOCTOU race condition)
     let currentStreak = 0;
     let longestStreak = 0;
+
     if (status === "Completed") {
-      const { data, error } = await supabase.rpc('increment_streak_on_completion', {
+      const { data, error } = await supabase.rpc('upsert_progress_and_update_streak', {
         p_user_id: authResult.user.id,
+        p_problem_id: problemId,
+        p_status: status,
+        p_updated_at: new Date().toISOString(),
       });
       if (error) return jsonResponse({ error: error.message }, 500);
       currentStreak = data?.[0]?.current_streak ?? 0;
       longestStreak = data?.[0]?.longest_streak ?? 0;
+    } else {
+      const { error } = await supabase.from("user_progress").upsert(
+        {
+          user_id: authResult.user.id,
+          problem_id: problemId,
+          status: status,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: ["user_id", "problem_id"] }
+      );
+      if (error) return jsonResponse({ error: error.message }, 500);
     }
 
     // Return streak data so the client can always trust the server value.
