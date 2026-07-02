@@ -226,6 +226,20 @@ export default function QuizPage() {
         "bg-lime-600 hover:bg-lime-700 dark:bg-lime-500 dark:hover:bg-lime-600",
     },
     {
+      title: "Advanced Tree Quiz",
+      description:
+        "Practice AVL, Red-Black Tree, B-Tree, B+ Tree, Segment Tree, Fenwick Tree, Trie, and Heap Tree concepts.",
+      href: "/visualizer/tree/advanced/quiz",
+      filename: "advanced_tree_quiz.js",
+      icon: Trees,
+      cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
+      topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      iconStyle:
+        "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+      btnBg:
+        "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
+    },
+    {
       title: "Dynamic Programming Quiz",
       description:
         "Test your understanding of DP concepts including Memoization, Tabulation, Knapsack, and LCS.",
