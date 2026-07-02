@@ -77,6 +77,20 @@ export async function proxy(request) {
   );
 
   const { data: { user }, error } = await supabase.auth.getUser();
+const requestHeaders = new Headers(request.headers);
+
+
+if (user) {
+  requestHeaders.set("x-user-id", user.id);
+
+  if (user.email) {
+    requestHeaders.set("x-user-email", user.email);
+  }
+}
+supabaseResponse = NextResponse.next({
+  request: {
+    headers: requestHeaders,
+  },
 
   // Forward the verified user to route handlers so they can skip
   // a redundant getUser() call, cutting auth latency in half.
