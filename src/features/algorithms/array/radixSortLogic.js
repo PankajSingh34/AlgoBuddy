@@ -13,11 +13,12 @@ export function* radixSortGenerator(initialArray) {
     Math.max(...nums.map(digitCount));
 
   const maxDigits = mostDigits(arr);
+  const hasNegativeValues = arr.some((num) => num < 0);
 
   let comparisons = 0;
   let swaps = 0;
   let step = 0;
-  const totalSteps = arr.length * maxDigits;
+  const totalSteps = arr.length * maxDigits + (hasNegativeValues ? 1 : 0);
 
   yield {
     type: "init",
@@ -78,6 +79,25 @@ export function* radixSortGenerator(initialArray) {
       payload: {
         arr: [...arr],
         digitPlace: k,
+        comparisons,
+        swaps,
+        step,
+        totalSteps,
+      },
+    };
+  }
+
+  if (hasNegativeValues) {
+    const negatives = arr.filter((num) => num < 0).reverse();
+    const nonNegatives = arr.filter((num) => num >= 0);
+    arr = [...negatives, ...nonNegatives];
+    swaps += arr.length;
+    step++;
+
+    yield {
+      type: "sign_complete",
+      payload: {
+        arr: [...arr],
         comparisons,
         swaps,
         step,
