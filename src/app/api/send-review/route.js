@@ -5,6 +5,10 @@ import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { validateCsrf } from "@/lib/csrf";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
+function sanitizeForPlainText(value) {
+  return String(value).replace(/[\r\n\x00-\x1f\x7f]/g, "");
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -120,6 +124,14 @@ export async function POST(request) {
       replyTo: trimmedEmail,
       to: inboxEmail,
       subject: `New Review Submission from ${trimmedName}`,
+      text: `
+        Name: ${sanitizeForPlainText(trimmedName)}
+        Email: ${sanitizeForPlainText(trimmedEmail)}
+        Rating: ${"★".repeat(safeRating)}${"☆".repeat(
+          5 - safeRating
+        )}
+        Review: ${sanitizeForPlainText(trimmedReview)}
+      `,
       html: `
         <h2>New Review Received</h2>
         <p><strong>Name:</strong> ${escapeHtml(trimmedName)}</p>
