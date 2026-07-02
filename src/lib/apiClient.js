@@ -12,7 +12,14 @@ class ApiClient {
 
   async getCsrfToken() {
     if (this.csrfToken) return this.csrfToken;
-
+    // Try reading from embedded page data first (server-side rendered)
+    if (typeof document !== 'undefined') {
+      const metaTag = document.querySelector('meta[name="csrf-token"]');
+      if (metaTag) {
+        this.csrfToken = metaTag.getAttribute('content');
+        return this.csrfToken;
+      }
+    }
     try {
       const res = await fetch("/api/csrf-token", {
         method: "GET",
