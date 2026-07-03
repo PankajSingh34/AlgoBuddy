@@ -727,7 +727,7 @@ export default function VisualizerClient({ initialSections }) {
         </div>
       </section>
 
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-[75px] left-3 sm:bottom-6 sm:left-6 z-50">
         <ShortcutsButton position="controls" />
       </div>
     </div>
