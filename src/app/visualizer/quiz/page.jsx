@@ -231,7 +231,21 @@ export default function QuizPage() {
         "Practice AVL, Red-Black Tree, B-Tree, B+ Tree, Segment Tree, Fenwick Tree, Trie, and Heap Tree concepts.",
       href: "/visualizer/tree/advanced/quiz",
       filename: "advanced_tree_quiz.js",
-      icon: Trees,
+      icon: Layers,
+      cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
+      topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      iconStyle:
+        "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+      btnBg:
+        "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
+    },
+    {
+      title: "Tree Applications Quiz",
+      description:
+        "Practice Heap, Heap Sort, Huffman Coding, Decision Trees, and Syntax Trees.",
+      href: "/visualizer/tree/applications/quiz",
+      filename: "tree_applications_quiz.js",
+      icon: Layers,
       cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
       topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
       iconStyle:
