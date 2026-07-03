@@ -111,6 +111,8 @@ export default function ArenaPage() {
     }
   };
 
+  const rankedMatches = matchHistory?.filter(m => m.mode === 'ranked' || m.isRanked) || [];
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
@@ -635,33 +637,57 @@ export default function ArenaPage() {
                       <p className="text-xs text-slate-500 dark:text-neutral-400">Compete against similarly skilled opponents to climb the ranks.</p>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                      <div className="relative mb-6">
-                        <div className="w-32 h-32 rounded-full border-4 border-slate-200 dark:border-neutral-800 flex items-center justify-center shadow-inner bg-white dark:bg-neutral-800 relative z-10">
-                          <Trophy size={64} className="text-slate-400" />
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-6">
+                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                        <div className="relative mb-6">
+                          <div className="w-32 h-32 rounded-full border-4 border-slate-200 dark:border-neutral-800 flex items-center justify-center shadow-inner bg-white dark:bg-neutral-800 relative z-10">
+                            <Trophy size={64} className="text-slate-400" />
+                          </div>
+                          <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent transform rotate-45 z-20"></div>
                         </div>
-                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent transform rotate-45 z-20"></div>
-                      </div>
-                      
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Unranked</h3>
-                      <p className="text-xs text-slate-500 font-bold mb-6">Play 5 placement matches to reveal your rank</p>
+                        
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Unranked</h3>
+                        <p className="text-xs text-slate-500 font-bold mb-6">Play 5 placement matches to reveal your rank</p>
 
-                      <div className="w-full max-w-sm mb-6">
-                        <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">
-                          <span>Placement Progress</span>
-                          <span>0 / 5</span>
+                        <div className="w-full max-w-sm mb-6">
+                          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">
+                            <span>Placement Progress</span>
+                            <span>0 / 5</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                            <div className="h-full w-0 bg-primary rounded-full transition-all duration-1000"></div>
+                          </div>
                         </div>
-                        <div className="w-full h-2 bg-slate-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                          <div className="h-full w-0 bg-primary rounded-full transition-all duration-1000"></div>
-                        </div>
+
+                        <button
+                          onClick={() => openMatchmakingModal()}
+                          className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 transition transform hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                          Find Ranked Match
+                        </button>
                       </div>
 
-                      <button
-                        onClick={() => openMatchmakingModal()}
-                        className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 transition transform hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        Find Ranked Match
-                      </button>
+                      <div className="flex flex-col gap-3">
+                        <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center flex-1">
+                          <TrendingUp size={20} className="text-blue-500 mb-2" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Win Rate</span>
+                          <span className="text-lg font-black text-slate-800 dark:text-neutral-200 mt-1">
+                            {rankedMatches.length > 0 
+                              ? `${Math.round((rankedMatches.filter(m => m.winner === user?.id || m.result === 'win').length / rankedMatches.length) * 100)}%`
+                              : "0%"}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center flex-1">
+                          <Target size={20} className="text-emerald-500 mb-2" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Peak Rating</span>
+                          <span className="text-lg font-black text-slate-800 dark:text-neutral-200 mt-1">{profile?.stats?.peakRating || profile?.rating || 1200}</span>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center flex-1">
+                          <Flame size={20} className="text-orange-500 mb-2" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Win Streak</span>
+                          <span className="text-lg font-black text-slate-800 dark:text-neutral-200 mt-1">{profile?.stats?.currentWinStreak || 0}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
