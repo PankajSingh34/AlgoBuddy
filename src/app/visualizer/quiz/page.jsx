@@ -255,6 +255,20 @@ export default function QuizPage() {
         "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600",
     },
     {
+      title: "Graph Representation Quiz",
+      description:
+        "Practice Adjacency Matrix and Adjacency List representations.",
+      href: "/visualizer/graph/representation/quiz",
+      filename: "graph_representation_quiz.js",
+      icon: Network,
+      cardBorder: "border-cyan-500/20 dark:border-cyan-500/30",
+      topBarBg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+      iconStyle:
+        "bg-cyan-500/10 border border-cyan-500/20 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
+      btnBg:
+        "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+    },
+    {
       title: "Dynamic Programming Quiz",
       description:
         "Test your understanding of DP concepts including Memoization, Tabulation, Knapsack, and LCS.",
