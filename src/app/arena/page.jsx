@@ -181,6 +181,7 @@ export default function ArenaPage() {
 
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
+  const [matchmakingOptions, setMatchmakingOptions] = useState({});
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
@@ -197,9 +198,10 @@ export default function ArenaPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [matchmakingOpen, createDuelOpen]);
 
-  const openMatchmakingModal = () => {
+  const openMatchmakingModal = (options = {}) => {
     if (!ensureLoggedIn()) return;
     window.history.pushState({ modal: "matchmaking" }, "", window.location.href);
+    setMatchmakingOptions(options);
     setMatchmakingOpen(true);
   };
 
@@ -657,7 +659,7 @@ export default function ArenaPage() {
                       </div>
 
                       <button
-                        onClick={() => openMatchmakingModal()}
+                        onClick={() => openMatchmakingModal({ isRanked: true })}
                         className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 transition transform hover:-translate-y-0.5 active:translate-y-0"
                       >
                         Find Ranked Match
@@ -1175,6 +1177,7 @@ export default function ArenaPage() {
       <MatchmakingModal
         isOpen={matchmakingOpen}
         onClose={() => closeMatchmakingModal()}
+        isRanked={matchmakingOptions.isRanked || false}
         onMatchFound={handleMatchFound}
         currentUserStats={currentUserStats}
       />
