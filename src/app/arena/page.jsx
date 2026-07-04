@@ -31,6 +31,7 @@ import {
   ChevronLeft,
   Users,
   Calendar,
+  Gift,
   TrendingDown,
   Minus,
   Navigation,
@@ -664,6 +665,25 @@ export default function ArenaPage() {
                       >
                         Find Ranked Match
                       </button>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between mt-6">
+                      <div className="flex items-center gap-4 mb-4 md:mb-0 text-left">
+                        <div className="w-12 h-12 bg-white dark:bg-neutral-800 rounded-full flex items-center justify-center shadow-sm shrink-0">
+                          <Gift className="text-purple-500" size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Season 1 Rewards</h4>
+                          <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">Reach Gold tier or higher to unlock the exclusive "Algorithm Master" profile badge and 1000 XP.</p>
+                        </div>
+                      </div>
+                      <div className="text-center md:text-right shrink-0">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Season Ends In</span>
+                        <div className="flex gap-2 mt-1 justify-center md:justify-end">
+                          <div className="px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-slate-100 dark:border-neutral-700 text-xs font-black text-slate-800 dark:text-neutral-200">14<span className="text-[9px] font-bold text-slate-400 ml-0.5">d</span></div>
+                          <div className="px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-slate-100 dark:border-neutral-700 text-xs font-black text-slate-800 dark:text-neutral-200">12<span className="text-[9px] font-bold text-slate-400 ml-0.5">h</span></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
