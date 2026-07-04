@@ -1,9 +1,10 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { getSupabaseServerClient } from '@/lib/serverApi';
 
 export async function GET(req, { params }) {
-  const { topic_id } = params;
-  const supabase = createRouteHandlerClient({ cookies });
+  const { topic_id } = await params;
+  const cookieStore = await cookies();
+  const supabase = getSupabaseServerClient(cookieStore);
   
   const { data: comments } = await supabase
     .from('topic_comments')

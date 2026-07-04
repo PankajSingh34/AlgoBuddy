@@ -42,6 +42,7 @@ export const sections = [
           { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Shell Sort", path: "/visualizer/array/shellsort" },
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
           { name: "Radix Sort", path: "/visualizer/array/radixsort"},
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
