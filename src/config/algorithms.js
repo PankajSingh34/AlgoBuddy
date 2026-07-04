@@ -101,6 +101,15 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/array/bubblesort/AlgorithmClient')),
   },
+  "array/bucketsort": {
+    metadata: {
+      title: "Bucket Sort Algorithm | Step-by-Step Animation",
+      description: "Learn Bucket Sort with interactive animations.",
+      robots: "index, follow",
+      openGraph: { images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Bucket Sort" }] },
+    },
+    component: dynamic(() => import('@/app/visualizer/array/bucketsort/AlgorithmClient')),
+  },
   "array/comparison": {
     metadata: {
   title: "Sorting Algorithm Comparison Mode | Side-by-Side Visualizer",
