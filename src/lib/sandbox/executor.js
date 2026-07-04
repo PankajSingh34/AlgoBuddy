@@ -5,22 +5,25 @@ const { MAX_TIMEOUT_MS, MAX_MEMORY_MB, MAX_OUTPUT_LENGTH } = require("./sandbox.
 // Sanitize error messages to prevent information leakage
 function sanitizeError(err) {
   let message = err.message ?? String(err);
-  
-  // Remove file paths from error messages
-  message = message.replace(/[a-zA-Z]:\\[^\\]*/g, "[path]");
-  message = message.replace(/\/[^\/]*/g, "[path]");
-  
+
+  // Remove Windows absolute paths (e.g. C:\Users\...)
+  message = message.replace(/[a-zA-Z]:\\[^:]*/g, "[path]");
+
+  // Remove Unix absolute paths using known directory prefixes
+  // Matches /home/..., /usr/..., /var/..., /tmp/..., /root/...,
+  // /run/..., /opt/..., /boot/..., /sys/..., /proc/..., /dev/...,
+  // /app/..., /sbin/..., /bin/..., /lib/..., /etc/...
+  message = message.replace(
+    /\/(home|usr|var|tmp|root|run|opt|boot|sys|proc|dev|app|sbin|bin|lib|etc|mnt|media|srv)[\/\w.-]*/gi,
+    "[path]",
+  );
+
   // Remove internal implementation details
   message = message.replace(/vm:\d+:\d+/g, "[internal]");
   message = message.replace(/internal\/[^)]*/g, "[internal]");
   message = message.replace(/node:[^)]*/g, "[internal]");
   message = message.replace(/isolated-vm:[^)]*/g, "[internal]");
-  
-  // Remove absolute paths
-  message = message.replace(/c:\\[^\\]*/gi, "[path]");
-  message = message.replace(/\/usr\/[^)]*/g, "[path]");
-  message = message.replace(/home\/[^)]*/g, "[path]");
-  
+
   return message;
 }
 
