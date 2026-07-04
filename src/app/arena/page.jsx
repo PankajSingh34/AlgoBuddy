@@ -208,6 +208,7 @@ export default function ArenaPage() {
   const [joinCode, setJoinCode] = useState("");
   const [duelWager, setDuelWager] = useState(50);
   const [duelMode, setDuelMode] = useState("Standard");
+  const [duelPublic, setDuelPublic] = useState(false);
 
   const handleJoinLobby = () => {
     if (joinCode.length !== 6) {
@@ -810,6 +811,19 @@ export default function ArenaPage() {
                               <span>250</span>
                               <span>500</span>
                             </div>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-800 dark:text-neutral-200">Public Lobby</span>
+                              <span className="text-[10px] text-slate-500">Allow anyone to join your duel</span>
+                            </div>
+                            <button
+                              onClick={() => setDuelPublic(!duelPublic)}
+                              className={`w-10 h-5 rounded-full relative transition-colors duration-200 focus:outline-none ${duelPublic ? "bg-primary" : "bg-slate-300 dark:bg-neutral-600"}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${duelPublic ? "translate-x-5" : "translate-x-0"}`} />
+                            </button>
                           </div>
                         </div>
 
