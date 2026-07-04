@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/stack/monotonic/largestrectangle/animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/stack/monotonic/largestrectangle/content";
-import Quiz from "@/app/visualizer/stack/monotonic/largestrectangle/quiz";
 import Code from "@/app/visualizer/stack/monotonic/largestrectangle/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
@@ -21,7 +20,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.monotonicStack}

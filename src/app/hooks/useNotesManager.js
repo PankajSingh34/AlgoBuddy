@@ -91,7 +91,7 @@ export function useNotesManager() {
   // Create Note
   const createNote = useCallback((title = "Untitled Note", content = "") => {
     const newNote = {
-      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `note-${Date.now()}-${globalThis.crypto.randomUUID().split('-')[0]}`,
       title: title.trim() || "Untitled Note",
       content,
       topic: currentTopic,

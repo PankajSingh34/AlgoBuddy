@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 
 /**
  * useProgress – lightweight hook for the topic sub-pages (/practice/[topic]).
@@ -84,11 +85,9 @@ export function useProgress() {
               });
             }
           } else {
-            // Supabase path via Next.js API route
-            await fetch("/api/progress", {
+            await api.request("/api/progress", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ problemId, status }),
+              body: { problemId, status },
             });
           }
         } catch (err) {

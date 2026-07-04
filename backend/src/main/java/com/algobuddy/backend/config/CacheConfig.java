@@ -1,31 +1,25 @@
 package com.algobuddy.backend.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.time.Duration;
+import java.util.Arrays;
 
-/**
- * Configures the Spring Cache abstraction with a Redis-backed
- * {@link RedisCacheManager}. This replaces the previous in-process
- * {@code ConcurrentMapCacheManager} to ensure cache entries are
- * shared across all application instances in multi-instance deployments.
- *
- * <p>Named caches registered here must match the {@code value} attributes
- * used in {@code @Cacheable}, {@code @CacheEvict}, and {@code @Caching}
- * annotations across the service layer.
- */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
     @Bean
+    @Primary
     @ConditionalOnProperty(name = "app.cache.redis.enabled", havingValue = "true")
     public CacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory) {
         RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
@@ -51,9 +45,9 @@ public class CacheConfig {
 
     @Bean
     @ConditionalOnProperty(name = "app.cache.redis.enabled", havingValue = "false", matchIfMissing = true)
-    public CacheManager simpleCacheManager() {
-        return new org.springframework.cache.concurrent.ConcurrentMapCacheManager(
-            "arenaProfile", "arenaLeaderboard", "mysheet", "bookmarks"
-        );
+    public CacheManager concurrentMapCacheManager() {
+        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
+        cacheManager.setCacheNames(Arrays.asList("arenaProfile", "arenaLeaderboard", "mysheet", "bookmarks"));
+        return cacheManager;
     }
 }

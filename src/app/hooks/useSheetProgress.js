@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/apiClient";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -78,9 +79,12 @@ async function fetchProgressFromServer() {
   }
 
   // Supabase path via Next.js API route
-  const res = await fetch("/api/progress");
-  if (!res.ok) return null;
-  return await res.json(); // { progress: { [id]: { status, updatedAt } } }
+  try {
+    const data = await api.request("/api/progress");
+    return data || null;
+  } catch {
+    return null;
+  }
 }
 
 /** Update a single problem's status */
@@ -98,12 +102,15 @@ async function postProgressToServer(problemId, status) {
   }
 
   // Supabase path
-  await fetch("/api/progress", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ problemId, status }),
-  });
-  return null;
+  try {
+    const fresh = await api.request("/api/progress", {
+      method: "POST",
+      body: { problemId, status },
+    });
+    return fresh || null;
+  } catch {
+    return null;
+  }
 }
 
 /** Bulk-sync items that exist locally but not on the server */
@@ -124,11 +131,12 @@ async function bulkSyncToServer(items) {
 
   // Supabase path: sequential POSTs
   for (const item of items) {
-    await fetch("/api/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ problemId: item.problemId, status: item.status }),
-    }).catch(() => {});
+    try {
+      await api.request("/api/progress", {
+        method: "POST",
+        body: { problemId: item.problemId, status: item.status },
+      });
+    } catch {}
   }
   return null;
 }
@@ -194,6 +202,9 @@ export function useSheetProgress() {
 
   // Track whether we've done the initial server sync to avoid double-syncing
   const syncedRef = useRef(false);
+
+  // Save previous progress for rollback on server failure
+  const prevProgressRef = useRef(null);
 
   // ── Load & sync on mount / user change ──────────────────────────────────
   useEffect(() => {
@@ -325,11 +336,12 @@ export function useSheetProgress() {
 
       // Sync to server asynchronously
       if (user) {
+        prevProgressRef.current = progress;
         try {
           const fresh = await postProgressToServer(problemId, newStatus);
-          // Use server streak data whenever it is returned (both Spring Boot
-          // and Supabase paths now include currentStreak/longestStreak).
-          if (fresh && fresh.currentStreak !== undefined) {
+          if (!fresh) throw new Error("Server returned no data");
+          // Use server streak data returned from either path.
+          if (fresh.currentStreak !== undefined) {
             setStreakData({
               current: fresh.currentStreak || 0,
               best: fresh.longestStreak || 0,
@@ -338,8 +350,13 @@ export function useSheetProgress() {
               monthlySolved: fresh.monthlySolved || 0,
             });
           }
+          prevProgressRef.current = null;
         } catch (err) {
-          console.error("[useSheetProgress] Failed to sync progress:", err);
+          console.error("[useSheetProgress] Failed to sync progress, rolling back:", err);
+          if (prevProgressRef.current) {
+            setProgress(prevProgressRef.current);
+            writeLocal(prevProgressRef.current);
+          }
         }
       }
     },

@@ -1,5 +1,8 @@
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAnonClient, getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request, { params }) {
   try {
@@ -12,12 +15,14 @@ export async function POST(request, { params }) {
     }
 
     const { sharedUserId } = await params;
-    if (!sharedUserId) return jsonResponse({ error: "sharedUserId is required" }, 400);
+    if (!sharedUserId || !UUID_RE.test(sharedUserId)) {
+      return jsonResponse({ error: "Valid sharedUserId is required" }, 400);
+    }
 
-    const supabase = getSupabaseRequestClient(request);
-    
-    // 1. Fetch shared user's public sheet items only
-    const { data: sharedData, error: fetchError } = await supabase
+    const anon = getSupabaseAnonClient();
+
+    // Fetch shared user's public sheet items (no auth needed — RLS allows public reads)
+    const { data: sharedData, error: fetchError } = await anon
       .from("my_sheet")
       .select("problem_id, note")
       .eq("user_id", sharedUserId)
@@ -25,10 +30,12 @@ export async function POST(request, { params }) {
 
     if (fetchError) return jsonResponse({ error: fetchError.message }, 500);
     if (!sharedData || sharedData.length === 0) {
-      return jsonResponse({ success: true, message: "No items to clone" });
+      return jsonResponse({ error: "No public items to clone" }, 404);
     }
 
-    // 2. Fetch authenticated user's existing sheet items to avoid duplicates
+    const supabase = getSupabaseRequestClient(request);
+
+    // Fetch authenticated user's existing sheet items to avoid duplicates
     const { data: userData, error: userFetchError } = await supabase
       .from("my_sheet")
       .select("problem_id")

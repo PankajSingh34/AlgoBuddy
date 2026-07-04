@@ -53,9 +53,10 @@ const VISUALIZERS = [
   { name: "Deque",                               path: "/visualizer/queue/deque",                              category: "Queue"      },
 
   // Linked List
-  { name: "Singly Linked List",                  path: "/visualizer/linkedlist/singly",                        category: "Linked List"},
-  { name: "Doubly Linked List",                  path: "/visualizer/linkedlist/doubly",                        category: "Linked List"},
-  { name: "Circular Linked List",                path: "/visualizer/linkedlist/circular",                      category: "Linked List"},
+  { name: "Linked List Visualizer",              path: "/visualizer/linked-list",                              category: "Linked List"},
+  { name: "Singly Linked List",                  path: "/visualizer/linkedlist/types/singly",                  category: "Linked List"},
+  { name: "Doubly Linked List",                  path: "/visualizer/linkedlist/types/doubly",                  category: "Linked List"},
+  { name: "Circular Linked List",                path: "/visualizer/linkedlist/types/circular",                category: "Linked List"},
 
   // Tree
   { name: "BST (Binary Search Tree)",            path: "/visualizer/tree/bst",                                 category: "Tree"       },

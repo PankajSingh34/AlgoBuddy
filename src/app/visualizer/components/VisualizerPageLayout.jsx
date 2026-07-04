@@ -29,7 +29,6 @@ export default function VisualizerPageLayout({
   code,
   quiz,
   moduleCard,
-  srsWidget,
   exploreOther,
   extraSections = [],
   animationSectionClassName = "px-6",
@@ -99,11 +98,6 @@ export default function VisualizerPageLayout({
           {moduleCard}
         </VisualizerPageSection>
 
-        {srsWidget && (
-          <VisualizerPageSection className={exploreSectionClassName}>
-            {srsWidget}
-          </VisualizerPageSection>
-        )}
 
         <VisualizerPageSection className={exploreSectionClassName}>
           {exploreOther}

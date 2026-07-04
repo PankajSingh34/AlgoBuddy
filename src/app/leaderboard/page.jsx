@@ -1,38 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FiUsers, FiGlobe, FiAward, FiTarget, FiTrendingUp } from "react-icons/fi";
+import { FiAward, FiTarget, FiTrendingUp } from "react-icons/fi";
 import Footer from "@/app/components/footer";
 
 // Mock data to render gracefully while API isn't fully active on frontend
 const MOCK_LEADERBOARDS = {
-  global: {
-    streak: [
-      { rank: 1, username: "Alex Dev", score: 42, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" },
-      { rank: 2, username: "CodeNinja", score: 38, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja" },
-      { rank: 3, username: "Sarah Script", score: 35, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" },
-      { rank: 4, username: "ByteMaster", score: 29, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Byte" },
-      { rank: 5, username: "AlgoKing", score: 21, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Algo" },
-    ],
-    arena: [
-      { rank: 1, username: "Grandmaster", score: 2450, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=GM" },
-      { rank: 2, username: "Alex Dev", score: 2100, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" },
-      { rank: 3, username: "CodeNinja", score: 1950, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja" },
-    ]
-  },
-  friends: {
-    streak: [
-      { rank: 1, username: "You", score: 12, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=You" },
-      { rank: 2, username: "Friend 1", score: 5, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Friend1" },
-    ],
-    arena: [
-      { rank: 1, username: "Friend 1", score: 1500, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Friend1" },
-      { rank: 2, username: "You", score: 1200, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=You" },
-    ]
-  }
+  streak: [
+    { rank: 1, username: "Alex Dev", score: 42, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" },
+    { rank: 2, username: "CodeNinja", score: 38, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja" },
+    { rank: 3, username: "Sarah Script", score: 35, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" },
+    { rank: 4, username: "ByteMaster", score: 29, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Byte" },
+    { rank: 5, username: "AlgoKing", score: 21, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Algo" },
+  ],
+  arena: [
+    { rank: 1, username: "Grandmaster", score: 2450, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=GM" },
+    { rank: 2, username: "Alex Dev", score: 2100, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" },
+    { rank: 3, username: "CodeNinja", score: 1950, avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja" },
+  ]
 };
 
 export default function LeaderboardPage() {
-  const [scope, setScope] = useState("global"); // 'global' or 'friends'
   const [metric, setMetric] = useState("streak"); // 'streak' or 'arena'
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
@@ -41,12 +28,12 @@ export default function LeaderboardPage() {
     setLoading(true);
     // Simulate API fetch delay
     const timer = setTimeout(() => {
-      // In a real app we'd fetch from /api/v1/leaderboard/${scope}/${metric}
-      setData(MOCK_LEADERBOARDS[scope][metric]);
+      // In a real app we'd fetch from /api/v1/leaderboard/global/${metric}
+      setData(MOCK_LEADERBOARDS[metric]);
       setLoading(false);
     }, 400);
     return () => clearTimeout(timer);
-  }, [scope, metric]);
+  }, [metric]);
 
   return (
     <>
@@ -58,22 +45,6 @@ export default function LeaderboardPage() {
           </header>
 
           <div className="flex flex-col md:flex-row gap-6 mb-8">
-            {/* Scopes */}
-            <div className="flex bg-surface-200 dark:bg-surface-800 p-1 rounded-xl w-full md:w-auto mx-auto md:mx-0">
-              <button 
-                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${scope === "global" ? "bg-white dark:bg-surface-950 shadow text-primary" : "text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white"}`}
-                onClick={() => setScope("global")}
-              >
-                <FiGlobe className="w-4 h-4" /> Global
-              </button>
-              <button 
-                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${scope === "friends" ? "bg-white dark:bg-surface-950 shadow text-primary" : "text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white"}`}
-                onClick={() => setScope("friends")}
-              >
-                <FiUsers className="w-4 h-4" /> Friends
-              </button>
-            </div>
-
             {/* Metrics */}
             <div className="flex bg-surface-200 dark:bg-surface-800 p-1 rounded-xl w-full md:w-auto mx-auto md:mx-0">
               <button 

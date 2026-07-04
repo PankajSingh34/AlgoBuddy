@@ -30,6 +30,6 @@ public interface ArenaMatchRepository extends JpaRepository<ArenaMatch, UUID> {
     long countRecentInitiationsByUserId(@Param("userId") UUID userId, @Param("since") LocalDateTime since);
 
     @Modifying
-    @Query("UPDATE ArenaMatch m SET m.status = :status WHERE m.endTime IS NULL AND m.startTime < :cutoff")
-    int expireStaleMatches(@Param("cutoff") LocalDateTime cutoff, @Param("status") MatchStatus status);
+    @Query("UPDATE ArenaMatch m SET m.status = :status, m.endTime = :now WHERE m.status IN ('PENDING', 'ACTIVE') AND m.startTime < :cutoff")
+    int expireStaleMatches(@Param("cutoff") LocalDateTime cutoff, @Param("status") MatchStatus status, @Param("now") LocalDateTime now);
 }

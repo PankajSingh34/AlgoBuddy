@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,4 +27,6 @@ public interface UserPracticeStatsRepository extends JpaRepository<UserPracticeS
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from UserPracticeStats s where s.userId = :userId")
     Optional<UserPracticeStats> findAndLockByUserId(@Param("userId") UUID userId);
+
+    List<UserPracticeStats> findTop100ByOrderByCurrentStreakDesc();
 }

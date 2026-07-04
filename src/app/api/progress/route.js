@@ -92,7 +92,48 @@ export async function POST(request) {
     );
 
     if (error) return jsonResponse({ error: error.message }, 500);
-    return jsonResponse({ success: true });
+
+    // Atomic streak update via Supabase RPC (fixes TOCTOU race condition)
+    let currentStreak = 0;
+    let longestStreak = 0;
+    if (status === "Completed") {
+      const { data, error } = await supabase.rpc('increment_streak_on_completion', {
+        p_user_id: authResult.user.id,
+      });
+      if (error) return jsonResponse({ error: error.message }, 500);
+      currentStreak = data?.[0]?.current_streak ?? 0;
+      longestStreak = data?.[0]?.longest_streak ?? 0;
+    }
+
+    // Return streak data so the client can always trust the server value.
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    const [dailyResult, weeklyResult, monthlyResult] = await Promise.all([
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfDay),
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfWeek),
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfMonth),
+    ]);
+
+    return jsonResponse({
+      success: true,
+      currentStreak,
+      longestStreak,
+      dailySolved: dailyResult.count ?? 0,
+      weeklySolved: weeklyResult.count ?? 0,
+      monthlySolved: monthlyResult.count ?? 0,
+    });
   } catch (error) {
     return errorResponse(error);
   }

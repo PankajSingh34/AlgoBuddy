@@ -1,4 +1,4 @@
-﻿// app/components/models/GraphCanvas.jsx
+// app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
 
@@ -34,9 +34,22 @@ function SelfLoop({ cx, cy, color }) {
 }
 
 // Renders an editable weight label at the midpoint of an edge
-function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange }) {
+function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange, readOnlyLabel }) {
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
+
+  if (readOnlyLabel !== undefined) {
+    return (
+      <text
+        x={mx}
+        y={my - 8}
+        textAnchor="middle"
+        className="fill-yellow-500 text-[10px] font-bold pointer-events-none"
+      >
+        {readOnlyLabel}
+      </text>
+    );
+  }
 
   return (
     <foreignObject x={mx - 16} y={my - 14} width={32} height={24}>
@@ -55,9 +68,7 @@ function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange }) {
           border: "1px solid #4b5563",
           borderRadius: 4,
           textAlign: "center",
-          fontSize: 11,
-          fontFamily: "monospace",
-          padding: 0,
+          fontSize: "12px",
           outline: "none",
         }}
       />
@@ -285,6 +296,11 @@ onMouseLeave={handleMouseUp}
                 y2={ey}
                 weight={edge.weight ?? 1}
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
+                readOnlyLabel={
+                  animationState?.flowData
+                    ? `${animationState.flowData.flow[edge.from][edge.to]}/${animationState.flowData.capacity[edge.from][edge.to]}`
+                    : undefined
+                }
               />
             )}
           </g>

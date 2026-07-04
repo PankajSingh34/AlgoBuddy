@@ -1,6 +1,7 @@
 require("dotenv").config({ path: '../.env.local' });
 const express = require("express");
 const http = require("http");
+const crypto = require("crypto");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -8,6 +9,39 @@ const jwksClient = require('jwks-rsa');
 const redisUrl = process.env.REDIS_URL;
 const Redis = redisUrl ? require("ioredis") : require("ioredis-mock");
 const { createAdapter } = require("@socket.io/redis-adapter");
+
+class BoundedMap {
+  constructor(maxSize = 10000) {
+    this.maxSize = maxSize;
+    this._map = new Map();
+  }
+  get(key) {
+    const value = this._map.get(key);
+    if (value !== undefined) {
+      this._map.delete(key);
+      this._map.set(key, value);
+    }
+    return value;
+  }
+  set(key, value) {
+    if (this._map.has(key)) {
+      this._map.delete(key);
+    } else if (this._map.size >= this.maxSize) {
+      const oldest = this._map.keys().next().value;
+      if (oldest !== undefined) this._map.delete(oldest);
+    }
+    this._map.set(key, value);
+  }
+  delete(key) {
+    return this._map.delete(key);
+  }
+  entries() {
+    return this._map.entries();
+  }
+  get size() {
+    return this._map.size;
+  }
+}
 
 const app = express();
 const ALLOWED_ORIGINS = [
@@ -60,6 +94,9 @@ const redisClient = pubClient.duplicate();
 
 // Phase 1: Atomically pop an opponent from the queue WITHOUT creating match state
 const ATOMIC_POP_OPPONENT_SCRIPT = `
+  local function sanitize(str)
+    return string.gsub(string.gsub(str, '\\\\', '\\\\\\\\'), '"', '\\\\"')
+  end
   local queueKey = KEYS[1]
   local socketKey = KEYS[2]
   local entry = ARGV[1]
@@ -102,7 +139,7 @@ const ATOMIC_POP_OPPONENT_SCRIPT = `
         redis.call('RPUSH', queueKey, skipList[i])
       end
       redis.call('HSET', socketKey, 'queueKey', queueKey)
-      return '{"status":"MATCH_FOUND","opponent":{"userId":"' .. oppUserId .. '","socketId":"' .. oppSocketId .. '","name":"' .. oppName .. '","rating":' .. oppRating .. ',"level":' .. oppLevel .. '}}'
+      return '{"status":"MATCH_FOUND","opponent":{"userId":"' .. sanitize(oppUserId) .. '","socketId":"' .. sanitize(oppSocketId) .. '","name":"' .. sanitize(oppName) .. '","rating":' .. oppRating .. ',"level":' .. oppLevel .. '}}'
     end
   end
 
@@ -126,8 +163,8 @@ const ATOMIC_POP_OPPONENT_SCRIPT = `
   return '{"status":"QUEUED"}'
 `;
 
-// Phase 2: Atomically create match state (only called after JS confirms liveness)
-const ATOMIC_CREATE_MATCH_SCRIPT = `
+      // Phase 2: Atomically create match state (only called after JS confirms liveness)
+      const ATOMIC_CREATE_MATCH_SCRIPT = `
   local matchKey = KEYS[1]
   local socketKey = KEYS[2]
   local oppKey = KEYS[3]
@@ -171,6 +208,9 @@ const ATOMIC_LEAVE_MATCHMAKING_SCRIPT = `
 // without race conditions. Using a single script eliminates the TOCTOU gap
 // between separate disconnect and complete scripts.
 const ATOMIC_MATCH_UPDATE_SCRIPT = `
+  local function sanitize(str)
+    return string.gsub(string.gsub(str, '\\\\', '\\\\\\\\'), '"', '\\\\"')
+  end
   local matchKey = KEYS[1]
   local action = ARGV[1]
   local actorUserId = ARGV[2]
@@ -190,9 +230,9 @@ const ATOMIC_MATCH_UPDATE_SCRIPT = `
     -- Mark as completed with winner
     local updated = string.gsub(matchStr, '"status"%s*:%s*"[^"]+"', '"status":"completed"')
     if string.find(updated, '"winnerId"') then
-      updated = string.gsub(updated, '"winnerId"%s*:%s*"[^"]+"', '"winnerId":"' .. actorUserId .. '"')
+      updated = string.gsub(updated, '"winnerId"%s*:%s*"[^"]+"', '"winnerId":"' .. sanitize(actorUserId) .. '"')
     else
-      updated = string.gsub(updated, '}%s*$', ',"winnerId":"' .. actorUserId .. '"}')
+      updated = string.gsub(updated, '}%s*$', ',"winnerId":"' .. sanitize(actorUserId) .. '"}')
     end
     redis.call('SET', matchKey, updated, 'EX', 3600)
     -- Extract opponent socketId for notification (match userId, not socketId)
@@ -202,7 +242,7 @@ const ATOMIC_MATCH_UPDATE_SCRIPT = `
         opponentSocketId = sId
       end
     end
-    return '{"status":"completed","winnerId":"' .. actorUserId .. '","opponentSocketId":"' .. opponentSocketId .. '"}'
+    return '{"status":"completed","winnerId":"' .. sanitize(actorUserId) .. '","opponentSocketId":"' .. sanitize(opponentSocketId) .. '"}'
 
   elseif action == "disconnect" then
     -- Set disconnected — the remaining player claims win via match_complete
@@ -217,7 +257,7 @@ const ATOMIC_MATCH_UPDATE_SCRIPT = `
         opponentSocketId = sId
       end
     end
-    return '{"status":"disconnected","opponentSocketId":"' .. opponentSocketId .. '","opponentUserId":"' .. opponentUserId .. '"}'
+    return '{"status":"disconnected","opponentSocketId":"' .. sanitize(opponentSocketId) .. '","opponentUserId":"' .. sanitize(opponentUserId) .. '"}'
   end
   return '{"status":"unknown_action"}'
 `;
@@ -228,6 +268,14 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
   adapter: createAdapter(pubClient, subClient)
+});
+
+io.use((socket, next) => {
+  const ip = socket.handshake.address;
+  if (isConnectionRateLimited(ip)) {
+    return next(new Error("Rate limited"));
+  }
+  next();
 });
 
 const PORT = process.env.PORT || 4000;
@@ -267,7 +315,7 @@ function verifyAuthToken(token) {
 }
 
 // Connection rate limiting to prevent JWT brute-forcing
-const connectionAttempts = new Map();
+const connectionAttempts = new BoundedMap(10000);
 const MAX_CONNECTION_ATTEMPTS = 5;
 const CONNECTION_ATTEMPT_WINDOW_MS = 60000;
 
@@ -282,16 +330,6 @@ function isConnectionRateLimited(ip) {
   return entry.count > MAX_CONNECTION_ATTEMPTS;
 }
 
-// Cleanup interval to prevent memory leaks in connection rate limiter
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of connectionAttempts.entries()) {
-    if (now > entry.resetTime) {
-      connectionAttempts.delete(ip);
-    }
-  }
-}, CONNECTION_ATTEMPT_WINDOW_MS);
-
 // Periodic queue health checker to remove stale entries from matchmaking queues
 setInterval(async () => {
   try {
@@ -303,20 +341,23 @@ setInterval(async () => {
       for (const key of result[1]) {
         const elements = await redisClient.lrange(key, 0, -1);
         let changed = false;
+        let remainingCount = elements.length;
         for (const el of elements) {
           const parsed = JSON.parse(el);
           if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
             await redisClient.lrem(key, 0, el);
             changed = true;
+            remainingCount--;
             continue;
           }
           const socket = io.sockets.sockets.get(parsed.socketId);
           if (!socket || !socket.connected) {
             await redisClient.lrem(key, 0, el);
             changed = true;
+            remainingCount--;
           }
         }
-        if (changed && elements.length === 0) {
+        if (changed && remainingCount === 0) {
           await redisClient.expire(key, 60);
         }
       }
@@ -370,36 +411,39 @@ async function isRateLimited(userId) {
   return result === 1;
 }
 
-io.on("connection", async (socket) => {
-  // Connection-level rate limiting to prevent JWT brute-forcing
-  const clientIp = socket.handshake.address;
-  if (isConnectionRateLimited(clientIp)) {
-    socket.emit("error", { message: "Too many connection attempts. Please try again later." });
-    socket.disconnect(true);
-    return;
-  }
+// Spectator rate limiting to prevent chat spam
+const spectatorRateLimit = new BoundedMap(5000);
 
+function isSpectatorRateLimited(userId) {
+  const key = `chat:${userId}`;
+  const entry = spectatorRateLimit.get(key);
+  if (!entry || Date.now() > entry.resetTime) {
+    spectatorRateLimit.set(key, { count: 1, resetTime: Date.now() + 10000 });
+    return false;
+  }
+  entry.count++;
+  return entry.count > 5;
+}
+
+io.on("connection", async (socket) => {
   // Verify Supabase JWT from handshake auth using JWKS
   const token = socket.handshake.auth?.token;
   const authPayload = await verifyAuthToken(token);
   
   if (!authPayload) {
-    const queryUserId = socket.handshake.query?.userId;
-    if (queryUserId && queryUserId.startsWith("spectator_")) {
-      socket.data.userId = queryUserId;
-      console.log(`Spectator connected: ${socket.id}, userId: ${socket.data.userId}`);
-    } else {
-      socket.emit("error", { message: "Authentication required. Please sign in again." });
-      socket.disconnect(true);
-      return;
-    }
+    socket.data.userId = `spectator_${crypto.randomUUID()}`;
+    socket.data.isSpectator = true;
+    console.log(`Spectator connected: ${socket.id}`);
   } else {
     // Store verified userId from the JWT payload
     socket.data.userId = authPayload.sub || authPayload.id;
     console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
   }
 
+  await redisClient.hset(`{arena}:socket:${socket.id}`, 'connected', '1');
+
   socket.on("join_matchmaking", async (data) => {
+    let opponent = null;
     try {
       if (await isRateLimited(socket.data.userId)) return;
 
@@ -407,7 +451,7 @@ io.on("connection", async (socket) => {
       const targetTopic = data.topic || "Arrays";
       const targetDifficulty = data.difficulty || "Easy";
       const queueKey = `{arena}:queue:${targetTopic}:${targetDifficulty}`;
-      const matchId = `match-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const matchId = `match-${Date.now()}-${crypto.randomUUID().split('-')[0]}`;
       const matchKey = `{arena}:match:${matchId}`;
 
       const queueEntry = JSON.stringify({
@@ -433,12 +477,11 @@ io.on("connection", async (socket) => {
       const result = JSON.parse(resultStr);
 
       if (result.status === 'MATCH_FOUND') {
-        const opponent = result.opponent;
+        opponent = result.opponent;
 
-        // Phase 2: Liveness check (before any state mutation)
-        const opponentSocket = io.sockets.sockets.get(opponent.socketId);
-        if (!opponentSocket || !opponentSocket.connected) {
-          // Re-push opponent back to queue (they were popped but no match was created)
+        // Phase 2: Cross-instance liveness check via Redis
+        const opponentAlive = await redisClient.exists(`{arena}:socket:${opponent.socketId}`);
+        if (!opponentAlive) {
           const opponentEntry = JSON.stringify({
             userId: opponent.userId,
             socketId: opponent.socketId,
@@ -485,12 +528,38 @@ io.on("connection", async (socket) => {
           io.in(opponent.socketId).socketsJoin(matchId);
 
           console.log(`Match found: ${opponent.userId} vs ${socket.data.userId}`);
+        } else {
+          const opponentEntry = JSON.stringify({
+            userId: opponent.userId,
+            socketId: opponent.socketId,
+            name: opponent.name || "Player",
+            rating: opponent.rating || 1200,
+            level: opponent.level || 1,
+            topic: targetTopic,
+            difficulty: targetDifficulty,
+          });
+          await redisClient.rpush(queueKey, opponentEntry);
+          console.log(`Match creation failed (status: ${createParsed.status}), re-queued opponent: ${opponent.userId}`);
+          socket.emit("matchmaking_error", { message: "Could not create match. Please try again." });
         }
       } else {
         console.log(`Added to queue ${queueKey}`);
       }
     } catch (error) {
       console.error(`[join_matchmaking] Error for user ${socket.data.userId}:`, error);
+      if (opponent) {
+        const opponentEntry = JSON.stringify({
+          userId: opponent.userId,
+          socketId: opponent.socketId,
+          name: opponent.name || "Player",
+          rating: opponent.rating || 1200,
+          level: opponent.level || 1,
+          topic: targetTopic,
+          difficulty: targetDifficulty,
+        });
+        await redisClient.rpush(queueKey, opponentEntry);
+        console.log(`Error during matchmaking, re-queued opponent: ${opponent.userId}`);
+      }
       socket.emit("error", { message: "Matchmaking error. Please try again." });
     }
   });
@@ -559,10 +628,10 @@ io.on("connection", async (socket) => {
       console.log(`Player ${socket.data.userId} emitted typing_status to room ${data.matchId}`);
       socket.to(data.matchId).emit("opponent_typing_status", {
         isTyping: data.isTyping,
+        userId: socket.data.userId,
         linesCoded: data.linesCoded,
-        cpm: data.cpm,
-        language: data.language,
-        userId: socket.data.userId
+        cpm: data.cpm || 0,
+        language: data.language
       });
     } catch (error) {
       console.error(`[typing_status] Error for user ${socket.data.userId}:`, error);
@@ -603,18 +672,48 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("spectate_match", async (data) => {
+    if (!data.matchId) return;
+    const room = `${data.matchId}-spectators`;
+    socket.join(room);
+    const sockets = await io.in(room).fetchSockets();
+    io.in(room).emit("spectator_count", { count: sockets.length });
+  });
+
+  socket.on("leave_spectate_match", async (data) => {
+    if (!data.matchId) return;
+    const room = `${data.matchId}-spectators`;
+    socket.leave(room);
+    const sockets = await io.in(room).fetchSockets();
+    io.in(room).emit("spectator_count", { count: sockets.length });
+  });
+
+  socket.on("disconnecting", async () => {
+    for (const room of socket.rooms) {
+      if (room.endsWith("-spectators")) {
+        const sockets = await io.in(room).fetchSockets();
+        io.in(room).emit("spectator_count", { count: Math.max(0, sockets.length - 1) });
+      }
+    }
+  });
+
   socket.on("spectator_chat", (data) => {
     if (!data.matchId || !data.message) return;
+    if (isSpectatorRateLimited(socket.data.userId)) return;
+    if (/<[^>]*>/.test(data.message)) return;
+    if (data.message.length > 500) return;
+    const safeUsername = `Spectator_${socket.id.slice(0, 6)}`;
     socket.to(data.matchId).emit("spectator_chat", {
       userId: socket.data.userId,
-      username: socket.handshake.query.username || "Spectator",
-      message: data.message,
+      username: safeUsername,
+      message: data.message.slice(0, 500),
       timestamp: Date.now()
     });
   });
 
   socket.on("spectator_emote", (data) => {
     if (!data.matchId || !data.emote) return;
+    if (isSpectatorRateLimited(socket.data.userId)) return;
     socket.to(data.matchId).emit("spectator_emote", {
       userId: socket.data.userId,
       emote: data.emote,
@@ -751,7 +850,7 @@ async function getRedisAggregateStats() {
 }
 
 // Rate limiter for debug endpoint to prevent brute-force discovery of debug key
-const debugRequestCounts = new Map();
+const debugRequestCounts = new BoundedMap(10000);
 
 function isDebugRateLimited(ip) {
   const now = Date.now();
@@ -765,16 +864,6 @@ function isDebugRateLimited(ip) {
   entry.count++;
   return entry.count > maxRequests;
 }
-
-// Cleanup interval for debug rate limiter
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of debugRequestCounts.entries()) {
-    if (now > entry.resetTime) {
-      debugRequestCounts.delete(ip);
-    }
-  }
-}, 60000);
 
 app.get("/debug", async (req, res) => {
   try {
@@ -828,6 +917,27 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
     });
   } catch (err) {
     console.error("[verify-match] Error:", err.message);
+    res.status(500).json({ verified: false, error: err.message });
+  }
+});
+
+app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
+  try {
+    const { matchId, userId } = req.params;
+    const matchKey = `{arena}:match:${matchId}`;
+    const matchStr = await redisClient.get(matchKey);
+    if (!matchStr) {
+      return res.json({ verified: false, winnerId: null });
+    }
+    const match = JSON.parse(matchStr);
+
+    if (match.status === "completed" && match.winnerId) {
+      return res.json({ verified: true, winnerId: match.winnerId });
+    }
+
+    return res.json({ verified: false, winnerId: null });
+  } catch (err) {
+    console.error("[verify-match-result] Error:", err.message);
     res.status(500).json({ verified: false, error: err.message });
   }
 });

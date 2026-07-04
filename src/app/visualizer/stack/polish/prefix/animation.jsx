@@ -46,7 +46,6 @@ const InfixToPrefixVisualizer = () => {
   const [prefix, setPrefix] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("Enter an infix expression and click Convert");
-  
   const [steps, setSteps] = useState([]);
   const [visualState, setVisualState] = useState({
     stack: [], output: [], operation: null, message: "Enter an infix expression and click Convert"
@@ -93,6 +92,7 @@ const InfixToPrefixVisualizer = () => {
       engine.play();
     }, 50);
   };
+
 
   /* ----------  GSAP flash on message change  ---------- */
   const statusRef = useRef();

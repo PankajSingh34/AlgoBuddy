@@ -18,19 +18,19 @@ export function useGlobalKeyboardShortcuts() {
         return;
       }
 
-      if (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {
+      if (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key?.toLowerCase() === "k")) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("open-command-palette"));
       }
-      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "k") {
+      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key?.toLowerCase() === "k") {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("toggle-notifications"));
       }
-      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "a") {
+      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key?.toLowerCase() === "a") {
         e.preventDefault();
         router.push("/arena");
       }
-      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "b") {
+      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key?.toLowerCase() === "b") {
         e.preventDefault();
         router.push("/practice");
       }

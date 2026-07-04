@@ -57,7 +57,62 @@ const slidingWindowQuestions = [
     ],
     correctAnswer: 2,
     explanation: "A HashMap or Frequency Array is used to keep track of the count of each character currently in the window, allowing you to easily check if there are exactly K unique characters."
-  }
+  },
+  {
+  question: "What happens when the sliding window moves one step forward in a fixed-size sliding window?",
+  options: [
+    "A new element is added to the right and the leftmost element is removed.",
+    "The entire window is recalculated from scratch.",
+    "Only the left pointer moves.",
+    "The window size doubles."
+  ],
+  correctAnswer: 0,
+  explanation: "In a fixed-size sliding window, the leftmost element leaves the window while a new element enters from the right."
+},
+{
+  question: "Which type of problems is Sliding Window most commonly used for?",
+  options: [
+    "Problems involving contiguous subarrays or substrings.",
+    "Sorting arrays.",
+    "Graph traversal.",
+    "Binary tree traversal."
+  ],
+  correctAnswer: 0,
+  explanation: "Sliding Window is primarily used for problems involving contiguous sequences in arrays or strings."
+},
+{
+  question: "Which pointer is typically moved first when expanding a variable-size sliding window?",
+  options: [
+    "Left pointer",
+    "Right pointer",
+    "Both pointers together",
+    "Neither pointer"
+  ],
+  correctAnswer: 1,
+  explanation: "The right pointer expands the window by including new elements, while the left pointer moves only when the window needs to shrink."
+},
+{
+  question: "Which of the following is NOT a common Sliding Window application?",
+  options: [
+    "Longest substring without repeating characters",
+    "Maximum average subarray",
+    "Breadth First Search traversal",
+    "Minimum window substring"
+  ],
+  correctAnswer: 2,
+  explanation: "Breadth First Search is a graph traversal algorithm and does not use the Sliding Window technique."
+},
+{
+  question: "What is the main idea behind the Sliding Window technique?",
+  options: [
+    "Recompute every possible subarray independently.",
+    "Reuse information from the previous window instead of recalculating everything.",
+    "Sort the array before processing.",
+    "Use recursion to examine all possibilities."
+  ],
+  correctAnswer: 1,
+  explanation: "Sliding Window improves efficiency by updating the current window incrementally instead of recalculating values for every new window."
+}
 ];
 
 const Quiz = () => {

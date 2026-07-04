@@ -1,6 +1,5 @@
 import Animation from "@/app/visualizer/linkedlist/types/circular/animation";
 import Content from "@/app/visualizer/linkedlist/types/circular/content";
-import Quiz from "@/app/visualizer/linkedlist/types/circular/quiz";
 import CodeBlock from "@/app/visualizer/linkedlist/types/circular/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -17,7 +16,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<CodeBlock />}
-      quiz={<Quiz />}
       exploreOther={
         <ExploreOther
           title="Explore Other Types"

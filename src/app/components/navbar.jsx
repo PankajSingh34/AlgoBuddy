@@ -21,6 +21,7 @@ import {
 import { NAV_LINKS } from "./navLinks";
 import NotificationDropdown from "./notifications/NotificationDropdown";
 import ProfileProgress from "./ui/ProfileProgress";
+import BottomNav from "./BottomNav";
 
 const MAX_AVATAR_URL_LENGTH = 512;
 
@@ -350,6 +351,8 @@ export default function Navbar() {
 
             <button
               onClick={toggleTheme}
+              
+              suppressHydrationWarning 
               aria-label={
                 themeMounted
                   ? `Switch to ${theme === "light"
@@ -378,13 +381,28 @@ export default function Navbar() {
               <Search className="w-5 h-5" />
             </button>
             <button
+              onClick={toggleTheme}
+              aria-label={
+                themeMounted
+                  ? `Switch to ${theme === "light" ? "dark" : "light"} mode`
+                  : "Toggle theme"
+              }
+              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+            >
+              {!themeMounted || theme === "light" ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </button>
+            <button
               onClick={() =>
                 setMenuOpen((o) => !o)
               }
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
-              className="w-10 h-10 flex items-center justify-center text-surface-600 dark:text-surface-400 rounded-lg hover:bg-surface-100 dark:hover:bg-udemy-dark-surface transition-colors focus-ring"
+              className="hidden"
             >
               {menuOpen ? (
                 <X className="w-5 h-5" />
@@ -496,9 +514,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
+                onClick={() => setMenuOpen(false)}
                 className="h-[44px] flex items-center justify-center text-[15px] font-semibold text-surface-900 dark:text-white border border-surface-300 dark:border-udemy-dark-border rounded-full hover:border-primary hover:text-primary transition-all focus-ring"
               >
                 Sign in
@@ -506,9 +522,12 @@ export default function Navbar() {
             )}
           </div>
         </div>
+        
       )}
 
+      <BottomNav />
       <div className="h-[72px]" />
     </>
   );
 }
+

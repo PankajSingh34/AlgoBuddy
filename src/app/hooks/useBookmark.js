@@ -7,7 +7,7 @@ export function useBookmark() {
 
   useEffect(() => {
     persistence.get('BOOKMARKS').then((stored) => {
-      if (stored) setBookmarks(stored);
+      if (stored) setBookmarks(prev => prev.length === 0 ? stored : prev);
     });
   }, []);
 

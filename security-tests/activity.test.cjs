@@ -6,14 +6,17 @@
 // its implementation directly (with getLocalISODate stubbed). trackActivity
 // is tested via inline mock to avoid the @/ alias resolution issue.
 
-const { test, describe } = require('node:test');
+const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 // ─── Inline computeStreak logic for testing ───────────────────────────────────
 // (Copied verbatim from src/lib/activity.js computeStreak body)
-// getLocalISODate stub: hardcoded to "2026-06-19" for deterministic tests
-function getLocalISODate() {
-  return '2026-06-19';
+// getLocalISODate stub: default to "2026-06-19" for deterministic tests
+function getLocalISODate(date = new Date('2026-06-19')) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function computeStreak(activities) {
@@ -33,7 +36,7 @@ function computeStreak(activities) {
   const uniqueDates = [...new Set(dates)];
   let streak = 1;
   const today = getLocalISODate();
-  const yesterday = new Date();
+  const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
 

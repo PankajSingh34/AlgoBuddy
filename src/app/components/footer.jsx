@@ -9,7 +9,7 @@ import {
   FaEnvelope,
   FaDiscord,
   FaYoutube,
-  FaTwitter,
+  FaXTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
 
@@ -69,21 +69,21 @@ const Footer = () => {
   };
 
   const footerHeading =
-    'text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-600'
+    'text-white text-lg font-semibold mb-6 relative after:absolute after:left-0 after:-bottom-2 after:w-10 after:h-[2px] after:bg-gray-700'
   const footerLink =
     'block text-gray-400 hover:text-white transition-colors duration-300 text-sm'
   const socialIcon =
-    'w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-primary/20 hover:border-primary/50 hover:text-white transition-all duration-300'
+    'w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300'
 
   return (
     <>
-      <footer className="relative bg-udemy-dark-bg text-gray-400 overflow-hidden border-t border-white/5">
+      <footer className="relative bg-gray-950 text-gray-400 overflow-hidden border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-12">
             {/* Left Section */}
             <div>
-              <h2 className="text-4xl font-black tracking-tight text-white">
-                Algo<span className="text-primary">Buddy</span>
+              <h2 className="text-4xl font-black tracking-tight">
+                <span className="text-white">Algo</span><span className="text-primary">Buddy</span>
               </h2>
 
               <p className="mt-6 text-sm leading-8 max-w-xs text-gray-400">
@@ -284,7 +284,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
-                  <FaTwitter className="w-4 h-4" /> Twitter
+                  <FaXTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
             </div>

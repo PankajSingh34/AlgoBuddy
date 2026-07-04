@@ -66,4 +66,5 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
             """, nativeQuery = true)
     Integer findRankByUserId(@Param("userId") UUID userId);
 
+    List<UserArenaProfile> findTop100ByOrderByRatingDesc();
 }

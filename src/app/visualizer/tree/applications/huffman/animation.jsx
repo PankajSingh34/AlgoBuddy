@@ -27,8 +27,16 @@ export default function HuffmanAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const animatingRef = useRef(animating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { animatingRef.current = animating; }, [animating]);
+
   useVisualizerReset(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setAnimating(false);
     setMessage("...");
     setTreeBuilt(false);
@@ -49,28 +57,33 @@ export default function HuffmanAnimation() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!animating || steps.length === 0) return;
+    if (!animating || steps.length === 0 || lockRef.current) return;
     if (currentStepIdx >= steps.length - 1) { 
       setAnimating(false);
       setTreeBuilt(true);
       return; 
     }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    lockRef.current = true;
+    timerRef.current = setTimeout(() => {
+      lockRef.current = false;
+      setCurrentStepIdx(p => p + 1);
+    }, 1600 / speed);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [animating, currentStepIdx, steps, speed]);
 
-  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); lockRef.current = false; };
   const startVisualizer = () => {
     if (steps.length === 0) return;
     setAnimating(true);
     const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
     setCurrentStepIdx(nextIdx);
   };
-  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const stepForward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current > 0) setCurrentStepIdx(p => p - 1); };
   const resetPlayback = () => {
     setAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setTreeBuilt(false);
     setMessage("Playback reset.");

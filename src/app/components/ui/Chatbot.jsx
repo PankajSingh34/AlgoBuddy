@@ -38,7 +38,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/apiClient";
-import { CSRF_HEADER_NAME } from "@/lib/csrf";
+import { CSRF_HEADER_NAME } from "@/lib/csrfConstants";
 
 // ─── Custom Robot Icon matching AlgoBuddy Theme ──────────────────────────────
 
@@ -397,6 +397,16 @@ function TypingIndicator() {
 
 // ─── Main Chatbot ─────────────────────────────────────────────────────────────
 
+const MAX_HISTORY = 30;
+
+function pruneMessages(messages) {
+  if (messages.length <= MAX_HISTORY) return messages;
+  const welcome = messages.find((m) => m.id === "welcome");
+  const others = messages.filter((m) => m.id !== "welcome");
+  const pruned = others.slice(-(MAX_HISTORY - 1));
+  return welcome ? [welcome, ...pruned] : pruned;
+}
+
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
@@ -477,15 +487,18 @@ export default function Chatbot() {
       const userMsg = { role: "user", content: text, id: `u-${Date.now()}` };
       const assistantId = `a-${Date.now()}`;
 
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        { role: "assistant", content: "", id: assistantId, isStreaming: true },
-      ]);
+      setMessages((prev) => {
+        const next = pruneMessages([
+          ...prev,
+          userMsg,
+          { role: "assistant", content: "", id: assistantId, isStreaming: true },
+        ]);
+        return next;
+      });
       setIsStreaming(true);
 
       // Build history for API (exclude system welcome + placeholders)
-      const history = messages
+      const history = pruneMessages(messages)
         .filter((m) => m.id !== "welcome" && !m.isError && !m.isStreaming)
         .map(({ role, content }) => ({ role, content }));
       history.push({ role: "user", content: text });
@@ -628,7 +641,7 @@ const res = await fetch("/api/chatbot", {
             exit={{ opacity: 0, scale: 0.88, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 30 }}
             style={{ transformOrigin: "bottom right" }}
-            className="fixed bottom-[80px] sm:bottom-[92px] right-4 sm:right-6 z-[10000] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-120px)] flex flex-col rounded-2xl overflow-hidden
+            className="bottom-[148px] sm:bottom-[92px] right-4 sm:right-6 z-[10000] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-120px)] flex flex-col rounded-2xl overflow-hidden
               bg-white/95 dark:bg-[#1c1d1f]/95 border border-purple-100 dark:border-purple-900/30 shadow-2xl backdrop-blur-xl transition-all duration-300"
           >
             {/* Header */}
@@ -783,7 +796,7 @@ const res = await fetch("/api/chatbot", {
       </AnimatePresence>
 
       {/* ── Floating Trigger Button ─────────────────────────────────────────────── */}
-      <div className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
+      <div className={`fixed bottom-[75px] right-3 sm:bottom-6 sm:right-6 z-[10000] ${isOpen ? "hidden sm:block" : "block"}`}>
         <motion.button
           onClick={() => {
             setIsOpen((v) => {

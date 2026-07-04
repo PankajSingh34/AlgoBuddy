@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Copy, Check, Link2, Play } from "lucide-react";
+import { generateSecureCode } from "@/lib/random";
 
 export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
   const [topic, setTopic] = useState("Arrays");
   const [difficulty, setDifficulty] = useState("Easy");
-  const [lobbyCode, setLobbyCode] = useState(() => Math.random().toString(36).substring(2, 8).toUpperCase());
+  const [lobbyCode, setLobbyCode] = useState(() => generateSecureCode(6));
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

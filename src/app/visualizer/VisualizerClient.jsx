@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
-import { X } from "lucide-react";
+import { X, Trophy } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
 import ShortcutsButton from "@/components/ui/ShortcutsButton";
 
@@ -644,9 +644,10 @@ export default function VisualizerClient({ initialSections }) {
             </div>
             <Link href="/visualizer/quiz">
               <button
-                className="h-[52px] px-6 rounded-2xl bg-[#a435f0] text-white font-semibold hover:bg-[#8e2de2] transition-all whitespace-nowrap"
+                className="h-[52px] px-6 rounded-2xl bg-[#a435f0] text-white font-semibold hover:bg-[#8e2de2] transition-all whitespace-nowrap flex items-center gap-2"
               >
-                🎯 Quiz Mode
+                <Trophy className="w-5 h-5" />
+                <span>Quiz Mode</span>
               </button>
             </Link>
           </div>

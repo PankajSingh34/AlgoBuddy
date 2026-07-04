@@ -20,7 +20,7 @@ const SEARCH_STATUSES = [
   "Expanding search criteria...",
 ];
 
-export default function MatchmakingModal({ isOpen, onClose, onMatchFound, currentUserStats }) {
+export default function MatchmakingModal({ isOpen, onClose, onMatchFound, currentUserStats, isRanked = false }) {
   const [seconds, setSeconds] = useState(0);
   const [statusIdx, setStatusIdx] = useState(0);
   const [matchState, setMatchState] = useState("searching"); // searching, matched
@@ -125,7 +125,8 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
         rating: statsRef.current?.rating || 1200,
         level: statsRef.current?.level || 1,
         topic: "Arrays",
-        difficulty: "Easy"
+        difficulty: "Easy",
+        isRanked: isRanked
       });
     });
 
@@ -199,7 +200,7 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
           {/* Header */}
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-neutral-800/80 mb-6">
             <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-              {matchState === "searching" ? "Finding DSA Match" : "Match Confirmed!"}
+              {matchState === "searching" ? (isRanked ? "Finding Ranked Match" : "Finding Casual Match") : "Match Confirmed!"}
             </h3>
             {matchState === "searching" && (
               <button

@@ -2,37 +2,37 @@ import { Redis } from "@upstash/redis";
 import { jwtVerify } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
-const RATE_LIMIT_KEY_PREFIX = "rl:";
+const RATE_LIMIT_KEY_PREFIX = "rl";
 const MAX_IN_MEMORY_ENTRIES = 10000;
 const MEMORY_SWEEP_INTERVAL_MS = 60000;
-const store = new Map();
+const stores = []; // { store: Map, keyPrefix: string }
 
-// Periodic sweeper to clean expired entries — avoids O(N) scan on every request
-// and ensures FIFO eviction doesn't silently reset active rate-limit windows.
 let memorySweepTimer = null;
 function startMemorySweeper() {
   if (memorySweepTimer) return;
   memorySweepTimer = setInterval(() => {
     const now = Date.now();
-    let expired = 0;
-    for (const [key, bucket] of store.entries()) {
-      if (bucket.resetAt <= now) {
-        store.delete(key);
-        expired++;
+    for (const entry of stores) {
+      const store = entry.store;
+      let expired = 0;
+      for (const [key, bucket] of store.entries()) {
+        if (bucket.resetAt <= now) {
+          store.delete(key);
+          expired++;
+        }
       }
-    }
-    // Size-based forced eviction only under extreme overflow, not as primary strategy.
-    if (store.size > MAX_IN_MEMORY_ENTRIES) {
-      const toEvict = store.size - MAX_IN_MEMORY_ENTRIES;
-      const iter = store.keys();
-      for (let i = 0; i < toEvict; i++) {
-        const k = iter.next().value;
-        if (k !== undefined) store.delete(k);
+      if (store.size > MAX_IN_MEMORY_ENTRIES) {
+        const toEvict = store.size - MAX_IN_MEMORY_ENTRIES;
+        const iter = store.keys();
+        for (let i = 0; i < toEvict; i++) {
+          const k = iter.next().value;
+          if (k !== undefined) store.delete(k);
+        }
+        console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
       }
-      console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
-    }
-    if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
-      console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
+      if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
+        console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
+      }
     }
   }, MEMORY_SWEEP_INTERVAL_MS);
   if (memorySweepTimer.unref) memorySweepTimer.unref();
@@ -101,16 +101,19 @@ async function resolveIdentityKey(request) {
 }
 
 export function createRateLimiter(options) {
-  const { maxRequests, windowSeconds } = options;
+  const { maxRequests, windowSeconds, prefix = "" } = options;
+  const store = new Map();
+  const keyPrefix = `${RATE_LIMIT_KEY_PREFIX}:${prefix}:`;
+  stores.push({ store, keyPrefix });
 
   async function check(key) {
     const now = Date.now();
     const windowMs = windowSeconds * 1000;
-    const redisKey = `${RATE_LIMIT_KEY_PREFIX}${key}`;
+    const redisKey = `${keyPrefix}${key}`;
 
     if (shouldTryRedis()) {
       try {
-        const uniqueMember = `${now}-${Math.random().toString(36).slice(2, 10)}`;
+        const uniqueMember = `${now}-${globalThis.crypto.randomUUID().split('-')[0]}`;
         const result = await redis
           .pipeline()
           .zadd(redisKey, { score: now, member: uniqueMember })
@@ -196,12 +199,19 @@ export function createRateLimiter(options) {
   return { check, checkRequest };
 }
 
-export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
-export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60 });
-export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
-export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60 });
+export const authLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60, prefix: "auth" });
+export const apiLimiter = createRateLimiter({ maxRequests: 5, windowSeconds: 60, prefix: "api" });
+export const sandboxLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "sandbox" });
+export const chatbotLimiter = createRateLimiter({ maxRequests: 10, windowSeconds: 60, prefix: "chatbot" });
+
+export function shouldBypassRateLimit() {
+  return process.env.DISABLE_RATE_LIMIT === "true";
+}
 
 export async function checkRateLimit(key) {
+  if (shouldBypassRateLimit()) {
+    return { allowed: true, remaining: 999, retryAfter: 0 };
+  }
   return apiLimiter.check(key);
 }
 
@@ -210,15 +220,17 @@ export async function checkChatbotRateLimit(key) {
 }
 
 export async function resetKey(key) {
-  if (shouldTryRedis()) {
-    try {
-      await redis.del(`${RATE_LIMIT_KEY_PREFIX}${key}`);
-      markRedisOnline();
-    } catch (err) {
-      markRedisOffline(err);
+  for (const entry of stores) {
+    entry.store.delete(key);
+    if (shouldTryRedis()) {
+      try {
+        await redis.del(`${entry.keyPrefix}${key}`);
+        markRedisOnline();
+      } catch (err) {
+        markRedisOffline(err);
+      }
     }
   }
-  store.delete(key);
 }
 
 export async function resetAll({ scope = "rate-limit" } = {}) {
@@ -233,7 +245,7 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
       const keysToDelete = [];
       do {
         const result = await redis.scan(cursor, {
-          match: `${RATE_LIMIT_KEY_PREFIX}*`,
+          match: `${RATE_LIMIT_KEY_PREFIX}:*`,
           count: 100,
         });
         cursor = Number(result[0]);
@@ -250,7 +262,9 @@ export async function resetAll({ scope = "rate-limit" } = {}) {
       markRedisOffline(err);
     }
   }
-  store.clear();
+  for (const entry of stores) {
+    entry.store.clear();
+  }
 }
 
 let localSmtpCounter = 0;
