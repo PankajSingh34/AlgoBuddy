@@ -1,13 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Copy, Check, Link2, Play } from "lucide-react";
 import { generateSecureCode } from "@/lib/random";
 
-export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
-  const [topic, setTopic] = useState("Arrays");
-  const [difficulty, setDifficulty] = useState("Easy");
+export default function CreateDuelModal({ isOpen, onClose, onCreateMatch, initialTopic, initialDifficulty, initialTimeLimit }) {
+  const [topic, setTopic] = useState(initialTopic || "Arrays");
+  const [difficulty, setDifficulty] = useState(initialDifficulty || "Easy");
+  const [timeLimit, setTimeLimit] = useState(initialTimeLimit || "30m");
   const [lobbyCode, setLobbyCode] = useState(() => generateSecureCode(6));
+  
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTopic) setTopic(initialTopic);
+      if (initialDifficulty) setDifficulty(initialDifficulty);
+      if (initialTimeLimit) setTimeLimit(initialTimeLimit);
+    }
+  }, [isOpen, initialTopic, initialDifficulty, initialTimeLimit]);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -23,6 +32,7 @@ export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
       lobbyCode,
       topic,
       difficulty,
+      timeLimit,
     });
   };
 

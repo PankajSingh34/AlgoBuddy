@@ -1258,6 +1258,9 @@ export default function ArenaPage() {
         onClose={closeCreateDuelModal}
         onLaunch={handleCreateMatchLaunch}
         currentUserStats={currentUserStats}
+        initialTopic={duelTopic}
+        initialDifficulty={duelDifficulty}
+        initialTimeLimit={duelTime}
       />
 
       <SpectatorSimulatorModal
