@@ -45,8 +45,8 @@ export default function SortingQuizClient() {
     {
       title: "Bucket Sort Quiz",
       description:
-        "Practice Bucket Sort, bucket distribution, complexity, stability, and applications.",
-      href: "/visualizer/array/sorting/quiz/bucket-sort",
+        "Practice Shell Sort algorithm, gap sequences, complexity, and applications.",
+      href: "/visualizer/sorting/quiz/shell-sort",
     },
     {
       title: "Tim Sort Quiz",

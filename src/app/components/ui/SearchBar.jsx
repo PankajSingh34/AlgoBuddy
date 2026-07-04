@@ -6,6 +6,7 @@ const SearchBar = ({ sections, onSearchResults }) => {
   const suggestions = [
   "Binary Search",
   "Merge Sort",
+  "Tim Sort",
   "Linked List",
   "Graph BFS",
   "Dynamic Programming",

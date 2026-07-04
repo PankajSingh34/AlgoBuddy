@@ -139,6 +139,21 @@ CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_s
   USING (true) WITH CHECK (true);
 
 -- ====================================================================
+-- topic_comments table for visualizer discussion threads
+-- ====================================================================
+CREATE TABLE topic_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  topic_id TEXT NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE topic_comments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read comments" ON topic_comments FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can insert comments" ON topic_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- Atomic streak increment function (fixes TOCTOU race condition)
 -- ====================================================================
 CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID)

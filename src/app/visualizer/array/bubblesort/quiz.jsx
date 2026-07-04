@@ -130,6 +130,116 @@ const BubbleSortQuiz = () => {
   ],
   correctAnswer: 0,
   explanation: "Bubble Sort is stable because equal elements retain their relative order after sorting."
+},
+{
+  question: "How many passes are required in the worst case to sort an array of n elements using Bubble Sort?",
+  options: [
+    "n",
+    "n - 1",
+    "log n",
+    "n²"
+  ],
+  correctAnswer: 1,
+  explanation: "Bubble Sort requires at most n - 1 passes to completely sort an array."
+},
+{
+  question: "Which pair of elements does Bubble Sort compare during each step?",
+  options: [
+    "First and last elements",
+    "Random elements",
+    "Adjacent elements",
+    "Smallest and largest elements"
+  ],
+  correctAnswer: 2,
+  explanation: "Bubble Sort works by comparing adjacent elements and swapping them if they are in the wrong order."
+},
+{
+  question: "What happens if no swaps occur during a complete pass in the optimized Bubble Sort?",
+  options: [
+    "The algorithm restarts",
+    "The algorithm terminates",
+    "The array is reversed",
+    "Another pass is always performed"
+  ],
+  correctAnswer: 1,
+  explanation: "If no swaps occur during a pass, the array is already sorted, so the algorithm stops."
+},
+{
+  question: "Which type of sorting algorithm is Bubble Sort?",
+  options: [
+    "Divide and Conquer",
+    "Comparison-based sorting",
+    "Hashing algorithm",
+    "Greedy algorithm"
+  ],
+  correctAnswer: 1,
+  explanation: "Bubble Sort is a comparison-based sorting algorithm because it compares elements to determine their order."
+},
+{
+  question: "Bubble Sort is mainly recommended for:",
+  options: [
+    "Very large datasets",
+    "Small datasets and educational purposes",
+    "Database indexing",
+    "Real-time systems with huge data"
+  ],
+  correctAnswer: 1,
+  explanation: "Bubble Sort is simple to understand and implement, making it suitable for small datasets and learning."
+},
+{
+  question: "Which element reaches its correct position after every pass of Bubble Sort?",
+  options: [
+    "Smallest element",
+    "Middle element",
+    "Largest unsorted element",
+    "Random element"
+  ],
+  correctAnswer: 2,
+  explanation: "After each pass, the largest remaining unsorted element moves to its correct position at the end."
+},
+{
+  question: "What is the average-case time complexity of Bubble Sort?",
+  options: [
+    "O(log n)",
+    "O(n)",
+    "O(n log n)",
+    "O(n²)"
+  ],
+  correctAnswer: 3,
+  explanation: "On average, Bubble Sort performs O(n²) comparisons and swaps."
+},
+{
+  question: "Which sorting algorithm generally performs better than Bubble Sort on large datasets?",
+  options: [
+    "Merge Sort",
+    "Quick Sort",
+    "Heap Sort",
+    "All of the above"
+  ],
+  correctAnswer: 3,
+  explanation: "Merge Sort, Quick Sort, and Heap Sort all have significantly better average performance than Bubble Sort for large datasets."
+},
+{
+  question: "Can Bubble Sort correctly sort an array containing duplicate elements?",
+  options: [
+    "Yes",
+    "No",
+    "Only if duplicates are adjacent",
+    "Only after removing duplicates"
+  ],
+  correctAnswer: 0,
+  explanation: "Bubble Sort correctly sorts arrays containing duplicate values while preserving their relative order."
+},
+{
+  question: "Which of the following is a major advantage of Bubble Sort?",
+  options: [
+    "Fastest sorting algorithm",
+    "Easy to understand and implement",
+    "Requires recursive calls",
+    "Works in O(log n) time"
+  ],
+  correctAnswer: 1,
+  explanation: "Bubble Sort's biggest advantage is its simplicity, making it a popular algorithm for beginners."
 }
   ];
 

@@ -135,7 +135,117 @@ const SelectionSortQuiz = () => {
     ],
     correctAnswer: 1,
     explanation: "Selection Sort performs the same number of comparisons regardless of whether the array is sorted or unsorted."
-  }
+  },
+  {
+  question: "What is the first step performed in Selection Sort?",
+  options: [
+    "Compare adjacent elements",
+    "Find the smallest element in the unsorted portion",
+    "Divide the array into two halves",
+    "Insert the first element into a sorted list"
+  ],
+  correctAnswer: 1,
+  explanation: "Selection Sort begins by finding the smallest element in the unsorted portion of the array."
+},
+{
+  question: "After each pass of Selection Sort, which part of the array is guaranteed to be sorted?",
+  options: [
+    "The last element",
+    "The first part of the array",
+    "The middle elements",
+    "The entire array"
+  ],
+  correctAnswer: 1,
+  explanation: "After every pass, one more element is placed in its correct position at the beginning of the array."
+},
+{
+  question: "How many passes are required to sort an array of n elements using Selection Sort?",
+  options: [
+    "n",
+    "n - 1",
+    "log n",
+    "n²"
+  ],
+  correctAnswer: 1,
+  explanation: "Selection Sort requires n - 1 passes because the last element is automatically in its correct position."
+},
+{
+  question: "What is the best-case time complexity of Selection Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 3,
+  explanation: "Selection Sort always performs O(n²) comparisons, even if the array is already sorted."
+},
+{
+  question: "Which operation is minimized in Selection Sort compared to Bubble Sort?",
+  options: [
+    "Comparisons",
+    "Swaps",
+    "Memory usage",
+    "Recursion"
+  ],
+  correctAnswer: 1,
+  explanation: "Selection Sort performs far fewer swaps than Bubble Sort, making it useful when write operations are expensive."
+},
+{
+  question: "Selection Sort belongs to which category of sorting algorithms?",
+  options: [
+    "Comparison-based sorting",
+    "Non-comparison sorting",
+    "Divide and Conquer",
+    "Hash-based sorting"
+  ],
+  correctAnswer: 0,
+  explanation: "Selection Sort compares elements to determine their correct order, making it a comparison-based sorting algorithm."
+},
+{
+  question: "Why is Selection Sort generally not suitable for large datasets?",
+  options: [
+    "It uses too much memory",
+    "It requires recursion",
+    "It has O(n²) time complexity",
+    "It cannot sort duplicate values"
+  ],
+  correctAnswer: 2,
+  explanation: "Selection Sort performs O(n²) comparisons, making it inefficient for large datasets."
+},
+{
+  question: "Can Selection Sort correctly sort an array containing duplicate elements?",
+  options: [
+    "Yes",
+    "No",
+    "Only if duplicates are adjacent",
+    "Only after removing duplicates"
+  ],
+  correctAnswer: 0,
+  explanation: "Selection Sort correctly sorts arrays with duplicate values, although it is not a stable sorting algorithm."
+},
+{
+  question: "Which sorting algorithm usually performs fewer swaps?",
+  options: [
+    "Bubble Sort",
+    "Selection Sort",
+    "Both perform the same number of swaps",
+    "Merge Sort"
+  ],
+  correctAnswer: 1,
+  explanation: "Selection Sort performs at most n−1 swaps, whereas Bubble Sort may perform many more."
+},
+{
+  question: "What is one major advantage of Selection Sort?",
+  options: [
+    "Guaranteed O(n log n) performance",
+    "Simple implementation with minimal swaps",
+    "Stable sorting by default",
+    "Works faster than Quick Sort on large arrays"
+  ],
+  correctAnswer: 1,
+  explanation: "Selection Sort is easy to implement and minimizes the number of swaps, making it useful in scenarios where writing to memory is costly."
+}
   ];
 
   return <QuizEngine title="Selection Sort Quiz Challenge" questions={questions} />;
