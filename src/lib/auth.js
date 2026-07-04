@@ -49,21 +49,36 @@ export function getSupabaseConfig() {
 }
 
 export async function getAuthenticatedUser() {
-  // If the middleware has already verified the user, use that directly
-  // to avoid a redundant getUser() network call.
+  // Check for the middleware-verified x-user-id header, but DO NOT trust it
+  // blindly — an attacker can forge this header directly. Instead, verify it
+  // against the Supabase session cookie before accepting the fast path.
   try {
     const nextHeaders = await import("next/headers");
     const headersList = await nextHeaders.headers();
     const middlewareUserId = headersList.get("x-user-id");
-    const middlewareUserEmail = headersList.get("x-user-email");
     if (middlewareUserId) {
-      return {
-        success: true,
-        user: {
-          id: middlewareUserId,
-          email: middlewareUserEmail || "",
-        },
-      };
+      const cookieStore = await nextHeaders.cookies();
+      const sbAccessToken = cookieStore.get("sb-access-token")?.value
+        || cookieStore.get("supabase-auth-token")?.value;
+      if (sbAccessToken) {
+        const config = getSupabaseConfig();
+        if (config) {
+          const { createClient } = await import("@supabase/supabase-js");
+          const adminClient = createClient(config.supabaseUrl, config.supabaseServiceKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          const { data, error } = await adminClient.auth.getUser(sbAccessToken);
+          if (!error && data?.user && data.user.id === middlewareUserId) {
+            return {
+              success: true,
+              user: {
+                id: middlewareUserId,
+                email: headersList.get("x-user-email") || data.user.email || "",
+              },
+            };
+          }
+        }
+      }
     }
   } catch {
     // headers() is not available in all contexts (e.g. WebSocket server).
