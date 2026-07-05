@@ -338,7 +338,7 @@ const AboutSection = () => {
               <Link href="/practice" className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-udemy-purple/20 dark:border-udemy-purple/30 bg-white dark:bg-udemy-dark-surface text-udemy-text dark:text-udemy-dark-text font-bold hover:border-udemy-purple dark:hover:border-udemy-purple transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2 shadow-sm">
                 Start Practicing <Code2 className="w-5 h-5 text-udemy-purple" />
               </Link>
-              <a href="https://github.com/Prakitesh28/AlgoBuddy" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-udemy-border dark:border-udemy-dark-border bg-transparent text-udemy-text dark:text-udemy-dark-text font-bold hover:bg-udemy-border/50 dark:hover:bg-udemy-dark-border/50 transition-all duration-300 flex items-center justify-center gap-2">
+              <a href="https://github.com/PankajSingh34/AlgoBuddy" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-udemy-border dark:border-udemy-dark-border bg-transparent text-udemy-text dark:text-udemy-dark-text font-bold hover:bg-udemy-border/50 dark:hover:bg-udemy-dark-border/50 transition-all duration-300 flex items-center justify-center gap-2">
                 Join Community <Github className="w-5 h-5" />
               </a>
             </div>
