@@ -221,7 +221,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <NotificationDropdown />
+            {user && <NotificationDropdown />}
 
             {user ? (
               <div
