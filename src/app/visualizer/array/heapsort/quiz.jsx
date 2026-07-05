@@ -184,7 +184,117 @@ const HeapSortQuiz = () => {
       correctAnswer: 2,
       explanation:
         "Heap Sort is an in-place comparison sorting algorithm."
-    }
+    },
+    {
+  question: "What is the primary purpose of the Heapify operation?",
+  options: [
+    "To sort the entire array",
+    "To maintain the heap property",
+    "To merge two heaps",
+    "To reverse the heap"
+  ],
+  correctAnswer: 1,
+  explanation: "Heapify restores the heap property by ensuring every parent node satisfies the heap condition with its children."
+},
+{
+  question: "Which element is stored at the root of a Max Heap?",
+  options: [
+    "The smallest element",
+    "The middle element",
+    "The largest element",
+    "A random element"
+  ],
+  correctAnswer: 2,
+  explanation: "In a Max Heap, the largest element is always stored at the root."
+},
+{
+  question: "How many child nodes can each node have in a Binary Heap?",
+  options: [
+    "One",
+    "Two",
+    "Three",
+    "Unlimited"
+  ],
+  correctAnswer: 1,
+  explanation: "A Binary Heap is a complete binary tree where each node can have at most two children."
+},
+{
+  question: "Which property must a Max Heap satisfy?",
+  options: [
+    "Parent is smaller than children",
+    "Parent is greater than or equal to its children",
+    "Children are always equal",
+    "Leaf nodes contain the largest values"
+  ],
+  correctAnswer: 1,
+  explanation: "In a Max Heap, every parent node must be greater than or equal to its child nodes."
+},
+{
+  question: "How many phases does Heap Sort mainly consist of?",
+  options: [
+    "One",
+    "Two",
+    "Three",
+    "Four"
+  ],
+  correctAnswer: 1,
+  explanation: "Heap Sort has two main phases: building the heap and repeatedly extracting the maximum element."
+},
+{
+  question: "What happens after swapping the root with the last element during Heap Sort?",
+  options: [
+    "The algorithm stops",
+    "The heap property is restored using Heapify",
+    "The array is divided into halves",
+    "The heap is rebuilt from scratch"
+  ],
+  correctAnswer: 1,
+  explanation: "After each swap, Heapify is applied to restore the Max Heap property."
+},
+{
+  question: "Which traversal is used by Heap Sort?",
+  options: [
+    "Inorder Traversal",
+    "Preorder Traversal",
+    "No tree traversal is required",
+    "Level-order Traversal"
+  ],
+  correctAnswer: 2,
+  explanation: "Heap Sort manipulates the heap using array indices and Heapify, without performing traditional tree traversals."
+},
+{
+  question: "Why is Heap Sort considered an in-place algorithm?",
+  options: [
+    "It creates a second array",
+    "It uses only constant extra memory",
+    "It requires recursion only",
+    "It avoids comparisons"
+  ],
+  correctAnswer: 1,
+  explanation: "Heap Sort rearranges elements within the original array and requires only O(1) auxiliary space."
+},
+{
+  question: "Which sorting algorithm also guarantees O(n log n) time but requires additional memory?",
+  options: [
+    "Bubble Sort",
+    "Selection Sort",
+    "Merge Sort",
+    "Insertion Sort"
+  ],
+  correctAnswer: 2,
+  explanation: "Merge Sort guarantees O(n log n) time but requires O(n) extra space, unlike Heap Sort."
+},
+{
+  question: "Which scenario is most suitable for using Heap Sort?",
+  options: [
+    "When guaranteed O(n log n) performance and O(1) extra space are required",
+    "When stable sorting is required",
+    "When sorting only small arrays",
+    "When no comparisons are allowed"
+  ],
+  correctAnswer: 0,
+  explanation: "Heap Sort is ideal when guaranteed O(n log n) performance and constant extra memory are important, even though it is not stable."
+}
   ];
 
   return (

@@ -437,7 +437,6 @@ export default function PracticePage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
-
       {/* Container holding three-column layout */}
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-y-8 lg:gap-0">
 
@@ -472,9 +471,18 @@ export default function PracticePage() {
           onBackToSessions={() => setActiveView("problem-list")}
         />
 
+        <PracticeRightSidebar
+            solved={stats.solved}
+            attempted={stats.attempted}
+            remaining={stats.remaining}
+            total={stats.total}
+            onViewProgress={() => router.push("/practice?view=dashboard")}
+        />
+
+    </div>
+
         {/* Center Content */}
         <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
-
           {/* Main dashboard rendering based on activeView */}
           {activeView === "dashboard" ? (
             <PracticeDashboard
@@ -687,17 +695,6 @@ export default function PracticePage() {
                     total={stats.total}
                   />
                 </div>
-                {activeView === "problem-list" && (
-                  <div className="w-full lg:w-[260px] flex-shrink-0">
-                    <PracticeRightSidebar
-                      solved={stats.solved}
-                      attempted={stats.attempted}
-                      remaining={stats.remaining}
-                      total={stats.total}
-                      onViewProgress={() => router.push("/practice?view=dashboard")}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Tab navigation */}
@@ -1484,8 +1481,10 @@ export default function PracticePage() {
         problem={selectedProblem}
         topicSlug={selectedProblem ? selectedProblem.topic.toLowerCase() : null}
       />
-
       <Footer />
     </div>
   );
 }
+
+
+

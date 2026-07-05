@@ -25,6 +25,7 @@ const VISUALIZERS = [
   { name: "Insertion Sort",                      path: "/visualizer/array/insertionsort",                      category: "Array"      },
   { name: "Merge Sort",                          path: "/visualizer/array/mergesort",                          category: "Array"      },
   { name: "Quick Sort",                          path: "/visualizer/array/quicksort",                          category: "Array"      },
+  { name: "Tim Sort",                            path: "/visualizer/array/timsort",                            category: "Array"      },
   { name: "Counting Sort",                       path: "/visualizer/array/countingsort",                       category: "Array"      },
   { name: "Heap Sort",                           path: "/visualizer/array/heapsort",                           category: "Array"      },
   { name: "Sliding Window",                      path: "/visualizer/array/slidingwindow",                      category: "Array"      },
@@ -75,6 +76,9 @@ const VISUALIZERS = [
 
   // Hash Map
   { name: "Hash Map",                            path: "/visualizer/hashmap",                                  category: "Hash Map"   },
+
+  // Bit Manipulation
+  { name: "Bit Manipulation Quiz",               path: "/visualizer/bit-manipulation/quiz",                    category: "Bit Manipulation" },
 ];
 
 // ─── Site Pages ─────────────────────────────────────────────────────────────
