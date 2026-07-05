@@ -207,6 +207,14 @@ export default function ArenaPage() {
   const [duelTopic, setDuelTopic] = useState("Random");
   const [joinCode, setJoinCode] = useState("");
 
+  const handleJoinLobby = () => {
+    if (joinCode.length !== 6) {
+      toast.error("Please enter a valid 6-digit invite code.");
+      return;
+    }
+    window.location.href = `/arena/duel/${joinCode}`;
+  };
+
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
   useEffect(() => {
@@ -799,6 +807,13 @@ export default function ArenaPage() {
                             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                             className="w-full md:w-48 px-4 py-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-mono tracking-widest uppercase focus:outline-none focus:border-primary/50 transition placeholder:normal-case placeholder:tracking-normal"
                           />
+                          <button
+                            onClick={handleJoinLobby}
+                            disabled={joinCode.length !== 6}
+                            className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center ${joinCode.length === 6 ? "bg-primary hover:bg-primary/90 text-white shadow-primary/20" : "bg-slate-200 dark:bg-neutral-800 text-slate-400 dark:text-neutral-600 cursor-not-allowed"}`}
+                          >
+                            Join Lobby
+                          </button>
                         </div>
                       </div>
                     </div>
