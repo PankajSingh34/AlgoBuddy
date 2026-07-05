@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS — Tune these values here in one place if needed
@@ -71,13 +72,15 @@ politely redirect the conversation back to DSA.`;
 export async function POST(request) {
   try {
     // ── 1. RATE LIMITING ──────────────────────────────────────────────────────
-    // Use the user's IP address as the rate-limit identifier.
-    // In production on Vercel, the real IP is in the x-forwarded-for header.
-    const ip =
+    // Use userId as the rate-limit key for authenticated users (so rotating IPs
+    // doesn't bypass the limit). Fall back to IP for unauthenticated users.
+    let authResult = null;
+    try { authResult = await getAuthenticatedUser(); } catch {}
+    const rateLimitKey = authResult?.user?.id ??
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "anonymous";
 
-    const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+    const { success, limit, remaining, reset } = await ratelimit.limit(rateLimitKey);
 
     if (!success) {
       // Tell the user clearly AND tell the frontend how long to wait.
