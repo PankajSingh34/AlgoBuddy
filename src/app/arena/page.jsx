@@ -205,6 +205,7 @@ export default function ArenaPage() {
   const [duelDifficulty, setDuelDifficulty] = useState("Medium");
   const [duelTime, setDuelTime] = useState("30m");
   const [duelTopic, setDuelTopic] = useState("Random");
+  const [joinCode, setJoinCode] = useState("");
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
@@ -790,7 +791,14 @@ export default function ArenaPage() {
                           <p className="text-xs text-slate-500">Have an invite code from a friend? Enter it below to join their custom duel.</p>
                         </div>
                         <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2">
-                          {/* Join code input will go here */}
+                          <input 
+                            type="text" 
+                            placeholder="Enter 6-digit code"
+                            maxLength={6}
+                            value={joinCode}
+                            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                            className="w-full md:w-48 px-4 py-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-mono tracking-widest uppercase focus:outline-none focus:border-primary/50 transition placeholder:normal-case placeholder:tracking-normal"
+                          />
                         </div>
                       </div>
                     </div>
