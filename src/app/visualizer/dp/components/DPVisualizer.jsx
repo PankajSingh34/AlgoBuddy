@@ -10,6 +10,8 @@ import { lcsGenerator } from "@/features/algorithms/dp/lcsLogic";
 import { coinChangeGenerator } from "@/features/algorithms/dp/coinChangeLogic";
 import { dpTopics } from "../data";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import CodePanel from "@/app/components/CodePanel";
+import { dpCodeSnippets, getHighlightLine } from "../codeSnippets";
 
 export default function DPVisualizer({ algorithm = "knapsack" }) {
   const topic = dpTopics[algorithm];
@@ -86,6 +88,7 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
   });
 
   const currentFrame = frames[engine.currentStep] || {};
+  const highlightLine = getHighlightLine(algorithm, currentFrame);
 
   // Rendering logic for grids
   const renderKnapsackGrid = () => {
@@ -112,10 +115,6 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
                 </th>
                 {rowArr.map((val, w) => {
                   const isCurrent = currentFrame.row === i && currentFrame.col === w;
-                  const isReferenced = !isCurrent && (
-                    (currentFrame.row === i && currentFrame.row > 0 && currentFrame.col !== w) || 
-                    false // Could highlight referenced cells if we add them to the frame state
-                  );
                   return (
                     <td key={w} className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
                       ${isCurrent ? 'bg-primary text-white font-bold scale-110 shadow-md' : 'bg-white dark:bg-surface-900'}
@@ -253,7 +252,7 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold">Knapsack Capacity (W)</label>
-                  <input type="number" min="1" max="20" value={capacity} onChange={(e) => setCapacity(parseInt(e.target.value) || 0)} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32" />
+                  <input type="number" min="1" max="20" value={capacity} onChange={(e)=> setCapacity(parseInt(e.target.value) || 0)} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32" />
                 </div>
                 <div>
                   <label className="text-sm font-semibold">Items (Weight, Value)</label>
@@ -310,10 +309,19 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
         )}
 
         {!isEditing && (
-          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900 min-h-[400px]">
-             {algorithm === "knapsack" && renderKnapsackGrid()}
-             {algorithm === "lcs" && renderLCSGrid()}
-             {algorithm === "coin-change" && renderCoinChangeGrid()}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900 min-h-[400px]">
+               {algorithm === "knapsack" && renderKnapsackGrid()}
+               {algorithm === "lcs" && renderLCSGrid()}
+               {algorithm === "coin-change" && renderCoinChangeGrid()}
+            </div>
+
+            <CodePanel
+              code={dpCodeSnippets[algorithm]}
+              currentLine={highlightLine}
+              language="JavaScript"
+              onLanguageChange={() => {}}
+            />
           </div>
         )}
 
