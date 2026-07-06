@@ -315,12 +315,18 @@ export function useSheetProgress() {
   const updateProgress = useCallback(
     async (problemId, newStatus) => {
       const updatedAt = new Date().toISOString();
-      const updated = {
-        ...progress,
-        [problemId]: { status: newStatus, updatedAt },
-      };
-      setProgress(updated);
-      writeLocal(updated);
+
+      // Update local state immediately so UI reflects the change right away.
+      // Use a functional update to avoid stale `progress` closure issues.
+      setProgress((prev) => {
+        const next = {
+          ...prev,
+          [problemId]: { status: newStatus, updatedAt },
+        };
+        writeLocal(next);
+        return next;
+      });
+
 
       // Update local streak on completion only for guests.
       // Authenticated users get their streak from the server after the sync
