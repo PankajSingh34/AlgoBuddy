@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
 import { X, Trophy } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
-import ShortcutsButton from "@/components/ui/ShortcutsButton";
 
 const DS_THEME = {
   Array: {
@@ -726,10 +725,6 @@ export default function VisualizerClient({ initialSections }) {
           )}
         </div>
       </section>
-
-      <div className="fixed bottom-6 right-6 z-50">
-        <ShortcutsButton position="controls" />
-      </div>
     </div>
   );
 }

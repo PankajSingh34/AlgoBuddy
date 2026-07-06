@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
-import {Award,BarChart3,Briefcase,Calendar,CheckCircle2,Code2,Download,Edit3,Eye,Flame,Folder,Github,Linkedin,Link as LinkIcon,MapPin,Medal,Plus,RefreshCw,Save,  ShieldCheck,Trash2,Trophy,User,X,} from "lucide-react";
+import {Award,BarChart3,Calendar,CheckCircle2,Code2,Edit3,Eye,Flame,Folder,Github,Linkedin,Link as LinkIcon,MapPin,Medal,Save,ShieldCheck,Trophy,X,} from "lucide-react";
 
 import { useUser } from "@/features/user/UserContext";
 import Footer from "@/app/components/footer";
-import { supabase } from "@/lib/supabase";
+import ProfileForm from "@/app/components/profile/ProfileForm";
+import { useProfileForm } from "@/app/hooks/useProfileForm";
 import { practiceData } from "@/lib/practiceData";
+import {
+  EMPTY_PROJECT,
+  PRESET_PROJECT_GRADIENTS,
+  safeExternalUrl,
+} from "@/lib/profileUtils";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useRecentlyViewed } from "@/app/hooks/useRecentlyViewed";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
@@ -22,36 +28,6 @@ const heatLevelClass = {
   3: "bg-violet-400 dark:bg-violet-700",
   4: "bg-violet-600 dark:bg-violet-500",
 };
-
-const AVATAR_BUCKET = "avatars";
-const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
-const MAX_AVATAR_URL_LENGTH = 512;
-const MAX_PROFILE_URL_LENGTH = 512;
-const MAX_BIO_LENGTH = 300;
-const PROFILE_URL_FIELDS = ["resume_link", "github_profile", "linkedin_profile"];
-const PRESET_PROJECT_GRADIENTS = [
-  "bg-[linear-gradient(135deg,#190f4f,#25116d_45%,#5338f2)]",
-  "bg-[linear-gradient(135deg,#064e3b,#0f172a)]",
-  "bg-[linear-gradient(135deg,#312e81,#111827)]",
-  "bg-[linear-gradient(135deg,#7c2d12,#1c1917)]",
-  "bg-[linear-gradient(135deg,#134e4a,#0f172a)]",
-  "bg-[linear-gradient(135deg,#1e1b4b,#312e81)]",
-];
-
-const EMPTY_PROJECT = {
-  title: "",
-  subtitle: "",
-  tags: "",
-  url: "",
-  preview: PRESET_PROJECT_GRADIENTS[0],
-};
-
-const CODING_PLATFORMS = [
-  ["leetcode", "leetcode_username", "LeetCode Username", "leetcode_solved", "Solved"],
-  ["codeforces", "codeforces_username", "Codeforces Handle", "codeforces_rating", "Rating"],
-  ["codechef", "codechef_username", "CodeChef Username", "codechef_stars", "Stars"],
-  ["github", "github_username", "GitHub Username", "github_contributions", "Contributions"],
-];
 
 const allPracticeProblems = practiceData.flatMap((topic) =>
   topic.subsections.flatMap((section) =>
@@ -79,39 +55,6 @@ const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value || 0
 const seededRandom = (seed) => {
   const value = Math.sin(seed * 9999) * 10000;
   return value - Math.floor(value);
-};
-
-const safeAvatarUrl = (value) => {
-  if (typeof value !== "string") return "";
-  if (value.startsWith("data:")) return "";
-  if (value.length > MAX_AVATAR_URL_LENGTH) return "";
-  return value;
-};
-
-const safeExternalUrl = (value) => {
-  if (typeof value !== "string" || value.length > MAX_PROFILE_URL_LENGTH) return "";
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
-    return parsed.toString();
-  } catch {
-    return "";
-  }
-};
-
-const sanitizeProfileLinks = (data) => {
-  const nextData = { ...data };
-
-  for (const field of PROFILE_URL_FIELDS) {
-    if (!nextData[field]) continue;
-    const safeUrl = safeExternalUrl(nextData[field]);
-    if (!safeUrl) {
-      return { error: "Please enter valid http or https URLs for profile links." };
-    }
-    nextData[field] = safeUrl;
-  }
-
-  return { data: nextData };
 };
 
 function LeetCodeIcon() {
@@ -160,67 +103,27 @@ export default function ProfilePage() {
   const { profile: arenaProfile, leaderboard, matchHistory } = useArenaProfile(user);
   const { recentlyViewed } = useRecentlyViewed();
   const router = useRouter();
-  const fileInputRef = useRef(null);
+  const {
+    formData,
+    setFormData,
+    saving,
+    savingAvatar,
+    fileInputRef,
+    handleChange,
+    handleAvatarChange,
+    saveProfile,
+  } = useProfileForm(user, setUser);
 
-  const [saving, setSaving] = useState(false);
-  const [savingAvatar, setSavingAvatar] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [projectForm, setProjectForm] = useState(EMPTY_PROJECT);
   const [editingProjectIndex, setEditingProjectIndex] = useState(null);
   const [fetchingProfile, setFetchingProfile] = useState({});
   const [importingRepos, setImportingRepos] = useState(false);
   const [githubRepos, setGithubRepos] = useState([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    branch: "",
-    location: "",
-    skills: "",
-    resume_link: "",
-    github_profile: "",
-    linkedin_profile: "",
-    email_notifications: true,
-    avatar_url: "",
-    leetcode_username: "",
-    leetcode_solved: 0,
-    codeforces_username: "",
-    codeforces_rating: 0,
-    codechef_username: "",
-    codechef_stars: 0,
-    github_username: "",
-    github_contributions: 0,
-    projects: [],
-  });
-  
-  
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
-      return;
-    }
-
-    if (user) {
-      const meta = user.user_metadata || {};
-      setFormData({
-        name: meta.name || "",
-        branch: meta.branch || "",
-        location: meta.location || meta.address || "",
-        skills: (meta.skills || "").slice(0, MAX_BIO_LENGTH),
-        resume_link: meta.resume_link || "",
-        github_profile: meta.github_profile || "",
-        linkedin_profile: meta.linkedin_profile || "",
-        email_notifications: meta.email_notifications !== false,
-        avatar_url: safeAvatarUrl(meta.avatar_url || meta.picture),
-        leetcode_username: meta.leetcode_username || "",
-        leetcode_solved: meta.leetcode_solved || 0,
-        codeforces_username: meta.codeforces_username || "",
-        codeforces_rating: meta.codeforces_rating || 0,
-        codechef_username: meta.codechef_username || "",
-        codechef_stars: meta.codechef_stars || 0,
-        github_username: meta.github_username || "",
-        github_contributions: meta.github_contributions || 0,
-        projects: Array.isArray(meta.projects) ? meta.projects : [],
-      });
     }
   }, [loading, router, user]);
 
@@ -427,79 +330,6 @@ export default function ProfilePage() {
   ];
   const progress = dsaProgress;
 
-  const handleAvatarChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      event.target.value = "";
-      toast.error("Please choose an image file");
-      return;
-    }
-
-    if (file.size > MAX_AVATAR_FILE_SIZE) {
-      event.target.value = "";
-      toast.error("Image size should be less than 2MB");
-      return;
-    }
-
-    const uploadAvatar = async () => {
-      setSavingAvatar(true);
-
-      try {
-        const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const filePath = `${user.id}/avatar-${Date.now()}.${extension}`;
-        const { error: uploadError } = await supabase.storage
-          .from(AVATAR_BUCKET)
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            contentType: file.type,
-            upsert: true,
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage
-          .from(AVATAR_BUCKET)
-          .getPublicUrl(filePath);
-
-        const avatarUrl = safeAvatarUrl(publicUrlData?.publicUrl);
-        if (!avatarUrl) throw new Error("Could not create a compact avatar URL");
-
-        const nextProfileData = { ...formData, avatar_url: avatarUrl };
-        setFormData(nextProfileData);
-
-        const { data, error } = await supabase.auth.updateUser({
-          data: nextProfileData,
-        });
-
-        if (error) throw error;
-        setUser(data.user);
-        toast.success("Profile photo updated");
-      } catch (error) {
-        console.error(error);
-        toast.error(
-          error.message?.includes("Bucket")
-            ? "Create a public Supabase Storage bucket named avatars"
-            : "Failed to update profile photo"
-        );
-      } finally {
-        setSavingAvatar(false);
-        event.target.value = "";
-      }
-    };
-
-    uploadAvatar();
-  };
-
-  const handleChange = (event) => {
-    const { name, type, value } = event.target;
-    setFormData((current) => ({
-      ...current,
-      [name]: name === "skills" ? value.slice(0, MAX_BIO_LENGTH) : type === "number" ? Number(value) : value,
-    }));
-  };
-
   const resetProjectForm = () => {
     setProjectForm(EMPTY_PROJECT);
     setEditingProjectIndex(null);
@@ -635,39 +465,16 @@ export default function ProfilePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const sanitized = sanitizeProfileLinks(formData);
-    if (sanitized.error) {
-      toast.error(sanitized.error);
-      return;
-    }
+    const result = await saveProfile({
+      mode: "edit",
+      onSuccess: () => {
+        setIsEditOpen(false);
+        resetProjectForm();
+        toast.success("Profile updated successfully");
+      },
+    });
 
-    setSaving(true);
-
-    try {
-      const nextProfileData = {
-        ...sanitized.data,
-        leetcode_solved: Number(sanitized.data.leetcode_solved) || 0,
-        codeforces_rating: Number(sanitized.data.codeforces_rating) || 0,
-        codechef_stars: Number(sanitized.data.codechef_stars) || 0,
-        github_contributions: Number(sanitized.data.github_contributions) || 0,
-        projects: Array.isArray(sanitized.data.projects) ? sanitized.data.projects : [],
-      };
-
-      const { data, error } = await supabase.auth.updateUser({ data: nextProfileData });
-
-      if (error) throw error;
-
-      setUser(data.user);
-      setFormData(nextProfileData);
-      setIsEditOpen(false);
-      resetProjectForm();
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
+    if (!result.ok) return;
   };
   if (loading || !user) {
     return (
@@ -1081,254 +888,30 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <div className="overflow-y-auto px-6 py-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[
-                    ["name", "Full Name", "John Doe", User],
-                    ["branch", "Branch", "Computer Science", ShieldCheck],
-                    ["location", "Location", "City, Country", MapPin],
-                    ["skills", "Bio", "Software Engineer passionate about...", Code2],
-                    ["github_profile", "GitHub URL", "https://github.com/...", Github],
-                    ["linkedin_profile", "LinkedIn URL", "https://linkedin.com/in/...", Linkedin],
-                    ["resume_link", "Resume URL", "https://drive.google.com/...", Briefcase],
-                  ].map(([name, label, placeholder, Icon]) => (
-                    <label key={name} className={name === "skills" ? "sm:col-span-2" : undefined}>
-                      <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-neutral-400">
-                        <span className="flex items-center gap-2">
-                          <Icon className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
-                          {label}
-                        </span>
-                        {name === "skills" && (
-                          <span className="normal-case tracking-normal text-slate-400 dark:text-neutral-500">
-                            {formData.skills.length}/{MAX_BIO_LENGTH}
-                          </span>
-                        )}
-                      </span>
-                      <input
-                        name={name}
-                        value={formData[name]}
-                        onChange={handleChange}
-                        maxLength={name === "skills" ? MAX_BIO_LENGTH : undefined}
-                        placeholder={placeholder}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder:text-neutral-600 dark:focus:border-violet-400 dark:focus:ring-violet-950/60"
-                      />
-                    </label>
-                  ))}
-                </div>
-
-                <div className="mt-6 border-t border-slate-100 pt-5 dark:border-neutral-800">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-black text-[#111331] dark:text-white">Coding Profiles</h3>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                        Usernames and stats shown on your profile.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {CODING_PLATFORMS.map(([platformKey, usernameField, usernameLabel, statField, statLabel]) => (
-                      <div key={usernameField} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-neutral-800 dark:bg-neutral-950/60">
-                        <label>
-                          <span className="mb-1.5 block text-xs font-black text-slate-500 dark:text-neutral-400">
-                            {usernameLabel}
-                          </span>
-                          <div className="flex gap-2">
-                            <input
-                              name={usernameField}
-                              value={formData[usernameField]}
-                              onChange={handleChange}
-                              placeholder="username"
-                              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder:text-neutral-600 dark:focus:border-violet-400 dark:focus:ring-violet-950/60"
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                fetchCodingProfileStat(
-                                  platformKey,
-                                  usernameField,
-                                  statField,
-                                  usernameLabel.replace(" Username", "").replace(" Handle", "")
-                                )
-                              }
-                              disabled={fetchingProfile[platformKey] || !formData[usernameField]?.trim()}
-                              className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-xs font-black text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-violet-700 dark:hover:bg-violet-950/40 dark:hover:text-violet-300"
-                            >
-                              <RefreshCw className={`h-3.5 w-3.5 ${fetchingProfile[platformKey] ? "animate-spin" : ""}`} />
-                              Fetch
-                            </button>
-                          </div>
-                        </label>
-                        <div className="mt-3 rounded-lg border border-slate-100 bg-white px-3 py-2 dark:border-neutral-800 dark:bg-neutral-900">
-                          <span className="text-[11px] font-black text-slate-500 dark:text-neutral-400">
-                            {statLabel}
-                          </span>
-                          <p className="mt-1 text-lg font-black text-[#111331] dark:text-white">
-                            {formatNumber(formData[statField])}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 border-t border-slate-100 pt-5 dark:border-neutral-800">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-black text-[#111331] dark:text-white">Projects</h3>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-neutral-400">
-                        Add up to the projects shown on your profile.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleImportFromGitHub}
-                        disabled={importingRepos}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-black text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-violet-700 dark:hover:bg-violet-950/40 dark:hover:text-violet-300"
-                      >
-                        <Github className="h-3.5 w-3.5" />
-                        {importingRepos ? "Fetching..." : "Import GitHub"}
-                        {!importingRepos && <Download className="h-3.5 w-3.5" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddProject}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-black text-violet-700 transition hover:bg-violet-100 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-300"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        Add
-                      </button>
-                    </div>
-                  </div>
-
-                  {githubRepos.length > 0 && (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 dark:border-neutral-700">
-                      <p className="border-b border-slate-100 px-3 py-2 text-xs font-black text-slate-500 dark:border-neutral-800 dark:text-neutral-400">
-                        Select a GitHub repo
-                      </p>
-                      <div className="max-h-44 overflow-y-auto">
-                        {githubRepos.map((repo) => (
-                          <button
-                            key={repo.name}
-                            type="button"
-                            onClick={() => handleSelectRepo(repo)}
-                            className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30"
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-black text-[#111331] dark:text-white">{repo.name}</p>
-                              {repo.description && (
-                                <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
-                                  {repo.description}
-                                </p>
-                              )}
-                            </div>
-                            {repo.language && (
-                              <span className="shrink-0 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-black text-violet-600 dark:bg-violet-950/40 dark:text-violet-300">
-                                {repo.language}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {editingProjectIndex !== null && (
-                    <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/50 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
-                      <p className="mb-3 text-xs font-black uppercase tracking-wide text-violet-600 dark:text-violet-300">
-                        {editingProjectIndex === -1 ? "New Project" : "Edit Project"}
-                      </p>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {[
-                          ["title", "Project title", "Portfolio Website"],
-                          ["subtitle", "Short description", "React app with animations"],
-                          ["tags", "Tags", "React, Tailwind, API"],
-                          ["url", "Project URL", "https://..."],
-                        ].map(([field, label, placeholder]) => (
-                          <label key={field}>
-                            <span className="mb-1.5 block text-xs font-black text-slate-500 dark:text-neutral-400">
-                              {label}
-                            </span>
-                            <input
-                              value={projectForm[field]}
-                              onChange={(event) => handleProjectFormChange(field, event.target.value)}
-                              placeholder={placeholder}
-                              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100 dark:placeholder:text-neutral-600 dark:focus:border-violet-400 dark:focus:ring-violet-950/60"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <div className="mt-3">
-                        <p className="mb-2 text-xs font-black text-slate-500 dark:text-neutral-400">Preview color</p>
-                        <div className="flex flex-wrap gap-2">
-                          {PRESET_PROJECT_GRADIENTS.map((gradient) => (
-                            <button
-                              key={gradient}
-                              type="button"
-                              onClick={() => handleProjectFormChange("preview", gradient)}
-                              className={`h-8 w-8 rounded-lg ${gradient} ${
-                                projectForm.preview === gradient
-                                  ? "ring-2 ring-violet-600 ring-offset-2 dark:ring-violet-400 dark:ring-offset-neutral-900"
-                                  : ""
-                              }`}
-                              aria-label="Select project preview color"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={resetProjectForm}
-                          className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-black text-slate-600 dark:border-neutral-700 dark:text-neutral-300"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSaveProject}
-                          className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white dark:bg-violet-500"
-                        >
-                          {editingProjectIndex === -1 ? "Add Project" : "Update Project"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.projects.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/50 px-4 py-5 text-center text-sm font-bold text-slate-500 dark:border-violet-900/60 dark:bg-violet-950/20 dark:text-neutral-400">
-                      No projects yet.
-                    </div>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {formData.projects.map((project, index) => (
-                        <div key={`${project.title}-${index}`} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-                          <div className={`h-10 w-10 shrink-0 rounded-lg ${project.preview}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-black text-[#111331] dark:text-white">{project.title}</p>
-                            <p className="truncate text-[11px] font-semibold text-slate-500 dark:text-neutral-400">{project.subtitle}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleEditProject(index)}
-                            className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-black text-slate-600 hover:border-violet-300 hover:text-violet-600 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-violet-300"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteProject(index)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-red-200 hover:text-red-500 dark:border-neutral-700 dark:text-neutral-500 dark:hover:text-red-400"
-                            aria-label="Delete project"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ProfileForm
+                mode="edit"
+                formData={formData}
+                onChange={handleChange}
+                user={user}
+                fileInputRef={fileInputRef}
+                savingAvatar={savingAvatar}
+                onAvatarChange={handleAvatarChange}
+                fetchingProfile={fetchingProfile}
+                onFetchCodingProfile={fetchCodingProfileStat}
+                formatNumber={formatNumber}
+                projectForm={projectForm}
+                onProjectFormChange={handleProjectFormChange}
+                editingProjectIndex={editingProjectIndex}
+                onAddProject={handleAddProject}
+                onEditProject={handleEditProject}
+                onDeleteProject={handleDeleteProject}
+                onSaveProject={handleSaveProject}
+                onResetProjectForm={resetProjectForm}
+                onImportFromGitHub={handleImportFromGitHub}
+                importingRepos={importingRepos}
+                githubRepos={githubRepos}
+                onSelectRepo={handleSelectRepo}
+              />
 
               <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-neutral-800 dark:bg-neutral-950/60">
                 <button

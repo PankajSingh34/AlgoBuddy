@@ -8,46 +8,60 @@ const MAX_AUTH_RETRIES = 2;
 class ApiClient {
   constructor() {
     this.csrfToken = null;
+    this.csrfTokenPromise = null;
+  }
+
+  readCsrfTokenFromCookie() {
+    if (typeof document === "undefined") return null;
+
+    const match = document.cookie.match(
+      new RegExp(`(?:^|;\\s*)${CSRF_COOKIE_NAME}=([^;]*)`),
+    );
+
+    return match ? decodeURIComponent(match[1].trim()) : null;
   }
 
   async getCsrfToken() {
-    if (this.csrfToken) return this.csrfToken;
-
-    try {
-      const res = await fetch("/api/csrf-token", {
-        method: "GET",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        this.csrfToken = data.csrfToken;
-        return this.csrfToken;
-      }
-    } catch {
-      // CSRF token fetch failed
+    const fromCookie = this.readCsrfTokenFromCookie();
+    if (fromCookie) {
+      this.csrfToken = fromCookie;
+      return fromCookie;
     }
 
-    return null;
+    if (this.csrfToken) return this.csrfToken;
+
+    if (!this.csrfTokenPromise) {
+      this.csrfTokenPromise = fetch("/api/csrf-token", { method: "GET" })
+        .then(async (res) => {
+          if (!res.ok) return null;
+          const data = await res.json();
+          const token = data.csrfToken || this.readCsrfTokenFromCookie();
+          this.csrfToken = token;
+          return token;
+        })
+        .catch(() => null)
+        .finally(() => {
+          this.csrfTokenPromise = null;
+        });
+    }
+
+    return this.csrfTokenPromise;
   }
 
   async request(path, options = {}, authRetries = 0) {
     const { method = "GET", body, headers = {} } = options;
 
     const extraHeaders = { ...headers };
+    delete extraHeaders[CSRF_HEADER_NAME];
+    delete extraHeaders["X-CSRF-Token"];
 
     if (STATE_CHANGING_METHODS.has(method)) {
-      let token = this.csrfToken;
-
-      if (!token && typeof document !== "undefined") {
-        const match = document.cookie.match(
-          new RegExp(`(^| )${CSRF_COOKIE_NAME}=([^;]+)`),
-        );
-
-        token = match ? decodeURIComponent(match[2]) : null;
-      }
+      let token = this.readCsrfTokenFromCookie();
 
       if (!token) {
         token = await this.getCsrfToken();
+      } else {
+        this.csrfToken = token;
       }
 
       if (token) {
@@ -110,6 +124,7 @@ class ApiClient {
         data.error.includes("CSRF")
       ) {
         this.csrfToken = null;
+        this.csrfTokenPromise = null;
 
         if (typeof document !== "undefined") {
           document.cookie = `${CSRF_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
