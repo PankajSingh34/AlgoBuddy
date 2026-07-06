@@ -319,10 +319,6 @@ const Footer = () => {
           {/* Bottom Row */}
           <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} AlgoBuddy. All rights reserved.</p>
-            <p>
-              Made with <span className="text-primary">💜</span> by developers,
-              for developers.
-            </p>
           </div>
         </div>
       </footer>
