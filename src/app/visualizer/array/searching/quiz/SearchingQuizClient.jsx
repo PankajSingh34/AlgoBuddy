@@ -27,6 +27,13 @@ export default function SearchingQuizClient() {
       filename: "ternary_search_quiz.js",
       themeColor: "from-violet-500 to-purple-600",
     },
+    {
+      title: "Jump Search Quiz",
+      description: "Practice Jump Search concepts, block jumping, linear scanning, and square-root time complexity.",
+      href: "/visualizer/array/jump-search/quiz",
+      filename: "jump_search_quiz.js",
+      themeColor: "from-emerald-500 to-teal-600",
+    },
   ];
 
   return (
@@ -45,7 +52,7 @@ export default function SearchingQuizClient() {
             Searching Quiz Portal
           </h1>
           <p className="text-[14px] text-surface-600 dark:text-surface-400 font-medium">
-            Test your understanding of linear and binary search algorithms. Select a specific challenge below.
+            Test your understanding of search algorithms. Select a specific challenge below.
           </p>
         </div>
       </section>
