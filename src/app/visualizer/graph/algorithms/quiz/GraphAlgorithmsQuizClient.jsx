@@ -12,6 +12,12 @@ const quizzes = [
     href: "/visualizer/graph/algorithms/quiz/dijkstra",
   },
   {
+    title: "Bellman-Ford Algorithm Quiz",
+    description:
+      "Test your understanding of single-source shortest paths, edge relaxation, V-1 iterations, and negative weight cycle detection.",
+    href: "/visualizer/graph/algorithms/quiz/bellman-ford",
+  },
+  {
     title: "Floyd-Warshall Algorithm Quiz",
     description:
       "Test your understanding of all-pairs shortest paths, dynamic programming, and Floyd-Warshall Algorithm.",

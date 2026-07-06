@@ -286,7 +286,7 @@ export default function QuizPage() {
     {
       title: "Graph Algorithms Quiz",
       description:
-        "Practice Dijkstra's, Floyd-Warshall, Prim's, Kruskal's, and Topological Sort algorithms.",
+        "Practice Dijkstra's, Bellman-Ford, Floyd-Warshall, Prim's, Kruskal's, and Topological Sort algorithms.",
       href: "/visualizer/graph/algorithms/quiz",
       filename: "graph_algorithms_quiz.js",
       icon: Network,
