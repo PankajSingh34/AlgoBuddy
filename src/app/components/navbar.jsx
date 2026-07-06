@@ -85,19 +85,10 @@ export default function Navbar() {
   }, []);
 
   const toggleTheme = () => {
-    setTheme((currentTheme) => {
-      const resolvedTheme = themeMounted
-        ? currentTheme
-        : getStoredTheme();
-
-      const nextTheme =
-        resolvedTheme === "light" ? "dark" : "light";
-
-      applyTheme(nextTheme);
-      setThemeMounted(true);
-
-      return nextTheme;
-    });
+    const nextTheme = theme === "light" ? "dark" : "light";
+    applyTheme(nextTheme);
+    setTheme(nextTheme);
+    setThemeMounted(true);
   };
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, User, LogIn, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
@@ -38,6 +38,10 @@ export default function AuthForm({ isLogin = true }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("next") || "/";
+
+  useEffect(() => {
+    api.getCsrfToken();
+  }, []);
   const { setUser } = useUser();
 
   const validateEmail = (value) => {
