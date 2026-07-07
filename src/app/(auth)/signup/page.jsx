@@ -34,19 +34,11 @@ export default function SignupPage() {
   }, []);
 
   const toggleTheme = () => {
-    setTheme((currentTheme) => {
-      const resolvedTheme = themeMounted
-        ? currentTheme
-        : getStoredTheme();
-
-      const nextTheme =
-        resolvedTheme === "light" ? "dark" : "light";
-
-      applyTheme(nextTheme);
-      setThemeMounted(true);
-
-      return nextTheme;
-    });
+    const current = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    const nextTheme = current === "light" ? "dark" : "light";
+    applyTheme(nextTheme);
+    setTheme(nextTheme);
+    setThemeMounted(true);
   };
 
   return (
