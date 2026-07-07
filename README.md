@@ -662,3 +662,5 @@ This project is licensed under the **MIT License** — see the [**LICENSE**](LIC
 [🌐 Website](https://www.algobuddy.me/) · [📢 Discord](https://discord.gg/Gv2N4U3KAc) · [🐛 Issues](https://github.com/PankajSingh34/AlgoBuddy/issues) · [🔀 Pull Requests](https://github.com/PankajSingh34/AlgoBuddy/pulls)
 
 </div>
+
+# TODO: fix for #2692: [performance] : GSAP + Framer Motion loaded simultaneously for visualizer animat
