@@ -416,7 +416,7 @@ export default function CodeEstimator() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(showOriginalTab ? code : result.optimizedCode)}
-                  className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/50 dark:hover:bg-neutral-850 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition"
+                  className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition"
                   title="Copy code"
                 >
                   <Copy className="h-3.5 w-3.5" />

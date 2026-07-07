@@ -113,7 +113,172 @@ const QuickSortQuiz = () => {
       ],
       correctAnswer: 1,
       explanation: "The partition step's main goal is to place the pivot in its correct sorted position while arranging other elements to be less than or greater than the pivot."
-    }
+    },
+    {
+  question: "What is the main strategy used by Quick Sort?",
+  options: [
+    "Greedy",
+    "Divide and Conquer",
+    "Dynamic Programming",
+    "Backtracking"
+  ],
+  correctAnswer: 1,
+  explanation: "Quick Sort follows the Divide and Conquer approach by selecting a pivot and partitioning the array around it."
+},
+{
+  question: "What is the average-case time complexity of Quick Sort?",
+  options: [
+    "O(n²)",
+    "O(log n)",
+    "O(n log n)",
+    "O(n)"
+  ],
+  correctAnswer: 2,
+  explanation: "Quick Sort has an average-case time complexity of O(n log n), making it one of the fastest practical sorting algorithms."
+},
+{
+  question: "What is the worst-case time complexity of Quick Sort?",
+  options: [
+    "O(n)",
+    "O(n²)",
+    "O(log n)",
+    "O(n log n)"
+  ],
+  correctAnswer: 1,
+  explanation: "Quick Sort performs O(n²) in the worst case when poor pivot choices repeatedly create highly unbalanced partitions."
+},
+{
+  question: "What is the role of the pivot element in Quick Sort?",
+  options: [
+    "It stores the smallest element",
+    "It divides the array into smaller partitions",
+    "It merges sorted arrays",
+    "It keeps the array balanced"
+  ],
+  correctAnswer: 1,
+  explanation: "The pivot is used to partition the array so that smaller elements are placed before it and larger elements after it."
+},
+{
+  question: "Which statement about Quick Sort is correct?",
+  options: [
+    "It is always stable",
+    "It requires O(n) extra space",
+    "It is generally one of the fastest comparison-based sorting algorithms",
+    "It only works on linked lists"
+  ],
+  correctAnswer: 2,
+  explanation: "Quick Sort is widely used because of its excellent average-case performance, although the standard implementation is not stable."
+},
+{
+  question: "What is the base case of the Quick Sort algorithm?",
+  options: [
+    "When the array has one or zero elements",
+    "When the array is already sorted",
+    "When two elements remain",
+    "When the pivot is the largest element"
+  ],
+  correctAnswer: 0,
+  explanation: "Quick Sort stops recursively dividing when the subarray contains one or zero elements, as it is already sorted."
+},
+{
+  question: "Which operation is performed during the partition step of Quick Sort?",
+  options: [
+    "Merge two sorted arrays",
+    "Compare and arrange elements around the pivot",
+    "Find the minimum element",
+    "Reverse the array"
+  ],
+  correctAnswer: 1,
+  explanation: "The partition step rearranges elements so those smaller than the pivot come before it and larger ones come after it."
+},
+{
+  question: "Which pivot selection strategy can improve Quick Sort's performance?",
+  options: [
+    "Random pivot",
+    "Median-of-three pivot",
+    "Middle element pivot",
+    "All of the above"
+  ],
+  correctAnswer: 3,
+  explanation: "Random, median-of-three, and middle-element pivot strategies all help reduce the chances of worst-case performance."
+},
+{
+  question: "Is the standard implementation of Quick Sort stable?",
+  options: [
+    "Yes",
+    "No",
+    "Only for integers",
+    "Only for sorted arrays"
+  ],
+  correctAnswer: 1,
+  explanation: "The standard implementation of Quick Sort is not stable because equal elements may change their relative order."
+},
+{
+  question: "What is the average auxiliary space complexity of Quick Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 1,
+  explanation: "Quick Sort uses O(log n) auxiliary space on average due to recursive function calls."
+},
+{
+  question: "Why is Quick Sort considered an in-place sorting algorithm?",
+  options: [
+    "It uses only a small amount of extra memory",
+    "It creates multiple temporary arrays",
+    "It stores all elements in another array",
+    "It never swaps elements"
+  ],
+  correctAnswer: 0,
+  explanation: "Quick Sort rearranges elements within the original array and requires only a small recursion stack."
+},
+{
+  question: "Which situation can lead to the worst-case performance of Quick Sort?",
+  options: [
+    "Balanced partitions",
+    "Random pivot selection",
+    "Highly unbalanced partitions",
+    "Duplicate elements only"
+  ],
+  correctAnswer: 2,
+  explanation: "Worst-case performance occurs when each partition leaves one side almost empty, resulting in O(n²) time complexity."
+},
+{
+  question: "Which sorting algorithm generally has better cache performance than Merge Sort?",
+  options: [
+    "Bubble Sort",
+    "Selection Sort",
+    "Quick Sort",
+    "Insertion Sort"
+  ],
+  correctAnswer: 2,
+  explanation: "Quick Sort accesses memory more sequentially, making it more cache-friendly and often faster in practice."
+},
+{
+  question: "How many recursive calls are typically made in Quick Sort after partitioning?",
+  options: [
+    "One",
+    "Two",
+    "Three",
+    "Four"
+  ],
+  correctAnswer: 1,
+  explanation: "After partitioning, Quick Sort recursively sorts the left and right subarrays, resulting in two recursive calls."
+},
+{
+  question: "Which scenario is most suitable for using Quick Sort?",
+  options: [
+    "Large in-memory datasets",
+    "External sorting on disk",
+    "Very small arrays only",
+    "Linked lists only"
+  ],
+  correctAnswer: 0,
+  explanation: "Quick Sort is widely used for large in-memory datasets because of its excellent average-case performance and cache efficiency."
+}
   ];
 
   return <QuizEngine title="Quick Sort Quiz Challenge" questions={questions} />;

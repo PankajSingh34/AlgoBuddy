@@ -52,7 +52,6 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   const [buildInput, setBuildInput] = useState("");
   const [steps, setSteps] = useState([]);
   const [message, setMessage] = useState("Build or insert values to start.");
-
   const onStep = useCallback((step) => {
     setMessage(step.explanation);
   }, []);
@@ -337,7 +336,7 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
                       y1={parent.y + nodeRadius}
                       x2={node.x - svgDimensions.offsetX}
                       y2={node.y - nodeRadius}
-                      stroke="#334155"
+                      className="stroke-slate-300 dark:stroke-slate-700"
                     strokeWidth="2.5"
                   />
                 ) : null;

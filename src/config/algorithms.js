@@ -101,6 +101,15 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/array/bubblesort/AlgorithmClient')),
   },
+  "array/bucketsort": {
+    metadata: {
+      title: "Bucket Sort Algorithm | Step-by-Step Animation",
+      description: "Learn Bucket Sort with interactive animations.",
+      robots: "index, follow",
+      openGraph: { images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Bucket Sort" }] },
+    },
+    component: dynamic(() => import('@/app/visualizer/array/bucketsort/AlgorithmClient')),
+  },
   "array/comparison": {
     metadata: {
   title: "Sorting Algorithm Comparison Mode | Side-by-Side Visualizer",
@@ -148,6 +157,27 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/array/heapsort/AlgorithmClient')),
   },
+  "array/radixsort": {
+  metadata: {
+    title: "Radix Sort Algorithm | Step-by-Step Visualization",
+    description:
+      "Learn Radix Sort with interactive animations and step-by-step visualization.",
+    robots: "index, follow",
+    openGraph: {
+      images: [
+        {
+          url: "/og/visualizer.png",
+          width: 1200,
+          height: 630,
+          alt: "Radix Sort Algorithm Visualization",
+        },
+      ],
+    },
+  },
+  component: dynamic(
+    () => import("@/app/visualizer/array/radixsort/AlgorithmClient")
+  ),
+},
   "array/insertionsort": {
     metadata: {
   title: "Insertion Sort Algorithm | Step-by-Step Visualization",
@@ -222,6 +252,28 @@ export const algorithmRegistry = {
   },
 },
     component: dynamic(() => import('@/app/visualizer/array/quicksort/AlgorithmClient')),
+  },
+  "array/shellsort": {
+    metadata: {
+  title: "Shell Sort Algorithm | Step-by-Step Visualization",
+  description: "Learn Shell Sort with interactive animations and step-by-step gap-based insertion sorting visualization.",
+  robots: "index, follow",
+  openGraph: {
+    images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Shell Sort Algorithm Visualization" }],
+  },
+},
+    component: dynamic(() => import('@/app/visualizer/array/shellsort/AlgorithmClient')),
+  },
+  "array/timsort": {
+    metadata: {
+  title: "Tim Sort Algorithm | Step-by-Step Visualization",
+  description: "Learn Tim Sort with interactive animations showing run detection, insertion sorting, and merging.",
+  robots: "index, follow",
+  openGraph: {
+    images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Tim Sort Algorithm Visualization" }],
+  },
+},
+    component: dynamic(() => import('@/app/visualizer/array/timsort/AlgorithmClient')),
   },
   "array/selectionsort": {
     metadata: {
@@ -433,6 +485,36 @@ export const algorithmRegistry = {
   robots: "index, follow",
 },
     component: dynamic(() => import('@/app/visualizer/linkedlist/operations/merge/AlgorithmClient')),
+  },
+  "linkedlist/operations/sorting": {
+    metadata: {
+    title:
+      "Linked List Sorting Algorithm | Interactive Visualization & Step-by-Step Guide",
+    description:
+      "Learn how linked list sorting works with interactive animations, detailed explanations, and hands-on practice. Visualize the sorting process step by step and master linked list sorting techniques.",
+    keywords: [
+      "Linked List Sorting",
+      "Merge Sort Linked List",
+      "Linked List Sort Visualization",
+      "Sorting Algorithm",
+      "Data Structures",
+      "DSA Linked List",
+      "Interactive Sorting",
+      "Linked List Tutorial",
+      "Merge Sort Visualization",
+      "Sorting Step-by-Step",
+      "Linked List Learning",
+      "Sorting using C",
+      "Sorting using Java",
+      "Sorting using JavaScript",
+      "Sorting using Python"
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import('@/app/visualizer/linkedlist/operations/sorting/AlgorithmClient')
+  ),  
   },
   "linkedlist/operations/reverse": {
     metadata: {

@@ -44,4 +44,13 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+
+  if (!context) {
+    console.warn("useUser used outside UserProvider");
+    return { user: null, setUser: () => {}, loading: false };
+  }
+
+  return context;
+};

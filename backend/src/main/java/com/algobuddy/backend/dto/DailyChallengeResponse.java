@@ -16,4 +16,5 @@ public class DailyChallengeResponse {
     private String difficulty;
     private String topic;
     private int xpAward;
+    private String practiceUrl;
 }

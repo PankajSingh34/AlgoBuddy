@@ -15,11 +15,6 @@ import FactorialContent from "../factorial/content";
 import ReverseArrayContent from "../reverse-array/content";
 import PalindromeContent from "../palindrome/content";
 
-import SumOfNQuiz from "../sum-of-n/quiz";
-import FactorialQuiz from "../factorial/quiz";
-import ReverseArrayQuiz from "../reverse-array/quiz";
-import PalindromeQuiz from "../palindrome/quiz";
-
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -37,7 +32,6 @@ export default function FunctionalParameterizedClient() {
           animation: <SumOfNAnimation />,
           content: <SumOfNContent />,
           code: <SumOfNCode />,
-          quiz: <SumOfNQuiz />,
         };
       case "factorial":
         return {
@@ -46,7 +40,6 @@ export default function FunctionalParameterizedClient() {
           animation: <FactorialAnimation />,
           content: <FactorialContent />,
           code: <FactorialCode />,
-          quiz: <FactorialQuiz />,
         };
       case "reverse-array":
         return {
@@ -55,7 +48,6 @@ export default function FunctionalParameterizedClient() {
           animation: <ReverseArrayAnimation />,
           content: <ReverseArrayContent />,
           code: <ReverseArrayCode />,
-          quiz: <ReverseArrayQuiz />,
         };
       case "palindrome":
         return {
@@ -64,7 +56,6 @@ export default function FunctionalParameterizedClient() {
           animation: <PalindromeAnimation />,
           content: <PalindromeContent />,
           code: <PalindromeCode />,
-          quiz: <PalindromeQuiz />,
         };
       default:
         return {};
@@ -103,7 +94,6 @@ export default function FunctionalParameterizedClient() {
       animation={details.animation}
       content={details.content}
       code={details.code}
-      quiz={details.quiz}
       exploreOther={
         <ExploreOther
           title="Explore other topics"

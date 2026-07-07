@@ -2,7 +2,7 @@
  * Pure generator logic for Dijkstra's Algorithm
  */
 
-export function* dijkstraGenerator(adj, startNode) {
+export function* dijkstraGenerator(adj, startNode, targetNode = null) {
   if (!startNode || !adj[startNode]) return;
 
   const distances = {};
@@ -19,6 +19,7 @@ export function* dijkstraGenerator(adj, startNode) {
     visitingNodes: new Set([startNode]),
     activeEdge: null,
     distances: { ...distances },
+    pq: [...pq],
     currentNode: startNode,
     description: `Initializing Dijkstra: start node ${startNode} distance set to 0`,
   };
@@ -36,9 +37,23 @@ export function* dijkstraGenerator(adj, startNode) {
       visitingNodes: new Set([u]),
       activeEdge: null,
       distances: { ...distances },
+      pq: [...pq],
       currentNode: u,
       description: `Processing node ${u} with current shortest distance ${d}`,
     };
+
+    if (targetNode && String(u) === String(targetNode)) {
+      yield {
+        visitedNodes: new Set(visited),
+        visitingNodes: new Set(),
+        activeEdge: null,
+        distances: { ...distances },
+        pq: [...pq],
+        currentNode: u,
+        description: `Target node ${u} reached! Shortest path distance is ${d}.`,
+      };
+      return; // Early exit
+    }
 
     const neighbors = adj[u] || [];
     for (const edge of neighbors) {
@@ -53,6 +68,7 @@ export function* dijkstraGenerator(adj, startNode) {
           visitingNodes: new Set([u, v]),
           activeEdge: { from: u, to: v },
           distances: { ...distances },
+          pq: [...pq],
           currentNode: u,
           description: `Checking edge ${u} -> ${v} (weight: ${weight})`,
         };
@@ -66,6 +82,7 @@ export function* dijkstraGenerator(adj, startNode) {
             visitingNodes: new Set([u, v]),
             activeEdge: { from: u, to: v },
             distances: { ...distances },
+            pq: [...pq],
             currentNode: u,
             description: `Relaxed distance to ${v}: ${newDist}`,
           };
@@ -79,6 +96,7 @@ export function* dijkstraGenerator(adj, startNode) {
     visitingNodes: new Set(),
     activeEdge: null,
     distances: { ...distances },
+    pq: [],
     currentNode: null,
     description: `Dijkstra's algorithm complete`,
   };

@@ -34,18 +34,10 @@ export default function PracticeSessionBanner({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden select-none">
+    <div className="w-full h-full bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden select-none">
       
       {/* Content Side */}
       <div className="flex-1 space-y-4">
-        {/* Back Link */}
-        <button 
-          onClick={onBackToSessions}
-          className="flex items-center gap-1.5 text-xs font-black text-primary hover:underline"
-        >
-          <ArrowLeft size={12} />
-          <span>Back to All Sessions</span>
-        </button>
 
         {/* Title */}
         <div className="flex items-center gap-3.5">
@@ -88,31 +80,13 @@ export default function PracticeSessionBanner({
             Start Practice
           </button>
 
-          <button
-            onClick={onGroupStudy}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-white font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
-          >
-            <Users size={16} />
-            Group Study
-          </button>
-
-          <button
-            onClick={handleSaveToggle}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-neutral-800 transition"
-          >
-            {saved ? (
-              <BookmarkCheck size={18} className="text-primary" />
-            ) : (
-              <Bookmark size={18} />
-            )}
-          </button>
         </div>
 
       </div>
 
       {/* Vector Illustration Side */}
       <div className="w-full md:w-auto flex justify-center md:justify-end flex-shrink-0">
-        <svg className="w-52 h-40 max-w-full" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-32 md:w-40 h-auto max-w-full" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Background shapes */}
           <circle cx="120" cy="90" r="80" fill="rgba(164, 53, 240, 0.03)" />
           <circle cx="190" cy="40" r="25" fill="rgba(34, 197, 94, 0.02)" />

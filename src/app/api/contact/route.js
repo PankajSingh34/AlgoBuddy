@@ -2,7 +2,9 @@ import nodemailer from "nodemailer";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
+import { validateCsrf } from "@/lib/csrf";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
+import { RATE_LIMITS } from "@/config/rateLimits";
 
 function escapeHtml(value) {
   return String(value)
@@ -19,6 +21,10 @@ function isValidEmail(value) {
 }
 
 export async function POST(req) {
+  if (!validateCsrf(req)) {
+    return Response.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
+
   try {
     const ip = getClientIp(req.headers);
 
@@ -28,7 +34,7 @@ export async function POST(req) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
       return jsonResponse({ message: "Too many requests. Please try again later." }, 429, {
         "Retry-After": retryAfter.toString(),
-        "X-RateLimit-Limit": "5",
+        "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
         "X-RateLimit-Remaining": "0",
       });
     }
@@ -74,7 +80,7 @@ export async function POST(req) {
     }
 
     const { allowed: smtpAllowed } = await checkGlobalSmtpQuota(
-      parseInt(process.env.SMTP_DAILY_QUOTA || "400", 10)
+      RATE_LIMITS.SMTP.DAILY_QUOTA
     );
     if (!smtpAllowed) {
       console.warn("[contact] SMTP daily quota exceeded. Persisting message to pending_messages.");
@@ -124,7 +130,7 @@ export async function POST(req) {
     await transporter.sendMail(mailOptions);
 
     return jsonResponse({ message: "Email sent successfully" }, 200, {
-      "X-RateLimit-Limit": "5",
+      "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
       "X-RateLimit-Remaining": remaining.toString(),
     });
   } catch (error) {

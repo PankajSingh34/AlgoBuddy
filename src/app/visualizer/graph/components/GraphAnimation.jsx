@@ -39,9 +39,7 @@ const sequences = {
 };
 
 // Algorithms that only make sense on directed graphs
-const DIRECTED_ONLY = ["topological", "dijkstra", "bellman-ford"];
-  "a-star": ["A", "B", "E"],
-};
+const DIRECTED_ONLY_OLD = ["topological", "dijkstra", "bellman-ford"];
 
 // Algorithms that only make sense on directed graphs
 const DIRECTED_ONLY = ["topological", "dijkstra", "a-star"];

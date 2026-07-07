@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Award, Shield, Zap } from "lucide-react";
 import { io } from "socket.io-client";
@@ -20,11 +20,58 @@ const SEARCH_STATUSES = [
   "Expanding search criteria...",
 ];
 
-export default function MatchmakingModal({ isOpen, onClose, onMatchFound, currentUserStats }) {
+export default function MatchmakingModal({ isOpen, onClose, onMatchFound, currentUserStats, isRanked = false }) {
   const [seconds, setSeconds] = useState(0);
   const [statusIdx, setStatusIdx] = useState(0);
   const [matchState, setMatchState] = useState("searching"); // searching, matched
   const [matchedOpponent, setMatchedOpponent] = useState(null);
+
+  const onMatchFoundRef = useRef(onMatchFound);
+  const statsRef = useRef(currentUserStats);
+
+  const timerRef = useRef(null);
+  const statusTimerRef = useRef(null);
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    onMatchFoundRef.current = onMatchFound;
+  }, [onMatchFound]);
+
+  useEffect(() => {
+    statsRef.current = currentUserStats;
+  }, [currentUserStats]);
+
+  const triggerMockMatch = () => {
+    clearInterval(timerRef.current);
+    clearInterval(statusTimerRef.current);
+
+    if (socketRef.current) {
+      socketRef.current.emit("leave_matchmaking");
+      socketRef.current.disconnect();
+    }
+
+    const randomOpp = MOCK_OPPONENTS[Math.floor(Math.random() * MOCK_OPPONENTS.length)];
+    const matchId = `mock-match-${Date.now()}`;
+    const opponent = {
+      userId: `mock-${randomOpp.name.toLowerCase()}`,
+      name: randomOpp.name,
+      rating: randomOpp.rating,
+      level: randomOpp.level,
+      avatar: randomOpp.avatar,
+      title: randomOpp.title,
+      matchId,
+      topic: "Arrays"
+    };
+
+    setMatchedOpponent(opponent);
+    setMatchState("matched");
+
+    setTimeout(() => {
+      if (onMatchFoundRef.current) {
+        onMatchFoundRef.current({ ...opponent, matchId });
+      }
+    }, 3000);
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -35,17 +82,21 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       return;
     }
 
-    const timer = setInterval(() => {
-      setSeconds((s) => s + 1);
+    setSeconds(0);
+    let currentSeconds = 0;
+    timerRef.current = setInterval(() => {
+      currentSeconds += 1;
+      setSeconds(currentSeconds);
     }, 1000);
 
-    const statusTimer = setInterval(() => {
+    statusTimerRef.current = setInterval(() => {
       setStatusIdx((prev) => (prev < SEARCH_STATUSES.length - 1 ? prev + 1 : prev));
     }, 1800);
 
-    const socketUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-      ? "http://127.0.0.1:4000"
-      : "https://algobuddy-socket-server.onrender.com";
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.")
+        ? `http://${window.location.hostname}:4000`
+        : "https://algobuddy-socket-server.onrender.com");
 
     // Establish Socket connection with auth token
     const socket = io(socketUrl, {
@@ -61,6 +112,8 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
       }
     });
 
+    socketRef.current = socket;
+
     socket.on("connect_error", (err) => {
       console.log("Socket Connection Error:", err.message);
     });
@@ -68,48 +121,56 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
     socket.on("connect", () => {
       console.log("Connected to Arena Socket Server:", socket.id);
       socket.emit("join_matchmaking", {
-        name: currentUserStats?.name || "Player",
-        rating: currentUserStats?.rating || 1200,
-        level: currentUserStats?.level || 1,
+        name: statsRef.current?.name || "Player",
+        rating: statsRef.current?.rating || 1200,
+        level: statsRef.current?.level || 1,
         topic: "Arrays",
-        difficulty: "Easy"
+        difficulty: "Easy",
+        isRanked: isRanked
       });
     });
 
     socket.on("match_found", (matchDetails) => {
       console.log("Match found!", matchDetails);
+      if (!matchDetails || !matchDetails.players) {
+        console.error("Invalid matchDetails structure:", matchDetails);
+        return;
+      }
       // Find the opponent from the matchDetails.players array
-      const opponentData = matchDetails.players.find(p => p.socketId !== socket.id) || matchDetails.players[0];
+      const opponentData = matchDetails.players.find(p => p.socketId !== socket.id) || matchDetails.players[0] || {};
+      const opponentName = opponentData.name || "Opponent";
       
       const opponent = {
-        userId: opponentData.userId,
-        name: opponentData.name,
+        userId: opponentData.userId || "",
+        name: opponentName,
         rating: opponentData.rating || 1200,
         level: opponentData.level || 1,
-        avatar: opponentData.name.slice(0, 2).toUpperCase(),
+        avatar: opponentName.slice(0, 2).toUpperCase(),
         title: "Challenger",
         matchId: matchDetails.matchId,
-        topic: matchDetails.topic
+        topic: matchDetails.topic || "Arrays"
       };
 
       setMatchedOpponent(opponent);
       setMatchState("matched");
-      clearInterval(timer);
-      clearInterval(statusTimer);
+      clearInterval(timerRef.current);
+      clearInterval(statusTimerRef.current);
 
       // Auto-start duel after 3 seconds of matched display
       setTimeout(() => {
-        onMatchFound({ ...opponent, matchId: matchDetails.matchId });
+        if (onMatchFoundRef.current) {
+          onMatchFoundRef.current({ ...opponent, matchId: matchDetails.matchId });
+        }
       }, 3000);
     });
 
     return () => {
-      clearInterval(timer);
-      clearInterval(statusTimer);
+      clearInterval(timerRef.current);
+      clearInterval(statusTimerRef.current);
       socket.emit("leave_matchmaking");
       socket.disconnect();
     };
-  }, [isOpen, onMatchFound, currentUserStats]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -139,7 +200,7 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
           {/* Header */}
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-neutral-800/80 mb-6">
             <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-              {matchState === "searching" ? "Finding DSA Match" : "Match Confirmed!"}
+              {matchState === "searching" ? (isRanked ? "Finding Ranked Match" : "Finding Casual Match") : "Match Confirmed!"}
             </h3>
             {matchState === "searching" && (
               <button
@@ -172,6 +233,15 @@ export default function MatchmakingModal({ isOpen, onClose, onMatchFound, curren
               <p className="text-xs text-slate-400 dark:text-neutral-500 mt-2">
                 Searching for players close to Rating {currentUserRating}...
               </p>
+
+              {seconds >= 10 && (
+                <button
+                  onClick={triggerMockMatch}
+                  className="mt-6 px-4 py-2 border border-primary/30 hover:border-primary text-primary dark:text-purple-400 rounded-xl text-xs font-bold transition bg-primary/5 hover:bg-primary/10 shadow-sm"
+                >
+                  Match with AI Bot 🤖
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center py-4">

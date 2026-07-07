@@ -239,7 +239,7 @@ export default function TopicPracticeSheet() {
                       return (
                         <tr
                           key={item.id}
-                          className="border-b border-surface-100 dark:border-neutral-850 hover:bg-surface-50/50 dark:hover:bg-neutral-800/40 transition-colors"
+                          className="border-b border-surface-100 dark:border-neutral-800 hover:bg-surface-50/50 dark:hover:bg-neutral-800/40 transition-colors"
                         >
                           {/* Name */}
                           <td className="py-4 px-6 font-bold text-sm text-surface-900 dark:text-white">

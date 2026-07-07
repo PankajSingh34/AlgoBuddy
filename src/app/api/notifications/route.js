@@ -32,7 +32,8 @@ export async function GET(request) {
     const { data: notifications, error, count } = await query;
 
     if (error) {
-      console.error("[/api/notifications GET] Supabase error:", error.message);
+      // Supabase error is harmless here (table doesn't exist yet)
+      // console.error("[/api/notifications GET] Supabase error:", error.message);
       return jsonResponse({ notifications: [], totalPages: 0, currentPage: page, totalUnread: 0 });
     }
 
@@ -65,7 +66,24 @@ export async function PATCH(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { notificationIds } = body;
+    const { notificationIds, markAll } = body;
+
+    // Require an explicit action — either a non-empty array of IDs to mark
+    // as read, or markAll: true to mark every notification for the user.
+    // Reject empty / missing payloads so a malformed request or missing body
+    // never silently triggers a bulk update.
+    const hasIds = Array.isArray(notificationIds) && notificationIds.length > 0;
+    const hasMarkAll = markAll === true;
+
+    if (!hasIds && !hasMarkAll) {
+      return jsonResponse(
+        {
+          error:
+            "Provide a non-empty 'notificationIds' array, or set 'markAll: true' to mark all notifications read.",
+        },
+        400
+      );
+    }
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
@@ -75,18 +93,31 @@ export async function PATCH(request) {
       .update({ read: true })
       .eq("student_id", authResult.user.id);
 
-    if (Array.isArray(notificationIds) && notificationIds.length > 0) {
-      query = query.in("id", notificationIds);
+    if (hasIds) {
+      // Strip any non-string or blank entries before passing to the query.
+      const validIds = notificationIds.filter(
+        (id) => typeof id === "string" && id.trim().length > 0
+      );
+      if (validIds.length === 0) {
+        return jsonResponse(
+          { error: "notificationIds contains no valid entries." },
+          400
+        );
+      }
+      query = query.in("id", validIds);
     }
+    // else: hasMarkAll === true — no additional filter, updates all rows for
+    // the authenticated user. The .eq("student_id", ...) above ensures the
+    // operation is always scoped to the requesting user.
 
-    const { error } = await query;
+    const { error, count } = await query;
 
     if (error) {
       console.error("[/api/notifications PATCH] Supabase error:", error.message);
       return jsonResponse({ error: error.message }, 500);
     }
 
-    return jsonResponse({ success: true });
+    return jsonResponse({ success: true, updated: count ?? 0 });
   } catch (error) {
     return errorResponse(error);
   }

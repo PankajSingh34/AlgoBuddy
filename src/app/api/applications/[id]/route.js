@@ -1,6 +1,6 @@
-import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseServerClient, getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { sendEmail } from "@/lib/email";
 
 export async function PATCH(request, { params }) {
   try {
@@ -9,18 +9,27 @@ export async function PATCH(request, { params }) {
       return jsonResponse({ error: "Authentication required" }, 401);
     }
 
+    const adminClient = getSupabaseAdmin();
+
+    const { data: profile } = await adminClient
+      .from("user_profiles")
+      .select("role")
+      .eq("id", authResult.user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin") {
+      return jsonResponse({ error: "Admin access required" }, 403);
+    }
+
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const { status } = body;
 
-    if (!status || !["accepted", "rejected"].includes(status)) {
-      return jsonResponse({ error: "Status must be 'accepted' or 'rejected'" }, 400);
+    if (!status || !["accepted", "rejected", "reviewing"].includes(status)) {
+      return jsonResponse({ error: "Invalid status value" }, 400);
     }
 
-    const cookieStore = await cookies();
-    const supabase = getSupabaseServerClient(cookieStore);
-
-    const { data: application, error: fetchError } = await supabase
+    const { data: application, error: fetchError } = await adminClient
       .from("applications")
       .select("*, job:job_id(title, company)")
       .eq("id", id)
@@ -35,11 +44,10 @@ export async function PATCH(request, { params }) {
     }
 
     const oldStatus = application.status;
-    const adminClient = getSupabaseAdmin();
 
     const { error: updateError } = await adminClient
       .from("applications")
-      .update({ status })
+      .update({ status, updated_at: new Date().toISOString() })
       .eq("id", id);
 
     if (updateError) {
@@ -63,6 +71,37 @@ export async function PATCH(request, { params }) {
 
     if (notifError) {
       console.error("[/api/applications/[id] PATCH] Notification insert error:", notifError.message);
+    }
+
+    const { data: studentUser } = await adminClient.auth.admin.getUserById(
+      application.student_id
+    );
+    const studentMeta = studentUser?.user?.user_metadata || {};
+    const emailNotificationsEnabled = studentMeta.email_notifications !== false;
+
+    if (emailNotificationsEnabled) {
+      const appUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+      await sendEmail({
+        to: application.student_email,
+        subject: `Application Update - ${companyName} - ${jobTitle}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h2 style="color: #1e293b;">Application Status Update</h2>
+            <p style="color: #475569; line-height: 1.6;">
+              Your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>
+              has been <strong>${statusLabel}</strong>.
+            </p>
+            <a href="${appUrl}/my-applications"
+               style="display: inline-block; padding: 10px 20px; background: #6366f1; color: white;
+                      text-decoration: none; border-radius: 8px; font-size: 14px; margin-top: 12px;">
+              View your applications
+            </a>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">
+              You can change email notification preferences in your profile settings.
+            </p>
+          </div>
+        `,
+      });
     }
 
     return jsonResponse({ success: true, status });

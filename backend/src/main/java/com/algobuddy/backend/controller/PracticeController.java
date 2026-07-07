@@ -11,10 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/v1/practice")
 @RequiredArgsConstructor
@@ -26,7 +26,7 @@ public class PracticeController {
     @GetMapping("/progress")
     @Operation(summary = "Get user progress", description = "Retrieves the practice progress and statistics for the authenticated user.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved progress")
-    public ResponseEntity<ProgressResponse> getProgress(@CurrentUserId UUID userId) {
+    public ResponseEntity<ProgressResponse> getProgress(@CurrentUserId @NonNull UUID userId) {
         return ResponseEntity.ok(practiceService.getUserProgress(userId));
     }
 
@@ -34,7 +34,7 @@ public class PracticeController {
     @Operation(summary = "Update progress", description = "Updates the progress status of a single practice problem.")
     @ApiResponse(responseCode = "200", description = "Successfully updated progress")
     @ApiResponse(responseCode = "400", description = "Invalid request payload")
-    public ResponseEntity<ProgressResponse> updateProgress(@CurrentUserId UUID userId, 
+    public ResponseEntity<ProgressResponse> updateProgress(@CurrentUserId @NonNull UUID userId, 
                                                            @Valid @RequestBody ProgressRequest request) {
         ProgressResponse response = practiceService.updateProgress(userId, request);
         return ResponseEntity.ok(response);
@@ -44,7 +44,7 @@ public class PracticeController {
     @Operation(summary = "Bulk update progress", description = "Updates the progress status of multiple practice problems at once.")
     @ApiResponse(responseCode = "200", description = "Successfully updated bulk progress")
     @ApiResponse(responseCode = "400", description = "Invalid request payload")
-    public ResponseEntity<ProgressResponse> bulkUpdateProgress(@CurrentUserId UUID userId,
+    public ResponseEntity<ProgressResponse> bulkUpdateProgress(@CurrentUserId @NonNull UUID userId,
                                                                @Valid @RequestBody BulkProgressRequest request) {
         ProgressResponse response = practiceService.bulkUpdateProgress(userId, request);
         return ResponseEntity.ok(response);

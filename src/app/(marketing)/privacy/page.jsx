@@ -7,14 +7,13 @@ import Footer from "@/app/components/footer";
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="mx-auto max-w-6xl px-6 py-12 lg:py-16">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border mb-6"
+          className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors mb-8"
         >
-          ← Return Home
+          <span className="mr-2">←</span> Back to Home
         </Link>
-
         <PrivacyPolicyContent />
       </div>
       <Footer/>

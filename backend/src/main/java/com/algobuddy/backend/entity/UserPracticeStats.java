@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import jakarta.persistence.Version;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -32,4 +33,17 @@ public class UserPracticeStats {
 
     @Column(name = "visualized_count")
     private Integer visualizedCount = 0;
+
+    @Version
+    @Column(name = "version")
+    private Integer version = 0;
+
+    public UserPracticeStats(UUID userId, Integer currentStreak, Integer longestStreak, LocalDate lastActiveDate, Integer visualizedCount) {
+        this.userId = userId;
+        this.currentStreak = currentStreak;
+        this.longestStreak = longestStreak;
+        this.lastActiveDate = lastActiveDate;
+        this.visualizedCount = visualizedCount;
+        this.version = 0;
+    }
 }

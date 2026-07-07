@@ -16,7 +16,7 @@ export const practiceData = [
             name: "Linear Search",
             difficulty: "Easy",
             companies: ["tcs", "infosys", "wipro", "accenture", "amazon", "google"],
-            practiceUrl: "https://leetcode.com/problems/find-numbers-with-even-number-of-digits/",
+            practiceUrl: "https://www.codechef.com/learn/course/searching-sorting/SORTSEARCH1/problems/SESO03",
             visualizerUrl: "/visualizer/array/linearsearch",
             theory: {
               summary: "A simple algorithm that checks every element in the array sequentially until the target is found.",
@@ -102,7 +102,51 @@ export const practiceData = [
               pitfalls: "Requires auxiliary linear memory space, making it less memory-efficient than in-place algorithms like Quick Sort.",
               tip: "Merge Sort is highly stable (preserves original order of duplicates) and is widely used for sorting Linked Lists due to constant space merging."
             }
-          }
+          },
+          {
+            id: "maximum-subarray",
+            name: "Maximum Subarray (Kadane's Algorithm)",
+            difficulty: "Medium",
+            companies: ["amazon", "microsoft", "google", "meta", "adobe", "flipkart", "swiggy", "zomato"],
+            practiceUrl: "https://leetcode.com/problems/maximum-subarray/",
+            visualizerUrl: "/visualizer/array/maxsubarray",
+            theory: {
+              summary: "Find the contiguous subarray within a one-dimensional array of numbers that has the largest sum, using Kadane's Algorithm for an optimal O(N) solution.",
+              steps: [
+                "Initialize currentSum = 0 and maxSum = -Infinity (or the first element).",
+                "Traverse the array from left to right.",
+                "At each element, add it to currentSum: currentSum = currentSum + array[i].",
+                "Update maxSum = max(maxSum, currentSum) to record the best sum found so far.",
+                "If currentSum becomes negative, reset it to 0, since a negative sum can never help a future subarray.",
+                "After traversing the full array, maxSum holds the answer."
+              ],
+              complexity: { time: "O(N)", space: "O(1)" },
+              pitfalls: "Resetting currentSum to 0 incorrectly when all elements are negative — in that case the answer is simply the largest (least negative) single element, not 0. Always initialize maxSum with the first element, not 0.",
+              tip: "Kadane's Algorithm is a classic example of Dynamic Programming with O(1) space: it only needs the answer 'so far', not a full DP table. It's one of the most frequently asked array problems in interviews."
+            }
+          },
+          {
+            id: "two-sum",
+            name: "Two Sum",
+            difficulty: "Easy",
+            companies: ["amazon", "google", "microsoft", "meta", "apple"],
+            practiceUrl: "https://leetcode.com/problems/two-sum/",
+            visualizerUrl: "/visualizer/array/twosum",
+            theory: {
+              summary: "Given an array of integers and a target value, find the indices of the two numbers that add up to the target, using a HashMap for an optimal one-pass solution.",
+              steps: [
+                "Create an empty HashMap to store value → index pairs.",
+                "Traverse the array from left to right with index i.",
+                "Calculate complement = target - array[i].",
+                "Check if complement already exists in the HashMap.",
+                "If it exists, return [HashMap[complement], i] as the answer.",
+                "If not, insert array[i] → i into the HashMap and continue."
+              ],
+              complexity: { time: "O(N)", space: "O(N)" },
+              pitfalls: "Using the Brute Force nested-loop approach (checking every pair) leads to O(N²) time, which is too slow for large inputs. Also, forgetting to check the HashMap before inserting the current element can cause matching an element with itself.",
+              tip: "Two Sum is the most frequently asked entry-level problem in interviews. The HashMap trick of storing 'what we need' (the complement) is a pattern reused in many other array problems."
+            }
+          },
         ]
       },
       {
@@ -590,6 +634,28 @@ export const practiceData = [
               pitfalls: "Forgetting that the number of moves grows exponentially as 2^N - 1, which causes time limit exceeded for larger N.",
               tip: "The recurrence relation is T(N) = 2T(N-1) + 1. Drawing the recursion tree helps visualize how the total moves double with each added disk."
             }
+          },
+          {
+            id:"subnets",
+            name:"Subnets/PowerSet",
+            difficulty:"Medium",
+            companies:["amazon","microsoft","google","facebook"],
+            practiceUrl:"https://leetcode.com/problems/subsets/",
+            visualizerUrl:"/visualizer/recursion/subsets",
+            theory:{
+              summary:" Generate all posible subnets (the power set) of a given element.or exclude it.",
+              steps:[
+                "Start with an empty subnet and index 0.",
+                "At each index, make two recursive choices: include the current element, exclude it.",
+                "Move to the next index after each choice.",
+                "Base case: when index reaches the end of the array, add the current subnet to the result.",
+                "Backtrack by removing the last added element before trying the next choice."
+              ],
+              comlexity: { time: "0(2^N)", space:"0(N) recursion stack"},
+              pitfalls: "Forgetting to backtrack (remove the element) after the 'include' branch, which causes wrong subnets to carry over into later paths.",
+              tip:" This 'include or exclude' patter is the foundation for many backtracking problem like combination sum and permutation = master this first!"
+            }
+
           }
         ]
       },

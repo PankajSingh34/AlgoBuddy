@@ -5,13 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ArenaProfileResponse {
+public class ArenaProfileResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private UUID userId;
     private Integer xp;
     private Integer level;
@@ -20,4 +23,7 @@ public class ArenaProfileResponse {
     private Integer battlesLost;
     private Integer totalProblemsSolved;
     private Integer rank; // Calculated rank compared to others
+    private String name;
+    private String avatarUrl;
 }
+

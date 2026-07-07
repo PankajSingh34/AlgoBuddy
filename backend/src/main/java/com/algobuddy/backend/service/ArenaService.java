@@ -1,5 +1,6 @@
 package com.algobuddy.backend.service;
 
+import com.algobuddy.backend.dto.ArenaLeaderboardProjection;
 import com.algobuddy.backend.dto.ArenaMatchResponse;
 import com.algobuddy.backend.dto.ArenaProfileResponse;
 import com.algobuddy.backend.entity.ArenaMatch;
@@ -9,15 +10,25 @@ import com.algobuddy.backend.repository.UserArenaProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -28,9 +39,12 @@ import java.util.stream.Collectors;
 public class ArenaService {
 
     private static final Logger log = LoggerFactory.getLogger(ArenaService.class);
+    private static final UUID BOT_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     private final UserArenaProfileRepository profileRepository;
     private final ArenaMatchRepository matchRepository;
+    private final CacheManager cacheManager;
+    private final PlatformTransactionManager transactionManager;
 
     private void checkMatchResultRateLimit(UUID userId) {
         LocalDateTime since = LocalDateTime.now().minusMinutes(1);
@@ -40,26 +54,33 @@ public class ArenaService {
         }
     }
 
-    @Transactional
     @Cacheable(value = "arenaProfile", key = "#userId", unless = "#result == null")
     public ArenaProfileResponse getProfile(UUID userId) {
-        UserArenaProfile profile = profileRepository.findById(userId)
-                .orElseGet(() -> createDefaultProfile(userId));
+        if (!profileRepository.existsById(userId)) {
+            try {
+                createDefaultProfile(userId);
+            } catch (DataIntegrityViolationException e) {
+                log.debug("Profile already created by concurrent request for userId: {}", userId);
+            }
+        }
+        
+        ArenaLeaderboardProjection projection = profileRepository.findProfileWithUserDetails(userId)
+                .orElseThrow(() -> new IllegalStateException("Profile not found after creation"));
         
         Integer rank = calculateRank(userId);
         
-        return mapToResponse(profile, rank);
+        return mapProjectionToResponse(projection, rank);
     }
     
     @Transactional(readOnly = true)
     @Cacheable(value = "arenaLeaderboard", unless = "#result == null")
     public List<ArenaProfileResponse> getLeaderboard() {
-        List<UserArenaProfile> topPlayers = profileRepository.findTopPlayers(PageRequest.of(0, 50));
+        List<ArenaLeaderboardProjection> topPlayers = profileRepository.findTopPlayersWithUserDetails(PageRequest.of(0, 50));
         
         int rank = 1;
         List<ArenaProfileResponse> result = new java.util.ArrayList<>();
-        for (UserArenaProfile profile : topPlayers) {
-            result.add(mapToResponse(profile, rank++));
+        for (ArenaLeaderboardProjection projection : topPlayers) {
+            result.add(mapProjectionToResponse(projection, rank++));
         }
         return result;
     }
@@ -91,16 +112,18 @@ public class ArenaService {
         return rank != null ? rank : profileRepository.findTopPlayers(PageRequest.of(0, 1)).size() + 1;
     }
 
-    private ArenaProfileResponse mapToResponse(UserArenaProfile profile, Integer rank) {
+    private ArenaProfileResponse mapProjectionToResponse(ArenaLeaderboardProjection projection, Integer rank) {
         return ArenaProfileResponse.builder()
-                .userId(profile.getUserId())
-                .xp(profile.getXp())
-                .level(profile.getLevel())
-                .rating(profile.getRating())
-                .battlesWon(profile.getBattlesWon())
-                .battlesLost(profile.getBattlesLost())
-                .totalProblemsSolved(profile.getTotalProblemsSolved())
+                .userId(projection.getUserId())
+                .xp(projection.getXp())
+                .level(projection.getLevel())
+                .rating(projection.getRating())
+                .battlesWon(projection.getBattlesWon())
+                .battlesLost(projection.getBattlesLost())
+                .totalProblemsSolved(projection.getTotalProblemsSolved())
                 .rank(rank)
+                .name(projection.getName())
+                .avatarUrl(projection.getAvatarUrl())
                 .build();
     }
 
@@ -108,8 +131,15 @@ public class ArenaService {
         boolean isPlayer1 = match.getPlayer1Id().equals(requestingUserId);
         UUID opponentId = isPlayer1 ? match.getPlayer2Id() : match.getPlayer1Id();
         
+        // Fetch opponent name from db if present, default to "User [id]"
+        String opponentName = profileRepository.findProfileWithUserDetails(opponentId)
+                .map(ArenaLeaderboardProjection::getName)
+                .orElse("User " + opponentId.toString().substring(0, 4));
+        
         String result = "In Progress";
-        if (match.getWinnerId() != null) {
+        if (match.getStatus() == ArenaMatch.MatchStatus.EXPIRED) {
+            result = "Expired";
+        } else if (match.getWinnerId() != null) {
             result = match.getWinnerId().equals(requestingUserId) ? "Victory" : "Defeat";
         } else if (match.getEndTime() != null) {
             result = "Draw";
@@ -117,7 +147,7 @@ public class ArenaService {
         
         return ArenaMatchResponse.builder()
                 .id(match.getId())
-                .opponentName("User " + opponentId.toString().substring(0, 4))
+                .opponentName(opponentName)
                 .topic(match.getTopic())
                 .difficulty(match.getDifficulty())
                 .startTime(match.getStartTime())
@@ -127,34 +157,146 @@ public class ArenaService {
                 .build();
     }
 
+    private void checkInitMatchRateLimit(UUID userId) {
+        LocalDateTime since = LocalDateTime.now().minusMinutes(1);
+        long recentCount = matchRepository.countRecentInitiationsByUserId(userId, since);
+        if (recentCount >= 5) {
+            throw new IllegalStateException("Rate limit exceeded. Max 5 match initiations per minute.");
+        }
+    }
+
     @Transactional
     public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request) {
         if (request.getMatchId() == null || request.getMatchId().isEmpty()) {
             throw new IllegalArgumentException("matchId is required");
         }
 
+        checkInitMatchRateLimit(requestingUserId);
+
         if (matchRepository.findByMatchId(request.getMatchId()).isPresent()) {
             return;
+        }
+
+        UUID opponentId;
+        if (request.getMatchId() != null && request.getMatchId().startsWith("mock-match-")) {
+            // Bypass socket matchmaking verification for offline practice matches against AI Bots
+            opponentId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        } else {
+            // Verify the match pair via the WebSocket matchmaking server (Redis-backed)
+            // This ensures the opponent actually consented through WebSocket matchmaking
+            opponentId = verifyMatchmakingPair(request.getMatchId(), requestingUserId);
         }
 
         ArenaMatch match = ArenaMatch.builder()
                 .matchId(request.getMatchId())
                 .player1Id(requestingUserId)
-                .player2Id(request.getOpponentId())
+                .player2Id(opponentId)
                 .topic(request.getTopic() != null ? request.getTopic() : "Arrays")
                 .difficulty(request.getDifficulty() != null ? request.getDifficulty() : "Easy")
                 .startTime(java.time.LocalDateTime.now())
+                .status(ArenaMatch.MatchStatus.PENDING)
                 .build();
 
         matchRepository.save(match);
     }
 
+    private UUID verifyMatchmakingPair(String matchId, UUID requestingUserId) {
+        String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
+        if (socketServerUrl == null || socketServerUrl.isEmpty()) {
+            socketServerUrl = "http://localhost:4000";
+        }
+        java.net.HttpURLConnection conn = null;
+        try {
+            java.net.URL url = new java.net.URL(socketServerUrl + "/api/verify-match/" + matchId + "/" + requestingUserId);
+            conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(3000);
+
+            int status = conn.getResponseCode();
+            if (status == 200) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // Parse JSON response
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(response.toString());
+
+                if (json.has("verified") && json.get("verified").asBoolean()) {
+                    if (json.has("opponentId") && !json.get("opponentId").isNull()) {
+                        return UUID.fromString(json.get("opponentId").asText());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to verify matchmaking pair via socket server: {}", e.getMessage());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+        throw new SecurityException("Match verification failed. Opponent has not consented to this match.");
+    }
+
+    private UUID verifyMatchResult(String matchId, UUID requestingUserId) {
+        String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
+        if (socketServerUrl == null || socketServerUrl.isEmpty()) {
+            socketServerUrl = "http://localhost:4000";
+        }
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(socketServerUrl + "/api/verify-match-result/" + matchId + "/" + requestingUserId);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(3000);
+
+            int status = conn.getResponseCode();
+            if (status == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode json = mapper.readTree(response.toString());
+
+                if (json.has("verified") && json.get("verified").asBoolean()) {
+                    if (json.has("winnerId") && !json.get("winnerId").isNull()) {
+                        return UUID.fromString(json.get("winnerId").asText());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to verify match result via socket server: {}", e.getMessage());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+        throw new SecurityException("Match result verification failed");
+    }
+
+    @Scheduled(fixedRate = 300_000)
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "arenaProfile", key = "#requestingUserId"),
-        @CacheEvict(value = "arenaProfile", key = "#request.opponentId"),
-        @CacheEvict(value = "arenaLeaderboard", allEntries = true)
-    })
+    public void expireStaleMatches() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(1);
+        LocalDateTime now = LocalDateTime.now();
+        int expired = matchRepository.expireStaleMatches(cutoff, ArenaMatch.MatchStatus.EXPIRED, now);
+        if (expired > 0) {
+            log.info("Expired {} stale arena matches older than {}", expired, cutoff);
+        }
+    }
+
+    @CacheEvict(value = "arenaLeaderboard", allEntries = true)
     public void recordMatchResult(UUID requestingUserId, com.algobuddy.backend.dto.RecordMatchRequest request) {
         checkMatchResultRateLimit(requestingUserId);
 
@@ -163,67 +305,125 @@ public class ArenaService {
             throw new IllegalArgumentException("matchId is required");
         }
 
-        ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
-
-        if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
-            !existingMatch.getPlayer2Id().equals(requestingUserId)) {
-            throw new SecurityException("User is not a participant in this match");
-        }
-
-        UUID opponentId = request.getOpponentId();
-        if (!existingMatch.getPlayer1Id().equals(opponentId) &&
-            !existingMatch.getPlayer2Id().equals(opponentId)) {
-            throw new SecurityException("Opponent is not a participant in this match");
-        }
-
-        if (existingMatch.getWinnerId() != null) {
-            throw new IllegalArgumentException("Match result has already been recorded");
-        }
-
         boolean isWinner = request.isWinner();
 
+        if (!matchIdStr.startsWith("mock-match-")) {
+            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            if (!verifiedWinnerId.equals(requestingUserId)) {
+                throw new SecurityException("Match result conflict: verified winner does not match claim");
+            }
+            isWinner = true;
+        }
+        final boolean finalIsWinner = isWinner;
         final int MAX_RETRIES = 3;
+
+        // Execute each retry attempt in an isolated transaction.
+        final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
+
+        // Ensure every retry starts a new transaction.
+        retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                // Deadlock Prevention: Always lock rows in the same order
-                UUID firstId = requestingUserId.compareTo(opponentId) < 0 ? requestingUserId : opponentId;
-                UUID secondId = requestingUserId.compareTo(opponentId) < 0 ? opponentId : requestingUserId;
 
-                UserArenaProfile firstProfile = profileRepository.findById(firstId)
-                        .orElseGet(() -> createDefaultProfile(firstId));
-                UserArenaProfile secondProfile = profileRepository.findById(secondId)
-                        .orElseGet(() -> createDefaultProfile(secondId));
+                UUID opponentId = retryTransaction.execute(status -> {
 
-                UserArenaProfile p1Profile = requestingUserId.equals(firstId) ? firstProfile : secondProfile;
-                UserArenaProfile p2Profile = opponentId.equals(firstId) ? firstProfile : secondProfile;
+                    ArenaMatch existingMatch = matchRepository.findByMatchId(matchIdStr)
+                            .orElseThrow(() -> new IllegalArgumentException("Invalid match ID"));
 
-                int p1RatingChange = isWinner ? 25 : -15;
-                int p2RatingChange = isWinner ? -15 : 25;
+                    if (!existingMatch.getPlayer1Id().equals(requestingUserId) &&
+                        !existingMatch.getPlayer2Id().equals(requestingUserId)) {
+                        throw new SecurityException("User is not a participant in this match");
+                    }
 
-                int p1XpAwarded = isWinner ? 50 : 10;
-                int p2XpAwarded = isWinner ? 10 : 50;
+                    if (existingMatch.getStatus() == ArenaMatch.MatchStatus.EXPIRED) {
+                        throw new IllegalStateException("This match has expired and cannot accept results");
+                    }
 
-                p1Profile.setRating(Math.max(0, p1Profile.getRating() + p1RatingChange));
-                p1Profile.setXp(p1Profile.getXp() + p1XpAwarded);
-                p1Profile.setLevel((p1Profile.getXp() / 1000) + 1);
-                p1Profile.setTotalProblemsSolved(p1Profile.getTotalProblemsSolved() + (isWinner ? 1 : 0));
-                if (isWinner) p1Profile.setBattlesWon(p1Profile.getBattlesWon() + 1);
-                else p1Profile.setBattlesLost(p1Profile.getBattlesLost() + 1);
+                    if (existingMatch.getStatus() == ArenaMatch.MatchStatus.COMPLETED) {
+                        return null;
+                    }
 
-                p2Profile.setRating(Math.max(0, p2Profile.getRating() + p2RatingChange));
-                p2Profile.setXp(p2Profile.getXp() + p2XpAwarded);
-                p2Profile.setLevel((p2Profile.getXp() / 1000) + 1);
-                p2Profile.setTotalProblemsSolved(p2Profile.getTotalProblemsSolved() + (!isWinner ? 1 : 0));
-                if (!isWinner) p2Profile.setBattlesWon(p2Profile.getBattlesWon() + 1);
-                else p2Profile.setBattlesLost(p2Profile.getBattlesLost() + 1);
+                    if (existingMatch.getWinnerId() != null) {
+                        // Match result has already been recorded. We return silently to prevent
+                        // duplicate submission exceptions from throwing 500 errors on the client.
+                        return null;
+                    }
 
-                profileRepository.save(firstProfile);
-                profileRepository.save(secondProfile);
+                    UUID opponentUserId = existingMatch.getPlayer1Id().equals(requestingUserId)
+                        ? existingMatch.getPlayer2Id()
+                        : existingMatch.getPlayer1Id();
 
-                existingMatch.setWinnerId(isWinner ? requestingUserId : opponentId);
-                existingMatch.setEndTime(java.time.LocalDateTime.now());
-                matchRepository.save(existingMatch);
+                    boolean isOpponentBot = opponentUserId.equals(BOT_USER_ID);
+
+                    UserArenaProfile requestingUserProfile = profileRepository.findById(requestingUserId)
+                            .orElseGet(() -> createDefaultProfile(requestingUserId));
+                
+                    UserArenaProfile opponentProfile = null;
+                    if (!isOpponentBot) {
+                        opponentProfile = profileRepository.findById(opponentUserId)
+                                .orElseGet(() -> createDefaultProfile(opponentUserId));
+                    }
+
+                    int requestingUserRatingChange = finalIsWinner ? 25 : -15;
+                    int opponentRatingChange = finalIsWinner ? -15 : 25;
+
+                    int requestingUserXp = finalIsWinner ? 50 : 10;
+                    int opponentXp = finalIsWinner ? 10 : 50;
+
+                    requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
+                    requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
+                    requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
+                    requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (finalIsWinner ? 1 : 0));
+                    if (finalIsWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
+                    else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
+
+                    if (!isOpponentBot && opponentProfile != null) {
+                        opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
+                        opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
+                        opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!finalIsWinner ? 1 : 0));
+                        if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
+                        else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
+                    }
+
+                    profileRepository.save(requestingUserProfile);
+                    if (!isOpponentBot && opponentProfile != null) {
+                        profileRepository.save(opponentProfile);
+                    }
+
+                    existingMatch.setWinnerId(finalIsWinner ? requestingUserId : opponentUserId);
+                    existingMatch.setEndTime(java.time.LocalDateTime.now());
+                    existingMatch.setStatus(ArenaMatch.MatchStatus.COMPLETED);
+
+                    boolean isReqUserPlayer1 = requestingUserId.equals(existingMatch.getPlayer1Id());
+                    existingMatch.setRatingChangeP1(isReqUserPlayer1 ? requestingUserRatingChange : opponentRatingChange);
+                    existingMatch.setRatingChangeP2(isReqUserPlayer1 ? opponentRatingChange : requestingUserRatingChange);
+                    existingMatch.setXpAwardedP1(isReqUserPlayer1 ? requestingUserXp : opponentXp);
+                    existingMatch.setXpAwardedP2(isReqUserPlayer1 ? opponentXp : requestingUserXp);
+
+                    matchRepository.save(existingMatch);
+
+                    return opponentUserId;
+                });
+
+                if (opponentId == null) {
+                    return;
+                }
+
+                boolean isOpponentBot = opponentId.equals(BOT_USER_ID);
+
+                org.springframework.cache.Cache profileCache = cacheManager.getCache("arenaProfile");
+                if (profileCache != null) {
+                    profileCache.evict(requestingUserId);
+                    if (!isOpponentBot) {
+                        profileCache.evict(opponentId);
+                    }
+                }
+                org.springframework.cache.Cache leaderboardCache = cacheManager.getCache("arenaLeaderboard");
+                if (leaderboardCache != null) {
+                    leaderboardCache.clear();
+                }
 
                 return;
             } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
@@ -240,10 +440,10 @@ public class ArenaService {
     public com.algobuddy.backend.dto.DailyChallengeResponse getDailyChallenge() {
         // Hardcoded list of challenges to simulate a rotating daily problem
         List<com.algobuddy.backend.dto.DailyChallengeResponse> pool = List.of(
-            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400),
-            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350)
+            new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250, "https://leetcode.com/problems/valid-anagram/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200, "https://leetcode.com/problems/two-sum/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("lru-cache", "LRU Cache", "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.", "Medium", "Design", 400, "https://leetcode.com/problems/lru-cache/"),
+            new com.algobuddy.backend.dto.DailyChallengeResponse("merge-intervals", "Merge Intervals", "Merge all overlapping intervals into one.", "Medium", "Arrays", 350, "https://leetcode.com/problems/merge-intervals/")
         );
 
         long daysSinceEpoch = java.time.LocalDate.now().toEpochDay();

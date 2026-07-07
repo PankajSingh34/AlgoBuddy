@@ -49,6 +49,27 @@ export function getSupabaseConfig() {
 }
 
 export async function getAuthenticatedUser() {
+  // If the middleware has already verified the user, use that directly
+  // to avoid a redundant getUser() network call.
+  try {
+    const nextHeaders = await import("next/headers");
+    const headersList = await nextHeaders.headers();
+    const middlewareUserId = headersList.get("x-user-id");
+    const middlewareUserEmail = headersList.get("x-user-email");
+    if (middlewareUserId) {
+      return {
+        success: true,
+        user: {
+          id: middlewareUserId,
+          email: middlewareUserEmail || "",
+        },
+      };
+    }
+  } catch {
+    // headers() is not available in all contexts (e.g. WebSocket server).
+    // Fall through to the normal getUser() path.
+  }
+
   const config = getSupabaseConfig();
   if (!config) {
     console.error("[Authentication Helper] Config error: Missing or invalid Supabase environment variables.");

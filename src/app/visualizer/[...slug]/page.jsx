@@ -3,8 +3,9 @@ import { algorithmRegistry } from "@/config/algorithms";
 import { sections } from "@/lib/visualizerSections";
 import CategoryClient from "@/app/visualizer/components/CategoryClient";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
-import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
+import DiscussionThread from "@/app/components/visualizer/DiscussionThread";
+
 
 export async function generateStaticParams() {
   const params = [];
@@ -63,7 +64,6 @@ export default async function DynamicRouterPage({ params }) {
           <main className="flex-1 max-w-[1100px] w-full mx-auto px-5 pt-4 pb-20">
             <CategoryClient section={section} />
           </main>
-          <BackToTop />
           <Footer />
         </div>
       );
@@ -75,5 +75,12 @@ export default async function DynamicRouterPage({ params }) {
   if (!algorithmRegistry[slugKey]) notFound();
   
   const AlgorithmComponent = algorithmRegistry[slugKey].component;
-  return <AlgorithmComponent />;
+  return (
+    <>
+      <AlgorithmComponent />
+      <div className="bg-white dark:bg-[#1c1d1f] w-full border-t dark:border-gray-800 pt-8 pb-16">
+        <DiscussionThread topicId={slugKey} />
+      </div>
+    </>
+  );
 }

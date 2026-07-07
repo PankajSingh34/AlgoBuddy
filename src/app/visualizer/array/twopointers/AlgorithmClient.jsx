@@ -1,6 +1,5 @@
 import Animation from "./animation";
 import Code from "./codeblock";
-import Quiz from "./quiz";
 import Content from "./content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -16,11 +15,10 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.twoPointers}
-          description="Mark Two Pointers as done and view it on your dashboard"
+          description="Mark Two Pointers as done and view it in your progress"
           initialDone={false}
         />
       }

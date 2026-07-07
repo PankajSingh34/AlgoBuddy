@@ -6,7 +6,6 @@ import UserProfileCard from "@/app/components/community/UserProfileCard";
 import CoreTeamSection from "@/app/components/community/CoreTeamSection";
 import ContributorsSection from "@/app/components/community/ContributorsSection";
 import JoinCommunityButton from "@/app/components/community/JoinCommunityButton";
-import BackToTop from "@/app/components/ui/backtotop";
 
 const containerVariants = {
   hidden: {},
@@ -207,7 +206,6 @@ export default function CommunityPage() {
       </motion.div>
 
       <Footer />
-      <BackToTop />
     </section>
   );
 }

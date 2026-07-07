@@ -278,10 +278,17 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const isAnimatingRef = useRef(isAnimating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   const resetPlayback = useCallback(() => {
     setIsAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setSteps([]);
     setMessage("Playback reset. Click Start to begin operations.");
@@ -479,7 +486,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
   };
 
   useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
+    if (!isAnimating || steps.length === 0 || lockRef.current) return;
 
     if (currentStepIdx >= steps.length) {
       setIsAnimating(false);
@@ -489,12 +496,14 @@ export default function TreeBSTVisualizer({ initialMode }) {
     const currentStep = steps[currentStepIdx];
     setMessage(currentStep.explanation);
 
+    lockRef.current = true;
+
     timerRef.current = setTimeout(() => {
-      if (currentStepIdx < steps.length - 1) {
+      lockRef.current = false;
+      if (stepIdxRef.current < steps.length - 1) {
         setCurrentStepIdx(prev => prev + 1);
       } else {
         setIsAnimating(false);
-        // Permanently write to tree state if write operation completed successfully
         if (mode === "insertion" || mode === "deletion") {
           setRoot(targetTreeRoot);
           setMessage("Operation completed successfully!");
@@ -512,21 +521,26 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const pauseVisualizer = () => {
     setIsAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
   };
 
   const stepForward = () => {
+    if (lockRef.current) return;
     setIsAnimating(false);
-    if (currentStepIdx < steps.length - 1) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (stepIdxRef.current < steps.length - 1) {
       setCurrentStepIdx(prev => prev + 1);
-      if (currentStepIdx === steps.length - 2 && (mode === "insertion" || mode === "deletion")) {
+      if (stepIdxRef.current === steps.length - 2 && (mode === "insertion" || mode === "deletion")) {
         setRoot(targetTreeRoot);
       }
     }
   };
 
   const stepBackward = () => {
+    if (lockRef.current) return;
     setIsAnimating(false);
-    if (currentStepIdx > 0) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (stepIdxRef.current > 0) {
       setCurrentStepIdx(prev => prev - 1);
     }
   };
@@ -639,10 +653,10 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const svgDimensions = getSvgDimensions();
 
   useEffect(() => {
-    // Populate default beautiful tree on mount
     generateRandomTree();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      lockRef.current = false;
     };
   }, [generateRandomTree]);
 
@@ -821,7 +835,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                         y1={edge.y1}
                         x2={edge.x2}
                         y2={edge.y2}
-                        stroke="#334155"
+                        className="stroke-slate-300 dark:stroke-slate-700"
                         strokeWidth="2.5"
                       />
                     ))}
@@ -899,7 +913,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
                             x={node.x}
                             y={node.y + 4.5}
                             textAnchor="middle"
-                            fill="#ffffff"
+                            className="fill-white dark:fill-slate-800"
                             fontSize="12"
                             fontWeight="bold"
                           >
@@ -909,13 +923,13 @@ export default function TreeBSTVisualizer({ initialMode }) {
                           {/* Label labels */}
                           {isCurr && node.state === "visiting" && (
                             <g transform={`translate(${node.x - 22}, ${node.y - 35})`}>
-                              <rect width="44" height="15" rx="4" fill="#047857" className="stroke stroke-emerald-400" strokeWidth="0.5" />
+                              <rect width="44" height="15" rx="4" className="fill-emerald-700 dark:fill-emerald-600 stroke stroke-emerald-400" strokeWidth="0.5" />
                               <text x="22" y="11" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">curr</text>
                             </g>
                           )}
                           {isPred && (
                             <g transform={`translate(${node.x - 22}, ${node.y - 35})`}>
-                              <rect width="44" height="15" rx="4" fill="#6b21a8" className="stroke stroke-purple-400" strokeWidth="0.5" />
+                              <rect width="44" height="15" rx="4" className="fill-purple-800 dark:fill-purple-700 stroke stroke-purple-400" strokeWidth="0.5" />
                               <text x="22" y="11" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">succ</text>
                             </g>
                           )}

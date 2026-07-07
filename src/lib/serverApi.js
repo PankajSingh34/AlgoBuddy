@@ -31,7 +31,11 @@ export function getSupabaseServerClient(cookieStore) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           try {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, {
+              ...options,
+              sameSite: 'strict',
+              secure: process.env.NODE_ENV === 'production',
+            });
           } catch {
             // Can happen during GET requests or rendering in Next.js
           }
@@ -61,6 +65,14 @@ export function getSupabaseRequestClient(request) {
       },
     },
   });
+}
+
+/** Anonymous Supabase client for public reads (no session cookies). */
+export function getSupabaseAnonClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) throw new ConfigError('Supabase not configured');
+  return createClient(url, anonKey);
 }
 
 export function jsonResponse(data, status = 200, extraHeaders = {}) {

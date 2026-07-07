@@ -1,12 +1,14 @@
 import GraphVisualizer from "../components/GraphVisualizer";
 import GraphTopicPage from "../components/GraphTopicPage";
 import { graphTopics } from "../data";
+import DiscussionThread from "@/app/components/visualizer/DiscussionThread";
 
 export async function generateStaticParams() {
   return [
     { algorithm: "bfs" },
     { algorithm: "dfs" },
     { algorithm: "dijkstra" },
+    { algorithm: "a-star" },
     { algorithm: "bellman-ford" },
     { algorithm: "floyd-warshall" },
     { algorithm: "prim" },
@@ -14,6 +16,7 @@ export async function generateStaticParams() {
     { algorithm: "topological-sort" },
     { algorithm: "kosaraju" },
     { algorithm: "tarjan" },
+    { algorithm: "ford-fulkerson" },
     { algorithm: "adjacency-list" },
     { algorithm: "adjacency-matrix" },
   ];
@@ -51,10 +54,15 @@ export default async function Page({ params, searchParams }) {
   );
 
   return (
-    <GraphTopicPage 
-      topic={topic} 
-      Animation={AnimationWrapper}
-      startNode={startNode}
-    />
+    <>
+      <GraphTopicPage 
+        topic={topic} 
+        Animation={AnimationWrapper}
+        startNode={startNode}
+      />
+      <div className="bg-white dark:bg-[#1c1d1f] w-full border-t dark:border-gray-800 pt-8 pb-16">
+        <DiscussionThread topicId={algorithm} />
+      </div>
+    </>
   );
 }

@@ -13,6 +13,7 @@ const baseRelatedLinks = [
   { key: "dfs", text: "DFS", url: "/visualizer/graph/dfs" },
   { key: "dijkstra", text: "Dijkstra", url: "/visualizer/graph/dijkstra" },
   { key: "bellman-ford", text: "Bellman-Ford", url: "/visualizer/graph/bellman-ford" },
+  { key: "kosaraju", text: "Kosaraju", url: "/visualizer/graph/kosaraju" },
   {
     key: "floyd-warshall",
     text: "Floyd-Warshall",
@@ -34,6 +35,16 @@ const baseRelatedLinks = [
     key: "tarjan",
     text: "Tarjan's Algorithm",
     url: "/visualizer/graph/tarjan",
+  },
+  {
+    key: "a-star",
+    text: "A* Search",
+    url: "/visualizer/graph/a-star",
+  },
+  {
+    key: "ford-fulkerson",
+    text: "Ford-Fulkerson",
+    url: "/visualizer/graph/ford-fulkerson",
   },
 ];
 
@@ -137,7 +148,7 @@ export const graphTopics = {
   dijkstra: {
     key: "dijkstra",
     title: "Dijkstra's Algorithm",
-    category: "Graph Algorithm",
+    category: "Advanced Graphs",
     description:
       "Find shortest paths from one source to all vertices in a weighted graph with non-negative edge weights.",
     animationType: "dijkstra",
@@ -331,6 +342,53 @@ export const graphTopics = {
       { label: "Best for", value: "Single-pass SCC finding" },
     ],
   },
+  "a-star": {
+    key: "a-star",
+    title: "A* Search Algorithm",
+    category: "Pathfinding",
+    description: "Find the shortest path using a heuristic to guide the search efficiently.",
+    animationType: "a-star",
+    summary: [
+      "A* is an informed search algorithm.",
+      "It uses f(n) = g(n) + h(n) where g is the cost from start and h is the estimated cost to goal.",
+      "It is optimal if the heuristic is admissible."
+    ],
+    steps: [
+      "Initialize open set with the start node.",
+      "Pick the node with the lowest f(n).",
+      "If it's the goal, reconstruct the path.",
+      "Otherwise, expand neighbors and update their g and f scores."
+    ],
+    complexity: [
+      { label: "Time", value: "O(E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Best for", value: "Shortest path with heuristic" }
+    ],
+  },
+  "ford-fulkerson": {
+    key: "ford-fulkerson",
+    title: "Ford-Fulkerson Algorithm",
+    category: "Network Flow",
+    description: "Find the maximum flow in a flow network by finding augmenting paths.",
+    animationType: "ford-fulkerson",
+    summary: [
+      "Ford-Fulkerson computes the maximum flow in a network.",
+      "It repeatedly finds an augmenting path from source to sink in the residual graph.",
+      "The Edmonds-Karp implementation uses BFS to guarantee O(V E^2) time."
+    ],
+    steps: [
+      "Initialize flow to 0 on all edges.",
+      "Find an augmenting path using BFS.",
+      "Find the bottleneck capacity on this path.",
+      "Augment the flow by this capacity and update residual edges.",
+      "Repeat until no augmenting path exists."
+    ],
+    complexity: [
+      { label: "Time", value: "O(V E^2)" },
+      { label: "Space", value: "O(V^2)" },
+      { label: "Best for", value: "Maximum Flow / Minimum Cut" }
+    ],
+  }
 };
 
 export function getGraphRelatedLinks(currentKey) {

@@ -3,6 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_SPEED = 500;
 
+function cloneStep(step) {
+  if (step === null || typeof step !== "object") return step;
+  return JSON.parse(JSON.stringify(step));
+}
+
 export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -13,12 +18,19 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
   const onStepRef = useRef(onStep);
   const isPlayingRef = useRef(false);
 
-  // KEY FIX: speedRef always holds the latest speed value.
-  // The rAF loop reads from this ref, so speed changes take effect
-  // on the very next frame — no stale closures, no old loops colliding.
   const speedRef = useRef(initialSpeed);
 
   const stepsLength = steps?.length ?? 0;
+
+  // Reset playback state when a new animation session (new steps array) is provided.
+  const stepsKeyRef = useRef(steps);
+  useEffect(() => {
+    if (steps !== stepsKeyRef.current) {
+      stepsKeyRef.current = steps;
+      setIsPlaying(false);
+      setCurrentStep(0);
+    }
+  }, [steps]);
 
   useEffect(() => {
     onStepRef.current = onStep;
@@ -35,8 +47,6 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
     }
   }, [isPlaying, currentStep, stepsLength]);
 
-  // Expose a setSpeed that updates BOTH the ref (instant, for the rAF loop)
-  // and the state (for UI re-renders). No loop restart needed.
   const setSpeed = useCallback((newSpeed) => {
     speedRef.current = newSpeed;
     setSpeedState(newSpeed);
@@ -78,8 +88,7 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
     setCurrentStep(Math.min(Math.max(0, step), stepsLength - 1));
   }, [stepsLength]);
 
-  // Single rAF loop. Only restarts when play state or stepsLength changes —
-  // NOT when speed changes, because speed is now read from speedRef.
+  // Single rAF loop.
   useEffect(() => {
     if (!isPlaying || stepsLength === 0) return;
 
@@ -90,7 +99,6 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
         lastFrameTime.current = timestamp;
       }
 
-      // Read speedRef.current here — always the latest value, never stale.
       if (timestamp - lastFrameTime.current >= speedRef.current) {
         setCurrentStep((s) => (s < stepsLength - 1 ? s + 1 : s));
         lastFrameTime.current = timestamp;
@@ -109,20 +117,20 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
         rafRef.current = null;
       }
     };
-  }, [isPlaying, stepsLength]); // speed intentionally excluded — handled by speedRef
+  }, [isPlaying, stepsLength]);
 
-  // Call onStep whenever the current step index changes.
+  // Call onStep with a deep-cloned snapshot to prevent mutation of steps.
   useEffect(() => {
     if (steps && currentStep >= 0 && currentStep < stepsLength) {
-      onStepRef.current?.(steps[currentStep], currentStep);
+      onStepRef.current?.(cloneStep(steps[currentStep]), currentStep);
     }
   }, [currentStep, steps, stepsLength]);
 
-  // Cleanup on unmount.
   useEffect(() => {
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
   }, []);

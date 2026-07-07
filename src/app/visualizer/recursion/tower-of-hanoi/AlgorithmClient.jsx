@@ -2,7 +2,6 @@
 import HanoiAnimation from "@/app/visualizer/recursion/tower-of-hanoi/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/recursion/tower-of-hanoi/codeBlock";
-import Quiz from "@/app/visualizer/recursion/tower-of-hanoi/quiz";
 import Content from "@/app/visualizer/recursion/tower-of-hanoi/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
@@ -21,7 +20,6 @@ export default function Page() {
       animation={<HanoiAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionHanoi}

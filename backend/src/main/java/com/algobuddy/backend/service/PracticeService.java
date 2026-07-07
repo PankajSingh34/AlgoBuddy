@@ -8,8 +8,12 @@ import com.algobuddy.backend.entity.UserProgress;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -27,9 +31,13 @@ public class PracticeService {
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
 
+    @Autowired
+    @Lazy
+    private PracticeService self;
+
 
     @Transactional(readOnly = true)
-    public ProgressResponse getUserProgress(UUID userId) {
+    public ProgressResponse getUserProgress(@NonNull UUID userId) {
         List<UserProgress> progressList = progressRepository.findByUserId(userId);
         
         Map<String, ProgressResponse.ProgressDetail> progressMap = progressList.stream()
@@ -62,18 +70,18 @@ public class PracticeService {
     }
 
     @Transactional
-    public ProgressResponse updateProgress(UUID userId, ProgressRequest request) {
+    public ProgressResponse updateProgress(@NonNull UUID userId, ProgressRequest request) {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            updateStreak(userId);
+            updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
     }
 
     @Transactional
-    public ProgressResponse bulkUpdateProgress(UUID userId, BulkProgressRequest request) {
+    public ProgressResponse bulkUpdateProgress(@NonNull UUID userId, BulkProgressRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             return getUserProgress(userId);
         }
@@ -117,16 +125,18 @@ public class PracticeService {
         progressRepository.saveAll(toSave);
 
         if (anyCompleted) {
-            updateStreak(userId);
+            updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    @Transactional
-    public void updateStreak(UUID userId) {
-        UserPracticeStats stats = statsRepository.findById(userId)
-                .orElse(new UserPracticeStats(userId, 0, 0, null, 0));
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateStreak(@NonNull UUID userId) {
+        statsRepository.insertStatsIfNotExists(userId);
+
+        UserPracticeStats stats = statsRepository.findAndLockByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("UserPracticeStats should exist for user: " + userId));
 
         LocalDate today = LocalDate.now();
         LocalDate lastActive = stats.getLastActiveDate();
@@ -148,5 +158,29 @@ public class PracticeService {
 
         stats.setLastActiveDate(today);
         statsRepository.save(stats);
+    }
+
+    public void updateStreakWithRetry(@NonNull UUID userId) {
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (self != null) {
+                    self.updateStreak(userId);
+                } else {
+                    updateStreak(userId);
+                }
+                return;
+            } catch (org.springframework.dao.TransientDataAccessException e) {
+                if (attempt == maxAttempts) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(50 * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(ie);
+                }
+            }
+        }
     }
 }

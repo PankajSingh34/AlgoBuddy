@@ -48,20 +48,25 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { problemId, note = "" } = body;
+    const { problemId, note = "", isPublic } = body;
     if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase.from("my_sheet").upsert(
-      {
-        user_id: authResult.user.id,
-        problem_id: problemId,
-        note,
-        added_at: new Date().toISOString(),
-      },
-      { onConflict: ["user_id", "problem_id"] }
-    );
+
+    const row = {
+      user_id: authResult.user.id,
+      problem_id: problemId,
+      note,
+      added_at: new Date().toISOString(),
+    };
+    if (typeof isPublic === "boolean") {
+      row.is_public = isPublic;
+    }
+
+    const { error } = await supabase.from("my_sheet").upsert(row, {
+      onConflict: ["user_id", "problem_id"],
+    });
 
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ success: true });

@@ -22,15 +22,21 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Ensure dropdown is hidden when pressing Escape
   useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
+    const handleToggleNotifications = () => {
+      setIsOpen((open) => !open);
     };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    const handleGlobalEscape = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener("toggle-notifications", handleToggleNotifications);
+    window.addEventListener("global-escape", handleGlobalEscape);
+
+    return () => {
+      window.removeEventListener("toggle-notifications", handleToggleNotifications);
+      window.removeEventListener("global-escape", handleGlobalEscape);
+    };
   }, []);
 
   const filteredNotifications = activeTab === "unread" 

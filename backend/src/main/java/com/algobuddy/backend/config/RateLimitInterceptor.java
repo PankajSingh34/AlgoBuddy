@@ -1,5 +1,7 @@
 package com.algobuddy.backend.config;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -9,14 +11,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.lang.NonNull;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -32,7 +34,14 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private Set<String> trustedProxies;
 
-    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> cache;
+
+    public RateLimitInterceptor() {
+        this.cache = Caffeine.newBuilder()
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .maximumSize(100_000)
+                .build();
+    }
 
     private Bucket newBucket() {
         Bandwidth limit = Bandwidth.builder()
@@ -43,7 +52,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private Bucket resolveBucket(String key) {
-        return cache.computeIfAbsent(key, k -> newBucket());
+        return cache.get(key, k -> newBucket());
     }
 
     private Set<String> getTrustedProxies() {
@@ -91,7 +100,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
         String ip = extractClientIp(request);
 
         Bucket bucket = resolveBucket(ip);
