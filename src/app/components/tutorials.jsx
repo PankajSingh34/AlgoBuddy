@@ -13,7 +13,7 @@ const TUTORIALS_DATA = [
     category: "Core Concepts",
     difficulty: "Beginner",
     readTime: "8 min read",
-    link: "/cheatsheets",
+    link: "/tutorials",
     badgeColor: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   },
   {
