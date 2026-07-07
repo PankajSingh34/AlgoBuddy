@@ -704,7 +704,6 @@ const weeklyChallenges = [
                             setCurrentPage(1);
                           }
                         }
-                      }
                         
                         placeholder="Search problems... (Press /)"
                         className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] text-xs font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition shadow-sm"
