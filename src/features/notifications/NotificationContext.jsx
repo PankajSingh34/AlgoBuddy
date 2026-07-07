@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useUser } from "@/features/user/UserContext";
+import { api } from "@/lib/apiClient";
 
 const initialMockNotifications = [
   {
@@ -164,10 +165,9 @@ export const NotificationProvider = ({ children }) => {
 
     if (id.startsWith("job-")) {
       const realId = id.replace("job-", "");
-      fetch("/api/notifications", {
+      api.request("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationIds: [realId] }),
+        body: { notificationIds: [realId] },
       }).catch(() => {});
     }
   };
@@ -178,10 +178,9 @@ export const NotificationProvider = ({ children }) => {
       .filter(n => n.id.startsWith("job-") && !n.read)
       .map(n => n.id.replace("job-", ""));
     if (jobNotifIds.length > 0) {
-      fetch("/api/notifications", {
+      api.request("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationIds: jobNotifIds }),
+        body: { notificationIds: jobNotifIds },
       }).catch(() => {});
     }
   };

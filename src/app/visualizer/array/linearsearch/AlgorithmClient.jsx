@@ -1,14 +1,11 @@
 import LinearSearchAnimation from "@/app/visualizer/array/linearsearch/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/array/linearsearch/codeBlock";
-import Quiz from "@/app/visualizer/array/linearsearch/quiz";
 import Content from "@/app/visualizer/array/linearsearch/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -21,14 +18,6 @@ export default function Page() {
       animation={<LinearSearchAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.linearSearch}
-          description="Mark linear search as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other operations"

@@ -1,6 +1,5 @@
 import Animation from "@/app/visualizer/array/countingsort/animation";
 import Content from "@/app/visualizer/array/countingsort/content";
-import Quiz from "@/app/visualizer/array/countingsort/quiz";
 import Code from "@/app/visualizer/array/countingsort/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
@@ -20,7 +19,6 @@ export default function Page() {
         animation={<Animation />}
         content={<Content />}
         code={<Code />}
-        quiz={<Quiz />}
         moduleCard={<ModuleCard moduleId={MODULE_MAPS.countingSort} description="Mark Counting Sort as done and track your progress" initialDone={false} />}
         exploreOther={<ExploreOther title="Explore Sorting Algorithms" links={[
           { text: "Bubble Sort", url: "/visualizer/array/bubblesort" },

@@ -8,9 +8,12 @@ import com.algobuddy.backend.entity.UserProgress;
 import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -27,6 +30,10 @@ public class PracticeService {
 
     private final UserProgressRepository progressRepository;
     private final UserPracticeStatsRepository statsRepository;
+
+    @Autowired
+    @Lazy
+    private PracticeService self;
 
 
     @Transactional(readOnly = true)
@@ -67,7 +74,7 @@ public class PracticeService {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            updateStreak(userId);
+            updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
@@ -118,15 +125,62 @@ public class PracticeService {
         progressRepository.saveAll(toSave);
 
         if (anyCompleted) {
-            updateStreak(userId);
+            updateStreakWithRetry(userId);
         }
 
         return getUserProgress(userId);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStreak(@NonNull UUID userId) {
-        statsRepository.acquireStreakUpdateLock(userId);
-        statsRepository.upsertStreakAtomic(userId, LocalDate.now());
+        statsRepository.insertStatsIfNotExists(userId);
+
+        UserPracticeStats stats = statsRepository.findAndLockByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("UserPracticeStats should exist for user: " + userId));
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastActive = stats.getLastActiveDate();
+
+        if (lastActive == null) {
+            stats.setCurrentStreak(1);
+            stats.setLongestStreak(1);
+        } else if (lastActive.equals(today.minusDays(1))) {
+            // Consecutive day
+            stats.setCurrentStreak(stats.getCurrentStreak() + 1);
+            if (stats.getCurrentStreak() > stats.getLongestStreak()) {
+                stats.setLongestStreak(stats.getCurrentStreak());
+            }
+        } else if (!lastActive.equals(today)) {
+            // Streak broken (not today and not yesterday)
+            stats.setCurrentStreak(1);
+        }
+        // If lastActive == today, do nothing (streak already incremented today)
+
+        stats.setLastActiveDate(today);
+        statsRepository.save(stats);
+    }
+
+    public void updateStreakWithRetry(@NonNull UUID userId) {
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (self != null) {
+                    self.updateStreak(userId);
+                } else {
+                    updateStreak(userId);
+                }
+                return;
+            } catch (org.springframework.dao.TransientDataAccessException e) {
+                if (attempt == maxAttempts) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(50 * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(ie);
+                }
+            }
+        }
     }
 }

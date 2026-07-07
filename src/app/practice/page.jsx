@@ -19,13 +19,10 @@ import {
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
-import PracticeRightSidebar from "@/app/components/practice/PracticeRightSidebar";
-import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
 import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
 import PracticeNotebook from "@/app/components/practice/PracticeNotebook";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Footer from "@/app/components/footer";
 
 import { practiceData } from "@/lib/practiceData";
@@ -33,6 +30,15 @@ import { useUser } from "@/features/user/UserContext";
 import { useProblemBookmarks } from "@/app/hooks/useProblemBookmarks";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import { useMySheet } from "@/app/hooks/useMySheet";
+import { supabase } from "@/lib/supabase";
+
+function isSpringBootApi() {
+  return typeof window !== "undefined" && process.env.NEXT_PUBLIC_USE_SPRING_BOOT_API === "true";
+}
+
+function springBootApiBase() {
+  return process.env.NEXT_PUBLIC_SPRING_BOOT_API_URL || "http://localhost:8080";
+}
 
 export default function PracticePage() {
   const { user,loading } = useUser();
@@ -329,16 +335,55 @@ export default function PracticePage() {
 
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
 
-  const handleShareSheet = () => {
-    if (!user) return;
-    const shareUrl = `${window.location.origin}/practice/shared/${user.id}`;
-    navigator.clipboard.writeText(shareUrl)
-      .then(() => {
-        toast.success("Share link copied to clipboard! 📋");
-      })
-      .catch(() => {
-        toast.error("Failed to copy link. Please copy manually.");
-      });
+  const handleShareSheet = async () => {
+    if (!ensureLoggedIn()) return;
+    if (sheetCount === 0) {
+      toast.error("Add problems to your sheet before sharing!");
+      return;
+    }
+
+    try {
+      if (isSpringBootApi()) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          toast.error("Session expired. Please log in again.");
+          return;
+        }
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+        const results = await Promise.all(
+          Object.keys(sheet).map((problemId) =>
+            fetch(
+              `${springBootApiBase()}/api/v1/mysheet/${encodeURIComponent(problemId)}/visibility`,
+              {
+                method: "PATCH",
+                headers,
+                body: JSON.stringify({ isPublic: true }),
+              }
+            )
+          )
+        );
+        if (results.some((res) => !res.ok)) {
+          throw new Error("Failed to publish sheet");
+        }
+      } else {
+        const res = await fetch("/api/mysheet/share", { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to publish sheet");
+        }
+      }
+
+      const shareUrl = `${window.location.origin}/practice/shared/${user.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Sheet published and link copied! 📋");
+    } catch (err) {
+      console.error("Share sheet error:", err);
+      toast.error(err.message || "Failed to share sheet. Please try again.");
+    }
   };
 
   // Solve random unsolved problem
@@ -380,42 +425,43 @@ export default function PracticePage() {
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
       
-      {/* Container holding three-column layout */}
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-y-8 lg:gap-0">
-        
-        {/* Left Sidebar */}
-        <PracticeSidebar 
-          activeView={activeView}
-          onViewChange={(view) => {
-            if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
-              if (!ensureLoggedIn()) return;
-            }
-            setCurrentPage(1); // Reset page on view change
-            setSelectedCompanyFilter("All"); // Reset company filter
-            // Push to URL so the browser records a history entry;
-            // the searchParams useEffect above will sync activeView in response.
-            if (view === "topic-wise") {
-              router.push(`/practice?view=${view}&topic=${encodeURIComponent(selectedTopicWise)}`);
-            } else {
-              router.push(`/practice?view=${view}`);
-            }
-          }}
-          solvedCount={stats.solved}
-          dailySolved={stats.dailySolved}
-          weeklySolved={stats.weeklySolved}
-          monthlySolved={stats.monthlySolved}
-          dailyGoal={3}
-          weeklyGoal={10}
-          monthlyGoal={50}
-          streakDays={currentStreak}
-          bestStreak={longestStreak}
-          mySheetCount={sheetCount}
-          onBackToPractice={() => router.push("/")}
-          onBackToSessions={() => setActiveView("problem-list")}
+
+    <div className="w-full lg:w-[280px] flex flex-col gap-6">
+
+        <PracticeSidebar
+            activeView={activeView}
+            onViewChange={(view) => {
+              if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
+                if (!ensureLoggedIn()) return;
+              }
+
+              setCurrentPage(1);
+              setSelectedCompanyFilter("All");
+
+              if (view === "topic-wise") {
+                router.push(`/practice?view=${view}&topic=${encodeURIComponent(selectedTopicWise)}`);
+              } else {
+                router.push(`/practice?view=${view}`);
+              }
+            }}
+            solvedCount={stats.solved}
+            dailySolved={stats.dailySolved}
+            weeklySolved={stats.weeklySolved}
+            monthlySolved={stats.monthlySolved}
+            dailyGoal={3}
+            weeklyGoal={10}
+            monthlyGoal={50}
+            streakDays={currentStreak}
+            bestStreak={longestStreak}
+            mySheetCount={sheetCount}
+            onBackToPractice={() => router.push("/")}
+            onBackToSessions={() => setActiveView("problem-list")}
         />
 
-        {/* Center Content */}
-        <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
+    </div>
+
+    <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
           
           {/* Main dashboard rendering based on activeView */}
           {activeView === "dashboard" ? (
@@ -616,33 +662,6 @@ export default function PracticePage() {
             </section>
           ) : activeView === "problem-list" ? (
             <>
-              {/* Top Row: Banner and Session Progress */}
-              <div className="flex flex-col lg:flex-row items-stretch gap-4">
-                <div className="flex-1">
-                  <PracticeSessionBanner 
-                    title="DSA Sheet - Most Important Interview Questions"
-                    description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
-                    difficulty="Beginner"
-                    problemCount={stats.total}
-                    duration={stats.estimatedTime}
-                    solved={stats.solved}
-                    attempted={stats.attempted}
-                    remaining={stats.remaining}
-                    total={stats.total}
-                  />
-                </div>
-                {activeView === "problem-list" && (
-                  <div className="w-full lg:w-[260px] flex-shrink-0">
-                    <PracticeRightSidebar 
-                      solved={stats.solved}
-                      attempted={stats.attempted}
-                      remaining={stats.remaining}
-                      total={stats.total}
-                      onViewProgress={() => setActiveView("dashboard")}
-                    />
-                  </div>
-                )}
-              </div>
 
               {/* Tab navigation */}
               <div className="flex border-b border-slate-200 dark:border-neutral-800">
@@ -673,13 +692,23 @@ export default function PracticePage() {
                     {/* Search */}
                     <div className="relative flex-1 w-full">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-neutral-600" />
-                      <input
+                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
                           setCurrentPage(1);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setSearchQuery("");
+                            setCurrentPage(1);
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-label="Search problems"
                         placeholder="Search problems... (Press /)"
                         className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] text-xs font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition shadow-sm"
                       />
@@ -1283,8 +1312,13 @@ export default function PracticePage() {
                                     <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
                                   </td>
                                   <td className="py-4 px-5 text-center">
-                                    <div className="flex justify-center">
-                                      <button onClick={() => handleStatusToggle(prob.id, status)} className="focus:outline-none">
+                                    <div className="relative flex justify-center group">
+                                      <button
+                                        onClick={() => handleStatusToggle(prob.id, status)}
+                                        className="focus:outline-none"
+                                        title={"Click once → Mark as Attempted 🟠\nDouble click → Mark as Completed 🟢"}
+                                        aria-label={"Status action: click once to mark as attempted, double click to mark as completed"}
+                                      >
                                         {status === "Completed" ? (
                                           <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition"><CheckCircle2 size={12} className="stroke-[3]" /></div>
                                         ) : status === "In Progress" ? (
@@ -1293,6 +1327,10 @@ export default function PracticePage() {
                                           <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
                                         )}
                                       </button>
+                                      <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-max -translate-x-1/2 rounded-2xl border border-slate-700/80 bg-slate-950/95 px-3 py-2 text-[10px] font-bold text-slate-200 shadow-xl shadow-black/20 ring-1 ring-white/5 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                        <div>Click once → Mark as Attempted 🟠</div>
+                                        <div>Double click → Mark as Completed 🟢</div>
+                                      </div>
                                     </div>
                                   </td>
                                   <td className="py-4 px-5 text-center">
@@ -1398,7 +1436,6 @@ export default function PracticePage() {
         topicSlug={selectedProblem ? selectedProblem.topic.toLowerCase() : null}
       />
 
-      <BackToTop />
       <Footer />
     </div>
   );

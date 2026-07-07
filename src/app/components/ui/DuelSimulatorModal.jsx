@@ -19,6 +19,7 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   const [socket, setSocket] = useState(null);
   const [language, setLanguage] = useState("javascript");
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const logContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -98,6 +99,20 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
   // Socket Connection
   useEffect(() => {
     if (!isOpen) return;
+
+    // Reset game/match state
+    setIsInitializing(true);
+    setSeconds(0);
+    startTimeRef.current = Date.now();
+    setUserCode(`function twoSum(nums, target) {\n    // Write your code here\n    \n}`);
+    setOppCode(`// Opponent is preparing...`);
+    setUserOutput("");
+    setOppStatus("Idle");
+    setLogs(["[00:00] Duel started. Let the battle begin!"]);
+    setBattleFinished(false);
+    setVictoryState(null);
+    setIsExecuting(false);
+    setFailedAttempts(0);
 
     const safetyTimeout = setTimeout(() => {
       setIsInitializing((initializing) => {

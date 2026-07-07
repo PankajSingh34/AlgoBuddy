@@ -52,7 +52,6 @@ export default function TreeHeapVisualizer({ initialHeapType = "min" }) {
   const [buildInput, setBuildInput] = useState("");
   const [steps, setSteps] = useState([]);
   const [message, setMessage] = useState("Build or insert values to start.");
-
   const onStep = useCallback((step) => {
     setMessage(step.explanation);
   }, []);

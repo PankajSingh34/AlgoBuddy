@@ -7,6 +7,13 @@
 const { describe, test, mock } = require("node:test");
 const assert = require("node:assert/strict");
 
+function getLocalISOString(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // Inline the source (pure function, no DOM/network dependencies).
 const msPerDay = 1000 * 60 * 60 * 24;
 
@@ -150,7 +157,7 @@ describe("practice_today reminder", () => {
     const todayDate = new Date();
     const oldDate = new Date(todayDate);
     oldDate.setDate(oldDate.getDate() - 2);
-    const isoOld = oldDate.toISOString().split("T")[0];
+    const isoOld = getLocalISOString(oldDate);
     const reminders = generateLearningReminders({ activityDates: [isoOld] });
     const ids = reminders.map((r) => r.id);
     assert.ok(ids.includes("practice_today"), "practice_today should fire when no activity today");
@@ -161,9 +168,9 @@ describe("streak_risk reminder", () => {
   test("fires when streak >= 3 and last activity is more than 1 day ago", () => {
     // 3 consecutive days ending 1 day ago: days 1,2,3 before today
     const today = new Date();
-    const d1 = new Date(today.getTime() - 1 * msPerDay).toISOString().split("T")[0];
-    const d2 = new Date(today.getTime() - 2 * msPerDay).toISOString().split("T")[0];
-    const d3 = new Date(today.getTime() - 3 * msPerDay).toISOString().split("T")[0];
+    const d1 = getLocalISOString(new Date(today.getTime() - 1 * msPerDay));
+    const d2 = getLocalISOString(new Date(today.getTime() - 2 * msPerDay));
+    const d3 = getLocalISOString(new Date(today.getTime() - 3 * msPerDay));
     const dates = [d1, d2, d3];
     const reminders = generateLearningReminders({ activityDates: dates });
     const ids = reminders.map((r) => r.id);
@@ -172,8 +179,8 @@ describe("streak_risk reminder", () => {
 
   test("does not fire when streak < 3", () => {
     const today = new Date();
-    const d0 = today.toISOString().split("T")[0];
-    const d1 = new Date(today.getTime() - 1 * msPerDay).toISOString().split("T")[0];
+    const d0 = getLocalISOString(today);
+    const d1 = getLocalISOString(new Date(today.getTime() - 1 * msPerDay));
     const dates = [d0, d1];
     const reminders = generateLearningReminders({ activityDates: dates });
     const ids = reminders.map((r) => r.id);
@@ -186,7 +193,7 @@ describe("inactivity reminders", () => {
     const today = new Date();
     const old = new Date(today);
     old.setDate(old.getDate() - 10);
-    const reminders = generateLearningReminders({ activityDates: [old.toISOString().split("T")[0]] });
+    const reminders = generateLearningReminders({ activityDates: [getLocalISOString(old)] });
     const ids = reminders.map((r) => r.id);
     assert.ok(ids.includes("long_inactivity"), "long_inactivity should fire after 7+ days");
     assert.ok(!ids.includes("mild_inactivity"), "mild_inactivity should not also fire");
@@ -196,7 +203,7 @@ describe("inactivity reminders", () => {
     const today = new Date();
     const old = new Date(today);
     old.setDate(old.getDate() - 4);
-    const reminders = generateLearningReminders({ activityDates: [old.toISOString().split("T")[0]] });
+    const reminders = generateLearningReminders({ activityDates: [getLocalISOString(old)] });
     const ids = reminders.map((r) => r.id);
     assert.ok(ids.includes("mild_inactivity"), "mild_inactivity should fire after 3-6 days");
     assert.ok(!ids.includes("long_inactivity"), "long_inactivity should not fire");
@@ -257,8 +264,8 @@ describe("deduplication and limit", () => {
   test("deduplicates reminders by id", () => {
     // The function normalizes uniqueDates which prevents duplicate day entries
     const today = new Date();
-    const d1 = today.toISOString().split("T")[0];
-    const d2 = new Date(today.setDate(today.getDate() - 1)).toISOString().split("T")[0];
+    const d1 = getLocalISOString(today);
+    const d2 = getLocalISOString(new Date(today.getTime() - 1 * msPerDay));
     // Only 2 unique dates → streak of 2 (< 3, so no streak_risk)
     const reminders = generateLearningReminders({ activityDates: [d1, d1, d2, d2] });
     const counts = {};
@@ -277,9 +284,9 @@ describe("deduplication and limit", () => {
     old2.setDate(old2.getDate() - 2);
     // 3-day streak ending 2 days ago
     const streakDates = [
-      old2.toISOString().split("T")[0],
-      new Date(old2.getTime() - msPerDay).toISOString().split("T")[0],
-      new Date(old2.getTime() - 2 * msPerDay).toISOString().split("T")[0],
+      getLocalISOString(old2),
+      getLocalISOString(new Date(old2.getTime() - msPerDay)),
+      getLocalISOString(new Date(old2.getTime() - 2 * msPerDay)),
     ];
     const reminders = generateLearningReminders({
       activityDates: streakDates,
@@ -297,7 +304,7 @@ describe("priority ordering", () => {
     const old7 = new Date(today);
     old7.setDate(old7.getDate() - 10);
     const reminders = generateLearningReminders({
-      activityDates: [old7.toISOString().split("T")[0]],
+      activityDates: [getLocalISOString(old7)],
       modulesCount: 10,
       completedModulesCount: 5,
     });

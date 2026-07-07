@@ -2,7 +2,6 @@
 import React from "react";
 import FibonacciAnimation from "../fibonacci/animation";
 import Code from "../fibonacci/codeBlock";
-import Quiz from "../fibonacci/quiz";
 import Content from "../fibonacci/content";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -20,7 +19,6 @@ export default function TreesClient() {
       animation={<FibonacciAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionFibonacci}

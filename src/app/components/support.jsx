@@ -316,11 +316,11 @@ const ContactSupportPopup = () => {
                       </h4>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Check out our{" "}
-                        <a href="#" className="underline">
+                        <a href="javascript:void(0)" className="underline">
                           FAQs
                         </a>{" "}
                         or join our{" "}
-                        <a href="#" className="underline">
+                        <a href="javascript:void(0)" className="underline">
                           community forum
                         </a>
                         .
@@ -339,7 +339,7 @@ const ContactSupportPopup = () => {
                         ].map((question, index) => (
                           <a
                             key={index}
-                            href="#"
+                            href="javascript:void(0)"
                             className="block p-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
                           >
                             {question}

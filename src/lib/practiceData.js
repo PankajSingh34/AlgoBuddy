@@ -634,6 +634,28 @@ export const practiceData = [
               pitfalls: "Forgetting that the number of moves grows exponentially as 2^N - 1, which causes time limit exceeded for larger N.",
               tip: "The recurrence relation is T(N) = 2T(N-1) + 1. Drawing the recursion tree helps visualize how the total moves double with each added disk."
             }
+          },
+          {
+            id:"subnets",
+            name:"Subnets/PowerSet",
+            difficulty:"Medium",
+            companies:["amazon","microsoft","google","facebook"],
+            practiceUrl:"https://leetcode.com/problems/subsets/",
+            visualizerUrl:"/visualizer/recursion/subsets",
+            theory:{
+              summary:" Generate all posible subnets (the power set) of a given element.or exclude it.",
+              steps:[
+                "Start with an empty subnet and index 0.",
+                "At each index, make two recursive choices: include the current element, exclude it.",
+                "Move to the next index after each choice.",
+                "Base case: when index reaches the end of the array, add the current subnet to the result.",
+                "Backtrack by removing the last added element before trying the next choice."
+              ],
+              comlexity: { time: "0(2^N)", space:"0(N) recursion stack"},
+              pitfalls: "Forgetting to backtrack (remove the element) after the 'include' branch, which causes wrong subnets to carry over into later paths.",
+              tip:" This 'include or exclude' patter is the foundation for many backtracking problem like combination sum and permutation = master this first!"
+            }
+
           }
         ]
       },

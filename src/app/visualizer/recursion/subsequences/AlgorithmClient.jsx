@@ -1,7 +1,6 @@
 import SubsequencesAnimation from "@/app/visualizer/recursion/subsequences/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/recursion/subsequences/codeBlock";
-import Quiz from "@/app/visualizer/recursion/subsequences/quiz";
 import Content from "@/app/visualizer/recursion/subsequences/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import ModuleCard from "@/app/components/ui/ModuleCard";
@@ -22,7 +21,6 @@ export default function Page() {
       animation={<SubsequencesAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionSubsequences}

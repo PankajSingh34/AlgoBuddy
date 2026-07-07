@@ -278,10 +278,17 @@ export default function TreeBSTVisualizer({ initialMode }) {
 
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const isAnimatingRef = useRef(isAnimating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { isAnimatingRef.current = isAnimating; }, [isAnimating]);
 
   const resetPlayback = useCallback(() => {
     setIsAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setSteps([]);
     setMessage("Playback reset. Click Start to begin operations.");
@@ -479,7 +486,7 @@ export default function TreeBSTVisualizer({ initialMode }) {
   };
 
   useEffect(() => {
-    if (!isAnimating || steps.length === 0) return;
+    if (!isAnimating || steps.length === 0 || lockRef.current) return;
 
     if (currentStepIdx >= steps.length) {
       setIsAnimating(false);
@@ -489,12 +496,14 @@ export default function TreeBSTVisualizer({ initialMode }) {
     const currentStep = steps[currentStepIdx];
     setMessage(currentStep.explanation);
 
+    lockRef.current = true;
+
     timerRef.current = setTimeout(() => {
-      if (currentStepIdx < steps.length - 1) {
+      lockRef.current = false;
+      if (stepIdxRef.current < steps.length - 1) {
         setCurrentStepIdx(prev => prev + 1);
       } else {
         setIsAnimating(false);
-        // Permanently write to tree state if write operation completed successfully
         if (mode === "insertion" || mode === "deletion") {
           setRoot(targetTreeRoot);
           setMessage("Operation completed successfully!");
@@ -512,21 +521,26 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const pauseVisualizer = () => {
     setIsAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
   };
 
   const stepForward = () => {
+    if (lockRef.current) return;
     setIsAnimating(false);
-    if (currentStepIdx < steps.length - 1) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (stepIdxRef.current < steps.length - 1) {
       setCurrentStepIdx(prev => prev + 1);
-      if (currentStepIdx === steps.length - 2 && (mode === "insertion" || mode === "deletion")) {
+      if (stepIdxRef.current === steps.length - 2 && (mode === "insertion" || mode === "deletion")) {
         setRoot(targetTreeRoot);
       }
     }
   };
 
   const stepBackward = () => {
+    if (lockRef.current) return;
     setIsAnimating(false);
-    if (currentStepIdx > 0) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (stepIdxRef.current > 0) {
       setCurrentStepIdx(prev => prev - 1);
     }
   };
@@ -639,10 +653,10 @@ export default function TreeBSTVisualizer({ initialMode }) {
   const svgDimensions = getSvgDimensions();
 
   useEffect(() => {
-    // Populate default beautiful tree on mount
     generateRandomTree();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      lockRef.current = false;
     };
   }, [generateRandomTree]);
 

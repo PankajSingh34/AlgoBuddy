@@ -1,6 +1,5 @@
 import Animation from "@/app/visualizer/linkedlist/operations/traversal/animation";
 import Content from "@/app/visualizer/linkedlist/operations/traversal/content";
-import Quiz from "@/app/visualizer/linkedlist/operations/traversal/quiz";
 import CodeBlock from "@/app/visualizer/linkedlist/operations/traversal/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -17,7 +16,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<CodeBlock />}
-      quiz={<Quiz />}
       exploreOther={
         <ExploreOther
           title="Explore Other Operations"

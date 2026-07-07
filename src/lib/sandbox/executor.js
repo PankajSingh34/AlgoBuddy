@@ -24,33 +24,51 @@ function sanitizeError(err) {
   return message;
 }
 
-// Create an isolate pool for better performance
-let isolatePool = [];
+// Producer-consumer pool for V8 isolates with proper synchronization
 const MAX_ISOLATES = 4;
-let isolateIndex = 0;
+const pool = [];
+const waitQueue = [];
+let isShuttingDown = false;
+let activeIsolateCount = 0;
 
-function getIsolate() {
-  if (isolatePool.length < MAX_ISOLATES) {
-    // isolated-vm expects memory limit in MB, not bytes
-    const isolate = new ivm.Isolate({ memoryLimit: MAX_MEMORY_MB });
-    isolatePool.push(isolate);
-    return isolate;
+function createIsolate() {
+  activeIsolateCount++;
+  return new ivm.Isolate({ memoryLimit: MAX_MEMORY_MB });
+}
+
+function disposeIsolate(isolate) {
+  activeIsolateCount--;
+  try { isolate.dispose(); } catch {}
+}
+
+async function acquireIsolate() {
+  if (isShuttingDown) throw new Error("Sandbox is shutting down");
+  if (pool.length > 0) return pool.shift();
+  if (activeIsolateCount < MAX_ISOLATES) return createIsolate();
+  return new Promise((resolve) => waitQueue.push(resolve));
+}
+
+function releaseIsolate(isolate) {
+  if (waitQueue.length > 0) {
+    waitQueue.shift()(isolate);
+  } else {
+    pool.push(isolate);
   }
-  return isolatePool[isolateIndex++ % MAX_ISOLATES];
 }
 
 async function executeCode(code) {
   const startTime = Date.now();
-  const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const executionId = `exec_${Date.now()}_${globalThis.crypto.randomUUID().split('-')[0]}`;
   let isolate = null;
   let context = null;
+  let isolateCorrupted = false;
 
   try {
     // Audit log: execution started
     console.log(`[sandbox:audit] Execution started: ${executionId}, codeLength: ${code.length}, isolation: isolated-vm`);
 
-    // Get or create an isolate
-    isolate = getIsolate();
+    // Acquire an isolate from the pool
+    isolate = await acquireIsolate();
 
     // Create a context within the isolate
     context = await isolate.createContext();
@@ -110,6 +128,7 @@ async function executeCode(code) {
   } catch (err) {
     const elapsed = Date.now() - startTime;
     const sanitizedMessage = sanitizeError(err);
+    isolateCorrupted = true;
 
     // Audit log: execution failed
     console.log(`[sandbox:audit] Execution failed: ${executionId}, status: ${err.code || 'ERROR'}, time: ${elapsed}ms, error: ${sanitizedMessage}, isolation: isolated-vm`);
@@ -146,7 +165,7 @@ async function executeCode(code) {
       memoryUsed: 0,
     };
   } finally {
-    // Clean up context (isolate is reused)
+    // Clean up context
     if (context) {
       try {
         context.release();
@@ -154,19 +173,30 @@ async function executeCode(code) {
         // Ignore cleanup errors
       }
     }
+    // Dispose corrupted isolates; return healthy ones to pool
+    if (isolate) {
+      if (isolateCorrupted) {
+        disposeIsolate(isolate);
+        releaseIsolate(createIsolate());
+      } else {
+        releaseIsolate(isolate);
+      }
+    }
   }
 }
 
 // Clean up function for graceful shutdown
 async function cleanup() {
-  for (const isolate of isolatePool) {
-    try {
-      isolate.dispose();
-    } catch (e) {
-      // Ignore cleanup errors
-    }
+  isShuttingDown = true;
+  // Drain wait queue so waiting acquireIsolate calls throw
+  waitQueue.splice(0).forEach(resolve => {
+    try { resolve(); } catch {}
+  });
+  for (const isolate of pool) {
+    try { isolate.dispose(); } catch {}
   }
-  isolatePool = [];
+  pool.length = 0;
+  activeIsolateCount = 0;
 }
 
 module.exports = { executeCode, cleanup };

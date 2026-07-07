@@ -247,6 +247,7 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  
 
   // Pre-calculate steps when tree or mode changes
   const steps = useMemo(() => {
@@ -352,28 +353,6 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
       generateRandomTree();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Pre-calculate steps based on current tree and traversal mode
-  const preCalculateSteps = () => {
-    if (!root) return [];
-    
-    switch (mode) {
-      case 'pre-order':
-        return generatePreOrderSteps(root);
-      case 'in-order':
-        return generateInOrderSteps(root);
-      case 'post-order':
-        return generatePostOrderSteps(root);
-      case 'level-order':
-        return generateLevelOrderSteps(root);
-      case 'morris':
-        return generateMorrisSteps(root);
-      default:
-        return [];
-    }
-  };
-
-
 
   useVisualizerKeyboard({
     onTogglePlayPause: engine.isPlaying ? engine.pause : startPlayback,

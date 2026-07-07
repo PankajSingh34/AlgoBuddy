@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/array/selectionsort/animation";
 import Content from "@/app/visualizer/array/selectionsort/content";
 import Code from "@/app/visualizer/array/selectionsort/codeBlock";
-import Quiz from "@/app/visualizer/array/selectionsort/quiz";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import TrackVisit from "@/app/components/ui/TrackVisit";
@@ -22,7 +21,6 @@ export default function Page() {
         animation={<Animation />}
         content={<Content />}
         code={<Code />}
-        quiz={<Quiz />}
         moduleCard={<ModuleCard moduleId={MODULE_MAPS.selectionSort} description="Mark Selection Sort as done and track your progress" initialDone={false} />}
         exploreOther={
           <ExploreOther

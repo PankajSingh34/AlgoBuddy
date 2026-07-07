@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
@@ -11,12 +11,36 @@ import ChallengeModePanel, {
 } from "@/app/visualizer/array/components/ChallengeMode";
 import { bubbleSortGenerator } from "@/features/algorithms/array/bubbleSortLogic";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import CodeExplanationPanel from "./CodeExplanationPanel";
 
 const getFontSize = (value) => {
   const len = String(value).length;
   if (len <= 2) return "text-lg";
   if (len === 3) return "text-sm";
   return "text-xs";
+};
+
+const generatePatternArray = (pattern, size = 20) => {
+  const arr = Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
+  switch (pattern) {
+    case "sorted":
+      return [...arr].sort((a, b) => a - b);
+    case "reverse":
+      return [...arr].sort((a, b) => b - a);
+    case "nearly": {
+      const s = [...arr].sort((a, b) => a - b);
+      for (let k = 0; k < Math.floor(size * 0.1); k++) {
+        const x = Math.floor(Math.random() * size);
+        const y = Math.floor(Math.random() * size);
+        [s[x], s[y]] = [s[y], s[x]];
+      }
+      return s;
+    }
+    case "duplicates":
+      return Array.from({ length: size }, () => [10, 20, 30, 40, 50][Math.floor(Math.random() * 5)]);
+    default:
+      return arr;
+  }
 };
 
 const createBubbleSwapQuestion = (arr, j) => {
@@ -39,7 +63,7 @@ const precomputeSteps = (inputArray) => {
   const generator = bubbleSortGenerator(inputArray);
   for (const frame of generator) {
     const { type, payload } = frame;
-    if (type === 'init') {
+    if (type === "init") {
       steps.push({
         array: inputArray,
         comparisons: 0, swaps: 0, currentStep: 0,
@@ -47,81 +71,69 @@ const precomputeSteps = (inputArray) => {
         currentPhase: "", stepExplanation: "Starting Bubble Sort...",
         sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'phase_start') {
+    } else if (type === "phase_start") {
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: payload.j, j: payload.jNext },
         currentPhase: `Pass ${payload.pass} of ${payload.totalPasses}`,
         stepExplanation: `Starting pass ${payload.pass}, comparing adjacent elements.`,
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'comparing') {
+    } else if (type === "comparing") {
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: payload.j, j: payload.jNext },
         currentPhase: payload.currentPhase || steps[steps.length - 1]?.currentPhase || "",
         stepExplanation: `Comparing ${payload.arr[payload.j]} and ${payload.arr[payload.jNext]} at indices ${payload.j} and ${payload.jNext}.`,
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'swap_needed') {
+    } else if (type === "swap_needed") {
       const prev = steps[steps.length - 1] || {};
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: payload.j, j: payload.jNext },
         currentPhase: prev.currentPhase || "",
         stepExplanation: `Since ${payload.arr[payload.j]} > ${payload.arr[payload.jNext]}, swapping elements at indices ${payload.j} and ${payload.jNext}.`,
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload.totalSteps,
         isSwap: true, swapJ: payload.j,
       });
-    } else if (type === 'swapped') {
+    } else if (type === "swapped") {
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: -1, j: -1 },
         currentPhase: steps[steps.length - 1]?.currentPhase || "",
-        stepExplanation: `Swapped. Array state: [${payload.arr.join(', ')}]`,
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        stepExplanation: `Swapped. Array state: [${payload.arr.join(", ")}]`,
+        sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'no_swap') {
+    } else if (type === "no_swap") {
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: -1, j: -1 },
         currentPhase: steps[steps.length - 1]?.currentPhase || "",
         stepExplanation: `No swap needed between ${payload.arr[payload.j]} and ${payload.arr[payload.jNext]}.`,
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'early_completion') {
+    } else if (type === "early_completion") {
       steps.push({
         array: payload.arr,
-        comparisons: payload.comparisons,
-        swaps: payload.swaps,
+        comparisons: payload.comparisons, swaps: payload.swaps,
         currentStep: payload.step,
         currentIndices: { i: -1, j: -1 },
         currentPhase: "Completion Check",
         stepExplanation: "No swaps occurred; the array is already sorted.",
-        sorted: false,
-        totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload.totalSteps,
       });
-    } else if (type === 'completed') {
+    } else if (type === "completed") {
       const last = steps[steps.length - 1] || {};
       steps.push({
         array: payload.arr || last.array || [],
@@ -141,13 +153,14 @@ const precomputeSteps = (inputArray) => {
 
 const BubbleSortVisualizer = () => {
   const [array, setArray] = useState([]);
+  const [pattern, setPattern] = useState("random");
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
   const [challengeEnabled, setChallengeEnabled] = useState(false);
   const {
-    activeQuestion,
-    askChallenge,
-    resetChallengeStats,
-    stats: challengeStats,
-    submitAnswer,
+    activeQuestion, askChallenge, resetChallengeStats,
+    stats: challengeStats, submitAnswer,
   } = useSortingChallenge(challengeEnabled);
 
   const [visualState, setVisualState] = useState({
@@ -162,13 +175,11 @@ const BubbleSortVisualizer = () => {
 
   const onStep = useCallback((step) => {
     setVisualState({
-      comparisons: step.comparisons,
-      swaps: step.swaps,
+      comparisons: step.comparisons, swaps: step.swaps,
       currentIndices: step.currentIndices,
       currentPhase: step.currentPhase,
       stepExplanation: step.stepExplanation,
-      sorted: step.sorted,
-      totalSteps: step.totalSteps,
+      sorted: step.sorted, totalSteps: step.totalSteps,
     });
     if (step.isSwap && step.swapJ !== undefined) {
       const bars = document.querySelectorAll(".bar");
@@ -181,7 +192,29 @@ const BubbleSortVisualizer = () => {
     }
   }, []);
 
-  const engine = useAnimationEngine({ steps, onStep, initialSpeed: 500 });
+  const [speed, setSpeed] = useState(500);
+
+  const engine = useAnimationEngine({ steps, onStep, initialSpeed: speed });
+
+  // Keep engine speed in sync with speed state
+  useEffect(() => {
+    if (engine?.setSpeed) {
+      engine.setSpeed(speed);
+    }
+  }, [speed, engine]);
+
+  // Timer logic
+  useEffect(() => {
+    if (engine?.isPlaying) {
+      const startTime = Date.now() - elapsedTime * 1000;
+      timerRef.current = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [engine?.isPlaying, elapsedTime, engine]);
 
   const currentStepData = steps[engine.currentStep];
 
@@ -199,15 +232,16 @@ const BubbleSortVisualizer = () => {
       comparisons: 0, swaps: 0, currentIndices: { i: -1, j: -1 },
       currentPhase: "", stepExplanation: "", sorted: false, totalSteps: 0,
     });
+    setElapsedTime(0);
+    clearInterval(timerRef.current);
     engine.reset();
   }, [engine]);
 
   useVisualizerKeyboard({
-    onStart: handleStart,
-    onReset: handleReset,
-    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onStart: handleStart, onReset: handleReset,
+    onSpeedChange: (s) => setSpeed(s * 500),
     onTogglePlayPause: engine.isPlaying ? engine.pause : handleStart,
-    speed: engine.speed / 500,
+    speed: speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.sorted || false,
   });
@@ -218,31 +252,52 @@ Phase: ${visualState.currentPhase}
 Explanation on screen: ${visualState.stepExplanation}
 Current Array State: [${currentStepData?.array?.join(", ") || array.join(", ")}]
 Currently comparing indices: i = ${visualState.currentIndices.i}, j = ${visualState.currentIndices.j}
-
 Please explain exactly what is happening in this step in detail.`;
-
-    window.dispatchEvent(
-      new CustomEvent("chatbot-explain", { detail: { prompt } })
-    );
+    window.dispatchEvent(new CustomEvent("chatbot-explain", { detail: { prompt } }));
   };
+
+  // Extract current pass number from phase string e.g. "Pass 3 of 10"
+  const currentPass = visualState.currentPhase?.match(/Pass (\d+)/)?.[1] || "—";
 
   return (
     <main className="container mx-auto px-6 pb-4">
       <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
-        Watch Bubble Sort in action as it repeatedly swaps adjacent elements to
-        sort the array step by step.
+        Watch Bubble Sort in action as it repeatedly swaps adjacent elements to sort the array step by step.
       </p>
 
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-neutral-950 p-4 sm:p-6 rounded-lg shadow-md mb-6 md:mb-8 border border-gray-200 dark:border-gray-700">
+
+          {/* Pattern Selector */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Input Pattern:
+            </label>
+            <select
+              value={pattern}
+              onChange={(e) => {
+                const val = e.target.value;
+                setPattern(val);
+                const newArr = generatePatternArray(val);
+                setArray(newArr);
+                handleReset();
+              }}
+              disabled={engine.isPlaying}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-neutral-900 text-gray-800 dark:text-gray-200"
+            >
+              <option value="random">🎲 Random Array (Average Case)</option>
+              <option value="sorted">✅ Already Sorted (Best Case — O(n))</option>
+              <option value="reverse">❌ Reverse Sorted (Worst Case — O(n²))</option>
+              <option value="nearly">〰️ Nearly Sorted</option>
+              <option value="duplicates">🔢 Array with Duplicates</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             <div className="flex flex-col gap-1">
               <ArrayGenerator onGenerate={setArray} disabled={engine.isPlaying} isPrimary={array.length === 0} />
               <CustomArrayInput
-                onUseCustomArray={(arr) => {
-                  setArray(arr);
-                  handleReset();
-                }}
+                onUseCustomArray={(arr) => { setArray(arr); handleReset(); }}
                 disabled={engine.isPlaying}
                 currentArray={array}
                 className="w-full"
@@ -270,8 +325,8 @@ Please explain exactly what is happening in this step in detail.`;
             <PlaybackControls
               isPlaying={engine.isPlaying}
               onPlayPause={engine.isPlaying ? engine.pause : handleStart}
-              speed={engine.speed / 500}
-              onSpeedChange={(s) => engine.setSpeed(s * 500)}
+              speed={speed / 500}
+              onSpeedChange={(s) => setSpeed(s * 500)}
               onStepForward={engine.stepForward}
               onStepBackward={engine.stepBackward}
               onReset={engine.reset}
@@ -284,15 +339,12 @@ Please explain exactly what is happening in this step in detail.`;
             <div className="flex items-center gap-4 mb-4">
               <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">Speed:</span>
               <input
-                type="range"
-                min="0.5"
-                max="5"
-                step="0.5"
-                value={engine.speed / 500}
-                onChange={(e) => engine.setSpeed(parseFloat(e.target.value) * 500)}
+                type="range" min="0.5" max="5" step="0.5"
+                value={speed / 500}
+                onChange={(e) => setSpeed(parseFloat(e.target.value) * 500)}
                 className="w-24 sm:w-32"
               />
-              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{engine.speed / 500}x</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{speed / 500}x</span>
             </div>
           )}
 
@@ -306,7 +358,8 @@ Please explain exactly what is happening in this step in detail.`;
             stats={challengeStats}
           />
 
-          <div className="grid grid-cols-2 gap-4 text-sm sm:text-base">
+          {/* Stats Panel */}
+          <div className="grid grid-cols-2 gap-4 text-sm sm:text-base mt-2">
             <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
               <div className="font-medium">Comparisons:</div>
               <div className="text-xl sm:text-2xl">{visualState.comparisons}</div>
@@ -315,7 +368,16 @@ Please explain exactly what is happening in this step in detail.`;
               <div className="font-medium">Swaps:</div>
               <div className="text-xl sm:text-2xl">{visualState.swaps}</div>
             </div>
+            <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
+              <div className="font-medium">Current Pass:</div>
+              <div className="text-xl sm:text-2xl">{currentPass}</div>
+            </div>
+            <div className="bg-gray-100 dark:bg-neutral-900 p-3 rounded">
+              <div className="font-medium">Time Elapsed:</div>
+              <div className="text-xl sm:text-2xl">{elapsedTime}s</div>
+            </div>
           </div>
+
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Step:</div>
             <div className="text-xl font-bold">
@@ -324,11 +386,10 @@ Please explain exactly what is happening in this step in detail.`;
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {engine.currentStep > 0 && !visualState.sorted
                 ? `Comparing index ${visualState.currentIndices.i} and ${visualState.currentIndices.j}`
-                : visualState.sorted
-                ? "Sorting complete!"
-                : "Start sorting to see steps"}
+                : visualState.sorted ? "Sorting complete!" : "Start sorting to see steps"}
             </div>
           </div>
+
           <div className="col-span-2 bg-gray-100 dark:bg-neutral-900 p-3 rounded mt-2">
             <div className="font-medium">Phase:</div>
             <div className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
@@ -375,6 +436,32 @@ Please explain exactly what is happening in this step in detail.`;
             </div>
           )}
         </div>
+
+        {/* Code Explanation Panel */}
+        <CodeExplanationPanel
+          currentStep={engine.currentStep}
+          iValues={{
+            i: visualState.currentIndices.i,
+            j: visualState.currentIndices.j,
+            array: currentStepData?.array || array,
+          }}
+        />
+
+        {/* Speed Control */}
+        <div className="flex items-center gap-3 mt-6 mb-6 text-sm text-gray-400 justify-center">
+          <span>Fast</span>
+          <input
+            type="range"
+            min={100}
+            max={1000}
+            step={100}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="accent-purple-500"
+          />
+          <span>Slow</span>
+        </div>
+
       </div>
     </main>
   );

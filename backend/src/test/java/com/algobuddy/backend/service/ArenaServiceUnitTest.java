@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
+import org.springframework.transaction.PlatformTransactionManager;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,12 +20,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("null")
 public class ArenaServiceUnitTest {
 
     private UserArenaProfileRepository profileRepository;
     private ArenaMatchRepository matchRepository;
     private CacheManager cacheManager;
+    private PlatformTransactionManager transactionManager;
     private Cache cache;
     private ArenaService arenaService;
 
@@ -33,9 +34,10 @@ public class ArenaServiceUnitTest {
         profileRepository = mock(UserArenaProfileRepository.class);
         matchRepository = mock(ArenaMatchRepository.class);
         cacheManager = mock(CacheManager.class);
+        transactionManager = mock(PlatformTransactionManager.class);
         cache = mock(Cache.class);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
-        arenaService = new ArenaService(profileRepository, matchRepository, cacheManager);
+        arenaService = new ArenaService(profileRepository, matchRepository, cacheManager, transactionManager);
     }
 
     @Test

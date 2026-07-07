@@ -7,8 +7,10 @@ const trackActivity = async (type = "site_visit") => {
       method: "POST",
       body: { type, localDate: getLocalISODate() },
     });
+    return { success: true };
   } catch (e) {
     console.error("trackActivity failed:", e);
+    return { success: false, error: e };
   }
 };
 

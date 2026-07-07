@@ -2,7 +2,6 @@
 import React from "react";
 import NQueensAnimation from "../n-queens/animation";
 import Code from "../n-queens/codeBlock";
-import Quiz from "../n-queens/quiz";
 import Content from "../n-queens/content";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
@@ -20,7 +19,6 @@ export default function BacktrackingClient() {
       animation={<NQueensAnimation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.recursionNQueens}

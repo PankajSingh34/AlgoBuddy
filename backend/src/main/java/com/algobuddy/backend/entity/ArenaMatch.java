@@ -64,8 +64,9 @@ public class ArenaMatch {
     private MatchStatus status = MatchStatus.PENDING;
 
     @Version
+    @Builder.Default
     @Column(name = "version")
-    private Integer version;
+    private Integer version = 0;
 
     public enum MatchStatus {
         PENDING,

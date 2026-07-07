@@ -14,7 +14,8 @@ CREATE TABLE user_practice_stats (
     current_streak INTEGER DEFAULT 0,
     longest_streak INTEGER DEFAULT 0,
     last_active_date DATE,
-    visualized_count INTEGER DEFAULT 0
+    visualized_count INTEGER DEFAULT 0,
+    version INTEGER NOT NULL DEFAULT 0
 );
 
 -- Enable RLS (Row Level Security)

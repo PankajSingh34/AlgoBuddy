@@ -8,9 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,15 +81,31 @@ public class MySheetService {
         if (sharedItems.isEmpty()) {
             throw new IllegalStateException("This user has not shared any sheet items");
         }
+
+        List<String> problemIds = sharedItems.stream()
+                .map(MySheet::getProblemId)
+                .toList();
+
+        List<MySheet> existingItems = mySheetRepository.findByUserIdAndProblemIdIn(targetUserId, problemIds);
+        Set<String> existingProblemIds = existingItems.stream()
+                .map(MySheet::getProblemId)
+                .collect(Collectors.toSet());
+
+        List<MySheet> toSave = new ArrayList<>();
         for (MySheet sharedItem : sharedItems) {
-            Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(targetUserId, sharedItem.getProblemId());
-            if (existing.isEmpty()) {
+            if (!existingProblemIds.contains(sharedItem.getProblemId())) {
                 MySheet newItem = new MySheet();
                 newItem.setUserId(targetUserId);
                 newItem.setProblemId(sharedItem.getProblemId());
-                newItem.setNote(null);
-                mySheetRepository.save(newItem);
+                newItem.setNote(sharedItem.isSharedNotes() ? sharedItem.getNote() : "");
+                newItem.setPublic(false);
+                newItem.setSharedNotes(false);
+                toSave.add(newItem);
             }
+        }
+
+        if (!toSave.isEmpty()) {
+            mySheetRepository.saveAll(toSave);
         }
     }
 }

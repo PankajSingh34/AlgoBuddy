@@ -1,20 +1,17 @@
-import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseRequestClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAnonClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// GET /api/mysheet/shared/[userId] — public read, no auth required
 export async function GET(request, { params }) {
   try {
-    const authResult = await getAuthenticatedUser();
-    if (!authResult.success) {
-      return jsonResponse(
-        { error: "Authentication required" },
-        authResult.type === "CONFIG_ERROR" ? 500 : 401
-      );
+    const { userId } = await params;
+    if (!userId || !UUID_RE.test(userId)) {
+      return jsonResponse({ error: "Valid userId is required" }, 400);
     }
 
-    const { userId } = await params;
-    if (!userId) return jsonResponse({ error: "userId is required" }, 400);
-
-    const supabase = getSupabaseRequestClient(request);
+    const supabase = getSupabaseAnonClient();
     const { data, error } = await supabase
       .from("my_sheet")
       .select("problem_id, added_at, note")

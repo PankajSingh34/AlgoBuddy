@@ -1,6 +1,5 @@
 import Animation from "./animation";
 import Code from "./codeBlock";
-import Quiz from "./quiz";
 import Content from "./content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -18,7 +17,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.slidingWindow}

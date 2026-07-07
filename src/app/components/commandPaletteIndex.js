@@ -25,6 +25,7 @@ const VISUALIZERS = [
   { name: "Insertion Sort",                      path: "/visualizer/array/insertionsort",                      category: "Array"      },
   { name: "Merge Sort",                          path: "/visualizer/array/mergesort",                          category: "Array"      },
   { name: "Quick Sort",                          path: "/visualizer/array/quicksort",                          category: "Array"      },
+  { name: "Tim Sort",                            path: "/visualizer/array/timsort",                            category: "Array"      },
   { name: "Counting Sort",                       path: "/visualizer/array/countingsort",                       category: "Array"      },
   { name: "Heap Sort",                           path: "/visualizer/array/heapsort",                           category: "Array"      },
   { name: "Sliding Window",                      path: "/visualizer/array/slidingwindow",                      category: "Array"      },
@@ -53,9 +54,10 @@ const VISUALIZERS = [
   { name: "Deque",                               path: "/visualizer/queue/deque",                              category: "Queue"      },
 
   // Linked List
-  { name: "Singly Linked List",                  path: "/visualizer/linkedlist/singly",                        category: "Linked List"},
-  { name: "Doubly Linked List",                  path: "/visualizer/linkedlist/doubly",                        category: "Linked List"},
-  { name: "Circular Linked List",                path: "/visualizer/linkedlist/circular",                      category: "Linked List"},
+  { name: "Linked List Visualizer",              path: "/visualizer/linked-list",                              category: "Linked List"},
+  { name: "Singly Linked List",                  path: "/visualizer/linkedlist/types/singly",                  category: "Linked List"},
+  { name: "Doubly Linked List",                  path: "/visualizer/linkedlist/types/doubly",                  category: "Linked List"},
+  { name: "Circular Linked List",                path: "/visualizer/linkedlist/types/circular",                category: "Linked List"},
 
   // Tree
   { name: "BST (Binary Search Tree)",            path: "/visualizer/tree/bst",                                 category: "Tree"       },
@@ -74,6 +76,9 @@ const VISUALIZERS = [
 
   // Hash Map
   { name: "Hash Map",                            path: "/visualizer/hashmap",                                  category: "Hash Map"   },
+
+  // Bit Manipulation
+  { name: "Bit Manipulation Quiz",               path: "/visualizer/bit-manipulation/quiz",                    category: "Bit Manipulation" },
 ];
 
 // ─── Site Pages ─────────────────────────────────────────────────────────────

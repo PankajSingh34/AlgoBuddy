@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS public.arena_matches (
     rating_change_p2 INTEGER,
     xp_awarded_p1 INTEGER,
     xp_awarded_p2 INTEGER,
-    match_id VARCHAR(255)
+    match_id VARCHAR(255),
+    version INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_arena_rating_xp ON public.user_arena_profiles (rating DESC, xp DESC);
@@ -35,6 +36,8 @@ CREATE INDEX IF NOT EXISTS idx_arena_matches_match_id ON public.arena_matches (m
 
 -- Migration: Add status column and indexes for match cleanup and rate limiting
 ALTER TABLE public.arena_matches ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'PENDING';
+
+ALTER TABLE public.arena_matches ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_arena_matches_player1_start
     ON public.arena_matches (player1_id, start_time DESC);

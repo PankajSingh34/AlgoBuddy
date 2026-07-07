@@ -7,6 +7,7 @@ import com.algobuddy.backend.service.ArenaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,7 +66,7 @@ public class ArenaController {
     @PostMapping("/match-result")
     @Operation(summary = "Record match result", description = "Records the outcome of an arena match.")
     @ApiResponse(responseCode = "200", description = "Match result recorded successfully")
-    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
+    public ResponseEntity<String> recordMatchResult(@CurrentUserId UUID userId, @Valid @RequestBody com.algobuddy.backend.dto.RecordMatchRequest request) {
         arenaService.recordMatchResult(userId, request);
         return ResponseEntity.ok("Match result recorded successfully");
     }

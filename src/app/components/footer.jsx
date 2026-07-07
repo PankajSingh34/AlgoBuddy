@@ -9,7 +9,7 @@ import {
   FaEnvelope,
   FaDiscord,
   FaYoutube,
-  FaTwitter,
+  FaXTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
 
@@ -182,7 +182,15 @@ const Footer = () => {
             <div>
               <h3 className={footerHeading}>Quick Links</h3>
               <div className="space-y-4">
-                <Link href="/" className={footerLink}>
+                <Link
+                  href="/#home"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("home")?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                  }}
+                >
                   Home
                 </Link>
                 <Link href="/visualizer" className={footerLink}>
@@ -284,7 +292,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
-                  <FaTwitter className="w-4 h-4" /> Twitter
+                  <FaXTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
             </div>
@@ -319,10 +327,6 @@ const Footer = () => {
           {/* Bottom Row */}
           <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} AlgoBuddy. All rights reserved.</p>
-            <p>
-              Made with <span className="text-primary">💜</span> by developers,
-              for developers.
-            </p>
           </div>
         </div>
       </footer>

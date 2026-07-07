@@ -80,7 +80,172 @@ const MergeSortQuiz = () => {
       ],
       correctAnswer: 1,
       explanation: "Merge Sort's divide-and-conquer approach works well with sequential access patterns needed for external storage, and it can efficiently merge sorted runs from disk."
-    }
+    },
+    {
+  question: "What is the main strategy used by Merge Sort?",
+  options: [
+    "Greedy",
+    "Divide and Conquer",
+    "Dynamic Programming",
+    "Backtracking"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort follows the Divide and Conquer strategy by recursively splitting the array and then merging the sorted halves."
+},
+{
+  question: "What is the worst-case time complexity of Merge Sort?",
+  options: [
+    "O(n²)",
+    "O(n log n)",
+    "O(log n)",
+    "O(n)"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort performs O(n log n) operations in the best, average, and worst cases."
+},
+{
+  question: "What is the extra space complexity of Merge Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 2,
+  explanation: "Merge Sort requires an auxiliary array during merging, resulting in O(n) extra space."
+},
+{
+  question: "Is Merge Sort a stable sorting algorithm?",
+  options: [
+    "Yes",
+    "No",
+    "Only for integers",
+    "Only for linked lists"
+  ],
+  correctAnswer: 0,
+  explanation: "Merge Sort is stable because equal elements preserve their relative order after sorting."
+},
+{
+  question: "Which type of dataset is Merge Sort especially suitable for?",
+  options: [
+    "Very small arrays",
+    "Large datasets requiring stable sorting",
+    "Already sorted arrays only",
+    "Hash tables"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort is efficient for large datasets and guarantees O(n log n) performance with stable sorting."
+},
+{
+  question: "What happens after Merge Sort divides the array into single-element subarrays?",
+  options: [
+    "The algorithm stops",
+    "The subarrays are merged back in sorted order",
+    "The array is reversed",
+    "The elements are randomly shuffled"
+  ],
+  correctAnswer: 1,
+  explanation: "After dividing the array into single-element subarrays, Merge Sort merges them back together while maintaining sorted order."
+},
+{
+  question: "Merge Sort is classified as which type of sorting algorithm?",
+  options: [
+    "Comparison-based sorting",
+    "Counting-based sorting",
+    "Hashing algorithm",
+    "Greedy algorithm"
+  ],
+  correctAnswer: 0,
+  explanation: "Merge Sort compares elements while merging, making it a comparison-based sorting algorithm."
+},
+{
+  question: "How many recursive calls are generally made before reaching the base case in Merge Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 1,
+  explanation: "The array is repeatedly divided into halves, resulting in a recursion depth of O(log n)."
+},
+{
+  question: "What is the base case of the Merge Sort algorithm?",
+  options: [
+    "When the array has one or zero elements",
+    "When the array is completely sorted",
+    "When two elements remain",
+    "When the array size is even"
+  ],
+  correctAnswer: 0,
+  explanation: "A single-element (or empty) array is already sorted, making it the base case."
+},
+{
+  question: "Which operation takes linear time in Merge Sort?",
+  options: [
+    "Dividing the array",
+    "Finding the middle element",
+    "Merging two sorted subarrays",
+    "Recursive calls"
+  ],
+  correctAnswer: 2,
+  explanation: "Merging two sorted subarrays requires comparing and copying all elements, taking O(n) time."
+},
+{
+  question: "Why is Merge Sort considered a stable sorting algorithm?",
+  options: [
+    "It uses recursion",
+    "It preserves the relative order of equal elements",
+    "It sorts in-place",
+    "It performs fewer comparisons"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort keeps equal elements in the same relative order as they appeared in the input."
+},
+{
+  question: "Which data structure is commonly used as temporary storage during Merge Sort?",
+  options: [
+    "Stack",
+    "Queue",
+    "Auxiliary array",
+    "Linked list"
+  ],
+  correctAnswer: 2,
+  explanation: "Merge Sort uses an auxiliary array to temporarily store merged elements before copying them back."
+},
+{
+  question: "Which of the following is a disadvantage of Merge Sort?",
+  options: [
+    "Poor worst-case performance",
+    "Requires additional memory",
+    "Cannot sort duplicate elements",
+    "Not suitable for recursion"
+  ],
+  correctAnswer: 1,
+  explanation: "Merge Sort requires O(n) extra memory, making it less memory-efficient than some in-place sorting algorithms."
+},
+{
+  question: "Which sorting algorithm always guarantees O(n log n) time complexity?",
+  options: [
+    "Bubble Sort",
+    "Insertion Sort",
+    "Selection Sort",
+    "Merge Sort"
+  ],
+  correctAnswer: 3,
+  explanation: "Merge Sort consistently performs in O(n log n) time regardless of the input order."
+},
+{
+  question: "Which scenario is ideal for using Merge Sort?",
+  options: [
+    "Large datasets requiring stable sorting",
+    "Very small arrays only",
+    "Arrays with one element",
+    "Hash table lookups"
+  ],
+  correctAnswer: 0,
+  explanation: "Merge Sort is an excellent choice for large datasets where stable sorting and predictable O(n log n) performance are important."
+}
   ];
 
   return <QuizEngine title="Merge Sort Quiz Challenge" questions={questions} />;

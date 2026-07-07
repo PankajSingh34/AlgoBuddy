@@ -1,7 +1,6 @@
 import { dpTopics } from "../data";
 import DPVisualizer from "../components/DPVisualizer";
 import Footer from "@/app/components/footer";
-import BackToTop from "@/app/components/ui/backtotop";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 
@@ -93,7 +92,6 @@ export default async function DPAlgorithmPage({ params }) {
           <DPVisualizer algorithm={algorithm} />
         </section>
       </main>
-      <BackToTop />
       <Footer />
     </>
   );
