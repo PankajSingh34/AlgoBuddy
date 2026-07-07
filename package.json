@@ -3,11 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-<<<<<<< HEAD
-    "dev": "next dev --port 3001",
-=======
-    "dev": "next dev --webpack",
->>>>>>> upstream/main
+  "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src --max-warnings=0",
@@ -84,3 +80,4 @@
     "tailwindcss": "3.4"
   }
 }
+
