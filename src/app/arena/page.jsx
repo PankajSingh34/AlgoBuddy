@@ -306,9 +306,9 @@ export default function ArenaPage() {
 
   const handleCreateMatchLaunch = (matchConfig) => {
     setCreateDuelOpen(false);
-    setSelectedOpponent({ name: "Opponent", rating: 1600, level: 15, avatar: "OP" });
-    setActiveDuelProblem(matchConfig.topic);
-    setDuelSimulatorOpen(true);
+    if (matchConfig?.lobbyCode) {
+      router.push(`/arena/duel/${matchConfig.lobbyCode}`);
+    }
   };
 
   if (loading) {
