@@ -2,11 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
+import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 
 export default function DuelLobbyPage({ params }) {
   const router = useRouter();
   const { user, loading } = useAuth();
   
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const [opponent, setOpponent] = useState(null);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
@@ -82,6 +86,13 @@ export default function DuelLobbyPage({ params }) {
           {copied ? "Link Copied!" : "Copy Invite Link"}
         </button>
       </div>
+
+      <DuelSimulatorModal
+        isOpen={simulatorOpen}
+        onClose={() => setSimulatorOpen(false)}
+        opponent={opponent}
+        problem="Arrays"
+      />
     </div>
   );
 }
