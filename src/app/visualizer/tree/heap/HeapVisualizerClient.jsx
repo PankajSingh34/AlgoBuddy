@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
@@ -46,14 +46,16 @@ export default function HeapVisualizerClient() {
   const handleInsert = () => {
     const value = parseInt(inputValue, 10);
     if (Number.isNaN(value)) return;
-    const newSteps = generateInsertSteps(array, value, heapType);
+    const currentArray = currentStep.array;
+    const newSteps = generateInsertSteps(currentArray, value, heapType);
     runSteps(newSteps);
     setInputValue('');
   };
 
   const handleExtract = () => {
-    if (array.length === 0) return;
-    const newSteps = generateExtractSteps(array, heapType);
+    const currentArray = currentStep.array;
+    if (currentArray.length === 0) return;
+    const newSteps = generateExtractSteps(currentArray, heapType);
     runSteps(newSteps);
   };
 
