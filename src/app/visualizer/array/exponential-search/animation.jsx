@@ -274,19 +274,18 @@ export default function ExponentialSearch() {
             let color =
               "bg-gray-200 border-gray-400";
 
-            if (index === visualState.current)
+            if (index === visualState.foundIndex) {
+              color = "bg-green-400 border-green-700";
+            } else if (index === visualState.current) {
               color = "bg-yellow-300 border-yellow-600";
-
-            if (
+            } else if (
               visualState.low !== -1 &&
               visualState.high !== -1 &&
               index >= visualState.low &&
               index <= visualState.high
-            )
+            ) {
               color = "bg-blue-300 border-blue-600";
-
-            if (index === visualState.foundIndex)
-              color = "bg-green-400 border-green-700";
+            }
 
             return (
               <div
