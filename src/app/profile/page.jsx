@@ -29,6 +29,29 @@ const heatLevelClass = {
   4: "bg-violet-600 dark:bg-violet-500",
 };
 
+const heatLevelRange = {
+  0: "0 problems",
+  1: "1-2 problems",
+  2: "3-4 problems",
+  3: "5-6 problems",
+  4: "7+ problems",
+};
+
+function HeatmapLegend() {
+  return (
+    <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-slate-500 dark:text-neutral-400 sm:text-xs">
+      <span>Less</span>
+      {[0, 1, 2, 3, 4].map((level) => (
+        <span
+          key={level}
+          title={heatLevelRange[level]}
+          className={`h-2.5 w-2.5 rounded-[3px] sm:h-3 sm:w-3 sm:rounded-[4px] ${heatLevelClass[level]}`}
+        />
+      ))}
+      <span>More</span>
+    </div>
+  );
+}
 const allPracticeProblems = practiceData.flatMap((topic) =>
   topic.subsections.flatMap((section) =>
     section.items.map((item) => ({
@@ -739,9 +762,15 @@ export default function ProfilePage() {
                       {activitySummary.heatmapData.map((level, index) => (
                         <span
                           key={index}
+                          title={heatLevelRange[level]}
                           className={`h-2.5 w-2.5 rounded-[3px] sm:h-3 sm:w-3 sm:rounded-[4px] ${heatLevelClass[level]}`}
                         />
-                      ))}
+                    ))}
+                    </div>
+                    <div className="mt-3">
+                      <HeatmapLegend />
+                    </div>
+    
                     </div>
                   </div>
                 </div>
@@ -763,7 +792,7 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
-        </section>
+      </section>
 
         <section className="grid gap-6 lg:grid-cols-2 xl:grid-cols-[1.35fr_0.75fr_1fr]">
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)] transition-colors dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none">
