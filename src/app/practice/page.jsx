@@ -787,7 +787,7 @@ export default function PracticePage() {
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="8" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="7" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -871,28 +871,7 @@ export default function PracticePage() {
                                     <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                   </button>
                                 </td>
-                                <td className="py-4 px-5 text-center">
-                                  <button
-                                    onClick={() => {
-                                      if (!ensureLoggedIn()) return;
-                                      if (isInSheet(prob.id)) {
-                                        removeFromSheet(prob.id);
-                                        toast.success('Removed from My Sheet');
-                                      } else {
-                                        addToSheet(prob.id);
-                                        toast.success('Added to My Sheet! ✨');
-                                      }
-                                    }}
-                                    title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                    className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                      isInSheet(prob.id)
-                                        ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
-                                        : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                    }`}
-                                  >
-                                    <ScrollText size={14} />
-                                  </button>
-                                </td>
+
                               </tr>
                             );
                           })
@@ -1300,7 +1279,7 @@ export default function PracticePage() {
                               <th className="py-4 px-5 text-center">Company</th>
                               <th className="py-4 px-5 text-center">Status</th>
                               <th className="py-4 px-5 text-center w-12"></th>
-                              <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
+                              
                             </tr>
                           </thead>
                           <tbody>
@@ -1366,28 +1345,6 @@ export default function PracticePage() {
                                       }`}
                                     >
                                       <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
-                                    </button>
-                                  </td>
-                                  <td className="py-4 px-5 text-center">
-                                    <button
-                                      onClick={() => {
-                                        if (!ensureLoggedIn()) return;
-                                        if (isInSheet(prob.id)) {
-                                          removeFromSheet(prob.id);
-                                          toast.success('Removed from My Sheet');
-                                        } else {
-                                          addToSheet(prob.id);
-                                          toast.success('Added to My Sheet! ✨');
-                                        }
-                                      }}
-                                      title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                      className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                        isInSheet(prob.id)
-                                          ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
-                                          : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                      }`}
-                                    >
-                                      <ScrollText size={14} />
                                     </button>
                                   </td>
                                 </tr>
