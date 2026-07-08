@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { validateCsrf } from "@/lib/csrf";
+import { validateCsrfTokenEdge, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/csrfToken";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
 function escapeHtml(value) {
@@ -28,7 +28,9 @@ function clampInt(value, min, max) {
 }
 
 export async function POST(request) {
-  if (!validateCsrf(request)) {
+  const headerToken = request.headers.get(CSRF_HEADER_NAME);
+  const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
+  if (!headerToken || !cookieToken || !(await validateCsrfTokenEdge(cookieToken)) || headerToken !== cookieToken) {
     return jsonResponse({ error: "Invalid CSRF token" }, 403);
   }
 
