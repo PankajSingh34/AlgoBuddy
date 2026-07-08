@@ -946,16 +946,6 @@ app.get("/health", (req, res) => {
   res.json({ status: "Arena Socket Server is running with Redis!" });
 });
 
-async function scanRedisKeys(pattern) {
-  let keys = [];
-  let cursor = '0';
-  do {
-    const result = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
-    cursor = result[0];
-    keys.push(...result[1]);
-  } while (cursor !== '0');
-  return keys;
-}
 
 app.get("/api/matches/active", async (req, res) => {
   try {
