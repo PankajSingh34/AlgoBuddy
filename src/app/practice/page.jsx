@@ -622,28 +622,7 @@ export default function PracticePage() {
                               </td>
                               <td className="py-4 px-5 text-center">
                                 <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
-                              </td>
-                              <td className="py-4 px-5 text-center">
-                                <div className="flex justify-center">
-                                  <button
-                                    onClick={() => handleStatusToggle(prob.id, status)}
-                                    className="focus:outline-none"
-                                    title={`Status: ${status}`}
-                                  >
-                                    {status === 'Completed' ? (
-                                      <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white">
-                                        <CheckCircle2 size={12} className="stroke-[3]" />
-                                      </div>
-                                    ) : status === 'In Progress' ? (
-                                      <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                      </div>
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
+                              </td> 
                               <td className="py-4 px-5 text-center">
                                 <div className="flex items-center justify-center gap-2">
                                   <button
@@ -779,15 +758,13 @@ export default function PracticePage() {
                           <th className="py-4 px-5">Topic</th>
                           <th className="py-4 px-5 text-center">Level</th>
                           <th className="py-4 px-5 text-center">Company</th>
-                          <th className="py-4 px-5 text-center">Status</th>
                           <th className="py-4 px-5 text-center w-12"></th>
-                          <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="7" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="6" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -836,27 +813,6 @@ export default function PracticePage() {
                                   </div>
                                 </td>
                                 <td className="py-4 px-5 text-center">
-                                  <div className="flex justify-center">
-                                    <button
-                                      onClick={() => handleStatusToggle(prob.id, status)}
-                                      className="focus:outline-none focus-ring rounded-full"
-                                      title={`Click to toggle status: currently ${status}`}
-                                    >
-                                      {status === "Completed" ? (
-                                        <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
-                                          <CheckCircle2 size={12} className="stroke-[3]" />
-                                        </div>
-                                      ) : status === "In Progress" ? (
-                                        <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition">
-                                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="py-4 px-5 text-center">
                                   <button
                                     onClick={() => {
                                       if (!ensureLoggedIn()) return;
@@ -886,24 +842,6 @@ export default function PracticePage() {
                       Showing {filteredProblems.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
                       {Math.min(currentPage * itemsPerPage, filteredProblems.length)} of {filteredProblems.length} problems
                     </span>
-
-                    {/* Legend circles */}
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-neutral-500">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-200 dark:border-neutral-750" />
-                        <span>Not Solved</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                          <div className="w-1 h-1 rounded-full bg-amber-500" />
-                        </div>
-                        <span>Attempted</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <span>Solved</span>
-                      </div>
-                    </div>
 
                     {/* Shuffle / Random & Pagination controls */}
                     <div className="flex items-center gap-3">
