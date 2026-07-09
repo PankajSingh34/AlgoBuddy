@@ -167,18 +167,29 @@ DECLARE
   v_today DATE := COALESCE(p_local_date, CURRENT_DATE);
   v_yesterday DATE := COALESCE(p_local_date, CURRENT_DATE) - 1;
 BEGIN
-  SELECT current_streak, longest_streak, last_active_date::DATE
+  -- Try to select and lock the existing row
+  SELECT user_practice_stats.current_streak, user_practice_stats.longest_streak, user_practice_stats.last_active_date::DATE
   INTO v_current, v_longest, v_last_active
   FROM user_practice_stats
   WHERE user_id = p_user_id
   FOR UPDATE;
 
+  -- If not found, attempt to insert a new row
   IF NOT FOUND THEN
-    INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
-    VALUES (p_user_id, 1, 1, v_today, 0)
-    RETURNING current_streak, longest_streak INTO v_current, v_longest;
-    RETURN QUERY SELECT v_current, v_longest;
-    RETURN;
+    BEGIN
+      INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
+      VALUES (p_user_id, 1, 1, v_today, 0)
+      RETURNING user_practice_stats.current_streak, user_practice_stats.longest_streak INTO v_current, v_longest;
+      RETURN QUERY SELECT v_current, v_longest;
+      RETURN;
+    EXCEPTION WHEN unique_violation THEN
+      -- If a concurrent insert succeeded, lock and select the newly inserted row
+      SELECT user_practice_stats.current_streak, user_practice_stats.longest_streak, user_practice_stats.last_active_date::DATE
+      INTO v_current, v_longest, v_last_active
+      FROM user_practice_stats
+      WHERE user_id = p_user_id
+      FOR UPDATE;
+    END;
   END IF;
 
   IF v_last_active > v_today THEN
