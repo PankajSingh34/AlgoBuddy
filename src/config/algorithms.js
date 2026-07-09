@@ -328,7 +328,7 @@ export const algorithmRegistry = {
   description:
     "Interactive complexity analyzer for visualizing Big-O growth curves and comparing algorithm efficiency.",
 },
-    component: dynamic(() => import('@/app/visualizer/complexity-analyzer/AlgorithmClient')),
+    component: dynamic(() => import('@/app/visualizer/complexity-analyzer/page')),
   },
   "dry-run": {
     metadata: {

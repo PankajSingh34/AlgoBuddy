@@ -1,5 +1,4 @@
 import AboutSection from "@/app/components/about";
-import KeyboardShortcutsLegend from '@/components/ui/KeyboardShortcutsLegend';
 
 export const metadata = {
   title: "About | AlgoBuddy",
@@ -11,10 +10,6 @@ export default function AboutPage() {
   return (
     <>
       <AboutSection />
-      {/* Floating Keyboard Shortcuts Legend - visible on all pages */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <KeyboardShortcutsLegend />
-      </div>
     </>
   );
 }

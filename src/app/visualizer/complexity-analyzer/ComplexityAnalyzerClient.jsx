@@ -1,75 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import AlgorithmComparator from "./components/AlgorithmComparator";
+import CodeEstimator from "./components/CodeEstimator";
+import ComplexityCard from "./components/ComplexityCard";
+import ComplexityGraph from "./components/ComplexityGraph";
+import {
+  algorithmComparisons,
+  complexityInfo,
+} from "./utils/complexityData";
+import { generateComplexityData } from "./utils/complexityFunctions";
 
-/**
- * Reusable Time & Space Complexity Panel
- * Props:
- * - complexity: { time: { best, average, worst }, space, explanation }
- * - operationsCount: number (live count of operations so far)
- */
-export default function ComplexityPanel({ complexity, operationsCount = 0 }) {
-  const [collapsed, setCollapsed] = useState(false);
+export default function ComplexityAnalyzerClient() {
+  const [selectedComplexities, setSelectedComplexities] = useState(
+    complexityInfo.map((item) => item.complexity)
+  );
 
-  if (!complexity) return null;
+  const graphData = useMemo(() => generateComplexityData(60), []);
+
+  const toggleComplexity = (complexity) => {
+    setSelectedComplexities((current) => {
+      if (current.includes(complexity)) {
+        return current.length === 1
+          ? current
+          : current.filter((item) => item !== complexity);
+      }
+
+      return [...current, complexity];
+    });
+  };
 
   return (
-    <div className="rounded-2xl border border-surface-200 bg-white shadow-sm dark:border-surface-800 dark:bg-surface-900 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-surface-100 dark:border-surface-800">
-        <h2 className="font-bold text-sm">Complexity Panel</h2>
-        <button
-          onClick={() => setCollapsed((prev) => !prev)}
-          className="text-xs px-2 py-1 rounded bg-surface-100 hover:bg-surface-200 dark:bg-surface-800 dark:hover:bg-surface-700 transition"
-        >
-          {collapsed ? "Expand" : "Collapse"}
-        </button>
-      </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-10 sm:px-6 lg:px-8">
+      <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <p className="text-sm font-black uppercase tracking-wider text-[#a435f0]">
+          Big-O Analyzer
+        </p>
+        <h1 className="mt-2 text-3xl font-black text-neutral-950 dark:text-white sm:text-4xl">
+          Time and Space Complexity Analyzer
+        </h1>
+        <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-neutral-600 dark:text-neutral-400">
+          Explore common complexity classes, compare algorithm growth, and use
+          the code estimator to reason about custom snippets.
+        </p>
+      </section>
 
-      {!collapsed && (
-        <div className="p-4 space-y-4 text-sm">
-          <div>
-            <h3 className="font-semibold mb-2 text-surface-600 dark:text-surface-300">
-              Time Complexity
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-lg bg-surface-50 dark:bg-surface-950 p-2 text-center">
-                <p className="text-xs text-surface-500">Best</p>
-                <p className="font-mono font-semibold">{complexity.time.best}</p>
-              </div>
-              <div className="rounded-lg bg-surface-50 dark:bg-surface-950 p-2 text-center">
-                <p className="text-xs text-surface-500">Average</p>
-                <p className="font-mono font-semibold">{complexity.time.average}</p>
-              </div>
-              <div className="rounded-lg bg-surface-50 dark:bg-surface-950 p-2 text-center">
-                <p className="text-xs text-surface-500">Worst</p>
-                <p className="font-mono font-semibold">{complexity.time.worst}</p>
-              </div>
-            </div>
-          </div>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {complexityInfo.map((item) => (
+          <button
+            key={item.complexity}
+            type="button"
+            onClick={() => toggleComplexity(item.complexity)}
+            className={`text-left transition ${
+              selectedComplexities.includes(item.complexity)
+                ? "opacity-100"
+                : "opacity-45"
+            }`}
+          >
+            <ComplexityCard {...item} />
+          </button>
+        ))}
+      </section>
 
-          <div>
-            <h3 className="font-semibold mb-2 text-surface-600 dark:text-surface-300">
-              Space Complexity
-            </h3>
-            <div className="rounded-lg bg-surface-50 dark:bg-surface-950 p-2 text-center">
-              <p className="font-mono font-semibold">{complexity.space}</p>
-            </div>
-          </div>
+      <ComplexityGraph
+        data={graphData}
+        selectedComplexities={selectedComplexities}
+      />
 
-          <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2">
-            <span className="text-surface-600 dark:text-surface-300">
-              Operations so far
-            </span>
-            <span className="font-mono font-bold text-primary">
-              {operationsCount}
-            </span>
-          </div>
+      <AlgorithmComparator algorithms={algorithmComparisons} />
 
-          <p className="text-xs text-surface-500 dark:text-surface-400 leading-relaxed">
-            {complexity.explanation}
-          </p>
-        </div>
-      )}
-    </div>
+      <CodeEstimator />
+    </main>
   );
 }

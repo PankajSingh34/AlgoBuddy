@@ -112,7 +112,7 @@ const sections = [
             path: "/visualizer/code-execution",
           },
         ],
-      },
+      },    
     ],
   },
   {

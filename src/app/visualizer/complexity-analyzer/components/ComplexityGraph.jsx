@@ -15,9 +15,9 @@ const COLORS = {
   "O(log n)": "#06b6d4",
   "O(n)": "#3b82f6",
   "O(n log n)": "#a855f7",
-  "O(n²)": "#f97316",
-  "O(n³)": "#ef4444",
-  "O(2ⁿ)": "#ec4899",
+  "O(n^2)": "#f97316",
+  "O(n^3)": "#ef4444",
+  "O(2^n)": "#ec4899",
 };
 
 export default function ComplexityGraph({
