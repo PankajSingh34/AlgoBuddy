@@ -63,21 +63,36 @@ function isAllowedVercelOrigin(origin) {
   }
 }
 
+// Only used outside production, and only for an exact host:port a
+// developer opts into via LAN_DEV_ORIGIN — never a whole /16 CIDR range.
+const LAN_DEV_ORIGIN = process.env.LAN_DEV_ORIGIN || null;
+const isProduction = process.env.NODE_ENV === "production";
+
 function isOriginAllowed(origin, callback) {
   // Allow requests with no origin (Render health checks, server-to-server)
   if (!origin) return callback(null, true);
-  
+
   if (
-    ALLOWED_ORIGINS.includes(origin) || 
+    ALLOWED_ORIGINS.includes(origin) ||
     isAllowedVercelOrigin(origin) ||
     origin.startsWith("http://localhost:") ||
-    origin.startsWith("http://127.0.0.1:") ||
-    origin.startsWith("http://192.168.")
+    origin.startsWith("http://127.0.0.1:")
   ) {
-    callback(null, true);
-  } else {
-    callback(new Error("Not allowed by CORS"));
+    return callback(null, true);
   }
+
+  // SECURITY: the previous `origin.startsWith("http://192.168.")` check
+  // trusted the ENTIRE private 192.168.0.0/16 range (65k+ hosts) as a
+  // valid Socket.IO origin in production — any page hosted by another
+  // device on a shared network (coffee shop, campus, office Wi-Fi) would
+  // be treated as trusted, enabling cross-site WebSocket hijacking. LAN
+  // testing is now opt-in, non-production only, and pinned to one exact
+  // origin via LAN_DEV_ORIGIN instead of a whole CIDR block.
+  if (!isProduction && LAN_DEV_ORIGIN && origin === LAN_DEV_ORIGIN) {
+    return callback(null, true);
+  }
+
+  callback(new Error("Not allowed by CORS"));
 }
 
 app.use(cors({
