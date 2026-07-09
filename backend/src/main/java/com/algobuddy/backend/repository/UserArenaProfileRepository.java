@@ -67,4 +67,14 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
     Integer findRankByUserId(@Param("userId") UUID userId);
 
     List<UserArenaProfile> findTop100ByOrderByRatingDesc();
+
+    @Query("""
+        SELECT new com.algobuddy.backend.dto.LeaderboardEntryDto(
+            0, a.userId, COALESCE(p.username, 'Anonymous'), p.avatarUrl, a.rating
+        )
+        FROM UserArenaProfile a
+        LEFT JOIN UserProfile p ON a.userId = p.userId
+        ORDER BY a.rating DESC
+        """)
+    List<com.algobuddy.backend.dto.LeaderboardEntryDto> findTop100ArenaLeaderboard(Pageable pageable);
 }
