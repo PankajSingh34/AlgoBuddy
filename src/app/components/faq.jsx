@@ -23,6 +23,7 @@ const faqData = {
     { question: "Do I need to install anything?", answer: "No, AlgoBuddy runs entirely in your web browser. There's no need to install any software or configure local environments." },
     { question: "Where should I start?", answer: "If you're new, we recommend checking out the 'Getting Started' tutorial series in the Dashboard, which introduces basic arrays and loops." },
     { question: "Is AlgoBuddy free?", answer: "Yes, AlgoBuddy provides many free resources for learners. We also plan to introduce premium features in the future for advanced tracking and personalized learning paths." }
+    { question: "Where should I start?", answer: "If you're new, we recommend starting with the Practice page and the beginner tutorial series, which introduce basic arrays and loops." }
   ],
   "Visualizers": [
     { question: "How do visualizers work?", answer: "Visualizers take abstract code execution and render it graphically step-by-step. You can control the speed, pause, step forward, or step backward to understand exactly how variables and structures change." },
@@ -74,7 +75,7 @@ const FAQSection = () => {
   // Handle Search Filtering
   const filteredFAQs = useMemo(() => {
     if (!searchQuery.trim()) return faqData[activeCategory];
-    
+
     const lowerQuery = searchQuery.toLowerCase();
     // If searching, search across all categories to make it useful
     const allFaqs = [];
@@ -91,7 +92,7 @@ const FAQSection = () => {
   return (
     <>
       <section className="relative min-h-screen bg-udemy-surface dark:bg-udemy-dark-bg overflow-hidden font-sans">
-        
+
         {/* Background Gradients */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-20 dark:opacity-30 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-udemy-purple via-udemy-purple-light to-transparent blur-3xl rounded-full mix-blend-multiply dark:mix-blend-screen transform -translate-y-1/2"></div>
@@ -141,7 +142,7 @@ const FAQSection = () => {
           </div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            
+
             {/* Sidebar / Categories */}
             <div className="lg:col-span-3">
               <div className="sticky top-24">
@@ -165,7 +166,7 @@ const FAQSection = () => {
                         activeCategory === category && !searchQuery
                           ? "bg-udemy-purple text-white shadow-md scale-[1.02]"
                           : "bg-white/50 dark:bg-udemy-dark-surface/50 text-udemy-text dark:text-udemy-dark-text hover:bg-udemy-purple/10 hover:text-udemy-purple dark:hover:text-udemy-purple-light"
-                      }`}
+                        }`}
                     >
                       {category}
                     </button>
@@ -193,7 +194,7 @@ const FAQSection = () => {
                   <p className="text-lg text-udemy-muted dark:text-udemy-dark-muted">
                     No FAQs found matching "{searchQuery}"
                   </p>
-                  <button 
+                  <button
                     onClick={() => setSearchQuery("")}
                     className="mt-4 text-udemy-purple hover:underline"
                   >
@@ -208,11 +209,10 @@ const FAQSection = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       key={index}
-                      className={`bg-white dark:bg-udemy-dark-surface border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden transition-all duration-300 ${
-                        activeIndex === index 
-                          ? "shadow-md ring-1 ring-udemy-purple/20" 
+                      className={`bg-white dark:bg-udemy-dark-surface border border-udemy-border dark:border-udemy-dark-border rounded-2xl overflow-hidden transition-all duration-300 ${activeIndex === index
+                          ? "shadow-md ring-1 ring-udemy-purple/20"
                           : "shadow-sm hover:shadow-md hover:border-udemy-purple/30 dark:hover:border-udemy-purple/50"
-                      }`}
+                        }`}
                     >
                       <button
                         id={`faq-btn-${index}`}
@@ -294,7 +294,7 @@ const FAQSection = () => {
                 <p className="text-purple-100 text-lg mb-10">
                   Our community and support team are always ready to help you out. Drop us a line!
                 </p>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
                   <Link href="https://discord.gg/your_discord" target="_blank" className="flex flex-col items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-6 transition-all group backdrop-blur-sm">
                     <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -318,7 +318,7 @@ const FAQSection = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Support component backward compatibility */}
           <div className="hidden">
             <Support />

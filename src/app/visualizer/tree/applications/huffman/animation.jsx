@@ -27,8 +27,16 @@ export default function HuffmanAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const animatingRef = useRef(animating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { animatingRef.current = animating; }, [animating]);
+
   useVisualizerReset(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setAnimating(false);
     setMessage("...");
     setTreeBuilt(false);
@@ -49,28 +57,33 @@ export default function HuffmanAnimation() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!animating || steps.length === 0) return;
+    if (!animating || steps.length === 0 || lockRef.current) return;
     if (currentStepIdx >= steps.length - 1) { 
       setAnimating(false);
       setTreeBuilt(true);
       return; 
     }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    lockRef.current = true;
+    timerRef.current = setTimeout(() => {
+      lockRef.current = false;
+      setCurrentStepIdx(p => p + 1);
+    }, 1600 / speed);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [animating, currentStepIdx, steps, speed]);
 
-  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); lockRef.current = false; };
   const startVisualizer = () => {
     if (steps.length === 0) return;
     setAnimating(true);
     const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
     setCurrentStepIdx(nextIdx);
   };
-  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const stepForward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current > 0) setCurrentStepIdx(p => p - 1); };
   const resetPlayback = () => {
     setAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setTreeBuilt(false);
     setMessage("Playback reset.");
@@ -224,13 +237,13 @@ export default function HuffmanAnimation() {
                 <line 
                   x1={edge.source.x} y1={edge.source.y + 20}
                   x2={edge.target.x} y2={edge.target.y - 20}
-                  stroke="#94a3b8" strokeWidth="2"
+                  className="stroke-slate-400 dark:stroke-slate-400" strokeWidth="2"
                   className="transition-all duration-500 dark:stroke-slate-700"
                 />
                 <text 
                   x={(edge.source.x + edge.target.x) / 2} 
                   y={(edge.source.y + edge.target.y) / 2 - 5} 
-                  fill="#a435f0" fontSize="14" fontWeight="bold"
+                  className="fill-purple-600 dark:fill-purple-500" fontSize="14" fontWeight="bold"
                 >
                   {edge.label}
                 </text>
@@ -242,7 +255,7 @@ export default function HuffmanAnimation() {
               const isActive = activeIds.includes(node.id);
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isActive && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="32" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   <circle 
                     cx={node.x} cy={node.y} r="24" 
                     fill={node.char ? "var(--background)" : "#a435f0"} 
@@ -259,7 +272,7 @@ export default function HuffmanAnimation() {
                     {node.val}
                   </text>
                   {node.char && (
-                    <text x={node.x} y={node.y + 40} textAnchor="middle" fill="#a435f0" fontSize="14" fontWeight="bold">
+                    <text x={node.x} y={node.y + 40} textAnchor="middle" className="fill-purple-600 dark:fill-purple-500" fontSize="14" fontWeight="bold">
                       {node.char}
                     </text>
                   )}

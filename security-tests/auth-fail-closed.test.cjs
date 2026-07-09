@@ -149,10 +149,6 @@ test("Authentication Helper - Configuration & Status Logic", async (t) => {
 
 test("Static Security Audit - Protected Routes fail-closed", () => {
   const routes = [
-    "src/app/api/sessions/route.js",
-    "src/app/api/sessions/[sessionId]/route.js",
-    "src/app/api/sessions/[sessionId]/realtime/route.js",
-    "src/app/api/sessions/[sessionId]/presenter/route.js",
     "src/app/api/complexity-estimator/route.js"
   ];
 

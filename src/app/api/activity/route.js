@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAdmin, getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { isRlsPolicyError } from "@/lib/activity";
 
 export async function POST(request) {
   try {
@@ -9,15 +11,34 @@ export async function POST(request) {
     }
     const body = await request.json().catch(() => ({}));
     const { type } = body;
-    const today = new Date();
-    const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-    const supabase = getSupabaseAdmin();
-    const { error } = await supabase
+
+    // Prefer the client-supplied local date (YYYY-MM-DD) so the activity row
+    // reflects the user's own calendar day rather than the server's UTC date.
+    // Fall back to UTC date when the client does not send one.
+    let localDate = typeof body.localDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.localDate)
+      ? body.localDate
+      : new Date().toISOString().split("T")[0];
+
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
+    let { data, error } = await supabase
       .from("user_activity")
       .upsert(
         { user_id: authResult.user.id, activity_date: localDate, type: type || "site_visit" },
         { onConflict: "user_id, activity_date", ignoreDuplicates: true }
       );
+
+    if (error && isRlsPolicyError(error)) {
+      console.warn("[activity] Falling back to admin client because the server client hit an RLS policy error.", error.message);
+      const adminSupabase = getSupabaseAdmin();
+      ({ data, error } = await adminSupabase
+        .from("user_activity")
+        .upsert(
+          { user_id: authResult.user.id, activity_date: localDate, type: type || "site_visit" },
+          { onConflict: "user_id, activity_date", ignoreDuplicates: true }
+        ));
+    }
+
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ success: true });
   } catch (error) {
@@ -36,13 +57,26 @@ export async function GET(request) {
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
+    let { data, error } = await supabase
       .from("user_activity")
       .select("activity_date, created_at")
       .eq("user_id", authResult.user.id)
       .gte("created_at", sinceStr)
       .order("created_at", { ascending: false });
+
+    if (error && isRlsPolicyError(error)) {
+      console.warn("[activity] Falling back to admin client because the server client hit an RLS policy error while reading activity history.", error.message);
+      const adminSupabase = getSupabaseAdmin();
+      ({ data, error } = await adminSupabase
+        .from("user_activity")
+        .select("activity_date, created_at")
+        .eq("user_id", authResult.user.id)
+        .gte("created_at", sinceStr)
+        .order("created_at", { ascending: false }));
+    }
+
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse(data || []);
   } catch (error) {

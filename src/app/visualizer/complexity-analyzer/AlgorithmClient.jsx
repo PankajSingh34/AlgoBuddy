@@ -10,7 +10,7 @@ export default function ComplexityAnalyzerPage() {
           <Breadcrumbs paths={createVisualizerPaths("Code Lab", "Complexity Analyzer")} />
         </div>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 p-4">
         <ComplexityAnalyzerClient />
       </div>
     </div>

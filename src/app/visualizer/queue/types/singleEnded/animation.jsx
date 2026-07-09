@@ -1,216 +1,280 @@
 "use client";
-import React, { useState } from "react";
-import usePlayback from "@/app/hooks/usePlayback";
-import LinearMemoryControls from "@/app/components/ui/LinearMemoryControls";
+
+import React, { useState, useMemo } from "react";
+import {
+  VisualizerCard,
+  VisualizerInteractiveLayout,
+} from "@/app/visualizer/components/VisualizerInteractiveLayout";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
-import { enqueueRearGenerator, dequeueFrontGenerator, peekFrontGenerator, peekRearGenerator } from "@/features/algorithms/queue/queueSingleEndedLogic";
+import {
+  enqueueRearGenerator,
+  dequeueFrontGenerator,
+  peekFrontGenerator,
+  peekRearGenerator
+} from "@/features/algorithms/queue/queueSingleEndedLogic";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
+import PlaybackControls from "@/app/components/ui/PlaybackControls";
+import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const SingleEndedQueueVisualizer = () => {
-  const [queue, setQueue] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [operation, setOperation] = useState(null);
-  const [message, setMessage] = useState("Queue is empty");
-  const [isAnimating, setIsAnimating] = useState(false);
-  useVisualizerReset(() => {
-    setQueue([]);
+  const [queue, setQueue] = useState([]);
+  const [pendingOp, setPendingOp] = useState(null);
+
+  const frames = useMemo(() => {
+    if (!pendingOp) return [];
+    switch (pendingOp.type) {
+      case 'enqueue': return Array.from(enqueueRearGenerator(queue, pendingOp.value));
+      case 'dequeue': return Array.from(dequeueFrontGenerator(queue));
+      case 'peekFront': return Array.from(peekFrontGenerator(queue));
+      case 'peekRear': return Array.from(peekRearGenerator(queue));
+      default: return [];
+    }
+  }, [queue, pendingOp]);
+
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 800 });
+
+  const enqueue = () => {
+    if (!inputValue || engine.isPlaying || pendingOp) return;
+    setPendingOp({ type: 'enqueue', value: inputValue });
+    engine.reset();
+    engine.play();
+  };
+
+  const dequeue = () => {
+    if (queue.length === 0 || engine.isPlaying || pendingOp) return;
+    setPendingOp({ type: 'dequeue' });
+    engine.reset();
+    engine.play();
+  };
+
+  const peekFront = () => {
+    if (queue.length === 0 || engine.isPlaying || pendingOp) return;
+    setPendingOp({ type: 'peekFront' });
+    engine.reset();
+    engine.play();
+  };
+
+  const peekRear = () => {
+    if (queue.length === 0 || engine.isPlaying || pendingOp) return;
+    setPendingOp({ type: 'peekRear' });
+    engine.reset();
+    engine.play();
+  };
+
+  const handleReset = () => {
     setInputValue("");
-    setOperation(null);
-    setMessage("Queue is empty");
-    setIsAnimating(false);
+    setQueue([]);
+    setPendingOp(null);
+    engine.reset();
+  };
+
+  useVisualizerReset(handleReset);
+
+  const togglePlay = () => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      const finalFrame = frames[frames.length - 1];
+      if (finalFrame && finalFrame.phase === 'complete') {
+         setQueue(finalFrame.queue);
+      }
+      setPendingOp(null);
+      engine.reset();
+    } else if (engine.isPlaying) {
+      engine.pause();
+    } else {
+      engine.play();
+    }
+  };
+
+  // Auto-commit on completion
+  React.useEffect(() => {
+    if (engine.currentStep === frames.length - 1 && frames.length > 0 && !engine.isPlaying) {
+        const finalFrame = frames[frames.length - 1];
+        if (finalFrame && finalFrame.phase === 'complete') {
+            setQueue(finalFrame.queue);
+            setPendingOp(null);
+            if (pendingOp?.type === 'enqueue') setInputValue("");
+            engine.reset();
+        }
+    }
+  }, [engine.currentStep, frames, engine.isPlaying, engine, pendingOp]);
+
+  useVisualizerKeyboard({
+    onStart: togglePlay,
+    onTogglePlayPause: togglePlay,
+    sorting: engine.isPlaying,
+    onReset: handleReset,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
-  const { speed, setSpeed } = usePlayback(1);
 
-  /* ---------- helpers ---------- */
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const showOp = async (txt, ms = 800) => {
-    setOperation(txt);
-    await sleep(ms / speed);
-    setOperation(null);
-  };
+  const currentFrame = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        phase: 'idle',
+        queue: queue,
+        explanation: "Enter a value to enqueue, or remove from the front. You can also peek at the front or rear elements."
+      };
 
-  /* ---------- enqueue (rear) ---------- */
-  const enqueueRear = async () => {
-    const gen = enqueueRearGenerator(queue, inputValue);
-    const startState = gen.next().value;
-
-    if (startState.type === 'error') {
-      setMessage(startState.message);
-      return;
-    }
-
-    setIsAnimating(true);
-    await showOp(startState.operation);
-
-    const completeState = gen.next().value;
-    setQueue(completeState.queue);
-    setMessage(completeState.message);
-    setInputValue("");
-    setIsAnimating(false);
-  };
-
-  /* ---------- dequeue (front) ---------- */
-  const dequeueFront = async () => {
-    const gen = dequeueFrontGenerator(queue);
-    const startState = gen.next().value;
-
-    if (startState.type === 'error') {
-      setMessage(startState.message);
-      return;
-    }
-
-    setIsAnimating(true);
-    await showOp(startState.operation);
-
-    const completeState = gen.next().value;
-    setQueue(completeState.queue);
-    setMessage(completeState.message);
-    setIsAnimating(false);
-  };
-
-  /* ---------- peek front ---------- */
-  const peekFront = async () => {
-    const gen = peekFrontGenerator(queue);
-    const startState = gen.next().value;
-
-    if (startState.type === 'error') {
-      setMessage(startState.message);
-      return;
-    }
-
-    setIsAnimating(true);
-    setMessage(startState.operation);
-    await sleep(1500 / speed);
-    
-    const completeState = gen.next().value;
-    setMessage(completeState.message);
-    setIsAnimating(false);
-  };
-
-  /* ---------- peek rear ---------- */
-  const peekRear = async () => {
-    const gen = peekRearGenerator(queue);
-    const startState = gen.next().value;
-
-    if (startState.type === 'error') {
-      setMessage(startState.message);
-      return;
-    }
-
-    setIsAnimating(true);
-    setMessage(startState.operation);
-    await sleep(1500 / speed);
-    
-    const completeState = gen.next().value;
-    setMessage(completeState.message);
-    setIsAnimating(false);
-  };
-
-  /* ---------- reset ---------- */
-  const reset = () => {
-    setQueue([]);
-    setInputValue("");
-    setOperation(null);
-    setMessage("Queue cleared");
-  };
-
-  /* ---------- UI ---------- */
   return (
-    <main className="container mx-auto px-6 pt-4 pb-4">
-      <p className="text-lg text-center text-gray-600 dark:text-gray-400 mb-8">
-        Single-Ended Queue Visualiser (FIFO)
+    <VisualizerInteractiveLayout>
+      <p className="text-center text-lg text-[#6b7280] dark:text-[#9ca3af]">
+        Visualize a standard Single-Ended Queue where insertions occur at the rear and deletions at the front.
       </p>
 
-      <div className="max-w-4xl mx-auto">
-        {/* ----- Controls card ----- */}
-        <LinearMemoryControls
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          isAnimating={isAnimating}
-          operation={operation}
-          message={message}
-          speed={speed}
-          onSpeedChange={setSpeed}
-          actions={[
-            { label: "Enqueue Rear", onClick: enqueueRear, variant: "primary", needsInput: true },
-            { label: "Dequeue Front", onClick: dequeueFront, disabled: queue.length === 0, variant: "secondary" },
-            { label: "Peek Front", onClick: peekFront, disabled: queue.length === 0, variant: "secondary" },
-            { label: "Peek Rear", onClick: peekRear, disabled: queue.length === 0, variant: "secondary" },
-            { label: "Reset", onClick: reset, variant: "outline" }
-          ]}
-        />
+      <VisualizerCard>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="flex-1 rounded-lg border bg-white p-3 dark:bg-gray-700"
+              placeholder="Enter value"
+              disabled={engine.isPlaying || pendingOp !== null}
+            />
+            <button
+              onClick={enqueue}
+              disabled={engine.isPlaying || !inputValue || pendingOp !== null}
+              className="rounded-lg bg-primary px-6 py-3 text-white transition hover:bg-primary-dark disabled:bg-gray-400"
+            >
+              Enqueue
+            </button>
+            <button
+              onClick={dequeue}
+              disabled={engine.isPlaying || queue.length === 0 || pendingOp !== null}
+              className="rounded-lg border border-black px-6 py-3 text-black transition hover:bg-gray-100 disabled:opacity-50 dark:border-white dark:text-white dark:hover:bg-gray-700"
+            >
+              Dequeue
+            </button>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button
+              onClick={peekFront}
+              disabled={engine.isPlaying || queue.length === 0 || pendingOp !== null}
+              className="w-full rounded-lg bg-[#3b82f6]/10 px-4 py-3 text-[#3b82f6] transition hover:bg-[#3b82f6]/20 border border-[#3b82f6]/30 disabled:opacity-50 sm:w-1/3"
+            >
+              Peek Front
+            </button>
+            <button
+              onClick={peekRear}
+              disabled={engine.isPlaying || queue.length === 0 || pendingOp !== null}
+              className="w-full rounded-lg bg-[#10b981]/10 px-4 py-3 text-[#10b981] transition hover:bg-[#10b981]/20 border border-[#10b981]/30 disabled:opacity-50 sm:w-1/3"
+            >
+              Peek Rear
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={engine.isPlaying && pendingOp === null}
+              className="w-full rounded-lg border border-black px-4 py-3 text-black transition hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-gray-700 sm:w-1/3"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
 
-        {/* ----- Visualisation card (hidden when empty) ----- */}
-        {queue.length > 0 && (
-          <div className="bg-white dark:bg-neutral-950 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-semibold mb-6 text-center">Queue Visualisation</h2>
-
-            <div className="flex items-center gap-3 w-full justify-center">
-              {/* Front pointer */}
-              <div className="text-primary dark:text-[#c27cf7] font-medium flex flex-col items-center">
-                <span>Front</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-
-              {/* Elements */}
-              <div className="flex items-center gap-4">
-                {queue.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`transition-all duration-300 ${
-                      index === 0 && operation?.includes("Dequeuing")
-                        ? "animate-pulse scale-110"
-                        : index === queue.length - 1 && operation?.includes("Enqueuing")
-                        ? "animate-bounce"
-                        : ""
-                    }`}
-                  >
-                    <div
-                      className={`w-24 h-24 rounded-lg shadow-md flex items-center justify-center text-lg font-medium border-2 ${
-                        index === 0
-                          ? "border-[#c27cf7] dark:border-primary-dark"
-                          : index === queue.length - 1
-                          ? "border-green-300 dark:border-green-700"
-                          : "border-gray-200 dark:border-gray-600"
-                      } bg-white dark:bg-neutral-900`}
-                    >
-                      {item}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Rear pointer */}
-              <div className="text-green-600 dark:text-green-400 font-medium flex flex-col items-center">
-                <span>Rear</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
+        {frames.length > 0 && (
+          <div className="mt-6">
+            <PlaybackControls
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+              disabled={frames.length === 0}
+            />
           </div>
         )}
+      </VisualizerCard>
+
+      <div className="w-full mb-6 max-w-4xl mx-auto p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm text-center min-h-[60px] flex items-center justify-center">
+         <p className="text-gray-800 dark:text-gray-200 font-medium">
+             {currentFrame.explanation}
+         </p>
       </div>
-    </main>
+
+      <VisualizerCard>
+        <div className="mb-6 flex justify-between px-4 text-sm font-semibold text-gray-500 dark:text-gray-400 sm:px-8">
+          <div>Front</div>
+          <div>Rear</div>
+        </div>
+        
+        <div className="relative flex min-h-[160px] w-full flex-col items-center justify-center overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 dark:border-[#222] dark:bg-[#181818] p-6">
+            
+            {currentFrame.action === 'enqueue' && currentFrame.newValue && currentFrame.phase === 'start' && (
+                <div className="absolute right-10 top-0 mb-4 animate-bounce flex flex-col items-center">
+                    <span className="text-xs font-bold text-blue-500 mb-1">New Node</span>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-blue-500 text-xl font-bold text-white shadow-lg">
+                        {currentFrame.newValue}
+                    </div>
+                </div>
+            )}
+            
+            {currentFrame.action === 'dequeue' && currentFrame.dequeuedNode && currentFrame.phase === 'start' && (
+                <div className="absolute left-10 top-0 mb-4 flex flex-col items-center opacity-50 scale-110 translate-y-[-20px] transition-all duration-500">
+                    <span className="text-xs font-bold text-rose-500 mb-1">Dequeued</span>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-rose-500 text-xl font-bold text-white shadow-lg">
+                        {currentFrame.dequeuedNode.value}
+                    </div>
+                </div>
+            )}
+
+            {currentFrame.queue.length === 0 ? (
+                <div className="py-8 text-center text-gray-500 font-medium">
+                []
+                </div>
+            ) : (
+                <div className="flex items-center gap-4 relative">
+                {currentFrame.queue.map((node, index) => {
+                    const isNew = currentFrame.action === 'enqueue' && currentFrame.phase === 'complete' && index === currentFrame.queue.length - 1;
+                    const isPeekedFront = currentFrame.action === 'peek_front' && currentFrame.phase === 'start' && index === 0;
+                    const isPeekedRear = currentFrame.action === 'peek_rear' && currentFrame.phase === 'start' && index === currentFrame.queue.length - 1;
+                    
+                    let bgClass = "bg-primary";
+                    let scaleClass = "scale-100";
+                    let borderClass = "";
+
+                    if (isNew) {
+                        bgClass = "bg-blue-500";
+                        scaleClass = "scale-110 shadow-lg z-10";
+                    } else if (isPeekedFront) {
+                        bgClass = "bg-amber-500";
+                        scaleClass = "scale-110 shadow-lg z-10";
+                        borderClass = "ring-4 ring-amber-300 dark:ring-amber-700";
+                    } else if (isPeekedRear) {
+                        bgClass = "bg-emerald-500";
+                        scaleClass = "scale-110 shadow-lg z-10";
+                        borderClass = "ring-4 ring-emerald-300 dark:ring-emerald-700";
+                    }
+                    
+                    return (
+                    <div key={node.id} className="relative">
+                        {isPeekedFront && (
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-xs font-bold text-amber-500 whitespace-nowrap bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                                Peeked: {node.value}
+                            </div>
+                        )}
+                        {isPeekedRear && (
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-500 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                                Peeked: {node.value}
+                            </div>
+                        )}
+                        <div
+                            className={`flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold text-white shadow-md transition-all duration-500 ${bgClass} ${scaleClass} ${borderClass}`}
+                        >
+                            {node.value}
+                        </div>
+                    </div>
+                    );
+                })}
+                </div>
+            )}
+        </div>
+      </VisualizerCard>
+    </VisualizerInteractiveLayout>
   );
 };
 

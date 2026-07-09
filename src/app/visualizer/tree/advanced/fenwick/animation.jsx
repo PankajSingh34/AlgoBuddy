@@ -404,11 +404,11 @@ export default function FenwickAnimation() {
                         {val}
                       </text>
                       {/* Index label */}
-                      <text x={x + cellW / 2} y="153" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold">[{idx}]</text>
+                      <text x={x + cellW / 2} y="153" textAnchor="middle" className="fill-slate-400 dark:fill-slate-400" fontSize="11" fontWeight="bold">[{idx}]</text>
                       {/* Binary label */}
                       <text x={x + cellW / 2} y="170" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400" fontSize="8.5">{idx.toString(2).padStart(4, '0')}</text>
                       {/* LSB label */}
-                      <text x={x + cellW / 2} y="185" textAnchor="middle" fill="#a435f0" fontSize="8.5" fontWeight="bold">LSB:{lsb}</text>
+                      <text x={x + cellW / 2} y="185" textAnchor="middle" className="fill-purple-600 dark:fill-purple-500" fontSize="8.5" fontWeight="bold">LSB:{lsb}</text>
                       {/* Range covered */}
                       <text x={x + cellW / 2} y="200" textAnchor="middle" className="fill-gray-600 dark:fill-gray-400" fontSize="7.5">[{idx - lsb + 1}..{idx}]</text>
                     </g>

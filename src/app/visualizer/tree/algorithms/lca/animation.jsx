@@ -38,8 +38,16 @@ export default function LCAAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const animatingRef = useRef(animating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { animatingRef.current = animating; }, [animating]);
+
   useVisualizerReset(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setTargetP("5");
     setTargetQ("1");
     setAnimating(false);
@@ -63,24 +71,29 @@ export default function LCAAnimation() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!animating || steps.length === 0) return;
+    if (!animating || steps.length === 0 || lockRef.current) return;
     if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    lockRef.current = true;
+    timerRef.current = setTimeout(() => {
+      lockRef.current = false;
+      setCurrentStepIdx(p => p + 1);
+    }, 1600 / speed);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [animating, currentStepIdx, steps, speed]);
 
-  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); lockRef.current = false; };
   const startVisualizer = () => {
     if (steps.length === 0) return;
     setAnimating(true);
     const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
     setCurrentStepIdx(nextIdx);
   };
-  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const stepForward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current > 0) setCurrentStepIdx(p => p - 1); };
   const resetPlayback = () => {
     setAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setMessage("Playback reset.");
   };
@@ -332,11 +345,11 @@ export default function LCAAnimation() {
               return (
                 <g key={node.id} className="transition-all duration-500">
                   {/* Active node glow */}
-                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#fcd34d" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isActive && !isLCA && <circle cx={node.x} cy={node.y} r="32" fill="none" className="stroke-yellow-300 dark:stroke-yellow-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   {/* LCA ultimate glow */}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" stroke="#fcd34d" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" stroke="#f59e0b" strokeWidth="1" className="opacity-40 animate-pulse" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="38" fill="none" className="stroke-yellow-300 dark:stroke-yellow-400" strokeWidth="2" className="opacity-80 animate-ping" />}
+                  {isLCA && <circle cx={node.x} cy={node.y} r="45" fill="none" className="stroke-amber-500 dark:stroke-amber-400" strokeWidth="1" className="opacity-40 animate-pulse" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
@@ -347,9 +360,9 @@ export default function LCAAnimation() {
                   />
                   <text x={node.x} y={node.y + 5} textAnchor="middle" fill={getTextColor(node.id)} fontSize="14" fontWeight="bold" className="transition-colors">{node.val}</text>
                   
-                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">p</text>}
-                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} fill="#f59e0b" fontSize="14" fontWeight="bold">q</text>}
-                  {isLCA && <text x={node.x + 45} y={node.y + 5} fill="#f59e0b" fontSize="16" fontWeight="black">LCA</text>}
+                  {isP && !isLCA && <text x={node.x + 35} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="14" fontWeight="bold">p</text>}
+                  {isQ && !isLCA && <text x={node.x + 35} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="14" fontWeight="bold">q</text>}
+                  {isLCA && <text x={node.x + 45} y={node.y + 5} className="fill-amber-500 dark:fill-amber-400" fontSize="16" fontWeight="black">LCA</text>}
                 </g>
               );
             })}

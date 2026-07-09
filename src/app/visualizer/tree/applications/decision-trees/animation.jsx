@@ -277,7 +277,7 @@ export default function DecisionTreeAnimation() {
 
             {/* Nodes */}
             <g className="transition-all duration-500">
-              {activeNode === "N1" && <rect x="230" y="40" width="140" height="40" rx="20" fill="none" stroke="#d38cff" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+              {activeNode === "N1" && <rect x="230" y="40" width="140" height="40" rx="20" fill="none" className="stroke-purple-300 dark:stroke-purple-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
               <rect x="240" y="40" width="120" height="40" rx="20" fill={getFill("N1", false)} stroke={getStroke("N1", false)} strokeWidth="2.5" className="shadow-sm transition-all duration-500" />
               <text x="300" y="65" textAnchor="middle" fill={getTextColor("N1", false)} fontSize="14" fontWeight="bold">Weather?</text>
             </g>

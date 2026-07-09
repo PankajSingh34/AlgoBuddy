@@ -107,12 +107,17 @@ const sections = [
             name: "Complexity Analyzer",
             path: "/visualizer/complexity-analyzer",
           },
+          {
+            name: "Code Execution Visualizer",
+            path: "/visualizer/code-execution",
+          },
         ],
-      },
+      },    
     ],
   },
   {
     title: "Array",
+    slug: "array",
     desc: "Searching & sorting algorithms on contiguous memory",
     icon: (
       <svg
@@ -151,7 +156,11 @@ const sections = [
           { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort" },
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+          { name: "Shell Sort", path: "/visualizer/array/shellsort" },
+          { name: "Tim Sort", path: "/visualizer/array/timsort" },
         ],
       },
       {
@@ -161,10 +170,19 @@ const sections = [
           { name: "Two Pointers", path: "/visualizer/array/twopointers" },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Searching Quiz", path: "/visualizer/array/searching/quiz" },
+          { name: "Sorting Quiz", path: "/visualizer/array/sorting/quiz" },
+          { name: "Interview Patterns Quiz", path: "/visualizer/array/Interview-Patterns/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "Recursion",
+    slug: "recursion",
     desc: "Understand stack frames, call stacks, base cases, and tree recursion through animated execution flow",
     icon: (
       <svg
@@ -201,10 +219,17 @@ const sections = [
           { name: "Recursive Binary Search", path: "/visualizer/recursion/binary-search" },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Recursion Quiz", path: "/visualizer/recursion/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "Stack",
+    slug: "stack",
     desc: "LIFO operations, polish notations & implementations",
     icon: (
       <svg
@@ -257,10 +282,20 @@ const sections = [
           },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Stack Operations Quiz", path: "/visualizer/stack/quiz" },
+          { name: "Polish Notation Evaluation Quiz", path: "/visualizer/stack/polish/quiz" },
+          { name: "Implementation Quiz", path: "/visualizer/stack/implementation/quiz" },
+          { name: "Monotonic Stack Quiz", path: "/visualizer/stack/monotonic/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "Queue",
+    slug: "queue",
     desc: "FIFO operations, variants & implementations",
     icon: (
       <svg
@@ -327,10 +362,19 @@ const sections = [
           },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Queue Operations Quiz", path: "/visualizer/queue/operations/quiz" },
+          { name: "Queue Types Quiz", path: "/visualizer/queue/types/quiz" },
+          { name: "Queue Implementation Quiz", path: "/visualizer/queue/implementation/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "Linked List",
+    slug: "linked-list",
     desc: "Singly, doubly, circular — traversal to merge",
     icon: (
       <svg
@@ -393,10 +437,6 @@ const sections = [
             path: "/visualizer/linkedlist/operations/deletion",
           },
           {
-            name: "Searching",
-            path: "/visualizer/linkedlist/operations/search",
-          },
-          {
             name: "Reverse",
             path: "/visualizer/linkedlist/operations/reverse",
           },
@@ -408,12 +448,24 @@ const sections = [
             name: "Comparison",
             path: "/visualizer/linkedlist/operations/comparison",
           },
+          {
+            name: "Sorting",
+            path: "/visualizer/linkedlist/operations/sorting",
+          },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Linked List Types Quiz", path: "/visualizer/linkedlist/types/quiz" },
+          { name: "Linked List Operations Quiz", path: "/visualizer/linkedlist/operations/quiz" },
         ],
       },
     ],
   },
   {
     title: "Tree",
+    slug: "tree",
     desc: "BST, AVL, traversals, tries & advanced trees",
     icon: (
       <svg
@@ -548,10 +600,21 @@ const sections = [
           },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Binary Tree Quiz", path: "/visualizer/tree/binaryTree/quiz" },
+          { name: "Binary Search Tree Quiz", path: "/visualizer/tree/bst/quiz" },
+          { name: "Tree Traversal Quiz", path: "/visualizer/tree/traversing/quiz" },
+          { name: "Advanced Tree Quiz", path: "/visualizer/tree/advanced/quiz" },
+          { name: "Tree Applications Quiz", path: "/visualizer/tree/applications/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "HashMap",
+    slug: "hashmap",
     desc: "Key-value pairs with hash function and collision handling",
     icon: (
       <svg
@@ -583,10 +646,17 @@ const sections = [
           { name: "Delete (remove)", path: "/visualizer/hashmap/delete" },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "HashMap Operation Quiz", path: "/visualizer/hashmap/operations/quiz" },
+        ],
+      },
     ],
   },
   {
     title: "Graph",
+    slug: "graph",
     desc: "BFS, DFS, shortest paths, MST & topological sort",
     icon: (
       <svg
@@ -659,6 +729,68 @@ const sections = [
             name: "Topological Sort",
             path: "/visualizer/graph/topological-sort",
           },
+          {
+            name: "Bellman-Ford Algorithm",
+            path: "/visualizer/graph/bellman-ford",
+          },
+          {
+            name: "Kosaraju's Algorithm",
+            path: "/visualizer/graph/kosaraju",
+          },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Graph Representation Quiz", path: "/visualizer/graph/representation/quiz" },
+          { name: "Graph Traversal Quiz", path: "/visualizer/graph/traversal/quiz" },
+          { name: "Graph Algorithms Quiz", path: "/visualizer/graph/algorithms/quiz" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+    info: {
+      About:
+        "Dynamic Programming is a method for solving complex problems by breaking them down into simpler subproblems. It is applicable when the problem has overlapping subproblems and optimal substructure.",
+      Representation: null,
+    },
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Dynamic Programming Quiz", path: "/visualizer/dp/quiz" },
         ],
       },
     ],
@@ -715,9 +847,6 @@ const sections = [
 ];
 
 const Visualizer = () => {
-  /* Strip non-serialisable `info` (contains JSX modals) before
-     passing to the client component. Icons are fine — they're
-     plain <svg> elements. */
   const clientSections = sections.map(({ info, ...rest }) => ({
     ...rest,
     slug: rest.slug || rest.title.toLowerCase().replace(/\s+/g, "-")
@@ -730,10 +859,9 @@ const Visualizer = () => {
     >
       <TutorialOverlay />
       <VisualizerClient initialSections={clientSections} />
+      <BackToTop />
       <div className="w-full relative">
-        
         <BookmarkSection />
-        <BackToTop />
         <Footer />
       </div>
     </div>
@@ -741,4 +869,3 @@ const Visualizer = () => {
 };
 
 export default Visualizer;
-

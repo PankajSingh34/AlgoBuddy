@@ -84,7 +84,9 @@ export default function ContributorsSection() {
 
       {/* View All Button */}
       <div className="mt-8 text-center">
-        <button className="inline-flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-purple-300 dark:hover:border-purple-900/50 text-purple-600 dark:text-purple-400 font-semibold px-5 py-2.5 rounded-xl text-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-200">
+        <button
+          onClick={() => window.open("https://github.com/PankajSingh34/AlgoBuddy/graphs/contributors", "_blank", "noopener,noreferrer")}
+          className="inline-flex items-center justify-center gap-2 border border-slate-200 dark:border-neutral-700 hover:border-purple-300 dark:hover:border-purple-900/50 text-purple-600 dark:text-purple-400 font-semibold px-5 py-2.5 rounded-xl text-xs hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-200">
           <FiUserCheck className="w-4 h-4" />
           View All Contributors
         </button>

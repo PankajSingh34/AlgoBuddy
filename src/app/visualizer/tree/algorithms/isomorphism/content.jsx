@@ -27,24 +27,24 @@ const IsomorphismContent = () => {
           <div className="flex justify-center my-6 gap-8 items-center">
             {/* Tree 1 */}
             <svg width="250" height="200" viewBox="0 0 250 200" className="drop-shadow-lg">
-              <line x1="125" y1="40" x2="60" y2="100" stroke="#475569" strokeWidth="2" />
-              <line x1="125" y1="40" x2="190" y2="100" stroke="#475569" strokeWidth="2" />
-              <line x1="60" y1="100" x2="30" y2="160" stroke="#475569" strokeWidth="2" />
-              <line x1="60" y1="100" x2="90" y2="160" stroke="#475569" strokeWidth="2" />
+              <line x1="125" y1="40" x2="60" y2="100" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="125" y1="40" x2="190" y2="100" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="60" y1="100" x2="30" y2="160" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="60" y1="100" x2="90" y2="160" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               
-              <circle cx="125" cy="40" r="20" fill="#0f172a" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="125" cy="40" r="20" className="fill-white dark:fill-slate-900 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="125" y="45" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">1</text>
               
-              <circle cx="60" cy="100" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="60" cy="100" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="60" y="105" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">2</text>
               
-              <circle cx="190" cy="100" r="20" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+              <circle cx="190" cy="100" r="20" className="fill-white dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               <text x="190" y="105" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">3</text>
               
-              <circle cx="30" cy="160" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="30" cy="160" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="30" y="165" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">4</text>
 
-              <circle cx="90" cy="160" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="90" cy="160" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="90" y="165" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">5</text>
             </svg>
 
@@ -52,24 +52,24 @@ const IsomorphismContent = () => {
 
             {/* Tree 2 */}
             <svg width="250" height="200" viewBox="0 0 250 200" className="drop-shadow-lg">
-              <line x1="125" y1="40" x2="60" y2="100" stroke="#475569" strokeWidth="2" />
-              <line x1="125" y1="40" x2="190" y2="100" stroke="#475569" strokeWidth="2" />
-              <line x1="190" y1="100" x2="160" y2="160" stroke="#475569" strokeWidth="2" />
-              <line x1="190" y1="100" x2="220" y2="160" stroke="#475569" strokeWidth="2" />
+              <line x1="125" y1="40" x2="60" y2="100" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="125" y1="40" x2="190" y2="100" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="190" y1="100" x2="160" y2="160" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="190" y1="100" x2="220" y2="160" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               
-              <circle cx="125" cy="40" r="20" fill="#0f172a" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="125" cy="40" r="20" className="fill-white dark:fill-slate-900 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="125" y="45" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">1</text>
               
-              <circle cx="60" cy="100" r="20" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+              <circle cx="60" cy="100" r="20" className="fill-white dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               <text x="60" y="105" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">3</text>
               
-              <circle cx="190" cy="100" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="190" cy="100" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="190" y="105" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">2</text>
               
-              <circle cx="160" cy="160" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="160" cy="160" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="160" y="165" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">5</text>
 
-              <circle cx="220" cy="160" r="20" fill="#14532d" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="220" cy="160" r="20" className="fill-green-900 dark:fill-green-800 stroke-green-500 dark:stroke-green-400" strokeWidth="2" />
               <text x="220" y="165" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">4</text>
             </svg>
           </div>

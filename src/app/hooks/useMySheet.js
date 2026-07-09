@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/apiClient";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const LOCAL_KEY = "algobuddy_my_sheet";
@@ -40,9 +41,15 @@ function apiBase() {
 async function fetchMySheetFromServer() {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
-    if (!headers.Authorization) return null;
+    if (!headers.Authorization) {
+      console.warn("[useMySheet] fetch skipped: No authorization token");
+      return null;
+    }
     const res = await fetch(`${apiBase()}/api/v1/mysheet`, { headers });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[useMySheet] fetch failed with status:", res.status);
+      return null;
+    }
     const data = await res.json();
     // Expect: { items: [ { problemId, addedAt, note } ] }
     const map = {};
@@ -53,17 +60,20 @@ async function fetchMySheetFromServer() {
   }
 
   // Supabase path via Next.js API route
-  const res = await fetch("/api/mysheet");
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.sheet || null;
+  try {
+    const data = await api.request("/api/mysheet");
+    return data.sheet || null;
+  } catch {
+    console.error("[useMySheet] fetch from NextJS failed");
+    return null;
+  }
 }
 
 async function addToSheetOnServer(problemId, note = "") {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    await fetch(`${apiBase()}/api/v1/mysheet`, {
+    const res = await fetch(`${apiBase()}/api/v1/mysheet`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ problemId, note }),
@@ -71,27 +81,30 @@ async function addToSheetOnServer(problemId, note = "") {
     return;
   }
 
-  await fetch("/api/mysheet", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ problemId, note }),
-  });
+  try {
+    await api.request("/api/mysheet", {
+      method: "POST",
+      body: { problemId, note },
+    });
+  } catch {}
 }
 
 async function removeFromSheetOnServer(problemId) {
   if (isSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
-    await fetch(`${apiBase()}/api/v1/mysheet?problemId=${problemId}`, {
+    const res = await fetch(`${apiBase()}/api/v1/mysheet?problemId=${problemId}`, {
       method: "DELETE",
       headers,
     });
     return;
   }
 
-  await fetch(`/api/mysheet?problemId=${encodeURIComponent(problemId)}`, {
-    method: "DELETE",
-  });
+  try {
+    await api.request(`/api/mysheet?problemId=${encodeURIComponent(problemId)}`, {
+      method: "DELETE",
+    });
+  } catch {}
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -122,7 +135,7 @@ export function useMySheet() {
     const init = async () => {
       setLoading(true);
       const local = readLocal();
-      if (!cancelled) setSheet(local);
+      if (!cancelled) setSheet(prev => Object.keys(prev).length === 0 ? local : prev);
 
       if (!user) {
         setLoading(false);
@@ -147,13 +160,20 @@ export function useMySheet() {
           // 2. After syncing local-only items up, build the authoritative state:
           //    server data + local-only items that were just synced.
           //    Items deleted in another browser (exist in local but not server) are dropped.
+          //    Use a functional updater to preserve any concurrent local mutations.
           const authoritative = { ...serverSheet };
           toSync.forEach(({ problemId }) => {
             if (local[problemId]) authoritative[problemId] = local[problemId];
           });
 
           writeLocal(authoritative);
-          if (!cancelled) setSheet(authoritative);
+          if (!cancelled) setSheet(prev => {
+            const merged = { ...authoritative };
+            for (const id of Object.keys(prev)) {
+              if (!merged[id]) merged[id] = prev[id];
+            }
+            return merged;
+          });
         }
       } catch (err) {
         console.error("[useMySheet] sync failed:", err);

@@ -13,10 +13,19 @@ import {
   Terminal,
 } from "lucide-react";
 import Link from "next/link";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[420px] items-center justify-center bg-slate-950 font-mono text-sm text-slate-400">
+      Loading Editor...
+    </div>
+  ),
+});
 import { useUser } from "@/features/user/UserContext";
-import { useGlobalCollaboration } from "@/app/components/ui/CollaborationProvider";
+
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 
 const SAMPLES = {
@@ -359,81 +368,15 @@ export default function DryRunClient() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(900);
-  const [annotationDraft, setAnnotationDraft] = useState("");
-  const [followPresenter, setFollowPresenter] = useState(true);
-
-  const skipBroadcastGenerationRef = useRef(0);
-  const sendStateRef = useRef(null);
   const fileInputRef = useRef(null);
-  const collaborationRef = useRef(null);
-  const followPresenterRef = useRef(followPresenter);
-  const lastReceivedHashRef = useRef("");
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const decorationsRef = useRef([]);
 
-  useEffect(() => {
-    followPresenterRef.current = followPresenter;
-  }, [followPresenter]);
-
   const displayName =
     user?.user_metadata?.name || user?.email?.split("@")[0] || "Anonymous";
 
-  function computeStateHash(state) {
-    return `${state.source}|${state.language}|${state.step}|${state.playing}|${state.speed}`;
-  }
 
-  function handleRemoteStateDelta(delta) {
-    const collab = collaborationRef.current || collaboration;
-    const effectivePresenterId =
-      delta.presenterId !== undefined ? delta.presenterId : collab.presenterId;
-    const isPresenter =
-      effectivePresenterId && effectivePresenterId === collab.clientId;
-
-    if (!followPresenterRef.current && !isPresenter) {
-      return;
-    }
-
-    const currentHash = computeStateHash({
-      source: typeof delta.source === "string" ? delta.source : source,
-      language: typeof delta.language === "string" ? delta.language : language,
-      step: typeof delta.step === "number" ? delta.step : step,
-      playing: typeof delta.playing === "boolean" ? delta.playing : playing,
-      speed: typeof delta.speed === "number" ? delta.speed : speed,
-    });
-    if (currentHash === lastReceivedHashRef.current) {
-      return;
-    }
-    lastReceivedHashRef.current = currentHash;
-
-    skipBroadcastGenerationRef.current += 1;
-
-    if (typeof delta.source === "string") {
-      setSource(delta.source);
-    }
-    if (typeof delta.language === "string") {
-      setLanguage(delta.language);
-    }
-    if (typeof delta.step === "number") {
-      setStep(delta.step);
-    }
-    if (typeof delta.playing === "boolean") {
-      setPlaying(delta.playing);
-    }
-    if (typeof delta.speed === "number") {
-      setSpeed(delta.speed);
-    }
-  }
-
-  const collaboration = useGlobalCollaboration();
-  const { session: collabSession, presenterId: collabPresenterId, clientId: collabClientId, registerHandler, unregisterHandler } = collaboration;
-
-  useEffect(() => {
-    registerHandler("dryRun", handleRemoteStateDelta);
-    return () => unregisterHandler("dryRun");
-  }, [registerHandler, unregisterHandler, handleRemoteStateDelta]);
-
-  collaborationRef.current = collaboration;
 
   const trace = useMemo(() => buildTrace(source), [source]);
   const current = trace[Math.min(step, trace.length - 1)];
@@ -548,57 +491,14 @@ export default function DryRunClient() {
     return () => window.clearInterval(timer);
   }, [playing, speed, trace.length]);
 
-  useEffect(() => {
-    sendStateRef.current = collaboration.sendEnvelope;
-  }, [collaboration.sendEnvelope]);
 
-  useEffect(() => {
-    if (!collabSession) return;
-
-    const currentGeneration = skipBroadcastGenerationRef.current;
-    if (currentGeneration > 0) {
-      skipBroadcastGenerationRef.current = 0;
-      return;
-    }
-
-    if (collabPresenterId && collabPresenterId !== collabClientId) {
-      return;
-    }
-
-    sendStateRef.current?.({
-      source,
-      language,
-      step,
-      playing,
-      speed,
-      currentFrameId: `${language}:${step}`,
-    });
-  }, [
-    source,
-    language,
-    step,
-    playing,
-    speed,
-    collabSession,
-    collabPresenterId,
-    collabClientId,
-  ]);
 
   const updateLanguage = (nextLanguage) => {
     setLanguage(nextLanguage);
     setSource(SAMPLES[nextLanguage]);
   };
 
-  const handleAddAnnotation = () => {
-    const annotation = collaboration.addAnnotation({
-      timeIndex: step,
-      text: annotationDraft,
-    });
 
-    if (annotation) {
-      setAnnotationDraft("");
-    }
-  };
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -731,18 +631,39 @@ export default function DryRunClient() {
                 </button>
               </div>
             </div>
-            <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <SlidersHorizontal className="h-4 w-4" />
-              Speed
-              <input
-                type="range"
-                min="250"
-                max="1400"
-                step="50"
-                value={speed}
-                onChange={(event) => setSpeed(Number(event.target.value))}
-                className="w-full accent-violet-600"
-              />
+            <label className="mt-4 flex flex-col gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Speed (Delay Interval)</span>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full">
+                {/* Explicit Left Bound Indicator */}
+                <span className="text-xs text-slate-500 font-medium select-none min-w-[50px] text-right">
+                  Fast (250ms)
+                </span>
+                
+                <input
+                  type="range"
+                  min="250"
+                  max="1400"
+                  step="50"
+                  value={speed}
+                  onChange={(event) => setSpeed(Number(event.target.value))}
+                  className="w-full accent-violet-600 cursor-pointer"
+                  aria-label="Execution Speed Delay Slider"
+                />
+                
+                {/* Explicit Right Bound Indicator */}
+                <span className="text-xs text-slate-500 font-medium select-none min-w-[60px]">
+                  Slow (1400ms)
+                </span>
+                
+                {/* Currently Selected Active Value Display */}
+                <span className="text-xs font-bold text-violet-600 dark:text-violet-400 min-w-[45px] text-right">
+                  {speed}ms
+                </span>
+              </div>
             </label>
           </div>
 

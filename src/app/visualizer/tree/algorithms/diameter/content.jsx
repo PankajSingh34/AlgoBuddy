@@ -27,23 +27,23 @@ const DiameterContent = () => {
           </h2>
           <div className="flex justify-center my-6">
             <svg width="400" height="250" viewBox="0 0 400 250" className="drop-shadow-lg">
-              <line x1="200" y1="50" x2="100" y2="120" stroke="#06b6d4" strokeWidth="3" />
-              <line x1="200" y1="50" x2="300" y2="120" stroke="#475569" strokeWidth="2" />
-              <line x1="100" y1="120" x2="50" y2="190" stroke="#06b6d4" strokeWidth="3" />
-              <line x1="100" y1="120" x2="150" y2="190" stroke="#06b6d4" strokeWidth="3" />
-              <circle cx="200" cy="50" r="24" fill="#164e63" stroke="#06b6d4" strokeWidth="2" />
+              <line x1="200" y1="50" x2="100" y2="120" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="3" />
+              <line x1="200" y1="50" x2="300" y2="120" className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
+              <line x1="100" y1="120" x2="50" y2="190" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="3" />
+              <line x1="100" y1="120" x2="150" y2="190" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="3" />
+              <circle cx="200" cy="50" r="24" className="fill-cyan-900 dark:fill-cyan-800 stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" />
               <text x="200" y="55" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">1</text>
               
-              <circle cx="100" cy="120" r="24" fill="#164e63" stroke="#06b6d4" strokeWidth="2" />
+              <circle cx="100" cy="120" r="24" className="fill-cyan-900 dark:fill-cyan-800 stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" />
               <text x="100" y="125" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">2</text>
               
-              <circle cx="300" cy="120" r="24" fill="#0f172a" stroke="#475569" strokeWidth="2" />
+              <circle cx="300" cy="120" r="24" className="fill-white dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2" />
               <text x="300" y="125" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">3</text>
               
-              <circle cx="50" cy="190" r="24" fill="#164e63" stroke="#06b6d4" strokeWidth="2" className="drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+              <circle cx="50" cy="190" r="24" className="fill-cyan-900 dark:fill-cyan-800 stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" className="drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
               <text x="50" y="195" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">4</text>
               
-              <circle cx="150" cy="190" r="24" fill="#164e63" stroke="#06b6d4" strokeWidth="2" className="drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+              <circle cx="150" cy="190" r="24" className="fill-cyan-900 dark:fill-cyan-800 stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" className="drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
               <text x="150" y="195" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">5</text>
             </svg>
           </div>

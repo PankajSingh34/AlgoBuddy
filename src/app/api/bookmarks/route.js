@@ -1,49 +1,43 @@
+import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
-
-export async function GET(request) {
-  try {
-    const authResult = await getAuthenticatedUser();
-    if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
-    }
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("problem_bookmarks")
-      .select("*")
-      .eq("user_id", authResult.user.id);
-    if (error) {
-      // Log server-side for debugging; always return [] so the UI degrades
-      // gracefully (local storage handles the fallback) instead of showing 500.
-      console.error("[/api/bookmarks GET] Supabase error:", error.message, error.code);
-      return jsonResponse([]);
-    }
-    return jsonResponse(data || []);
-  } catch (error) {
-    console.error("[/api/bookmarks GET] Unexpected error:", error.message);
-    return jsonResponse([]);
-  }
-}
+import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 
 export async function POST(request) {
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
+      return jsonResponse({ error: "Authentication required" }, 401);
     }
+
     const body = await request.json().catch(() => ({}));
     const { problemId, topicSlug } = body;
-    if (!problemId || !topicSlug) return jsonResponse({ error: "problemId and topicSlug are required" }, 400);
-    const supabase = getSupabaseAdmin();
-    const { error } = await supabase.from("problem_bookmarks").upsert(
-      { user_id: authResult.user.id, problem_id: problemId, topic_slug: topicSlug, created_at: new Date().toISOString() },
-      { onConflict: ["user_id", "problem_id"] }
-    );
-    if (error) {
-      console.error("[/api/bookmarks POST] Supabase error:", error.message, error.code);
-      return jsonResponse({ error: error.message }, 500);
+
+    if (!problemId || !topicSlug) {
+      return jsonResponse({ error: "problemId and topicSlug are required" }, 400);
     }
-    return jsonResponse({ success: true });
+
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
+
+    // problem_bookmarks table schema:
+    // user_id, problem_id, topic_slug, created_at
+    const { error: insertError } = await supabase
+      .from("problem_bookmarks")
+      .insert({
+        user_id: authResult.user.id,
+        problem_id: problemId,
+        topic_slug: topicSlug,
+      });
+
+    if (insertError) {
+      // Ignore unique constraint violations (23505) if the user already bookmarked it
+      if (insertError.code !== '23505') {
+        console.error("[/api/bookmarks POST] Supabase insert error:", insertError.message);
+        return jsonResponse({ error: insertError.message }, 500);
+      }
+    }
+
+    return jsonResponse({ bookmarked: true });
   } catch (error) {
     return errorResponse(error);
   }
@@ -53,22 +47,59 @@ export async function DELETE(request) {
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {
-      return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
+      return jsonResponse({ error: "Authentication required" }, 401);
     }
+
     const { searchParams } = new URL(request.url);
     const problemId = searchParams.get("problemId");
-    if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
-    const supabase = getSupabaseAdmin();
-    const { error } = await supabase
+
+    if (!problemId) {
+      return jsonResponse({ error: "problemId query parameter is required" }, 400);
+    }
+
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
+
+    const { error: deleteError } = await supabase
       .from("problem_bookmarks")
       .delete()
       .eq("user_id", authResult.user.id)
       .eq("problem_id", problemId);
-    if (error) {
-      console.error("[/api/bookmarks DELETE] Supabase error:", error.message, error.code);
-      return jsonResponse({ error: error.message }, 500);
+
+    if (deleteError) {
+      console.error("[/api/bookmarks DELETE] Supabase delete error:", deleteError.message);
+      return jsonResponse({ error: deleteError.message }, 500);
     }
-    return jsonResponse({ success: true });
+
+    return jsonResponse({ bookmarked: false });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function GET(request) {
+  try {
+    const authResult = await getAuthenticatedUser();
+    if (!authResult.success) {
+      return jsonResponse({ error: "Authentication required" }, 401);
+    }
+
+    const cookieStore = await cookies();
+    const supabase = getSupabaseServerClient(cookieStore);
+
+    const { data: bookmarks, error } = await supabase
+      .from("problem_bookmarks")
+      .select("problem_id, topic_slug, created_at")
+      .eq("user_id", authResult.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[/api/bookmarks GET] Supabase error:", error.message);
+      return jsonResponse([]);
+    }
+
+    // Return the array directly, which matches what useProblemBookmarks expects
+    return jsonResponse(bookmarks || []);
   } catch (error) {
     return errorResponse(error);
   }

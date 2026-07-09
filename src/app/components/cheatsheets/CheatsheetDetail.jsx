@@ -9,7 +9,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
   if (!cheatsheet) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-bold text-white mb-4">Cheatsheet not found</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Cheatsheet not found</h2>
         <Link href="/cheatsheets" className="text-[#a435f0] hover:text-[#c084fc] transition-colors">
           ← Back to cheatsheets
         </Link>
@@ -24,7 +24,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
       {/* Back link */}
       <Link
         href="/cheatsheets"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mb-6"
       >
         <ArrowLeft size={16} /> Back to cheatsheets
       </Link>
@@ -35,7 +35,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
           <span className="text-xs font-bold uppercase tracking-wider text-[#a435f0] mb-2 block">
             {category}
           </span>
-          <h1 className="text-3xl md:text-4xl font-black font-serif text-white">{title}</h1>
+          <h1 className="text-3xl md:text-4xl font-black font-serif text-slate-900 dark:text-white">{title}</h1>
         </div>
         <button
           onClick={downloadCheatsheet}
@@ -47,7 +47,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
 
       {/* Complexity */}
       <section className="mb-8">
-        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Code size={18} className="text-[#a435f0]" /> Complexity
         </h2>
         <ComplexityTable cheatsheet={cheatsheet} />
@@ -56,7 +56,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
       {/* Code Snippets */}
       {code && (
         <section className="mb-8">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Code size={18} className="text-[#a435f0]" /> Code
           </h2>
           <div className="space-y-4">
@@ -73,7 +73,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
       {/* Steps */}
       {steps && steps.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <ListChecks size={18} className="text-[#a435f0]" /> Algorithm Steps
           </h2>
           <ol className="space-y-2">
@@ -101,7 +101,7 @@ export default function CheatsheetDetail({ cheatsheet }) {
 
       {/* Pitfalls */}
       {pitfalls && (
-        <section className="mb-8 p-4 rounded-xl border border-red-700/30 bg-red-900/10">
+        <section className="mb-8 p-4 rounded-xl border bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-700/30">
           <h2 className="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">
             <AlertTriangle size={18} /> Common Pitfalls
           </h2>

@@ -1,7 +1,8 @@
 /**
  * Pure generator function for Binary Search algorithm.
  * Yields frames representing the state of the search.
- * 
+ * No async, no timers — timing and abort are handled by useAlgorithmPlayer.
+ *
  * @param {number[]} arr - The sorted array to search through.
  * @param {number} targetValue - The value to search for.
  * @returns {Generator<{type: string, l?: number, h?: number, m?: number, step?: number, arrM?: number}, void, unknown>}
@@ -15,7 +16,6 @@ export function* binarySearchGenerator(arr, targetValue) {
     const m = Math.floor((l + h) / 2);
     step++;
 
-    // Stage 1: Highlight mid and search range
     yield {
       type: 'checking',
       l,
@@ -25,7 +25,6 @@ export function* binarySearchGenerator(arr, targetValue) {
       arrM: arr[m]
     };
 
-    // Stage 2: Result of comparison
     if (arr[m] === targetValue) {
       yield { type: 'found', m, step };
       return;

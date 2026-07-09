@@ -36,8 +36,16 @@ export default function DiameterAnimation() {
   const [currentStepIdx, setCurrentStepIdx] = useState(-1);
   const { speed, setSpeed } = usePlayback(1);
   const timerRef = useRef(null);
+  const lockRef = useRef(false);
+  const stepIdxRef = useRef(currentStepIdx);
+  const animatingRef = useRef(animating);
+
+  useEffect(() => { stepIdxRef.current = currentStepIdx; }, [currentStepIdx]);
+  useEffect(() => { animatingRef.current = animating; }, [animating]);
+
   useVisualizerReset(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setAnimating(false);
     setMessage("...");
     setSteps([]);
@@ -59,24 +67,29 @@ export default function DiameterAnimation() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!animating || steps.length === 0) return;
+    if (!animating || steps.length === 0 || lockRef.current) return;
     if (currentStepIdx >= steps.length - 1) { setAnimating(false); return; }
-    timerRef.current = setTimeout(() => setCurrentStepIdx(p => p + 1), 1600 / speed);
+    lockRef.current = true;
+    timerRef.current = setTimeout(() => {
+      lockRef.current = false;
+      setCurrentStepIdx(p => p + 1);
+    }, 1600 / speed);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [animating, currentStepIdx, steps, speed]);
 
-  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); };
+  const pauseVisualizer = () => { setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); lockRef.current = false; };
   const startVisualizer = () => {
     if (steps.length === 0) return;
     setAnimating(true);
     const nextIdx = currentStepIdx === -1 || currentStepIdx >= steps.length - 1 ? 0 : currentStepIdx + 1;
     setCurrentStepIdx(nextIdx);
   };
-  const stepForward = () => { setAnimating(false); if (currentStepIdx < steps.length - 1) setCurrentStepIdx(p => p + 1); };
-  const stepBackward = () => { setAnimating(false); if (currentStepIdx > 0) setCurrentStepIdx(p => p - 1); };
+  const stepForward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current < steps.length - 1) setCurrentStepIdx(p => p + 1); };
+  const stepBackward = () => { if (lockRef.current) return; setAnimating(false); if (timerRef.current) clearTimeout(timerRef.current); if (stepIdxRef.current > 0) setCurrentStepIdx(p => p - 1); };
   const resetPlayback = () => {
     setAnimating(false);
     if (timerRef.current) clearTimeout(timerRef.current);
+    lockRef.current = false;
     setCurrentStepIdx(-1);
     setMessage("Playback reset.");
   };
@@ -211,8 +224,8 @@ export default function DiameterAnimation() {
 
               return (
                 <g key={node.id} className="transition-all duration-500">
-                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" stroke="#22d3ee" strokeWidth="2" className="opacity-80 animate-ping" />}
-                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" stroke="#06b6d4" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
+                  {isPath && <circle cx={node.x} cy={node.y} r="32" fill="none" strokeWidth="2" className="stroke-cyan-400 opacity-80 animate-ping dark:stroke-cyan-400" />}
+                  {isActive && <circle cx={node.x} cy={node.y} r="30" fill="none" className="stroke-cyan-500 dark:stroke-cyan-400" strokeWidth="2" strokeDasharray="4,2" className="animate-spin-slow opacity-80" />}
                   
                   <circle 
                     cx={node.x} cy={node.y} r={r} 
@@ -223,7 +236,7 @@ export default function DiameterAnimation() {
                   
                   {/* Height Indicator Label */}
                   {h !== undefined && (
-                    <text x={node.x + 28} y={node.y + 4} fill="#06b6d4" fontSize="12" fontWeight="bold">h:{h}</text>
+                    <text x={node.x + 28} y={node.y + 4} fontSize="12" fontWeight="bold" className="fill-cyan-500 dark:fill-cyan-400">h:{h}</text>
                   )}
                 </g>
               );

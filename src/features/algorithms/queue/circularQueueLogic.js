@@ -1,8 +1,3 @@
-/**
- * Pure generator functions for Circular Queue data structure operations.
- * Yields frames representing the state of the operation.
- */
-
 const wrap = (idx, maxSize) => (idx + maxSize) % maxSize;
 
 export function* enqueueCircularGenerator(queue, front, rear, count, maxSize, inputValue) {
@@ -15,18 +10,30 @@ export function* enqueueCircularGenerator(queue, front, rear, count, maxSize, in
     return;
   }
   
-  yield { type: 'start', operation: `Enqueuing "${inputValue}" at rear …` };
+  yield { 
+      phase: 'start', 
+      action: 'enqueue',
+      queue: [...queue],
+      front,
+      rear,
+      count,
+      newValue: inputValue,
+      explanation: `Enqueuing "${inputValue}" at rear...` 
+  };
   
-  const newRear = wrap(rear + 1, maxSize);
+  const newRear = count === 0 ? front : wrap(rear + 1, maxSize);
   const newQ = [...queue];
   newQ[newRear] = inputValue;
   
   yield { 
-    type: 'complete', 
+    phase: 'complete', 
+    action: 'enqueue',
     queue: newQ, 
+    front,
     rear: newRear, 
     count: count + 1, 
-    message: `"${inputValue}" added` 
+    newValue: null,
+    explanation: `"${inputValue}" added at index ${newRear}.` 
   };
 }
 
@@ -37,32 +44,29 @@ export function* dequeueCircularGenerator(queue, front, rear, count, maxSize) {
   }
 
   const item = queue[front];
-  yield { type: 'start', operation: `Dequeuing "${item}" from front …` };
+  yield { 
+      phase: 'start', 
+      action: 'dequeue',
+      queue: [...queue],
+      front,
+      rear,
+      count,
+      dequeuedItem: item,
+      explanation: `Dequeuing "${item}" from front (index ${front})...` 
+  };
 
   const newQ = [...queue];
   newQ[front] = null;
+  const newFront = count === 1 ? front : wrap(front + 1, maxSize);
   
   yield { 
-    type: 'complete', 
+    phase: 'complete', 
+    action: 'dequeue',
     queue: newQ, 
-    front: wrap(front + 1, maxSize), 
+    front: newFront, 
+    rear,
     count: count - 1, 
-    message: `"${item}" removed` 
-  };
-}
-
-export function* checkEmptyCircularGenerator(count) {
-  yield { type: 'start', operation: 'Checking if empty …' };
-  yield { 
-    type: 'complete', 
-    message: count === 0 ? "Circular queue is EMPTY" : "Circular queue is NOT empty" 
-  };
-}
-
-export function* checkFullCircularGenerator(count, maxSize) {
-  yield { type: 'start', operation: 'Checking if full …' };
-  yield { 
-    type: 'complete', 
-    message: count === maxSize ? "Circular queue is FULL" : "Circular queue is NOT full" 
+    dequeuedItem: null,
+    explanation: `"${item}" removed. Front moved to index ${newFront}.` 
   };
 }

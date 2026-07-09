@@ -32,6 +32,11 @@ export const sections = [
         items: [
           { name: "Linear Search", path: "/visualizer/array/linearsearch" },
           { name: "Binary Search", path: "/visualizer/array/binarysearch" },
+          { name: "Ternary Search", path: "/visualizer/array/ternary-search" },
+          { name: "Jump Search", path: "/visualizer/array/jump-search" },
+          { name: "Fibonacci Search", path: "/visualizer/array/fibonacci-search" },
+          { name: "Exponential Search", path: "/visualizer/array/exponential-search" },
+          { name: "Interpolation Search", path: "/visualizer/array/interpolation-search"},
         ],
       },
       {
@@ -42,7 +47,11 @@ export const sections = [
           { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Shell Sort", path: "/visualizer/array/shellsort" },
+          { name: "Tim Sort", path: "/visualizer/array/timsort" },
+          { name: "Bucket Sort", path: "/visualizer/array/bucketsort" },
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
+          { name: "Radix Sort", path: "/visualizer/array/radixsort"},
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
           { name: "Comparison Mode", path: "/visualizer/array/comparison" },
         ],
@@ -164,10 +173,10 @@ export const sections = [
           { name: "Traversal", path: "/visualizer/linkedlist/operations/traversal" },
           { name: "Insertion", path: "/visualizer/linkedlist/operations/insertion" },
           { name: "Deletion", path: "/visualizer/linkedlist/operations/deletion" },
-          { name: "Searching", path: "/visualizer/linkedlist/operations/search" },
           { name: "Reverse", path: "/visualizer/linkedlist/operations/reverse" },
           { name: "Merge", path: "/visualizer/linkedlist/operations/merge" },
           { name: "Comparison", path: "/visualizer/linkedlist/operations/comparison" },
+          { name: "Sorting", path: "/visualizer/linkedlist/operations/sorting" },
         ],
       },
     ],
@@ -282,6 +291,30 @@ export const sections = [
           { name: "Prim's Algorithm", path: "/visualizer/graph/prim" },
           { name: "Kruskal's Algorithm", path: "/visualizer/graph/kruskal" },
           { name: "Topological Sort", path: "/visualizer/graph/topological-sort" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Dynamic Programming",
+    slug: "dp",
+    desc: "Visualized matrices for the Knapsack Problem, Longest Common Subsequence, and Coin Change",
+    subsections: [
+      {
+        title: "Algorithms",
+        items: [
+          {
+            name: "0/1 Knapsack Problem",
+            path: "/visualizer/dp/knapsack",
+          },
+          {
+            name: "Longest Common Subsequence",
+            path: "/visualizer/dp/lcs",
+          },
+          {
+            name: "Coin Change",
+            path: "/visualizer/dp/coin-change",
+          },
         ],
       },
     ],

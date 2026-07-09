@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/ai/mcts/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/ai/mcts/codeBlock";
-import Quiz from "@/app/visualizer/ai/mcts/quiz";
 import Content from "@/app/visualizer/ai/mcts/content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -17,7 +16,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.mcts}

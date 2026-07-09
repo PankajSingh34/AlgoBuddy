@@ -1,12 +1,15 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 import { generateFibonacciFrames } from "@/features/algorithms/recursion/fibonacciLogic";
+
 const getCoords = (path, n) => {
   const coordsMap = {
     1: {
@@ -48,38 +51,24 @@ const codeLines = [
 
 const FibonacciAnimation = () => {
   const [nVal, setNVal] = useState("3");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-    useVisualizerReset(() => {
-      setNVal("3");
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-      setErrorMsg("");
-    });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];
     const n = parseInt(nVal, 10);
-    if (isNaN(n) || n < 1) return [];
-    return generateFibonacciFrames(n);
+    if (isNaN(n) || n < 1 || n > 4) return [];
+    return Array.from(generateFibonacciFrames(n));
   }, [nVal, isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setNVal("3");
+    setIsVisualizing(false);
+    setErrorMsg("");
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
@@ -93,56 +82,45 @@ const FibonacciAnimation = () => {
       return;
     }
     setErrorMsg("");
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
     setErrorMsg("");
+    engine.reset();
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
+      engine.play();
     }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    treeNodes: [],
-    activeLine: 0,
-    description: "Enter N (between 1 and 4) and click Visualize Go!",
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
+
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        stack: [],
+        treeNodes: [],
+        activeLine: 0,
+        description: "Enter N (between 1 and 4) and click Visualize Go!",
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activeTreeNodes = activeFrameData.treeNodes || [];
@@ -202,17 +180,17 @@ const FibonacciAnimation = () => {
 
         {errorMsg && <p className="text-red-500 dark:text-red-400 text-xs font-semibold mt-2">{errorMsg}</p>}
 
-        {isVisualizing && (
+        {isVisualizing && frames.length > 0 && (
           <div className="mt-4">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>
@@ -247,7 +225,7 @@ const FibonacciAnimation = () => {
                   <div
                     key={frame.id}
                     className={`w-full max-w-[280px] p-2.5 rounded-lg border flex flex-col items-center transition-all duration-300 ${statusClass} ${
-                      isTop ? "ring-2 ring-primary dark:ring-primary-light ring-offset-2 dark:ring-offset-zinc-950" : ""
+                      isTop ? "ring-2 ring-[#a435f0] dark:ring-[#a435f0] ring-offset-2 dark:ring-offset-zinc-950 shadow-md" : "scale-[0.98]"
                     }`}
                   >
                     <div className="flex justify-between w-full font-mono text-[10px] font-semibold">
@@ -342,7 +320,7 @@ const FibonacciAnimation = () => {
                           width="16"
                           height="12"
                           rx="3"
-                          className="fill-teal-500 text-white"
+                          className="fill-[#a435f0] text-white"
                         />
                         <text
                           x={coords.x + 16}
@@ -364,11 +342,6 @@ const FibonacciAnimation = () => {
           <div className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-950 font-mono text-xs shadow-inner">
             <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
               <span className="text-zinc-400 font-semibold">Active Code Trace</span>
-              <div className="flex gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-              </div>
             </div>
             <div className="p-4 text-zinc-300 leading-relaxed">
               {codeLines.map((ln) => {
@@ -377,11 +350,11 @@ const FibonacciAnimation = () => {
                   <div
                     key={ln.line}
                     className={`flex gap-4 px-2 py-0.5 rounded transition-colors duration-200 ${
-                      isActive ? "bg-[#0d9488]/20 border-l-4 border-[#0d9488] text-white font-bold" : "border-l-4 border-transparent"
+                      isActive ? "bg-[#a435f0]/20 border-l-4 border-[#a435f0] text-white font-bold" : "border-l-4 border-transparent"
                     }`}
                   >
                     <span className="text-zinc-600 select-none w-4 text-right">{ln.line}</span>
-                    <span>{ln.code}</span>
+                    <span className="whitespace-pre">{ln.code}</span>
                   </div>
                 );
               })}

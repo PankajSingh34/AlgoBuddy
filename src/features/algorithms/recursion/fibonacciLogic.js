@@ -1,9 +1,4 @@
-/**
- * Pure function to generate frames for the Recursive Fibonacci algorithm.
- * Returns an array of frames for the visualizer to step through.
- */
-export function generateFibonacciFrames(n) {
-  const frames = [];
+export function* generateFibonacciFrames(n) {
   const stack = [];
   let frameIdCounter = 0;
   const treeNodesMap = {};
@@ -24,7 +19,7 @@ export function generateFibonacciFrames(n) {
 
   prebuildTree(n);
 
-  function fib(val, path = "root", parentId = null) {
+  function* fib(val, path = "root", parentId = null) {
     const myId = ++frameIdCounter;
     const currentFrame = {
       id: myId,
@@ -38,78 +33,78 @@ export function generateFibonacciFrames(n) {
     stack.push(currentFrame);
     treeNodesMap[path].status = "active";
 
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack)),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 1,
       description: `Calling fib(${val}). Pushing onto the call stack and activating tree node.`,
       phase: "call",
       activeFrameId: myId,
-    });
+    };
 
     stack[stack.length - 1].status = "checking_base";
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack)),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 2,
       description: `Checking base case condition for fib(${val}): is n <= 1?`,
       phase: "call",
       activeFrameId: myId,
-    });
+    };
 
     if (val <= 1) {
       stack[stack.length - 1].status = "base_case";
       treeNodesMap[path].status = "base";
       treeNodesMap[path].result = val;
-      frames.push({
+      yield {
         stack: JSON.parse(JSON.stringify(stack)),
         treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
         activeLine: 2,
         description: `Base case met! fib(${val}) returns ${val}.`,
         phase: "basecase",
         activeFrameId: myId,
-      });
+      };
 
       stack[stack.length - 1].status = "returning";
       stack[stack.length - 1].retVal = val;
-      frames.push({
+      yield {
         stack: JSON.parse(JSON.stringify(stack)),
         treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
         activeLine: 2,
         description: `Returning ${val} from fib(${val}). Stack frame is ready to pop.`,
         phase: "return",
         activeFrameId: myId,
-      });
+      };
 
       stack.pop();
       return val;
     }
 
     stack[stack.length - 1].status = "waiting_L";
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack)),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 3,
       description: `fib(${val}) requires left term fib(${val - 1}). Calling fib(${val - 1}).`,
       phase: "call",
       activeFrameId: myId,
-    });
+    };
 
-    const leftVal = fib(val - 1, path + "-L", myId);
+    const leftVal = yield* fib(val - 1, path + "-L", myId);
 
     const myFrameIndex = stack.findIndex((f) => f.id === myId);
     stack[myFrameIndex].status = "waiting_R";
     stack[myFrameIndex].leftVal = leftVal;
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack.slice(0, myFrameIndex + 1))),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 3,
       description: `Left child returned ${leftVal}. Now fib(${val}) requires right term fib(${val - 2}). Calling fib(${val - 2}).`,
       phase: "call",
       activeFrameId: myId,
-    });
+    };
 
-    const rightVal = fib(val - 2, path + "-R", myId);
+    const rightVal = yield* fib(val - 2, path + "-R", myId);
 
     const myFrameIndex2 = stack.findIndex((f) => f.id === myId);
     stack[myFrameIndex2].status = "calculating";
@@ -118,38 +113,36 @@ export function generateFibonacciFrames(n) {
     treeNodesMap[path].status = "returned";
     treeNodesMap[path].result = leftVal + rightVal;
 
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack.slice(0, myFrameIndex2 + 1))),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 3,
       description: `Right child returned ${rightVal}. Calculating fib(${val}) = left (${leftVal}) + right (${rightVal}) = ${leftVal + rightVal}.`,
       phase: "return",
       activeFrameId: myId,
-    });
+    };
 
     stack[myFrameIndex2].status = "returning";
-    frames.push({
+    yield {
       stack: JSON.parse(JSON.stringify(stack.slice(0, myFrameIndex2 + 1))),
       treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
       activeLine: 3,
       description: `Returning ${leftVal + rightVal} from fib(${val}). Stack frame is ready to pop.`,
       phase: "return",
       activeFrameId: myId,
-    });
+    };
 
     stack.pop();
     return leftVal + rightVal;
   }
 
-  const finalResult = fib(n);
-  frames.push({
+  const finalResult = yield* fib(n);
+  yield {
     stack: [],
     treeNodes: JSON.parse(JSON.stringify(Object.values(treeNodesMap))),
     activeLine: 0,
     description: `Recursion finished! Final returned value is ${finalResult}.`,
     phase: "completed",
     activeFrameId: null,
-  });
-
-  return frames;
+  };
 }

@@ -1,12 +1,15 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+
+import React, { useState, useMemo } from "react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
+import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 
 import { generateNQueensFrames } from "@/features/algorithms/recursion/nQueensLogic";
+
 const codeLines = [
   { line: 1, code: "function solve(col) {" },
   { line: 2, code: "  if (col >= N) {" },
@@ -23,88 +26,63 @@ const codeLines = [
 ];
 
 const NQueensAnimation = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [currentFrame, setCurrentFrame] = useState(-1);
   const [isVisualizing, setIsVisualizing] = useState(false);
-    useVisualizerReset(() => {
-      setIsPlaying(false);
-      setSpeed(1);
-      setCurrentFrame(-1);
-      setIsVisualizing(false);
-    });
 
   const frames = useMemo(() => {
     if (!isVisualizing) return [];
-    return generateNQueensFrames();
+    return Array.from(generateNQueensFrames());
   }, [isVisualizing]);
 
-  useEffect(() => {
-    let timer;
-    if (isPlaying && currentFrame < frames.length - 1) {
-      timer = setTimeout(() => {
-        setCurrentFrame((prev) => prev + 1);
-      }, 1500 / speed);
-    } else if (currentFrame === frames.length - 1) {
-      setIsPlaying(false);
-    }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentFrame, frames.length, speed]);
+  const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  useVisualizerReset(() => {
+    setIsVisualizing(false);
+    engine.reset();
+  });
 
   const handleGo = (e) => {
     e.preventDefault();
-    setCurrentFrame(0);
     setIsVisualizing(true);
-    setIsPlaying(true);
+    engine.reset();
+    engine.play();
   };
 
   const handleReset = () => {
-    setIsPlaying(false);
     setIsVisualizing(false);
-    setCurrentFrame(-1);
+    engine.reset();
   };
 
   const togglePlay = () => {
-    if (currentFrame === frames.length - 1) {
-      setCurrentFrame(0);
-      setIsPlaying(true);
+    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
+      engine.reset();
+      engine.play();
+    } else if (engine.isPlaying) {
+      engine.pause();
     } else {
-      setIsPlaying((prev) => !prev);
+      engine.play();
     }
-  };
-
-  const stepForward = () => {
-    if (currentFrame < frames.length - 1) {
-      setCurrentFrame((prev) => prev + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const stepBackward = () => {
-    if (currentFrame > 0) {
-      setCurrentFrame((prev) => prev - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const activeFrameData = frames[currentFrame] || {
-    stack: [],
-    board: [-1, -1, -1, -1],
-    solutions: [],
-    activeCell: null,
-    conflictCell: null,
-    activeLine: 0,
-    description: "Click Visualize Go to see the N-Queens backtracking process!",
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: isPlaying,
+    sorting: engine.isPlaying,
     onReset: handleReset,
-    speed: speed,
-    onSpeedChange: setSpeed,
+    speed: engine.speed / 1000,
+    onSpeedChange: (s) => engine.setSpeed(s * 1000),
   });
+
+  const activeFrameData = frames.length > 0 && engine.currentStep >= 0
+    ? frames[engine.currentStep]
+    : {
+        stack: [],
+        board: [-1, -1, -1, -1],
+        solutions: [],
+        activeCell: null,
+        conflictCell: null,
+        activeLine: 0,
+        description: "Click Visualize Go to see the N-Queens backtracking process!",
+      };
 
   const activeStack = activeFrameData.stack || [];
   const activeLine = activeFrameData.activeLine;
@@ -121,7 +99,7 @@ const NQueensAnimation = () => {
         className="max-w-4xl mx-auto bg-white dark:bg-neutral-950 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-8"
       >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-gray-700 dark:text-gray-300 font-medium">
+          <div className="text-gray-700 dark:text-gray-300 font-medium text-lg">
             N-Queens Backtracking Visualizer (4x4 Chessboard)
           </div>
 
@@ -131,17 +109,17 @@ const NQueensAnimation = () => {
           </div>
         </div>
 
-        {isVisualizing && (
-          <div className="mt-4">
+        {isVisualizing && frames.length > 0 && (
+          <div className="mt-6">
             <PlaybackControls
-              isPaused={!isPlaying}
-              onTogglePlayPause={togglePlay}
-              speed={speed}
-              onSpeedChange={setSpeed}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              progressText={`${currentFrame + 1} / ${frames.length || 1}`}
+              isPlaying={engine.isPlaying}
+              onPlayPause={togglePlay}
+              speed={engine.speed / 1000}
+              onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+              onStepForward={engine.stepForward}
+              onStepBackward={engine.stepBackward}
+              onReset={() => { engine.reset(); }}
+              progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
               disabled={frames.length === 0}
             />
           </div>
@@ -173,7 +151,7 @@ const NQueensAnimation = () => {
                 return (
                   <div
                     key={frame.id}
-                    className={`w-full p-2.5 rounded-lg border flex flex-col items-center font-mono text-[9px] font-semibold transition-all duration-300 ${
+                    className={`w-full p-2.5 rounded-lg border flex flex-col items-center font-mono text-[10px] font-semibold transition-all duration-300 ${
                       isTop
                         ? "bg-sky-100 dark:bg-sky-950/40 border-sky-400 text-sky-800 dark:text-sky-200 ring-2 ring-[#0d9488]"
                         : "bg-gray-100 dark:bg-zinc-800 border-gray-300 text-gray-500 dark:text-zinc-400"
@@ -205,7 +183,7 @@ const NQueensAnimation = () => {
                   let borderStyle = "border-transparent";
 
                   if (isCellActive) {
-                    borderStyle = "border-teal-500 dark:border-teal-400 scale-105 shadow-md border-2";
+                    borderStyle = "border-teal-500 dark:border-teal-400 scale-105 shadow-md border-2 z-10";
                     cellColor = "bg-teal-100 dark:bg-teal-950";
                   }
                   if (hasQueen) {
@@ -215,7 +193,7 @@ const NQueensAnimation = () => {
                   return (
                     <div
                       key={col}
-                      className={`w-14 h-14 rounded-lg flex items-center justify-center border-2 transition-all duration-300 font-bold ${cellColor} ${borderStyle}`}
+                      className={`relative w-14 h-14 rounded-lg flex items-center justify-center border-2 transition-all duration-300 font-bold ${cellColor} ${borderStyle}`}
                     >
                       {hasQueen ? (
                         <span
@@ -269,7 +247,7 @@ const NQueensAnimation = () => {
                     }`}
                   >
                     <span className="text-zinc-600 select-none w-3 text-right">{ln.line}</span>
-                    <span>{ln.code}</span>
+                    <span className="whitespace-pre">{ln.code}</span>
                   </div>
                 );
               })}

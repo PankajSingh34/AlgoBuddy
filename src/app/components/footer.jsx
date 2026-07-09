@@ -2,30 +2,31 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { Users } from 'lucide-react'
 import {
   FaGithub,
   FaLinkedin,
   FaEnvelope,
   FaDiscord,
   FaYoutube,
-  FaTwitter,
+  FaXTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
 
 
-import TermsOfServiceModal from '@/app/components/termsOfServicesModal'
-import CookiePolicyModal from '@/app/components/cookie'
-
 
 const Footer = () => {
-  
-  const [showTermsModal, setShowTermsModal] = useState(false)
-  const [showCookieModal, setShowCookieModal] = useState(false)
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterEmailError, setNewsletterEmailError] = useState("");
+  const [newsletterSuccess, setNewsletterSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const validateEmail = (value) => {
+  const validateEmail = (value, isSubmit = false) => {
     if (!value) {
+      if (isSubmit) {
+        setNewsletterEmailError("Email is required");
+        return false;
+      }
       setNewsletterEmailError("");
       return true;
     }
@@ -38,14 +39,33 @@ const Footer = () => {
     return true;
   };
 
-  const handleNewsletterSubscribe = (e) => {
+  const handleNewsletterSubscribe = async (e) => {
     e.preventDefault();
-    if (!validateEmail(newsletterEmail)) {
+    setNewsletterSuccess("");
+    if (!validateEmail(newsletterEmail, true)) {
       return;
     }
-    // TODO: Implement newsletter subscription API call here
-    // For now, just clear the form on successful validation
-    setNewsletterEmail("");
+    
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setNewsletterEmailError(data.error || "Subscription failed");
+      } else {
+        setNewsletterSuccess(data.message || "Successfully subscribed!");
+        setNewsletterEmail("");
+      }
+    } catch (error) {
+      setNewsletterEmailError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const footerHeading =
@@ -123,7 +143,7 @@ const Footer = () => {
               </div>
 
               {/* Newsletter */}
-              <div className="mt-10">
+              <form onSubmit={handleNewsletterSubscribe} className="mt-10">
                 <h3 className="text-white font-semibold mb-2">Stay updated</h3>
                 <p className="text-sm mb-4 text-gray-400 max-w-xs">
                   Subscribe to get the latest updates, features, and tutorials.
@@ -133,20 +153,44 @@ const Footer = () => {
                   <input
                     type="email"
                     placeholder="Enter your email"
-                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500"
+                    value={newsletterEmail}
+                    disabled={isSubmitting}
+                    onChange={(e) => {
+                      setNewsletterEmail(e.target.value);
+                      validateEmail(e.target.value, false);
+                    }}
+                    className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-white placeholder-gray-500 disabled:opacity-50"
                   />
-                  <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors">
-                    Subscribe
+                  <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50">
+                    {isSubmitting ? "..." : "Subscribe"}
                   </button>
                 </div>
-              </div>
+                {newsletterEmailError && (
+                  <p className="text-red-500 text-xs mt-2" role="alert">
+                    {newsletterEmailError}
+                  </p>
+                )}
+                {newsletterSuccess && (
+                  <p className="text-green-500 text-xs mt-2" role="alert">
+                    {newsletterSuccess}
+                  </p>
+                )}
+              </form>
             </div>
 
             {/* Quick Links */}
             <div>
               <h3 className={footerHeading}>Quick Links</h3>
               <div className="space-y-4">
-                <Link href="/" className={footerLink}>
+                <Link
+                  href="/#home"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("home")?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                  }}
+                >
                   Home
                 </Link>
                 <Link href="/visualizer" className={footerLink}>
@@ -202,11 +246,19 @@ const Footer = () => {
                 Join our community and connect with learners and developers.
               </p>
               <div className="space-y-4">
+                <Link
+                  href="/community"
+                  className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  aria-label="Visit AlgoBuddy Community"
+                >
+                  <Users className="w-4 h-4" /> Community
+                </Link>
                 <a
                   href="https://discord.gg/PqnazRxPc"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+                  aria-label="Join AlgoBuddy Discord Community"
                 >
                   <FaDiscord className="w-4 h-4" /> Discord
                 </a>
@@ -240,7 +292,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
-                  <FaTwitter className="w-4 h-4" /> Twitter
+                  <FaXTwitter className="w-4 h-4" /> Twitter
                 </a>
               </div>
             </div>
@@ -254,18 +306,15 @@ const Footer = () => {
                 >
                   Privacy Policy
                 </Link>
-                <button
-                  onClick={() => setShowTermsModal(true)}
-                  className={footerLink}
-                >
-                  Terms of Service
-                </button>
-                <button
-                  onClick={() => setShowCookieModal(true)}
-                  className={footerLink}
-                >
-                  Cookies Policy
-                </button>
+                
+                  <Link href="/terms" className={footerLink}>
+  Terms of Service
+</Link>
+<Link href="/cookie" className={footerLink}>
+  Cookies Policy
+</Link>
+
+
                 <Link href="/code-of-conduct"
                   className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
                 >
@@ -278,23 +327,9 @@ const Footer = () => {
           {/* Bottom Row */}
           <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} AlgoBuddy. All rights reserved.</p>
-            <p>
-              Made with <span className="text-primary">💜</span> by developers,
-              for developers.
-            </p>
           </div>
         </div>
       </footer>
-
-      
-      <TermsOfServiceModal
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-      />
-      <CookiePolicyModal
-        isOpen={showCookieModal}
-        onClose={() => setShowCookieModal(false)}
-      />
       
     </>
   )

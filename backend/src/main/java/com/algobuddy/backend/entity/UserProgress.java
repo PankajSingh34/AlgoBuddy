@@ -3,6 +3,7 @@ package com.algobuddy.backend.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.UUID;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "user_progress")
+@Table(name = "user_progress", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "problem_id"})})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

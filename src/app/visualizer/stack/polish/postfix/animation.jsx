@@ -42,7 +42,6 @@ const InfixToPostfixVisualizer = () => {
   const [postfix, setPostfix] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("Enter an infix expression and click Convert");
-  
   const [steps, setSteps] = useState([]);
   const [visualState, setVisualState] = useState({
     stack: [], output: [], operation: null, message: "Enter an infix expression and click Convert"

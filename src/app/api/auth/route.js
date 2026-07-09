@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Redis } from "@upstash/redis";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, shouldBypassRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { jsonResponse, errorResponse } from "@/lib/serverApi";
+import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 
 function getValidUrl(value) {
   if (!value) return null;
@@ -31,12 +30,9 @@ function getValidKey(value) {
 const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = getValidKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const supabaseServiceKey = getValidKey(process.env.SUPABASE_SERVICE_KEY);
-const turnstileConfigured = process.env.TURNSTILE_CONFIGURED === "true";
 
-const supabaseAdmin =
-  supabaseUrl && supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : null;
+let supabaseAdmin = null;
+try { supabaseAdmin = getSupabaseAdmin(); } catch { supabaseAdmin = null; }
 
 const AUTH_RATE_LIMIT_PREFIX = "auth";
 
@@ -44,9 +40,64 @@ const LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60; // 15 minutes
 const LOGIN_FAILURE_THRESHOLD = 5; // lock after 5 failed attempts
 const LOGIN_LOCK_SECONDS = 15 * 60; // 15 minutes lockout
 
+const MAX_MEMORY_LOCKOUTS = 5000;
+const MAX_MEMORY_FAILURES = 5000;
+
 // In-memory fallback for local dev (single instance). Not suitable for serverless scaling.
 const memoryLockouts = new Map(); // email -> until timestamp
 const memoryFailures = new Map(); // email -> { count, resetAt }
+const memoryLocks = new Map(); // email -> boolean (per-email mutex)
+
+async function acquireMemoryLock(key, timeoutMs = 2000) {
+  const start = Date.now();
+  while (memoryLocks.get(key) === true) {
+    if (Date.now() - start > timeoutMs) return false;
+    await new Promise(r => setTimeout(r, 5));
+  }
+  memoryLocks.set(key, true);
+  return true;
+}
+
+function releaseMemoryLock(key) {
+  memoryLocks.delete(key);
+}
+
+// Periodic sweeper to clean up expired entries (replaces probabilistic GC)
+const MEMORY_SWEEP_INTERVAL_MS = 60_000;
+let memorySweepTimer = null;
+
+function startMemorySweeper() {
+  if (memorySweepTimer) return;
+  memorySweepTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [k, until] of memoryLockouts.entries()) {
+      if (until <= now) memoryLockouts.delete(k);
+    }
+    for (const [k, bucket] of memoryFailures.entries()) {
+      if (bucket.resetAt <= now) memoryFailures.delete(k);
+    }
+    // memoryLockouts is exempt from size-based eviction to prevent brute-force
+    // bypass (an attacker flooding dummy emails should not flush a target's lockout).
+    // OOM risk is low since lockouts require 5 consecutive failures before creation.
+    // memoryFailures gets size limits to bound the higher-volume failure tracking.
+    if (memoryFailures.size > MAX_MEMORY_FAILURES) {
+      const toEvict = memoryFailures.size - MAX_MEMORY_FAILURES;
+      const iter = memoryFailures.keys();
+      for (let i = 0; i < toEvict; i++) {
+        const k = iter.next().value;
+        if (k !== undefined) memoryFailures.delete(k);
+      }
+      console.warn(`[auth] Evicted ${toEvict} failure entries: exceeded ${MAX_MEMORY_FAILURES} limit`);
+    }
+    const totalMemoryEntries = memoryLockouts.size + memoryFailures.size + memoryLocks.size;
+    if (totalMemoryEntries > 0) {
+      console.log(`[auth] Memory state: lockouts=${memoryLockouts.size}, failures=${memoryFailures.size}, locks=${memoryLocks.size}`);
+    }
+  }, MEMORY_SWEEP_INTERVAL_MS);
+  if (memorySweepTimer.unref) memorySweepTimer.unref();
+}
+
+startMemorySweeper();
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -106,13 +157,20 @@ async function isEmailLocked(email) {
     }
   }
 
-  const until = memoryLockouts.get(email);
-  if (!until) return false;
-  if (until <= Date.now()) {
-    memoryLockouts.delete(email);
-    return false;
+  const lockKeyMem = `auth:lock:${email}`;
+  const acquired = await acquireMemoryLock(lockKeyMem);
+  if (!acquired) return false;
+  try {
+    const until = memoryLockouts.get(email);
+    if (!until) return false;
+    if (until <= Date.now()) {
+      memoryLockouts.delete(email);
+      return false;
+    }
+    return true;
+  } finally {
+    releaseMemoryLock(lockKeyMem);
   }
-  return true;
 }
 
 async function recordLoginFailure(email) {
@@ -121,7 +179,6 @@ async function recordLoginFailure(email) {
   if (shouldTryRedis()) {
     try {
       const attempts = await redis.incr(failKey(email));
-      // Ensure the failure counter expires.
       if (attempts === 1) {
         await redis.expire(failKey(email), LOGIN_FAILURE_WINDOW_SECONDS);
       }
@@ -139,31 +196,28 @@ async function recordLoginFailure(email) {
     }
   }
 
-  const now = Date.now();
-  
-  // --- Memory Leak Fix: Probabilistic Garbage Collection ---
-  if (Math.random() < 0.05) {
-    for (const [k, until] of memoryLockouts.entries()) {
-      if (until <= now) memoryLockouts.delete(k);
-    }
-    for (const [k, bucket] of memoryFailures.entries()) {
-      if (bucket.resetAt <= now) memoryFailures.delete(k);
-    }
-  }
+  const lockKeyMem = `auth:fail:${email}`;
+  const acquired = await acquireMemoryLock(lockKeyMem);
+  if (!acquired) return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD };
 
-  const bucket = memoryFailures.get(email);
-  if (!bucket || bucket.resetAt <= now) {
-    memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
-    return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD - 1 };
+  try {
+    const now = Date.now();
+    const bucket = memoryFailures.get(email);
+    if (!bucket || bucket.resetAt <= now) {
+      memoryFailures.set(email, { count: 1, resetAt: now + LOGIN_FAILURE_WINDOW_SECONDS * 1000 });
+      return { locked: false, remaining: LOGIN_FAILURE_THRESHOLD - 1 };
+    }
+    bucket.count += 1;
+    const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - bucket.count);
+    if (bucket.count >= LOGIN_FAILURE_THRESHOLD) {
+      memoryFailures.delete(email);
+      memoryLockouts.set(email, now + LOGIN_LOCK_SECONDS * 1000);
+      return { locked: true, remaining: 0 };
+    }
+    return { locked: false, remaining };
+  } finally {
+    releaseMemoryLock(lockKeyMem);
   }
-  bucket.count += 1;
-  const remaining = Math.max(0, LOGIN_FAILURE_THRESHOLD - bucket.count);
-  if (bucket.count >= LOGIN_FAILURE_THRESHOLD) {
-    memoryFailures.delete(email);
-    memoryLockouts.set(email, now + LOGIN_LOCK_SECONDS * 1000);
-    return { locked: true, remaining: 0 };
-  }
-  return { locked: false, remaining };
 }
 
 async function clearLoginFailures(email) {
@@ -178,8 +232,16 @@ async function clearLoginFailures(email) {
       markRedisOffline(err);
     }
   }
-  memoryFailures.delete(email);
-  memoryLockouts.delete(email);
+
+  const lockKeyMem = `auth:clear:${email}`;
+  const acquired = await acquireMemoryLock(lockKeyMem);
+  if (!acquired) return;
+  try {
+    memoryFailures.delete(email);
+    memoryLockouts.delete(email);
+  } finally {
+    releaseMemoryLock(lockKeyMem);
+  }
 }
 
 function genericAuthError() {
@@ -214,28 +276,31 @@ export async function POST(req) {
 
     const ip = getClientIp(req.headers);
 
-    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
-    const isConfigured = turnstileConfigured && turnstileSecretKey && turnstileSecretKey !== "undefined";
-
+    const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
     let captcha;
-    if (!isConfigured) {
-      const explicitBypass = process.env.TURNSTILE_BYPASS === "true";
 
-      if (isProduction && !explicitBypass) {
-        return jsonResponse({ success: false, message: "Server misconfigured: CAPTCHA secret key is not set." }, 500);
-      }
-
-      if (!explicitBypass) {
-        console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
-      }
-
+    if (explicitBypass) {
       captcha = { ok: true };
     } else {
-      captcha = await verifyTurnstile(String(captchaToken), { ip });
+      try {
+        captcha = await verifyTurnstile(String(captchaToken), { ip });
+      } catch (err) {
+        if (err.message === 'CAPTCHA_CONFIG_MISSING') {
+          if (!isProduction) {
+            console.warn("TURNSTILE_SECRET_KEY is not configured. Skipping captcha verification. This should only be used for local development.");
+            captcha = { ok: true };
+          } else {
+            console.error("Server misconfigured: CAPTCHA secret key is not set.");
+            return jsonResponse({ success: false, message: "We're having trouble verifying the CAPTCHA. Please try again later." }, 500);
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (!captcha.ok) {
-      return jsonResponse({ success: false, message: captcha.error }, 400);
+      return jsonResponse({ success: false, message: captcha.error || "Captcha verification failed. Please try again." }, 400);
     }
 
     const normalizedEmail = normalizeEmail(email);
@@ -256,7 +321,7 @@ export async function POST(req) {
         return jsonResponse({ success: false, message: "Auth server is not configured." }, 500);
       }
 
-      const admin = createClient(supabaseUrl, serviceKey);
+      const admin = getSupabaseAdmin();
 
       const emailConfirm = process.env.AUTO_CONFIRM_EMAIL === "true";
 
@@ -287,7 +352,7 @@ export async function POST(req) {
     }
 
     if (action === "login") {
-      if (await isEmailLocked(normalizedEmail)) {
+      if (!shouldBypassRateLimit() && await isEmailLocked(normalizedEmail)) {
         return jsonResponse({ success: false, message: "Too many failed login attempts. Please try again later." }, 429);
       }
 
@@ -307,7 +372,11 @@ export async function POST(req) {
             },
             setAll(cookiesToSet) {
               cookiesToSet.forEach(({ name, value, options }) => {
-                cookieStore.set(name, value, options);
+                cookieStore.set(name, value, {
+                  ...options,
+                  sameSite: 'strict',
+                  secure: process.env.NODE_ENV === 'production',
+                });
               });
             },
           },

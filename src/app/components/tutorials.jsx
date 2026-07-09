@@ -23,7 +23,7 @@ const TUTORIALS_DATA = [
     category: "Data Structures",
     difficulty: "Beginner",
     readTime: "12 min read",
-    link: "/visualizer/linkedlist",
+    link: "/visualizer/linked-list",
     badgeColor: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   },
   {

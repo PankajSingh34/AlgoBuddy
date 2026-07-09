@@ -3,33 +3,29 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import { TriangleAlert } from "lucide-react";
-
-async function apiFetch(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
-}
+import { api } from "@/lib/apiClient";
 
 export default function ModuleCard({ moduleId, description, initialDone }) {
   const { user } = useUser() || {};
   const [isDone, setIsDone] = useState(initialDone);
-  
+
   useEffect(() => {
+    if (!user) {
+      setIsDone(initialDone ?? false);
+      return;
+    }
+
     const fetchUserProgress = async () => {
-      if (!user) return;
       try {
-        const data = await apiFetch(`/api/progress?moduleId=${encodeURIComponent(moduleId)}`);
-        setIsDone(data?.is_done ?? false);
+        const data = await api.request("/api/progress");
+        const status = data.progress?.[moduleId]?.status;
+        setIsDone(status === "Completed");
       } catch (e) {
         console.error("Error fetching user progress:", e);
       }
     };
     fetchUserProgress();
-  }, [user, moduleId]);
+  }, [user, moduleId, initialDone]);
 
   async function toggleCompletion() {
     if (!user) {
@@ -64,12 +60,15 @@ export default function ModuleCard({ moduleId, description, initialDone }) {
     }
 
     try {
-      await apiFetch("/api/progress", {
+      const nextStatus = isDone ? "Not Started" : "Completed";
+      await api.request("/api/progress", {
         method: "POST",
-        body: JSON.stringify({ moduleId, isDone: !isDone }),
+        body: { problemId: moduleId, status: nextStatus },
       });
       setIsDone(!isDone);
-      toast.success(isDone ? "Module marked as incomplete." : "Module marked as completed!");
+      toast.success(
+        isDone ? "Module marked as incomplete." : "Module marked as completed!"
+      );
     } catch (err) {
       console.error("Error updating progress:", err);
       toast.error("Failed to update progress. Please try again.");
