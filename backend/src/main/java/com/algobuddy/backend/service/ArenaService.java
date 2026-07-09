@@ -376,7 +376,6 @@ public class ArenaService {
                     requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
                     requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
                     requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
-                    requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (finalIsWinner ? 1 : 0));
                     if (finalIsWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
                     else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
 
@@ -384,7 +383,6 @@ public class ArenaService {
                         opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
                         opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
                         opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
-                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!finalIsWinner ? 1 : 0));
                         if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
                         else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
                     }

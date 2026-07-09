@@ -26,7 +26,7 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 p.rating as rating, 
                 p.battles_won as battlesWon, 
                 p.battles_lost as battlesLost, 
-                p.total_problems_solved as totalProblemsSolved,
+                (SELECT COALESCE(COUNT(*), 0) FROM public.user_progress up WHERE up.user_id = p.user_id AND up.status = 'Completed') as totalProblemsSolved,
                 COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as name,
                 COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
             FROM public.user_arena_profiles p
@@ -44,7 +44,7 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 p.rating as rating, 
                 p.battles_won as battlesWon, 
                 p.battles_lost as battlesLost, 
-                p.total_problems_solved as totalProblemsSolved,
+                (SELECT COALESCE(COUNT(*), 0) FROM public.user_progress up WHERE up.user_id = p.user_id AND up.status = 'Completed') as totalProblemsSolved,
                 COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as name,
                 COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
             FROM public.user_arena_profiles p
