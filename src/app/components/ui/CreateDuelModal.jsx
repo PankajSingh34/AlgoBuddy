@@ -1,13 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Copy, Check, Link2, Play } from "lucide-react";
 import { generateSecureCode } from "@/lib/random";
 
-export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
-  const [topic, setTopic] = useState("Arrays");
-  const [difficulty, setDifficulty] = useState("Easy");
-  const [lobbyCode, setLobbyCode] = useState(() => generateSecureCode(6));
+export default function CreateDuelModal({ isOpen, onClose, onCreateMatch, initialTopic, initialDifficulty, initialTimeLimit, initialWager, initialMode, initialPublic }) {
+  const [lobbyCode, setLobbyCode] = useState("");
+  
+  useEffect(() => {
+    if (isOpen) {
+      setLobbyCode(generateSecureCode(6));
+    }
+  }, [isOpen]);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -21,8 +25,12 @@ export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
   const handleStart = () => {
     onCreateMatch({
       lobbyCode,
-      topic,
-      difficulty,
+      topic: initialTopic,
+      difficulty: initialDifficulty,
+      timeLimit: initialTimeLimit,
+      wager: initialWager,
+      mode: initialMode,
+      isPublic: initialPublic
     });
   };
 
@@ -50,7 +58,7 @@ export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
           {/* Header */}
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-neutral-800/80 mb-6">
             <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-              Create Friend Duel
+              Lobby Created
             </h3>
             <button
               onClick={onClose}
@@ -60,46 +68,37 @@ export default function CreateDuelModal({ isOpen, onClose, onCreateMatch }) {
             </button>
           </div>
 
-          <div className="space-y-4">
-            {/* Topic Select */}
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 tracking-wider mb-2">
-                DSA Topic
-              </label>
-              <select
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800/80 text-slate-800 dark:text-neutral-250 rounded-xl px-4 py-3 text-sm focus:border-primary/50 outline-none transition duration-150"
-              >
-                <option value="Arrays">Arrays &amp; Strings</option>
-                <option value="Sorting">Sorting Algorithms</option>
-                <option value="Linked Lists">Linked Lists</option>
-                <option value="Trees">Trees &amp; BSTs</option>
-                <option value="Graphs">Graphs (BFS/DFS)</option>
-                <option value="DP">Dynamic Programming</option>
-              </select>
-            </div>
-
-            {/* Difficulty Select */}
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 tracking-wider mb-2">
-                Difficulty
-              </label>
-              <div className="flex gap-2">
-                {["Easy", "Medium", "Hard"].map((diff) => (
-                  <button
-                    key={diff}
-                    type="button"
-                    onClick={() => setDifficulty(diff)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition duration-150 ${
-                      difficulty === diff
-                        ? "bg-primary text-white border-primary shadow-sm"
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-neutral-950 dark:border-neutral-800/80 dark:text-neutral-400 dark:hover:bg-neutral-900"
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                ))}
+          <div className="space-y-6">
+            {/* Lobby Settings Summary */}
+            <div className="bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800/80 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Lobby Configuration</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="block text-[10px] text-slate-400 mb-1">Topic</span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 bg-white dark:bg-neutral-900 px-2 py-1 rounded border border-slate-200 dark:border-neutral-800">{initialTopic || "Random"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-400 mb-1">Difficulty</span>
+                  <span className={`text-xs font-bold px-2 py-1 rounded border ${initialDifficulty === "Easy" ? "bg-emerald-50 text-emerald-600 border-emerald-200" : initialDifficulty === "Medium" ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-rose-50 text-rose-600 border-rose-200"}`}>{initialDifficulty || "Medium"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-400 mb-1">Time Limit</span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 bg-white dark:bg-neutral-900 px-2 py-1 rounded border border-slate-200 dark:border-neutral-800">{initialTimeLimit || "30m"}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-slate-400 mb-1">Mode</span>
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20">{initialMode || "Standard"}</span>
+                </div>
+                <div className="col-span-2 flex justify-between items-center bg-white dark:bg-neutral-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-800 mt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400">XP Wager</span>
+                    <span className="text-sm font-black text-amber-500">{initialWager || 50} XP</span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] text-slate-400">Visibility</span>
+                    <span className={`text-xs font-bold ${initialPublic ? "text-emerald-500" : "text-slate-500"}`}>{initialPublic ? "Public" : "Private"}</span>
+                  </div>
+                </div>
               </div>
             </div>
 

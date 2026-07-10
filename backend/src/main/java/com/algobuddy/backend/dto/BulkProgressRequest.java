@@ -16,6 +16,8 @@ public class BulkProgressRequest {
     @Size(max = 100, message = "Bulk update limited to 100 items per request")
     private List<Item> items;
 
+    private String localDate;
+
     @Data
     public static class Item {
         @NotBlank(message = "problemId is required")

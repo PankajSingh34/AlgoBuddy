@@ -38,8 +38,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     public RateLimitInterceptor() {
         this.cache = Caffeine.newBuilder()
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .maximumSize(100_000)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(10_000)
                 .build();
     }
 

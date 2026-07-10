@@ -55,7 +55,15 @@ export async function PATCH(request, { params }) {
       return jsonResponse({ error: updateError.message }, 500);
     }
 
-    const statusLabel = status === "accepted" ? "accepted" : "rejected";
+    // Map every valid status to its own label. The previous binary ternary
+    // (`status === "accepted" ? "accepted" : "rejected"`) silently mislabeled
+    // "reviewing" updates as "rejected" in both the notification and email.
+    const STATUS_LABELS = {
+      accepted: "accepted",
+      rejected: "rejected",
+      reviewing: "moved to review",
+    };
+    const statusLabel = STATUS_LABELS[status] ?? status;
     const jobTitle = application.job?.title || "a job";
     const companyName = application.job?.company || "";
 

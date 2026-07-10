@@ -3,7 +3,6 @@ import AuthGuard from "./AuthGuard";
 import Animation from "./animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "./codeBlock";
-import Quiz from "./quiz";
 import Content from "./content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, { createVisualizerPaths } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -18,7 +17,6 @@ export default function ClientVisualizer() {
         animation={<Animation />}
         content={<Content />}
         code={<Code />}
-        quiz={<Quiz />}
         moduleCard={
           <ModuleCard
             moduleId={MODULE_MAPS.astar}

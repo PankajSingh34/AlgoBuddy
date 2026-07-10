@@ -139,9 +139,24 @@ CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_s
   USING (true) WITH CHECK (true);
 
 -- ====================================================================
+-- topic_comments table for visualizer discussion threads
+-- ====================================================================
+CREATE TABLE topic_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  topic_id TEXT NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE topic_comments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read comments" ON topic_comments FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can insert comments" ON topic_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- Atomic streak increment function (fixes TOCTOU race condition)
 -- ====================================================================
-CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID)
+CREATE OR REPLACE FUNCTION increment_streak_on_completion(p_user_id UUID, p_local_date DATE DEFAULT NULL)
 RETURNS TABLE (current_streak INT, longest_streak INT)
 LANGUAGE plpgsql
 AS $$
@@ -149,24 +164,40 @@ DECLARE
   v_current INT;
   v_longest INT;
   v_last_active DATE;
-  v_today DATE := CURRENT_DATE;
-  v_yesterday DATE := CURRENT_DATE - 1;
+  v_today DATE := COALESCE(p_local_date, CURRENT_DATE);
+  v_yesterday DATE := COALESCE(p_local_date, CURRENT_DATE) - 1;
 BEGIN
-  SELECT current_streak, longest_streak, last_active_date::DATE
+  -- Try to select and lock the existing row
+  SELECT user_practice_stats.current_streak, user_practice_stats.longest_streak, user_practice_stats.last_active_date::DATE
   INTO v_current, v_longest, v_last_active
   FROM user_practice_stats
   WHERE user_id = p_user_id
   FOR UPDATE;
 
+  -- If not found, attempt to insert a new row
   IF NOT FOUND THEN
-    INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
-    VALUES (p_user_id, 1, 1, v_today, 0)
-    RETURNING current_streak, longest_streak INTO v_current, v_longest;
-    RETURN QUERY SELECT v_current, v_longest;
-    RETURN;
+    BEGIN
+      INSERT INTO user_practice_stats (user_id, current_streak, longest_streak, last_active_date, visualized_count)
+      VALUES (p_user_id, 1, 1, v_today, 0)
+      RETURNING user_practice_stats.current_streak, user_practice_stats.longest_streak INTO v_current, v_longest;
+      RETURN QUERY SELECT v_current, v_longest;
+      RETURN;
+    EXCEPTION WHEN unique_violation THEN
+      -- If a concurrent insert succeeded, lock and select the newly inserted row
+      SELECT user_practice_stats.current_streak, user_practice_stats.longest_streak, user_practice_stats.last_active_date::DATE
+      INTO v_current, v_longest, v_last_active
+      FROM user_practice_stats
+      WHERE user_id = p_user_id
+      FOR UPDATE;
+    END;
   END IF;
 
-  IF v_last_active = v_yesterday THEN
+  IF v_last_active > v_today THEN
+    -- Out of order update (e.g., solving problem for a past day after solving one for today/future)
+    -- Do not reset or modify current_streak, longest_streak, or last_active_date.
+    RETURN QUERY SELECT v_current, v_longest;
+    RETURN;
+  ELSIF v_last_active = v_yesterday THEN
     v_current := v_current + 1;
     IF v_current > v_longest THEN
       v_longest := v_current;

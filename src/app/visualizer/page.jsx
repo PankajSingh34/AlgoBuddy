@@ -112,7 +112,7 @@ const sections = [
             path: "/visualizer/code-execution",
           },
         ],
-      },
+      },    
     ],
   },
   {
@@ -159,6 +159,8 @@ const sections = [
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
           { name: "Radix Sort", path: "/visualizer/array/radixsort" },
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
+          { name: "Shell Sort", path: "/visualizer/array/shellsort" },
+          { name: "Tim Sort", path: "/visualizer/array/timsort" },
         ],
       },
       {
@@ -166,6 +168,14 @@ const sections = [
         items: [
           { name: "Sliding Window", path: "/visualizer/array/slidingwindow" },
           { name: "Two Pointers", path: "/visualizer/array/twopointers" },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Searching Quiz", path: "/visualizer/array/searching/quiz" },
+          { name: "Sorting Quiz", path: "/visualizer/array/sorting/quiz" },
+          { name: "Interview Patterns Quiz", path: "/visualizer/array/Interview-Patterns/quiz" },
         ],
       },
     ],
@@ -207,6 +217,12 @@ const sections = [
           { name: "Recursion Trees", path: "/visualizer/recursion/trees" },
           { name: "Call Stack Visualization", path: "/visualizer/recursion/stack" },
           { name: "Recursive Binary Search", path: "/visualizer/recursion/binary-search" },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Recursion Quiz", path: "/visualizer/recursion/quiz" },
         ],
       },
     ],
@@ -264,6 +280,15 @@ const sections = [
             name: "Using Linked List",
             path: "/visualizer/stack/implementation/usingLinkedList",
           },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Stack Operations Quiz", path: "/visualizer/stack/quiz" },
+          { name: "Polish Notation Evaluation Quiz", path: "/visualizer/stack/polish/quiz" },
+          { name: "Implementation Quiz", path: "/visualizer/stack/implementation/quiz" },
+          { name: "Monotonic Stack Quiz", path: "/visualizer/stack/monotonic/quiz" },
         ],
       },
     ],
@@ -335,6 +360,14 @@ const sections = [
             name: "Using Linked List",
             path: "/visualizer/queue/implementation/linkedList",
           },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Queue Operations Quiz", path: "/visualizer/queue/operations/quiz" },
+          { name: "Queue Types Quiz", path: "/visualizer/queue/types/quiz" },
+          { name: "Queue Implementation Quiz", path: "/visualizer/queue/implementation/quiz" },
         ],
       },
     ],
@@ -419,6 +452,13 @@ const sections = [
             name: "Sorting",
             path: "/visualizer/linkedlist/operations/sorting",
           },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Linked List Types Quiz", path: "/visualizer/linkedlist/types/quiz" },
+          { name: "Linked List Operations Quiz", path: "/visualizer/linkedlist/operations/quiz" },
         ],
       },
     ],
@@ -560,6 +600,16 @@ const sections = [
           },
         ],
       },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Binary Tree Quiz", path: "/visualizer/tree/binaryTree/quiz" },
+          { name: "Binary Search Tree Quiz", path: "/visualizer/tree/bst/quiz" },
+          { name: "Tree Traversal Quiz", path: "/visualizer/tree/traversing/quiz" },
+          { name: "Advanced Tree Quiz", path: "/visualizer/tree/advanced/quiz" },
+          { name: "Tree Applications Quiz", path: "/visualizer/tree/applications/quiz" },
+        ],
+      },
     ],
   },
   {
@@ -594,6 +644,12 @@ const sections = [
           { name: "Insert (put)", path: "/visualizer/hashmap/insert" },
           { name: "Search (get)", path: "/visualizer/hashmap/search" },
           { name: "Delete (remove)", path: "/visualizer/hashmap/delete" },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "HashMap Operation Quiz", path: "/visualizer/hashmap/operations/quiz" },
         ],
       },
     ],
@@ -673,6 +729,22 @@ const sections = [
             name: "Topological Sort",
             path: "/visualizer/graph/topological-sort",
           },
+          {
+            name: "Bellman-Ford Algorithm",
+            path: "/visualizer/graph/bellman-ford",
+          },
+          {
+            name: "Kosaraju's Algorithm",
+            path: "/visualizer/graph/kosaraju",
+          },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Graph Representation Quiz", path: "/visualizer/graph/representation/quiz" },
+          { name: "Graph Traversal Quiz", path: "/visualizer/graph/traversal/quiz" },
+          { name: "Graph Algorithms Quiz", path: "/visualizer/graph/algorithms/quiz" },
         ],
       },
     ],
@@ -713,6 +785,12 @@ const sections = [
             name: "Coin Change",
             path: "/visualizer/dp/coin-change",
           },
+        ],
+      },
+      {
+        title: "Quizzes",
+        items: [
+          { name: "Dynamic Programming Quiz", path: "/visualizer/dp/quiz" },
         ],
       },
     ],

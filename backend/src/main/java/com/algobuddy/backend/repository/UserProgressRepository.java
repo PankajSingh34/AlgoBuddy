@@ -19,7 +19,7 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
 
     List<UserProgress> findByUserIdAndProblemIdIn(UUID userId, List<String> problemIds);
 
-    @Query(value = "SELECT COUNT(*) FROM user_progress WHERE user_id = :userId AND status = 'Completed' AND updated_at >= :startTime", nativeQuery = true)
+    @Query("SELECT COUNT(up) FROM UserProgress up WHERE up.userId = :userId AND up.status = 'Completed' AND up.updatedAt >= :startTime")
     int countCompletedSince(@Param("userId") UUID userId, @Param("startTime") OffsetDateTime startTime);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

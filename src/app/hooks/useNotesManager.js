@@ -16,6 +16,13 @@ const TOPIC_MAPPING = {
   dp: "Dynamic Programming"
 };
 
+const getUUIDPart = () => {
+  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID().split("-")[0];
+  }
+  return Math.random().toString(36).substring(2, 10);
+};
+
 export function useNotesManager() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -91,7 +98,7 @@ export function useNotesManager() {
   // Create Note
   const createNote = useCallback((title = "Untitled Note", content = "") => {
     const newNote = {
-      id: `note-${Date.now()}-${globalThis.crypto.randomUUID().split('-')[0]}`,
+      id: `note-${Date.now()}-${getUUIDPart()}`,
       title: title.trim() || "Untitled Note",
       content,
       topic: currentTopic,

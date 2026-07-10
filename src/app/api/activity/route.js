@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { getSupabaseAdmin, getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { isRlsPolicyError } from "@/lib/activity";
 
 export async function POST(request) {
   try {
@@ -20,12 +21,24 @@ export async function POST(request) {
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase
+    let { data, error } = await supabase
       .from("user_activity")
       .upsert(
         { user_id: authResult.user.id, activity_date: localDate, type: type || "site_visit" },
         { onConflict: "user_id, activity_date", ignoreDuplicates: true }
       );
+
+    if (error && isRlsPolicyError(error)) {
+      console.warn("[activity] Falling back to admin client because the server client hit an RLS policy error.", error.message);
+      const adminSupabase = getSupabaseAdmin();
+      ({ data, error } = await adminSupabase
+        .from("user_activity")
+        .upsert(
+          { user_id: authResult.user.id, activity_date: localDate, type: type || "site_visit" },
+          { onConflict: "user_id, activity_date", ignoreDuplicates: true }
+        ));
+    }
+
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ success: true });
   } catch (error) {
@@ -46,12 +59,24 @@ export async function GET(request) {
     const sinceStr = since.toISOString();
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("user_activity")
       .select("activity_date, created_at")
       .eq("user_id", authResult.user.id)
       .gte("created_at", sinceStr)
       .order("created_at", { ascending: false });
+
+    if (error && isRlsPolicyError(error)) {
+      console.warn("[activity] Falling back to admin client because the server client hit an RLS policy error while reading activity history.", error.message);
+      const adminSupabase = getSupabaseAdmin();
+      ({ data, error } = await adminSupabase
+        .from("user_activity")
+        .select("activity_date, created_at")
+        .eq("user_id", authResult.user.id)
+        .gte("created_at", sinceStr)
+        .order("created_at", { ascending: false }));
+    }
+
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse(data || []);
   } catch (error) {

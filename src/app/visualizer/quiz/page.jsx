@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Layers, GitBranch, Terminal, HelpCircle, ArrowRight, Search, Network, Brain } from "lucide-react";
+import { Layers, GitBranch, Terminal, HelpCircle, ArrowRight, Search, Network, Brain, TreePine, Hash, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QuizPage() {
+  
   const quizzes = [
     {
       title: "Searching Quiz",
-      description: "Practice Linear Search and Binary Search.",
+      description: "Practice all searching algorithms including liner search, binary search, ternary search, etc.",
       href: "/visualizer/array/searching/quiz",
       icon: Search,
       filename: "searching_quiz.js",
@@ -106,31 +107,16 @@ export default function QuizPage() {
       btnBg: "bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600",
     },
     {
-      title: "Graph Algorithms Quiz",
-      description: "Test your understanding of Graph algorithms including BFS, DFS, Dijkstra, MST, and more.",
-      href: "/visualizer/graph/quiz",
-      icon: Network,
-      filename: "graph_algorithms_quiz.js",
-      cardBorder: "border-orange-500/20 dark:border-orange-500/30",
-      topBarBg: "bg-orange-500/10 dark:bg-orange-500/20",
-      iconStyle: "bg-orange-500/10 border border-orange-500/20 dark:border-orange-500/30 text-orange-600 dark:text-orange-400",
-      btnBg: "bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600",
-    },
-    {
       title: "Queue Types Quiz",
       description:
         "Practice Single Ended Queue, Double Ended Queue, Circular Queue, and Priority Queue concepts.",
       href: "/visualizer/queue/types/quiz",
       icon: Layers,
       filename: "queue_types_quiz.js",
-
       cardBorder: "border-orange-500/20 dark:border-orange-500/30",
-
       topBarBg: "bg-orange-500/10 dark:bg-orange-500/20",
-
       iconStyle:
         "bg-orange-500/10 border border-orange-500/20 dark:border-orange-500/30 text-orange-600 dark:text-orange-400",
-
       btnBg:
         "bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600",
     },
@@ -141,13 +127,10 @@ export default function QuizPage() {
       href: "/visualizer/queue/implementation/quiz",
       icon: Layers,
       filename: "queue_implementation_quiz.js",
-
       cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
       topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-
       iconStyle:
         "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
-
       btnBg:
         "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
     },
@@ -158,13 +141,10 @@ export default function QuizPage() {
       href: "/visualizer/linkedlist/types/quiz",
       icon: Layers,
       filename: "linked_list_types_quiz.js",
-
       cardBorder: "border-blue-500/20 dark:border-blue-500/30",
       topBarBg: "bg-blue-500/10 dark:bg-blue-500/20",
-
       iconStyle:
         "bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400",
-
       btnBg:
         "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
     },
@@ -175,15 +155,136 @@ export default function QuizPage() {
       href: "/visualizer/linkedlist/operations/quiz",
       icon: Layers,
       filename: "linked_list_operations_quiz.js",
-
       cardBorder: "border-blue-500/20 dark:border-blue-500/30",
       topBarBg: "bg-blue-500/10 dark:bg-blue-500/20",
-
       iconStyle:
         "bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400",
-
       btnBg:
         "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
+    },
+    {
+      title: "Binary Tree Quiz",
+      description: "Practice Binary Tree Structure & Properties and Types.",
+      href: "/visualizer/tree/binaryTree/quiz",
+      filename: "binary_tree_quiz.js",
+      icon: Layers,
+      cardBorder: "border-green-500/20 dark:border-green-500/30",
+      topBarBg: "bg-green-500/10 dark:bg-green-500/20",
+      iconStyle:
+        "bg-green-500/10 border border-green-500/20 dark:border-green-500/30 text-green-600 dark:text-green-400",
+      btnBg:
+        "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600",
+    },
+    {
+      title: "Binary Search Tree Quiz",
+      description: "Practice BST insertion, deletion, searching, traversals, and AVL balancing.",
+      href: "/visualizer/tree/bst/quiz",
+      filename: "binary_search_tree_quiz.js",
+      icon: Layers,
+      cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
+      topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      iconStyle:
+        "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+      btnBg:
+        "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
+    },
+    {
+      title: "Tree Traversal Quiz",
+      description:
+        "Practice Pre-order, In-order, Post-order, and Level-order traversal algorithms.",
+      href: "/visualizer/tree/traversing/quiz",
+      filename: "tree_traversal_quiz.js",
+      icon: Layers,
+      cardBorder: "border-lime-500/20 dark:border-lime-500/30",
+      topBarBg: "bg-lime-500/10 dark:bg-lime-500/20",
+      iconStyle:
+        "bg-lime-500/10 border border-lime-500/20 dark:border-lime-500/30 text-lime-600 dark:text-lime-400",
+      btnBg:
+        "bg-lime-600 hover:bg-lime-700 dark:bg-lime-500 dark:hover:bg-lime-600",
+    },
+    {
+      title: "Advanced Tree Quiz",
+      description:
+        "Practice AVL, Red-Black Tree, B-Tree, B+ Tree, Segment Tree, Fenwick Tree, Trie, and Heap Tree concepts.",
+      href: "/visualizer/tree/advanced/quiz",
+      filename: "advanced_tree_quiz.js",
+      icon: Layers,
+      cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
+      topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      iconStyle:
+        "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+      btnBg:
+        "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
+    },
+    {
+      title: "Tree Applications Quiz",
+      description:
+        "Practice Heap, Heap Sort, Huffman Coding, Decision Trees, and Syntax Trees.",
+      href: "/visualizer/tree/applications/quiz",
+      filename: "tree_applications_quiz.js",
+      icon: Layers,
+      cardBorder: "border-emerald-500/20 dark:border-emerald-500/30",
+      topBarBg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      iconStyle:
+        "bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400",
+      btnBg:
+        "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600",
+    },
+    {
+      title: "HashMap Operation Quiz",
+      description:
+        "Practice HashMap insertion, searching, and deletion operations.",
+      href: "/visualizer/hashmap/operations/quiz",
+      filename: "hashmap_quiz.js",
+      icon: Hash,
+      cardBorder: "border-violet-500/20 dark:border-violet-500/30",
+      topBarBg: "bg-violet-500/10 dark:bg-violet-500/20",
+      iconStyle:
+        "bg-violet-500/10 border border-violet-500/20 dark:border-violet-500/30 text-violet-600 dark:text-violet-400",
+      btnBg:
+        "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600",
+    },
+    {
+      title: "Graph Representation Quiz",
+      description:
+        "Practice Adjacency Matrix and Adjacency List representations.",
+      href: "/visualizer/graph/representation/quiz",
+      filename: "graph_representation_quiz.js",
+      icon: Network,
+      cardBorder: "border-cyan-500/20 dark:border-cyan-500/30",
+      topBarBg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+      iconStyle:
+        "bg-cyan-500/10 border border-cyan-500/20 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
+      btnBg:
+        "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+    },
+    {
+      title: "Graph Traversal Quiz",
+      description:
+        "Practice Breadth-First Search (BFS) and Depth-First Search (DFS).",
+      href: "/visualizer/graph/traversal/quiz",
+      filename: "graph_traversal_quiz.js",
+      icon: Network,
+      cardBorder: "border-sky-500/20 dark:border-sky-500/30",
+      topBarBg: "bg-sky-500/10 dark:bg-sky-500/20",
+      iconStyle:
+        "bg-sky-500/10 border border-sky-500/20 dark:border-sky-500/30 text-sky-600 dark:text-sky-400",
+      btnBg:
+        "bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600",
+    },
+    {
+      title: "Graph Algorithms Quiz",
+      description:
+        "Practice Dijkstra's, Bellman-Ford, Floyd-Warshall, Prim's, Kruskal's, Topological Sort, and Kosaraju's algorithms.",
+      href: "/visualizer/graph/algorithms/quiz",
+      filename: "graph_algorithms_quiz.js",
+      icon: Network,
+      cardBorder: "border-indigo-500/20 dark:border-indigo-500/30",
+      topBarBg: "bg-indigo-500/10 dark:bg-indigo-500/20",
+      iconStyle:
+        "bg-indigo-500/10 border border-indigo-500/20 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400",
+      btnBg:
+        "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600",
     },
     {
       title: "Dynamic Programming Quiz",
@@ -200,32 +301,32 @@ export default function QuizPage() {
         "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600",
     },
     {
-      title: "Tree Data Structure Quiz",
+      title: "Bit Manipulation Quiz",
       description:
-        "Test your understanding of Tree Data Structures including Binary Trees, BSTs, Traversals, and more.",
-      href: "/visualizer/tree/quiz",
-      icon: Network,
-      filename: "tree_data_structure_quiz.js",
-      cardBorder: "border-lime-500/20 dark:border-lime-500/30",
-      topBarBg: "bg-lime-500/10 dark:bg-lime-500/20",
+        "Test your understanding of binary representations, bitwise operators (&, |, ^, ~, <<, >>), setting/clearing/toggling bits, power of two, Kernighan's algorithm, and bitmasking.",
+      href: "/visualizer/bit-manipulation/quiz",
+      icon: Cpu,
+      filename: "bit_manipulation_quiz.js",
+      cardBorder: "border-violet-500/20 dark:border-violet-500/30",
+      topBarBg: "bg-violet-500/10 dark:bg-violet-500/20",
       iconStyle:
-        "bg-lime-500/10 border border-lime-500/20 dark:border-lime-500/30 text-lime-600 dark:text-lime-400",
+        "bg-violet-500/10 border border-violet-500/20 dark:border-violet-500/30 text-violet-600 dark:text-violet-400",
       btnBg:
-        "bg-lime-600 hover:bg-lime-700 dark:bg-lime-500 dark:hover:bg-lime-600",
+        "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600",
     },
     {
-      title: "Segment Tree Quiz",
+      title: "Sliding Window Quiz",
       description:
-        "Test your understanding of Segment Trees, Range Queries, Point Updates, and Lazy Propagation.",
-      href: "/visualizer/segment-tree/quiz",
-      icon: Network,
-      filename: "segment_tree_quiz.js",
-      cardBorder: "border-amber-500/20 dark:border-amber-500/30",
-      topBarBg: "bg-amber-500/10 dark:bg-amber-500/20",
+        "Test your understanding of the sliding window technique, fixed vs variable size windows, and contiguous subarrays.",
+      href: "/visualizer/array/Interview-Patterns/quiz/slidingWindow",
+      icon: Terminal,
+      filename: "sliding_window_quiz.js",
+      cardBorder: "border-cyan-500/20 dark:border-cyan-500/30",
+      topBarBg: "bg-cyan-500/10 dark:bg-cyan-500/20",
       iconStyle:
-        "bg-amber-500/10 border border-amber-500/20 dark:border-amber-500/30 text-amber-600 dark:text-amber-400",
+        "bg-cyan-500/10 border border-cyan-500/20 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
       btnBg:
-        "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600",
+        "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
     },
   ];
   return (
@@ -245,7 +346,7 @@ export default function QuizPage() {
             const IconComponent = quiz.icon;
             return (
               <motion.div
-                key={quiz.title}
+                key={quiz.href}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}

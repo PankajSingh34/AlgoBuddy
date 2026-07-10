@@ -103,6 +103,10 @@ export async function proxy(request) {
     isStateChangingMethod(request.method) &&
     !CSRF_EXEMPT_ROUTES.has(pathname)
   ) {
+    if (request.nextUrl.pathname.startsWith('/api/chatbot')) {
+      return NextResponse.next();
+    }     
+
     if (!validateCsrfOrigin(request)) {
       return NextResponse.json(
         { error: "CSRF validation failed: untrusted origin" },

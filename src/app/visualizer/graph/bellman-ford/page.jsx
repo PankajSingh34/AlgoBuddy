@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 
 const BellmanFordVisualizer = () => {
   const [source, setSource] = useState(0);
@@ -149,6 +150,11 @@ const BellmanFordVisualizer = () => {
           className="bg-gray-400 text-white px-6 py-2 rounded-lg hover:bg-gray-500">
           Reset
         </button>
+        <Link href="/visualizer/graph/algorithms/quiz/bellman-ford">
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium ml-auto">
+            Take Quiz
+          </button>
+        </Link>
       </div>
 
       {currentDist && (

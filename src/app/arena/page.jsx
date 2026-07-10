@@ -31,9 +31,15 @@ import {
   ChevronLeft,
   Users,
   Calendar,
+  Gift,
   TrendingDown,
   Minus,
-  Navigation
+  Navigation,
+  Share2,
+  Star,
+  Crown,
+  ShieldCheck,
+  ShieldAlert
 } from "lucide-react";
 import { useArenaProfile } from "@/app/hooks/useArenaProfile";
 import { useSheetProgress } from "@/app/hooks/useSheetProgress";
@@ -100,6 +106,19 @@ export default function ArenaPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
 
+  const calculateRank = (xp) => {
+    if (xp >= 10000) return { name: "Grandmaster", Icon: Crown, color: "text-purple-500", ringColor: "border-purple-500" };
+    if (xp >= 5000) return { name: "Diamond", Icon: Award, color: "text-indigo-500", ringColor: "border-indigo-500" };
+    if (xp >= 2500) return { name: "Platinum", Icon: Star, color: "text-cyan-500", ringColor: "border-cyan-500" };
+    if (xp >= 1000) return { name: "Gold", Icon: ShieldCheck, color: "text-yellow-500", ringColor: "border-yellow-500" };
+    if (xp >= 500) return { name: "Silver", Icon: ShieldAlert, color: "text-slate-400", ringColor: "border-slate-400" };
+    return { name: "Bronze", Icon: Shield, color: "text-amber-700", ringColor: "border-amber-700" };
+  };
+
+  const rankedMatches = matchHistory?.filter(m => m.mode === 'ranked' || m.isRanked) || [];
+  const currentRank = rankedMatches.length >= 5 ? calculateRank(profile?.xp || 0) : { name: "Unranked", Icon: Trophy, color: "text-slate-400", ringColor: "border-primary" };
+  const RankIcon = currentRank.Icon;
+
   const handleTabChange = (tabId) => {
     if (["ranked", "friend", "streak", "badges", "history"].includes(tabId)) {
       if (!ensureLoggedIn()) return;
@@ -109,6 +128,11 @@ export default function ArenaPage() {
       setActiveTab(tabId);
     }
   };
+
+  const rankProgress = Math.min(((profile?.xp || 0) % 1000) / 1000 * 100, 100);
+  const ringRadius = 62;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringDashoffset = ringCircumference - (rankProgress / 100) * ringCircumference;
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -180,7 +204,23 @@ export default function ArenaPage() {
 
   // Modals state
   const [matchmakingOpen, setMatchmakingOpen] = useState(false);
+  const [matchmakingOptions, setMatchmakingOptions] = useState({});
   const [createDuelOpen, setCreateDuelOpen] = useState(false);
+  const [duelDifficulty, setDuelDifficulty] = useState("Medium");
+  const [duelTime, setDuelTime] = useState("30m");
+  const [duelTopic, setDuelTopic] = useState("Random");
+  const [joinCode, setJoinCode] = useState("");
+  const [duelWager, setDuelWager] = useState(50);
+  const [duelMode, setDuelMode] = useState("Standard");
+  const [duelPublic, setDuelPublic] = useState(false);
+
+  const handleJoinLobby = () => {
+    if (joinCode.length !== 6) {
+      toast.error("Please enter a valid 6-digit invite code.");
+      return;
+    }
+    window.location.href = `/arena/duel/${joinCode}`;
+  };
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
@@ -196,9 +236,10 @@ export default function ArenaPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [matchmakingOpen, createDuelOpen]);
 
-  const openMatchmakingModal = () => {
+  const openMatchmakingModal = (options = {}) => {
     if (!ensureLoggedIn()) return;
     window.history.pushState({ modal: "matchmaking" }, "", window.location.href);
+    setMatchmakingOptions(options);
     setMatchmakingOpen(true);
   };
 
@@ -265,9 +306,9 @@ export default function ArenaPage() {
 
   const handleCreateMatchLaunch = (matchConfig) => {
     setCreateDuelOpen(false);
-    setSelectedOpponent({ name: "Opponent", rating: 1600, level: 15, avatar: "OP" });
-    setActiveDuelProblem(matchConfig.topic);
-    setDuelSimulatorOpen(true);
+    if (matchConfig?.lobbyCode) {
+      router.push(`/arena/duel/${matchConfig.lobbyCode}`);
+    }
   };
 
   if (loading) {
@@ -287,8 +328,8 @@ export default function ArenaPage() {
           {/* ─── Column 1: Left Sidebar ────────────────────────────────────────── */}
           <aside className="space-y-6">
             {/* Navigation Menu */}
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-4 shadow-sm">
-              <nav className="space-y-1">
+            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-3 shadow-sm">
+              <nav className="space-y-0.5">
                 {[
                   { id: "home", label: "Arena Home", icon: Home },
                   { id: "live", label: "Live Battles", icon: Swords },
@@ -306,12 +347,12 @@ export default function ArenaPage() {
                     <button
                       key={item.id}
                       onClick={() => handleTabChange(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${isActive
-                          ? "bg-primary text-white shadow-sm"
-                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-900/40"
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${isActive
+                          ? "bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 text-primary dark:from-primary/20 dark:border-primary/30 dark:text-primary-light shadow-sm"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-900/40 border border-transparent"
                         }`}
                     >
-                      <Icon size={18} />
+                      <Icon size={isActive ? 20 : 18} className={isActive ? "text-primary dark:text-primary-light" : ""} />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -320,25 +361,36 @@ export default function ArenaPage() {
             </div>
 
             {/* XP Progress */}
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">
+            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-primary/10 transition-colors duration-500"></div>
+              
+              <div className="flex justify-between items-center mb-4 relative z-10">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 flex items-center gap-2">
+                  <Star size={16} className="text-amber-500" />
                   XP Progress
                 </h3>
-                <span className="text-xs text-primary dark:text-purple-400 font-bold uppercase tracking-wider">
-                  Level {currentUserStats.level}
+                <span className="text-[10px] bg-primary/10 text-primary dark:text-primary-light font-black uppercase tracking-widest px-2 py-0.5 rounded-md border border-primary/20">
+                  Lvl {currentUserStats.level}
                 </span>
               </div>
 
-              <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-500"
-                  style={{ width: `${calculateLevelProgress(currentUserStats.xp)}%` }}
-                />
-              </div>
+              <div className="relative z-10">
+                <div className="flex justify-between text-xs font-bold mb-2">
+                  <span className="text-slate-700 dark:text-neutral-300">{calculateLevelProgress(currentUserStats.xp).toFixed(0)}%</span>
+                  <span className="text-slate-500 dark:text-neutral-500">{1000 - (currentUserStats.xp % 1000)} XP to Next</span>
+                </div>
+                
+                <div className="w-full bg-slate-100 dark:bg-neutral-900 h-2.5 rounded-full overflow-hidden mb-3 border border-slate-200 dark:border-neutral-800">
+                  <div
+                    className="bg-gradient-to-r from-primary to-purple-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.4)]"
+                    style={{ width: `${calculateLevelProgress(currentUserStats.xp)}%` }}
+                  />
+                </div>
 
-              <div className="flex justify-between text-xs text-slate-500 dark:text-neutral-400">
-                <span>{currentUserStats.xp % 1000} / 1000 XP</span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-neutral-400 bg-slate-50 dark:bg-neutral-900/50 p-2 rounded-lg border border-slate-100 dark:border-neutral-800 mt-4">
+                  <Gift size={12} className="text-purple-500 shrink-0" />
+                  <span>Next: <strong className="text-slate-700 dark:text-neutral-300">Level {currentUserStats.level + 1} Badge</strong></span>
+                </div>
               </div>
             </div>
 
@@ -594,14 +646,8 @@ export default function ArenaPage() {
             )}
 
             {activeTab !== "home" && (
-              <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm min-h-[400px] flex flex-col justify-center items-center text-center">
-                <Swords size={48} className="text-slate-300 dark:text-neutral-750 mb-3 animate-pulse" />
-                <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200 capitalize mb-1">
-                  {activeTab.replace("-", " ")} Section
-                </h3>
-                <p className="text-xs text-slate-400 dark:text-neutral-500 max-w-xs leading-normal mb-6">
-                  Access matchmaking controls, leaderboards, or customize your profile values directly from the side panels.
-                </p>
+              <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm">
+
 
                 {activeTab === "live" && (
                   <div className="w-full max-w-md space-y-3 text-left">
@@ -637,30 +683,46 @@ export default function ArenaPage() {
                     <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
                       <div className="relative mb-6">
                         <div className="w-32 h-32 rounded-full border-4 border-slate-200 dark:border-neutral-800 flex items-center justify-center shadow-inner bg-white dark:bg-neutral-800 relative z-10">
-                          <Trophy size={64} className="text-slate-400" />
+                          <RankIcon size={64} className={currentRank.color} />
                         </div>
-                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent border-l-transparent transform rotate-45 z-20"></div>
+                        <div className={`absolute inset-0 rounded-full border-4 ${currentRank.ringColor} border-t-transparent border-l-transparent transform rotate-45 z-20`}></div>
                       </div>
                       
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Unranked</h3>
-                      <p className="text-xs text-slate-500 font-bold mb-6">Play 5 placement matches to reveal your rank</p>
+                      <h3 className={`text-2xl font-black uppercase tracking-widest mb-1 ${currentRank.color === 'text-slate-400' ? 'text-slate-800 dark:text-neutral-200' : currentRank.color}`}>{currentRank.name}</h3>
+                      <p className="text-xs text-slate-500 font-bold mb-6">
+                        {rankedMatches.length >= 5 ? `${profile?.xp || 0} Rating` : "Play 5 placement matches to reveal your rank"}
+                      </p>
 
                       <div className="w-full max-w-sm mb-6">
                         <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">
                           <span>Placement Progress</span>
                           <span>0 / 5</span>
                         </div>
-                        <div className="w-full h-2 bg-slate-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                          <div className="h-full w-0 bg-primary rounded-full transition-all duration-1000"></div>
+                        <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center flex-1">
+                          <Flame size={20} className="text-orange-500 mb-2" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Win Streak</span>
+                          <span className="text-lg font-black text-slate-800 dark:text-neutral-200 mt-1">{profile?.stats?.currentWinStreak || 0}</span>
                         </div>
                       </div>
+                    </div>
 
-                      <button
-                        onClick={() => openMatchmakingModal()}
-                        className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 transition transform hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        Find Ranked Match
-                      </button>
+                    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between mt-6">
+                      <div className="flex items-center gap-4 mb-4 md:mb-0 text-left">
+                        <div className="w-12 h-12 bg-white dark:bg-neutral-800 rounded-full flex items-center justify-center shadow-sm shrink-0">
+                          <Gift className="text-purple-500" size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Season 1 Rewards</h4>
+                          <p className="text-[10px] text-slate-500 dark:text-neutral-400 mt-0.5">Reach Gold tier or higher to unlock the exclusive "Algorithm Master" profile badge and 1000 XP.</p>
+                        </div>
+                      </div>
+                      <div className="text-center md:text-right shrink-0">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Season Ends In</span>
+                        <div className="flex gap-2 mt-1 justify-center md:justify-end">
+                          <div className="px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-slate-100 dark:border-neutral-700 text-xs font-black text-slate-800 dark:text-neutral-200">14<span className="text-[9px] font-bold text-slate-400 ml-0.5">d</span></div>
+                          <div className="px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-slate-100 dark:border-neutral-700 text-xs font-black text-slate-800 dark:text-neutral-200">12<span className="text-[9px] font-bold text-slate-400 ml-0.5">h</span></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -678,10 +740,46 @@ export default function ArenaPage() {
                           <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Lobby Settings</h5>
                           
                           <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mode</label>
+                            <div className="flex gap-2">
+                              {["Standard", "Optimization"].map(mode => (
+                                <button 
+                                  key={mode} 
+                                  onClick={() => setDuelMode(mode)}
+                                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${duelMode === mode ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}
+                                >
+                                  {mode}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Topic</label>
+                            <select
+                              value={duelTopic}
+                              onChange={(e) => setDuelTopic(e.target.value)}
+                              className="w-full py-2 px-3 text-xs font-bold rounded-lg border bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-300 focus:outline-none focus:border-primary/50 transition"
+                            >
+                              <option value="Random">Random</option>
+                              <option value="Arrays">Arrays</option>
+                              <option value="Strings">Strings</option>
+                              <option value="Hash Tables">Hash Tables</option>
+                              <option value="Two Pointers">Two Pointers</option>
+                              <option value="Dynamic Programming">Dynamic Programming</option>
+                              <option value="Graphs">Graphs</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Difficulty</label>
                             <div className="flex gap-2">
                               {["Easy", "Medium", "Hard"].map(diff => (
-                                <button key={diff} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${diff === "Medium" ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}>
+                                <button 
+                                  key={diff} 
+                                  onClick={() => setDuelDifficulty(diff)}
+                                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${duelDifficulty === diff ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}
+                                >
                                   {diff}
                                 </button>
                               ))}
@@ -692,11 +790,49 @@ export default function ArenaPage() {
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Time Limit</label>
                             <div className="flex gap-2">
                               {["15m", "30m", "60m"].map(time => (
-                                <button key={time} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${time === "30m" ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}>
+                                <button 
+                                  key={time} 
+                                  onClick={() => setDuelTime(time)}
+                                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg border ${duelTime === time ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-400 hover:border-slate-300"}`}
+                                >
                                   {time}
                                 </button>
                               ))}
                             </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">XP Wager</label>
+                              <span className="text-xs font-bold text-primary">{duelWager} XP</span>
+                            </div>
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max="500" 
+                              step="10" 
+                              value={duelWager}
+                              onChange={(e) => setDuelWager(Number(e.target.value))}
+                              className="w-full accent-primary h-1.5 bg-slate-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[9px] text-slate-400 font-bold px-1">
+                              <span>0</span>
+                              <span>250</span>
+                              <span>500</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-800 dark:text-neutral-200">Public Lobby</span>
+                              <span className="text-[10px] text-slate-500">Allow anyone to join your duel</span>
+                            </div>
+                            <button
+                              onClick={() => setDuelPublic(!duelPublic)}
+                              className={`w-10 h-5 rounded-full relative transition-colors duration-200 focus:outline-none ${duelPublic ? "bg-primary" : "bg-slate-300 dark:bg-neutral-600"}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${duelPublic ? "translate-x-5" : "translate-x-0"}`} />
+                            </button>
                           </div>
                         </div>
 
@@ -713,6 +849,32 @@ export default function ArenaPage() {
                               Generate Invite Link
                             </button>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 mt-4">
+                      <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1 space-y-2">
+                          <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Join an Existing Lobby</h5>
+                          <p className="text-xs text-slate-500">Have an invite code from a friend? Enter it below to join their custom duel.</p>
+                        </div>
+                        <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="Enter 6-digit code"
+                            maxLength={6}
+                            value={joinCode}
+                            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                            className="w-full md:w-48 px-4 py-2.5 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-mono tracking-widest uppercase focus:outline-none focus:border-primary/50 transition placeholder:normal-case placeholder:tracking-normal"
+                          />
+                          <button
+                            onClick={handleJoinLobby}
+                            disabled={joinCode.length !== 6}
+                            className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center ${joinCode.length === 6 ? "bg-primary hover:bg-primary/90 text-white shadow-primary/20" : "bg-slate-200 dark:bg-neutral-800 text-slate-400 dark:text-neutral-600 cursor-not-allowed"}`}
+                          >
+                            Join Lobby
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -768,44 +930,51 @@ export default function ArenaPage() {
 
                     {/* Top 3 Podium */}
                     {leaderboard && leaderboard.length >= 3 && !searchQuery.trim() && leaderboardFilter === "Global" && (
-                      <div className="flex justify-center items-end gap-4 my-6 pt-4 pb-2 px-4 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-neutral-900/50 rounded-xl relative">
-                        {/* 2nd Place */}
-                        <div className="flex flex-col items-center pb-2">
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full border-2 border-slate-300 dark:border-neutral-500 overflow-hidden mb-1">
-                              {leaderboard[1].avatarUrl ? <img src={leaderboard[1].avatarUrl} alt="2nd" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-neutral-400">{getInitials(leaderboard[1].name)}</div>}
+                      (() => {
+                        const getDisplayName = (player) => player.name || (player.userId ? `User ${player.userId.substring(0,4)}` : "Unknown");
+                        const p1 = leaderboard[0], p2 = leaderboard[1], p3 = leaderboard[2];
+                        const n1 = getDisplayName(p1), n2 = getDisplayName(p2), n3 = getDisplayName(p3);
+                        return (
+                          <div className="flex justify-center items-end gap-4 my-6 pt-4 pb-2 px-4 bg-gradient-to-t from-slate-100/50 to-transparent dark:from-neutral-900/50 rounded-xl relative">
+                            {/* 2nd Place */}
+                            <div className="flex flex-col items-center pb-2">
+                              <div className="relative">
+                                <div className="w-10 h-10 rounded-full border-2 border-slate-300 dark:border-neutral-500 overflow-hidden mb-1">
+                                  {p2.avatarUrl ? <img src={p2.avatarUrl} alt="2nd" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-neutral-400">{getInitials(n2)}</div>}
+                                </div>
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-slate-300 dark:bg-neutral-600 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold text-slate-700 dark:text-slate-200 shadow-md ring-1 ring-white dark:ring-neutral-900">2</div>
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-700 dark:text-neutral-300 truncate max-w-[60px] mt-1">{n2.split(" ")[0]}</span>
+                              <span className="text-[9px] font-bold text-slate-500">{p2.rating}</span>
                             </div>
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-slate-300 dark:bg-neutral-600 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold text-slate-700 dark:text-slate-200 shadow-md ring-1 ring-white dark:ring-neutral-900">2</div>
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-700 dark:text-neutral-300 truncate max-w-[60px] mt-1">{leaderboard[1].name?.split(" ")[0]}</span>
-                          <span className="text-[9px] font-bold text-slate-500">{leaderboard[1].rating}</span>
-                        </div>
-                        
-                        {/* 1st Place */}
-                        <div className="flex flex-col items-center relative z-10 pb-4">
-                          <Trophy size={16} className="text-amber-500 mb-1 drop-shadow-md"/>
-                          <div className="relative">
-                            <div className="w-14 h-14 rounded-full border-2 border-amber-400 dark:border-amber-500 overflow-hidden mb-1 ring-4 ring-amber-400/20 shadow-lg shadow-amber-500/20">
-                              {leaderboard[0].avatarUrl ? <img src={leaderboard[0].avatarUrl} alt="1st" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-amber-500">{getInitials(leaderboard[0].name)}</div>}
+                            
+                            {/* 1st Place */}
+                            <div className="flex flex-col items-center relative z-10 pb-4">
+                              <Trophy size={16} className="text-amber-500 mb-1 drop-shadow-md"/>
+                              <div className="relative">
+                                <div className="w-14 h-14 rounded-full border-2 border-amber-400 dark:border-amber-500 overflow-hidden mb-1 ring-4 ring-amber-400/20 shadow-lg shadow-amber-500/20">
+                                  {p1.avatarUrl ? <img src={p1.avatarUrl} alt="1st" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-amber-500">{getInitials(n1)}</div>}
+                                </div>
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-amber-400 dark:bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md ring-2 ring-white dark:ring-neutral-900">1</div>
+                              </div>
+                              <span className="text-xs font-bold text-slate-900 dark:text-white mt-1.5 truncate max-w-[80px]">{n1.split(" ")[0]}</span>
+                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500">{p1.rating}</span>
                             </div>
-                            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-amber-400 dark:bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md ring-2 ring-white dark:ring-neutral-900">1</div>
-                          </div>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white mt-1.5 truncate max-w-[80px]">{leaderboard[0].name?.split(" ")[0]}</span>
-                          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500">{leaderboard[0].rating}</span>
-                        </div>
-                        
-                        {/* 3rd Place */}
-                        <div className="flex flex-col items-center pb-1">
-                          <div className="relative">
-                            <div className="w-9 h-9 rounded-full border-2 border-orange-700/50 dark:border-orange-900 overflow-hidden mb-1">
-                              {leaderboard[2].avatarUrl ? <img src={leaderboard[2].avatarUrl} alt="3rd" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-[9px] font-bold text-orange-800 dark:text-orange-700">{getInitials(leaderboard[2].name)}</div>}
+                            
+                            {/* 3rd Place */}
+                            <div className="flex flex-col items-center pb-1">
+                              <div className="relative">
+                                <div className="w-9 h-9 rounded-full border-2 border-orange-700/50 dark:border-orange-900 overflow-hidden mb-1">
+                                  {p3.avatarUrl ? <img src={p3.avatarUrl} alt="3rd" className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center text-[9px] font-bold text-orange-800 dark:text-orange-700">{getInitials(n3)}</div>}
+                                </div>
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-orange-300 dark:bg-orange-900/80 text-orange-900 dark:text-orange-400 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold shadow-md ring-1 ring-white dark:ring-neutral-900">3</div>
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-700 dark:text-neutral-300 truncate max-w-[60px] mt-1">{n3.split(" ")[0]}</span>
+                              <span className="text-[9px] font-bold text-slate-500">{p3.rating}</span>
                             </div>
-                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-orange-300 dark:bg-orange-900/80 text-orange-900 dark:text-orange-400 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold shadow-md ring-1 ring-white dark:ring-neutral-900">3</div>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-700 dark:text-neutral-300 truncate max-w-[60px] mt-1">{leaderboard[2].name?.split(" ")[0]}</span>
-                          <span className="text-[9px] font-bold text-slate-500">{leaderboard[2].rating}</span>
-                        </div>
-                      </div>
+                        );
+                      })()
                     )}
 
                     <div className="space-y-2">
@@ -970,43 +1139,166 @@ export default function ArenaPage() {
                   </div>
                 )}
                 {activeTab === "streak" && (
-                  <div className="w-full text-left space-y-6">
-                    <div>
-                      <h4 className="text-xl font-extrabold text-slate-800 dark:text-neutral-200 mb-1">Daily Streak</h4>
-                      <p className="text-xs text-slate-500 dark:text-neutral-400">Keep your learning momentum going by solving problems every day.</p>
+                  <div className="w-full text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+                    {/* Hero Section */}
+                    <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 relative overflow-hidden text-white flex flex-col md:flex-row items-center justify-between border border-amber-600 shadow-xl shadow-amber-500/20 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100 fill-mode-both">
+                      <div className="absolute -right-10 -bottom-10 opacity-20 pointer-events-none">
+                        <Flame size={240} className="text-white" />
+                      </div>
+                      <div className="space-y-3 z-10 text-center md:text-left">
+                        <span className="text-[10px] bg-white/20 text-white border border-white/30 font-bold uppercase tracking-wider px-2.5 py-1 rounded-full inline-block mb-1">
+                          Keep The Fire Burning
+                        </span>
+                        <h2 className="text-3xl font-black tracking-tight drop-shadow-md">
+                          Maintain Your Momentum!
+                        </h2>
+                        <p className="text-sm text-amber-100 max-w-md">
+                          You are currently on a <strong className="text-white">{streakData?.current || 0}-day</strong> streak. 
+                          Only <strong className="text-white">{Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10) - (streakData?.current || 0)}</strong> days left to hit your next milestone. Log in and solve problems daily to keep it alive!
+                        </p>
+                      </div>
                     </div>
 
+                    {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Flame size={32} className="mx-auto mb-2 text-amber-500 animate-pulse" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.current || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Current Streak</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-amber-500/30 animate-in zoom-in-95 duration-500 delay-200 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                          <Flame size={28} className="animate-pulse" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Current Streak</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.current || 0}</div>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Trophy size={32} className="mx-auto mb-2 text-primary" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.longest || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Longest Streak</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30 animate-in zoom-in-95 duration-500 delay-300 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-primary/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <Trophy size={28} />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Longest Streak</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.longest || 0}</div>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center">
-                        <Calendar size={32} className="mx-auto mb-2 text-indigo-500" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">14</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Days Active</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-indigo-500/30 animate-in zoom-in-95 duration-500 delay-400 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 shrink-0">
+                          <Calendar size={28} />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Days Active</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">14</div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5">
-                      <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200 mb-4">Activity Heatmap (Last 30 Days)</h5>
-                      <div className="grid grid-cols-7 gap-2">
-                        {Array.from({ length: 30 }).map((_, i) => {
-                          const isActive = Math.random() > 0.4;
-                          return (
-                            <div 
-                              key={i} 
-                              className={`aspect-square rounded-lg transition ${isActive ? "bg-amber-400 dark:bg-amber-500" : "bg-slate-200 dark:bg-neutral-800"} hover:scale-110`}
-                              title={isActive ? "Active" : "Inactive"}
-                            />
-                          );
-                        })}
+                    {/* Heatmap */}
+                    <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both relative">
+                      <div className="flex items-center justify-between mb-6">
+                        <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Activity Heatmap</h5>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-neutral-900 px-2 py-1 rounded-md">Last 30 Days</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 overflow-x-auto pb-2">
+                        {/* Heatmap Grid */}
+                        <div className="flex gap-2 min-w-max">
+                          {/* Day Labels */}
+                          <div className="flex flex-col gap-2 pt-6 text-[10px] font-semibold text-slate-400 mr-2 justify-between">
+                            <span className="h-5 flex items-center">Mon</span>
+                            <span className="h-5 flex items-center">Wed</span>
+                            <span className="h-5 flex items-center">Fri</span>
+                          </div>
+                          {Array.from({ length: 6 }).map((_, weekIdx) => {
+                            // 6 columns (weeks), each 5 days (mon-fri approx) or 7 days.
+                            // The original design had 30 days flat. Let's make it a realistic 7x5 or 5x6 grid.
+                            // Let's use 5 weeks x 7 days = 35 days for a better layout.
+                            return (
+                              <div key={weekIdx} className="flex flex-col gap-2">
+                                {/* Week/Month Label roughly */}
+                                {weekIdx % 2 === 0 ? (
+                                  <div className="text-[10px] font-semibold text-slate-400 h-4 text-center">
+                                    {new Date(Date.now() - (5 - weekIdx) * 7 * 24 * 60 * 60 * 1000).toLocaleDateString(undefined, { month: 'short' })}
+                                  </div>
+                                ) : (
+                                  <div className="h-4"></div>
+                                )}
+                                {Array.from({ length: 7 }).map((_, dayIdx) => {
+                                  const totalDays = 35;
+                                  const daysAgo = totalDays - 1 - (weekIdx * 7 + dayIdx);
+                                  
+                                  // Don't render future days if daysAgo < 0
+                                  if (daysAgo < 0 || daysAgo >= 30) return <div key={dayIdx} className="w-5 h-5 opacity-0"></div>;
+
+                                  const current = streakData?.current || 0;
+                                  let isActive = daysAgo < current;
+                                  if (!isActive) {
+                                    isActive = (daysAgo * 7) % 11 < 4 && daysAgo < 25; 
+                                  }
+                                  
+                                  const d = new Date();
+                                  d.setDate(d.getDate() - daysAgo);
+                                  const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+                                  
+                                  // Intensity based on 'activity'
+                                  const intensityClass = isActive? ((daysAgo % 3 === 0)  
+                                  ? "bg-primary dark:bg-primary-light shadow-[0_0_8px_rgba(164,53,240,0.35)]"   
+                                  : "bg-primary/70 dark:bg-primary-light/70 shadow-[0_0_8px_rgba(164,53,240,0.25)]")
+                                  : "bg-slate-100 dark:bg-neutral-700/50";
+
+                                  return (
+                                    <div 
+                                      key={dayIdx} 
+                                      className={`w-5 h-5 rounded-[4px] transition-all duration-300 ${intensityClass} hover:scale-125 hover:ring-2 hover:ring-primary/50 cursor-pointer relative group`}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2.5 py-1.5 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl flex flex-col items-center">
+                                        <span>{isActive ? "Active Day 🔥" : "No Activity"}</span>
+                                        <span className="text-slate-400 font-medium">{dateStr}</span>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center gap-2 mt-6 justify-end text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span>Less</span>
+                        <div className="flex gap-1">
+                          <div className="w-3 h-3 rounded-[3px] bg-slate-100 dark:bg-neutral-700/50"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary/40"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary/70"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary dark:bg-primary-light"></div>
+                        </div>
+                        <span>More</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-primary to-purple-600 border border-primary/20 rounded-2xl p-6 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700 fill-mode-both">
+                      <div className="absolute -right-10 -bottom-10 opacity-20 pointer-events-none">
+                        <Share2 size={200} />
+                      </div>
+                      <div className="relative z-10 text-center md:text-left flex-1">
+                        <h5 className="text-xl font-black mb-1">Brag About Your Streak!</h5>
+                        <p className="text-sm text-white/90 max-w-md">
+                          You're on a <strong>{streakData?.current || 0} day</strong> coding streak! Show off your dedication to your friends and rivals.
+                        </p>
+                      </div>
+                      <div className="relative z-10 shrink-0">
+                        <button 
+                          onClick={() => {
+                            toast.success("Link copied to clipboard!");
+                          }}
+                          className="px-6 py-3 bg-white text-primary rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2 group"
+                        >
+                          <Share2 size={18} className="group-hover:scale-110 transition-transform" />
+                          Share My Streak
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1018,26 +1310,33 @@ export default function ArenaPage() {
           {/* ─── Column 3: Right Sidebar ───────────────────────────────────────── */}
           <aside className="space-y-6">
             {/* Daily Streak Card */}
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Daily Streak</h3>
-                <span className="text-[11px] text-slate-400 dark:text-neutral-500 font-semibold cursor-default">
-                  Milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)}d
+            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
+
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 flex items-center gap-2">
+                  <Flame size={16} className="text-amber-500" />
+                  Daily Streak
+                </h3>
+                <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-black uppercase tracking-widest px-2 py-0.5 rounded-md border border-amber-500/20">
+                  Goal: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)}d
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 bg-amber-500/10 p-3.5 border border-amber-500/20 rounded-xl mb-4 text-amber-500">
-                <Flame size={28} className={(streakData?.current || 0) > 0 ? "animate-pulse" : "opacity-50"} />
+              <div className="flex items-center gap-3 bg-gradient-to-r from-amber-500/10 to-transparent p-4 border border-amber-500/20 rounded-xl mb-4 text-amber-500 relative z-10">
+                <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0">
+                  <Flame size={24} className={(streakData?.current || 0) > 0 ? "animate-pulse drop-shadow-md" : "opacity-50"} />
+                </div>
                 <div>
-                  <div className="text-xl font-black leading-none">{streakData?.current || 0} Days</div>
-                  <span className="text-[10px] text-slate-500 dark:text-amber-500/80 block mt-1 font-semibold">
+                  <div className="text-2xl font-black leading-none drop-shadow-sm">{streakData?.current || 0} Days</div>
+                  <span className="text-[10px] text-slate-500 dark:text-neutral-400 block mt-1 font-semibold">
                     Keep it up! Next milestone: {Math.max(10, Math.ceil(((streakData?.current || 0) + 1) / 10) * 10)} days
                   </span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-center gap-1 mb-4 border-b border-slate-100 dark:border-neutral-800/60 pb-4">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => {
+              <div className="flex justify-between items-center text-center gap-1 mt-2 relative z-10">
+                {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => {
                   const today = new Date();
                   const currentDay = today.getDay();
                   const diff = idx - currentDay;
@@ -1045,14 +1344,14 @@ export default function ArenaPage() {
                   dateToCheck.setDate(today.getDate() + diff);
                   
                   const isFuture = diff > 0;
-                  const isActive = !isFuture && streakData?.isActive && streakData.isActive(dateToCheck);
+                  const isActive = !isFuture && -diff < (streakData?.current || 0);
                   
                   return (
-                    <div key={day} className="flex flex-col items-center">
-                      <span className={`text-[9px] block mb-1 font-semibold ${diff === 0 ? "text-amber-500 dark:text-amber-400" : "text-slate-400 dark:text-neutral-500"}`}>{day[0]}</span>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive
-                          ? "bg-amber-500 text-white shadow-sm"
-                          : isFuture ? "bg-slate-50 dark:bg-neutral-900/50 text-slate-300 dark:text-neutral-700" : "bg-slate-100 dark:bg-neutral-900 text-slate-400 dark:text-neutral-600"
+                    <div key={idx} className="flex flex-col items-center group/day">
+                      <span className={`text-[10px] block mb-1.5 font-bold uppercase ${diff === 0 ? "text-amber-500 dark:text-amber-400" : "text-slate-400 dark:text-neutral-500 group-hover/day:text-slate-600 dark:group-hover/day:text-neutral-300 transition-colors"}`}>{day}</span>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${isActive
+                          ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-110"
+                          : isFuture ? "bg-slate-50 dark:bg-neutral-900/50 text-slate-300 dark:text-neutral-700" : "bg-slate-100 dark:bg-neutral-900 text-slate-400 dark:text-neutral-600 hover:bg-slate-200 dark:hover:bg-neutral-800"
                         }`}>
                         {isActive ? "🔥" : "•"}
                       </div>
@@ -1063,22 +1362,21 @@ export default function ArenaPage() {
             </div>
             
             {/* Leaderboard Table */}
-            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">
-                    🏆 Global Leaderboard
-                  </h3>
-                </div>
-                <span
+                <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 flex items-center gap-2">
+                  <Trophy size={16} className="text-primary" />
+                  Global Leaderboard
+                </h3>
+                <button
                   onClick={() => handleTabChange("leaderboard")}
-                  className="text-xs text-primary dark:text-purple-400 font-semibold cursor-pointer hover:underline"
+                  className="text-[10px] text-primary dark:text-primary-light font-bold uppercase tracking-widest hover:bg-primary/10 px-2 py-1 rounded transition-colors"
                 >
                   View All
-                </span>
+                </button>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-1">
                 {leaderboard && leaderboard.length > 0 ? (
                   leaderboard.slice(0, 10).map((row, idx) => {
                     const rank = row.rank || idx + 1;
@@ -1087,34 +1385,33 @@ export default function ArenaPage() {
                     return (
                       <div
                         key={rank}
-                        className={`flex items-center justify-between 
-                        text-xs px-3 py-2.5 rounded-xl transition
+                        className={`flex items-center justify-between text-xs px-2.5 py-2 rounded-lg transition-all
                         ${isCurrentUser
-                            ? "bg-purple-100 dark:bg-purple-900/30"
-                            : "hover:bg-slate-50 dark:hover:bg-neutral-700/50"
+                            ? "bg-primary/10 border border-primary/20 shadow-sm"
+                            : "hover:bg-slate-50 dark:hover:bg-neutral-700/50 border border-transparent"
                           }
                         `}
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`w-5 text-center font-bold ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : "text-slate-500"
+                          <span className={`w-4 text-center font-black ${rank === 1 ? "text-amber-500" : rank === 2 ? "text-slate-400" : rank === 3 ? "text-orange-700" : "text-slate-400 dark:text-neutral-500"
                             }`}>
                             {rank}
                           </span>
-                          <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0">
+                          <div className={`w-7 h-7 rounded-full bg-slate-200 dark:bg-neutral-700 flex items-center justify-center font-bold text-[9px] text-slate-600 dark:text-neutral-300 overflow-hidden shrink-0 ${rank === 1 ? "ring-2 ring-amber-400/50" : ""}`}>
                             {row.avatarUrl ? (
                               <img src={row.avatarUrl} alt={name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                             ) : (
                               getInitials(name)
                             )}
                           </div>
-                          <span className="font-semibold text-slate-850 dark:text-neutral-200">{name}</span>
+                          <span className={`font-bold truncate max-w-[120px] ${isCurrentUser ? "text-primary dark:text-primary-light" : "text-slate-700 dark:text-neutral-300"}`}>{name}</span>
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-neutral-300">{row.rating}</span>
+                        <span className={`font-black ${isCurrentUser ? "text-primary" : "text-slate-800 dark:text-neutral-200"}`}>{row.rating}</span>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="p-4 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
+                  <div className="p-4 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400 bg-slate-50 dark:bg-neutral-900/50 rounded-xl border border-dashed border-slate-200 dark:border-neutral-700">
                     Leaderboard is currently empty.
                   </div>
                 )}
@@ -1132,6 +1429,7 @@ export default function ArenaPage() {
       <MatchmakingModal
         isOpen={matchmakingOpen}
         onClose={() => closeMatchmakingModal()}
+        isRanked={matchmakingOptions.isRanked || false}
         onMatchFound={handleMatchFound}
         currentUserStats={currentUserStats}
       />
@@ -1147,8 +1445,14 @@ export default function ArenaPage() {
       <CreateDuelModal
         isOpen={createDuelOpen}
         onClose={closeCreateDuelModal}
-        onLaunch={handleCreateMatchLaunch}
+        onCreateMatch={handleCreateMatchLaunch}
         currentUserStats={currentUserStats}
+        initialTopic={duelTopic}
+        initialDifficulty={duelDifficulty}
+        initialTimeLimit={duelTime}
+        initialWager={duelWager}
+        initialMode={duelMode}
+        initialPublic={duelPublic}
       />
 
       <SpectatorSimulatorModal

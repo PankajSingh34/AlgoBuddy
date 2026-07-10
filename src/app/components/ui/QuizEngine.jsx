@@ -20,12 +20,19 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function QuizEngine({ title, questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [showIntro, setShowIntro] = useState(true);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  // Compute score dynamically based on finalized answers to prevent double-counting or spoilers
+  const score = answers.reduce((acc, ans, idx) => {
+    if (idx < currentQuestion || quizCompleted) {
+      return ans === questions[idx].correctAnswer ? acc + 1 : acc;
+    }
+    return acc;
+  }, 0);
 
   const handleAnswerSelect = (optionIndex) => {
     setSelectedAnswer(optionIndex);
@@ -37,12 +44,9 @@ export default function QuizEngine({ title, questions }) {
   const handleNextQuestion = () => {
     if (selectedAnswer === null) return;
 
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore(score + 1);
-    }
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
+      setSelectedAnswer(answers[currentQuestion + 1]);
     } else {
       setShowSuccessAnimation(true);
       setTimeout(() => {
@@ -61,7 +65,6 @@ export default function QuizEngine({ title, questions }) {
   const resetQuiz = () => {
     setCurrentQuestion(0);
     setSelectedAnswer(null);
-    setScore(0);
     setShowResult(false);
     setQuizCompleted(false);
     setAnswers(Array(questions.length).fill(null));

@@ -5,6 +5,7 @@ import CategoryClient from "@/app/visualizer/components/CategoryClient";
 import Breadcrumbs from "@/app/components/ui/Breadcrumbs";
 import Footer from "@/app/components/footer";
 
+
 export async function generateStaticParams() {
   const params = [];
   
@@ -73,5 +74,9 @@ export default async function DynamicRouterPage({ params }) {
   if (!algorithmRegistry[slugKey]) notFound();
   
   const AlgorithmComponent = algorithmRegistry[slugKey].component;
-  return <AlgorithmComponent />;
+  return (
+    <>
+      <AlgorithmComponent />
+    </>
+  );
 }

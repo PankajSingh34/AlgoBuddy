@@ -58,7 +58,10 @@ function releaseIsolate(isolate) {
 
 async function executeCode(code) {
   const startTime = Date.now();
-  const executionId = `exec_${Date.now()}_${globalThis.crypto.randomUUID().split('-')[0]}`;
+  const uuidPart = typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID().split("-")[0]
+    : Math.random().toString(36).substring(2, 10);
+  const executionId = `exec_${Date.now()}_${uuidPart}`;
   let isolate = null;
   let context = null;
   let isolateCorrupted = false;
