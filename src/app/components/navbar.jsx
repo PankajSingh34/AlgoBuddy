@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
+import { useTheme } from "@/app/hooks/useTheme";
 import {
   Search,
   Moon,
@@ -24,25 +25,6 @@ import ProfileProgress from "./ui/ProfileProgress";
 import BottomNav from "./BottomNav";
 
 const MAX_AVATAR_URL_LENGTH = 512;
-
-function getStoredTheme() {
-  if (typeof window === "undefined") return "light";
-
-  const saved = window.localStorage.getItem("theme");
-  if (saved === "dark" || saved === "light") return saved;
-
-  return document.documentElement.classList.contains("dark")
-    ? "dark"
-    : "light";
-}
-
-function applyTheme(nextTheme) {
-  document.documentElement.classList.toggle(
-    "dark",
-    nextTheme === "dark"
-  );
-  window.localStorage.setItem("theme", nextTheme);
-}
 
 function getInitials(name) {
   if (!name) return "??";
@@ -65,40 +47,16 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [theme, setTheme] = useState("light");
-  const [themeMounted, setThemeMounted] = useState(false);
+  const { theme, mounted: themeMounted, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
- 
+  
   const { user, setUser } = useUser();
   const userRef = useRef(null);
   const avatarSrc = safeAvatarUrl(
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture
   );
   const displayName = user?.user_metadata?.name || "AlgoBuddy User";
-
-  useEffect(() => {
-    const currentTheme = getStoredTheme();
-    setTheme(currentTheme);
-    applyTheme(currentTheme);
-    setThemeMounted(true);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme((currentTheme) => {
-      const resolvedTheme = themeMounted
-        ? currentTheme
-        : getStoredTheme();
-
-      const nextTheme =
-        resolvedTheme === "light" ? "dark" : "light";
-
-      applyTheme(nextTheme);
-      setThemeMounted(true);
-
-      return nextTheme;
-    });
-  };
 
   useEffect(() => {
     const handleScroll = () =>
