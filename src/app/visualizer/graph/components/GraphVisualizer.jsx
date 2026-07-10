@@ -33,7 +33,6 @@ import { topologicalSortGenerator } from "@/features/algorithms/graph/topologica
 import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
 import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
 import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
-import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
 import { fordFulkersonGenerator } from "@/features/algorithms/graph/fordFulkersonLogic";
 import { 
   adjacencyListFrames,
