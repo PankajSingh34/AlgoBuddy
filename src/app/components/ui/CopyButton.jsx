@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, memo } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function CopyButton({ code }) {
+const CopyButton = memo(function CopyButton({ code }) {
   const [copied, setCopied] = useState(false)
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(code)
       setCopied(true)
@@ -15,7 +15,7 @@ export default function CopyButton({ code }) {
     } catch (err) {
       console.error('Failed to copy: ', err)
     }
-  }
+  }, [code])
 
   return (
     <button
@@ -52,4 +52,6 @@ export default function CopyButton({ code }) {
       </AnimatePresence>
     </button>
   )
-}
+});
+
+export default CopyButton;

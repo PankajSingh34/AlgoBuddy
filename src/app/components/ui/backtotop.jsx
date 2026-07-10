@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BackToTop = () => {
+const BackToTop = memo(function BackToTop() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -12,13 +12,13 @@ const BackToTop = () => {
     };
 
     check();
-    window.addEventListener("scroll", check);
+    window.addEventListener("scroll", check, { passive: true });
     return () => window.removeEventListener("scroll", check);
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
   return (
     <AnimatePresence>
@@ -44,6 +44,6 @@ const BackToTop = () => {
       )}
     </AnimatePresence>
   );
-};
+});
 
 export default BackToTop;

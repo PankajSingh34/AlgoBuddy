@@ -1,4 +1,5 @@
 "use client";
+import { memo, useCallback, useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,30 +10,32 @@ const VISUALIZER_SLUG_BY_SEGMENT = {
   "complexity-analyzer": "code-lab",
 };
 
-export default function Breadcrumbs({ paths }) {
+const Breadcrumbs = memo(function Breadcrumbs({ paths }) {
   const pathname = usePathname();
-  const pathSegments = pathname?.split("/").filter(Boolean) ?? [];
+  const pathSegments = useMemo(() => pathname?.split("/").filter(Boolean) ?? [], [pathname]);
   const isVisualizer = pathSegments[0] === "visualizer";
   const visualizerSegment = pathSegments[1] || "";
   const visualizerSlug = VISUALIZER_SLUG_BY_SEGMENT[visualizerSegment] || visualizerSegment;
   const categoryHref = `/visualizer/${visualizerSlug}`;
 
-  const getHref = (path, index) => {
+  const getHref = useCallback((path, index) => {
     if (path.href) return path.href;
     if (!isVisualizer) return null;
     if (index > 1 && index < paths.length - 1) {
       return categoryHref;
     }
     return null;
-  };
+  }, [isVisualizer, categoryHref]);
 
   return (
     <nav className="flex items-center text-sm text-gray-600 dark:text-gray-300" aria-label="Breadcrumb">
-      {paths.map((path, index) => (
+      {paths.map((path, index) => {
+        const href = getHref(path, index);
+        return (
         <div key={index} className="flex items-center">
-          {getHref(path, index) ? (
+          {href ? (
             <Link
-              href={getHref(path, index)}
+              href={href}
               className="hover:text-black dark:hover:text-white transition-colors"
             >
               {path.name}
@@ -46,7 +49,10 @@ export default function Breadcrumbs({ paths }) {
             <ChevronRight className="mx-2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           )}
         </div>
-      ))}
+        );
+      })}
     </nav>
   );
-}
+});
+
+export default Breadcrumbs;
