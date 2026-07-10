@@ -1,4 +1,15 @@
 export function* generatePrintNTo1Frames(n) {
+  if (n <= 0) {
+    yield {
+      stack: [],
+      printed: [],
+      activeLine: null,
+      statusType: 'error',
+      description: `Invalid input: N must be greater than 0 (received ${n}).`,
+      activeFrameId: null,
+    };
+    return;
+  }
   const stack = [];
   const printed = [];
   let frameIdCounter = 0;
