@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Layers, GitBranch, Terminal, HelpCircle, ArrowRight, Search, Network, Brain, TreePine, Hash, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QuizPage() {
+
+  const [searchTerm, setSearchTerm] = useState("");
   
   const quizzes = [
     {
@@ -329,6 +332,9 @@ export default function QuizPage() {
         "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
     },
   ];
+  const filteredQuizzes = quizzes.filter((quiz) =>
+    quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="min-h-screen bg-white dark:bg-[#1c1d1f] text-[var(--udemy-text)] dark:text-white transition-colors duration-300 pb-20">
       
@@ -341,8 +347,25 @@ export default function QuizPage() {
             <span className="animate-pulse text-violet-500">_</span>
           </h1>
         </div>
+        <div className="mb-8">
+          <div className="relative">
+            <Search
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+            <input
+              type="text"
+              placeholder="Search quizzes... (Press / or Ctrl+K)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] py-4 pl-12 pr-4 text-base outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-800 transition"
+            />
+          </div>
+        </div>
         <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          {quizzes.map((quiz, index) => {
+          {filteredQuizzes.length > 0 ? (
+            filteredQuizzes.map((quiz, index) => {
             const IconComponent = quiz.icon;
             return (
               <motion.div
@@ -391,7 +414,14 @@ export default function QuizPage() {
                 </div>
               </motion.div>
             );
-          })}
+          })
+          ) : (
+            <div className="col-span-2 text-center py-20">
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                No quizzes found.
+              </p>
+            </div>
+          )}
         </div>
         <Link
           href="/visualizer"
