@@ -727,12 +727,19 @@ io.on("connection", async (socket) => {
     });
   });
 
+  const ALLOWED_EMOTES = new Set(['clap', 'laugh', 'cheer', 'boo', 'wave', 'popcorn', 'cry', 'heart', 'fire', 'thumbsup']);
+
   socket.on("spectator_emote", (data) => {
     if (!data.matchId || !data.emote) return;
     if (isSpectatorRateLimited(socket.data.userId)) return;
+    if (typeof data.emote !== 'string') return;
+    if (data.emote.length > 50) return;
+    if (/<[^>]*>/.test(data.emote)) return;
+    const normalized = data.emote.toLowerCase().trim();
+    if (!ALLOWED_EMOTES.has(normalized)) return;
     socket.to(data.matchId).emit("spectator_emote", {
       userId: socket.data.userId,
-      emote: data.emote,
+      emote: data.emote.slice(0, 50),
       timestamp: Date.now()
     });
   });
