@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Code, FileText, BookOpen, LayoutDashboard, X } from "lucide-react";
 import { SEARCH_INDEX, CATEGORIES } from "@/app/components/commandPaletteIndex";
 import { supabase } from "@/lib/supabase";
+import { useDebounce } from "@/app/hooks/useDebounce";
 
 // ── Icon mapping per category ────────────────────────────────────────────────
 const CATEGORY_ICON = {
@@ -77,16 +78,17 @@ export function CommandPalette() {
     return merged.slice(0, 20);
   }, [staticResults, supabaseBlogResults, query]);
 
-  // Debounced Supabase search for blog posts
+  const debouncedQuery = useDebounce(query, 250);
+
   useEffect(() => {
-    const q = query.trim();
+    const q = debouncedQuery.trim();
     if (!q) {
       setSupabaseBlogResults([]);
       return;
     }
 
-    const delayDebounce = setTimeout(async () => {
-      setIsSearchingSupabase(true);
+    setIsSearchingSupabase(true);
+    (async () => {
       try {
         const { data, error } = await supabase
           .from("blog_posts")
@@ -104,16 +106,13 @@ export function CommandPalette() {
         } else {
           setSupabaseBlogResults([]);
         }
-      } catch (err) {
-        console.error("Supabase blog search error:", err);
+      } catch {
         setSupabaseBlogResults([]);
       } finally {
         setIsSearchingSupabase(false);
       }
-    }, 250);
-
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
+    })();
+  }, [debouncedQuery]);
 
   // ── Open / close keyboard shortcut & custom event ─────────────────────────
   useEffect(() => {
