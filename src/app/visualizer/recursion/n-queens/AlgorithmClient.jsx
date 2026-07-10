@@ -4,11 +4,9 @@ import Code from "@/app/visualizer/recursion/n-queens/codeBlock";
 import Quiz from "@/app/visualizer/recursion/n-queens/quiz";
 import Content from "@/app/visualizer/recursion/n-queens/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -23,13 +21,6 @@ export default function Page() {
       content={<Content />}
       code={<Code />}
       quiz={<Quiz />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionNQueens}
-          description="Mark N-Queens Placement as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

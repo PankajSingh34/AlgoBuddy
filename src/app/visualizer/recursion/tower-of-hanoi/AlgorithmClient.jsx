@@ -4,11 +4,9 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/recursion/tower-of-hanoi/codeBlock";
 import Content from "@/app/visualizer/recursion/tower-of-hanoi/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 export default function Page() {
   return (
@@ -20,13 +18,6 @@ export default function Page() {
       animation={<HanoiAnimation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionHanoi}
-          description="Mark Tower of Hanoi as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

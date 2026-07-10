@@ -4,11 +4,9 @@ import Code from "@/app/visualizer/recursion/fibonacci/codeBlock";
 import Quiz from "@/app/visualizer/recursion/fibonacci/quiz";
 import Content from "@/app/visualizer/recursion/fibonacci/content";
 import ArticleActions from "@/app/components/ui/ArticleActions";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -23,13 +21,6 @@ export default function Page() {
       content={<Content />}
       code={<Code />}
       quiz={<Quiz />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionFibonacci}
-          description="Mark Fibonacci Recursion as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

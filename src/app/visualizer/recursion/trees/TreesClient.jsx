@@ -7,8 +7,6 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 
 export default function TreesClient() {
   return (
@@ -19,13 +17,6 @@ export default function TreesClient() {
       animation={<FibonacciAnimation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionFibonacci}
-          description="Mark Recursion Trees (Fibonacci Tree) as done"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

@@ -7,8 +7,6 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 
 export default function BacktrackingClient() {
   return (
@@ -19,13 +17,6 @@ export default function BacktrackingClient() {
       animation={<NQueensAnimation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionNQueens}
-          description="Mark Backtracking (N-Queens Placement) as done"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

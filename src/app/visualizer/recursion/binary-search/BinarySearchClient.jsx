@@ -7,8 +7,6 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 
 export default function BinarySearchClient() {
   return (
@@ -19,13 +17,6 @@ export default function BinarySearchClient() {
       animation={<BinarySearchAnimation />}
       content={<BinarySearchContent />}
       code={<BinarySearchCode />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionBinarySearch}
-          description="Mark Recursive Binary Search as done"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"
