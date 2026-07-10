@@ -203,6 +203,26 @@ export const practiceData = [
             }
           },
           {
+  id: "linked-list-cycle",
+  name: "Linked List Cycle",
+  difficulty: "Easy",
+  companies: ["amazon", "microsoft", "apple"],
+  practiceUrl: "https://leetcode.com/problems/linked-list-cycle/",
+  visualizerUrl: "/visualizer/linkedlist/operations/traversal",
+  theory: {
+    summary: "Determine if a linked list has a cycle by checking if any node is visited more than once.",
+    steps: [
+      "Initialize two pointers, slow and fast, pointing to the head.",
+      "Move slow by one step and fast by two steps in each iteration.",
+      "If fast reaches null, there is no cycle — return false.",
+      "If slow and fast pointers ever meet, a cycle exists — return true."
+    ],
+    complexity: { time: "O(N)", space: "O(1)" },
+    pitfalls: "Not checking fast.next for null before moving fast two steps, which causes a null pointer error.",
+    tip: "This is also called Floyd's Cycle Detection Algorithm, or the Tortoise and Hare approach."
+  }
+},
+          {
             id: "intersection-of-two-linked-lists",
             name: "Intersection of Two Linked Lists",
             difficulty: "Easy",
