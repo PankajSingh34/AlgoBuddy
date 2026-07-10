@@ -48,6 +48,19 @@ export function* bucketSortGenerator(inputArray) {
         },
     };
     step++;
+    
+    if (min === max) {
+        yield {
+            type: "all_elements_equal",
+            payload: {
+                step,
+                value: min,
+                message: "All elements are equal. They will all be placed in the first bucket.",
+                totalSteps,
+            }
+        };
+        step++;
+    }
 
     const buckets = Array.from({ length: bucketCount }, () => []);
 
