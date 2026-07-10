@@ -453,6 +453,7 @@ io.on("connection", async (socket) => {
   await redisClient.hset(`{arena}:socket:${socket.id}`, 'connected', '1');
 
   socket.on("join_matchmaking", async (data) => {
+    if (socket.data.isSpectator) return;
     let opponent = null;
     try {
       if (await isRateLimited(socket.data.userId)) return;
@@ -575,6 +576,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("leave_matchmaking", async () => {
+    if (socket.data.isSpectator) return;
     try {
       if (await isRateLimited(socket.data.userId)) return;
       await redisClient.eval(
@@ -591,6 +593,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("join_match", async (data) => {
+    if (socket.data.isSpectator) return;
     try {
       if (!data.matchId) return;
       const userMatchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
@@ -627,6 +630,7 @@ io.on("connection", async (socket) => {
 
   // Duel Room Events
   socket.on("typing_status", async (data) => {
+    if (socket.data.isSpectator) return;
     try {
       if (await isRateLimited(socket.data.userId)) return;
       const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
@@ -649,6 +653,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("test_submit", async (data) => {
+    if (socket.data.isSpectator) return;
     try {
       if (await isRateLimited(socket.data.userId)) return;
       const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
@@ -664,6 +669,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("test_result", async (data) => {
+    if (socket.data.isSpectator) return;
     try {
       if (await isRateLimited(socket.data.userId)) return;
 
@@ -732,6 +738,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("match_complete", async (data) => {
+    if (socket.data.isSpectator) return;
     try {
       if (await isRateLimited(socket.data.userId)) return;
 
