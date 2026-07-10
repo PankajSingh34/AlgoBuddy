@@ -58,7 +58,10 @@ function releaseIsolate(isolate) {
 
 async function executeCode(code) {
   const startTime = Date.now();
-  const executionId = `exec_${Date.now()}_${globalThis.crypto.randomUUID().split('-')[0]}`;
+  const uuidPart = typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID().split("-")[0]
+    : Math.random().toString(36).substring(2, 10);
+  const executionId = `exec_${Date.now()}_${uuidPart}`;
   let isolate = null;
   let context = null;
   let isolateCorrupted = false;
@@ -128,12 +131,19 @@ async function executeCode(code) {
   } catch (err) {
     const elapsed = Date.now() - startTime;
     const sanitizedMessage = sanitizeError(err);
-    isolateCorrupted = true;
+
+    // SECURITY/PERF: only genuine VM-level failures leave the isolate in a
+    // state we can no longer trust. An ordinary throw/ReferenceError/etc.
+    // from user code is caught cleanly by isolated-vm and does NOT corrupt
+    // the isolate 
+    const isTimeout = err.code === "ISOLATED_VM_SCRIPT_TIMEOUT" || err.message?.includes("timed out");
+    const isMemoryLimit = err.code === "ISOLATED_VM_MEMORY_LIMIT_EXCEEDED" || err.message?.includes("memory");
+    isolateCorrupted = isTimeout || isMemoryLimit;
 
     // Audit log: execution failed
-    console.log(`[sandbox:audit] Execution failed: ${executionId}, status: ${err.code || 'ERROR'}, time: ${elapsed}ms, error: ${sanitizedMessage}, isolation: isolated-vm`);
+    console.log(`[sandbox:audit] Execution failed: ${executionId}, status: ${err.code || 'ERROR'}, time: ${elapsed}ms, error: ${sanitizedMessage}, isolation: isolated-vm, isolateCorrupted: ${isolateCorrupted}`);
 
-    if (err.code === "ISOLATED_VM_SCRIPT_TIMEOUT" || err.message?.includes("timed out")) {
+    if (isTimeout) {
       return {
         status: EXECUTION_STATUS.TLE,
         output: "",
@@ -143,7 +153,7 @@ async function executeCode(code) {
       };
     }
 
-    if (err.code === "ISOLATED_VM_MEMORY_LIMIT_EXCEEDED" || err.message?.includes("memory")) {
+    if (isMemoryLimit) {
       return {
         status: EXECUTION_STATUS.MLE,
         output: "",
@@ -153,6 +163,9 @@ async function executeCode(code) {
       };
     }
 
+    // Ordinary runtime error from user code — the isolate itself is fine
+    // and goes back to the pool (see `finally` below); only the script
+    // execution failed.
     let errorMessage = sanitizedMessage;
     if (err.name && err.name !== "Error" && !errorMessage.startsWith(err.name)) {
       errorMessage = `${err.name}: ${errorMessage}`;

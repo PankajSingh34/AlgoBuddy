@@ -12,4 +12,6 @@ public class ProgressRequest {
     @Pattern(regexp = "^(Completed|In Progress|Attempted|Bookmarked)$",
              message = "Invalid status. Must be one of: Completed, In Progress, Attempted, Bookmarked")
     private String status;
+
+    private String localDate;
 }

@@ -67,7 +67,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
 
     const socket = io(socketUrl, {
       query: {
-        userId: profile?.id || "spectator_" + globalThis.crypto.randomUUID().split('-')[0],
+        userId: profile?.id || "spectator_" + (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID().split('-')[0] : Math.random().toString(36).substring(2, 10)),
         username: profile?.username || "Spectator_" + Math.floor(Math.random() * 1000)
       }
     });

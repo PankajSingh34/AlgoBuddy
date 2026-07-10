@@ -51,7 +51,7 @@ const HeroSection = () => {
 
   return (
     <main className="landing-page bg-white dark:bg-surface-900">
-      <section className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
+      <section id="home" className="min-h-[calc(100vh-72px)] flex items-center justify-center px-5 py-20 relative overflow-hidden">
         <div className="relative z-10 w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* LEFT — text */}
           <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-7">

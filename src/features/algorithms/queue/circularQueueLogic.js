@@ -6,7 +6,7 @@ export function* enqueueCircularGenerator(queue, front, rear, count, maxSize, in
     return;
   }
   if (count === maxSize) {
-    yield { type: 'error', message: 'Circular queue is full!' };
+    yield { phase: 'error', action: 'enqueue', message: 'Circular queue is full!' };
     return;
   }
   

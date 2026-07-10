@@ -113,6 +113,116 @@ const LinearSearchQuiz = () => {
   ],
   correctAnswer: 1,
   explanation: "Linear search is ideal for small datasets or when the data is unsorted and sorting isn't worthwhile."
+},
+{
+  question: "What is the space complexity of an iterative linear search algorithm?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 0,
+  explanation: "Linear search only uses a few variables during execution, so its auxiliary space complexity is O(1)."
+},
+{
+  question: "How many elements may need to be checked in the worst case for a linear search on an array of n elements?",
+  options: [
+    "1",
+    "n/2",
+    "n",
+    "log n"
+  ],
+  correctAnswer: 2,
+  explanation: "If the target is the last element or not present, every element must be checked, resulting in n comparisons."
+},
+{
+  question: "Which searching algorithm does NOT require the data to be sorted?",
+  options: [
+    "Binary Search",
+    "Linear Search",
+    "Jump Search",
+    "Interpolation Search"
+  ],
+  correctAnswer: 1,
+  explanation: "Linear search works on both sorted and unsorted data because it checks elements sequentially."
+},
+{
+  question: "If the target element is found at index 6, how many comparisons are required using linear search?",
+  options: [
+    "5",
+    "6",
+    "7",
+    "8"
+  ],
+  correctAnswer: 2,
+  explanation: "Linear search starts from index 0, so finding an element at index 6 requires 7 comparisons."
+},
+{
+  question: "Which of the following is a disadvantage of linear search?",
+  options: [
+    "Requires extra memory",
+    "Cannot search unsorted arrays",
+    "Slow for large datasets",
+    "Works only with integers"
+  ],
+  correctAnswer: 2,
+  explanation: "Linear search examines elements one by one, making it inefficient for large datasets."
+},
+{
+  question: "What happens if the first element matches the target value?",
+  options: [
+    "The algorithm continues searching",
+    "The algorithm returns immediately",
+    "The array is sorted",
+    "An error is generated"
+  ],
+  correctAnswer: 1,
+  explanation: "Linear search stops immediately once the target element is found."
+},
+{
+  question: "Which of the following applications commonly uses linear search?",
+  options: [
+    "Finding a contact in a short unsorted list",
+    "Searching in a balanced BST",
+    "Database indexing",
+    "Searching in a hash table"
+  ],
+  correctAnswer: 0,
+  explanation: "Linear search is practical for small unsorted collections where sorting is unnecessary."
+},
+{
+  question: "What is the average number of comparisons required in linear search for a successful search?",
+  options: [
+    "1",
+    "n/2",
+    "log n",
+    "n²"
+  ],
+  correctAnswer: 1,
+  explanation: "On average, the target is expected to be found halfway through the array, requiring about n/2 comparisons."
+},
+{
+  question: "Which statement about linear search is TRUE?",
+  options: [
+    "It always performs faster than binary search",
+    "It works only on sorted arrays",
+    "It checks elements sequentially until the target is found",
+    "It divides the array into halves"
+  ],
+  correctAnswer: 2,
+  explanation: "Linear search examines each element one after another until the target is found or the array ends."
+},
+{
+  question: "For which type of dataset is linear search generally preferred?",
+  options: [
+    "Very large sorted datasets",
+    "Small datasets with infrequent searches",
+    "Balanced binary search trees",
+    "Hash tables"
+  ],
+  correctAnswer: 1,
+  explanation: "Linear search is simple and efficient enough for small datasets where sorting or advanced search algorithms are unnecessary."
 }
   ];
 

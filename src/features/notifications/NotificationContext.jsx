@@ -1,80 +1,29 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useUser } from "@/features/user/UserContext";
+import { useSheetProgress } from "@/app/hooks/useSheetProgress";
 import { api } from "@/lib/apiClient";
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+const SOLVED_MILESTONES = [10, 25, 50, 100, 200];
 
-const initialMockNotifications = [
-  {
-    id: "1",
-    category: "Streak",
-    title: "🔥 7 Day Streak Achieved",
-    message: "You've practiced for 7 days in a row. Keep it up!",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    read: false,
-    priority: "high",
-    actionUrl: "/arena",
-  },
-  {
-    id: "2",
-    category: "Achievement",
-    title: "🏆 Achievement Unlocked",
-    message: "You have completed 50 algorithms! You earned the 'Algorithmic Master' badge.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    read: false,
-    priority: "high",
-    actionUrl: "/profile",
-  },
-  {
-    id: "3",
-    category: "Practice",
-    title: "📝 Daily Practice Challenge",
-    message: "New dynamic programming challenges have been added to your curriculum.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    read: true,
-    priority: "medium",
-    actionUrl: "/practice",
-  },
-  {
-    id: "4",
-    category: "Blog",
-    title: "📚 New Blog Available",
-    message: "Check out our latest post: 'Understanding Graphs and Tree Traversals'.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    read: true,
-    priority: "low",
-    actionUrl: "/blog",
-  },
-  {
-    id: "5",
-    category: "System",
-    title: "🎯 Goal Completed",
-    message: "You successfully completed your weekly target of 10 problems.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    read: true,
-    priority: "medium",
-    actionUrl: "/profile",
-  },
-  {
-    id: "6",
-    category: "Community",
-    title: "💬 New Reply",
-    message: "Someone replied to your comment in the 'Two Sum' discussion.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
-    read: true,
-    priority: "low",
-    actionUrl: "/community",
-  },
-  {
-    id: "7",
-    category: "Announcement",
-    title: "🚀 Platform Update",
-    message: "AlgoBuddy v2.0 is live! Explore the new notification panel and more.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    read: false,
-    priority: "high",
-    actionUrl: "/",
+const FIRED_MILESTONES_KEY = "algobuddy_fired_milestones";
+
+function readFiredMilestones() {
+  try {
+    const raw = localStorage.getItem(FIRED_MILESTONES_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
   }
-];
+}
+
+function markMilestoneFired(id) {
+  try {
+    const fired = readFiredMilestones();
+    fired.add(id);
+    localStorage.setItem(FIRED_MILESTONES_KEY, JSON.stringify([...fired]));
+  } catch {}
+}
 
 const NotificationContext = createContext();
 
@@ -88,6 +37,7 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }) => {
   const { user } = useUser();
+  const { streakData, progress } = useSheetProgress();
   const [notifications, setNotifications] = useState([]);
   const [mounted, setMounted] = useState(false);
 
@@ -104,15 +54,64 @@ export const NotificationProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem("algobuddy_notifications");
       if (saved) {
+        // New accounts (no saved key yet) correctly start with an empty
+        // list instead of being seeded with fake achievement/streak data.
         setNotifications(JSON.parse(saved));
-      } else {
-        setNotifications(initialMockNotifications);
       }
     } catch (e) {
       console.error("Error loading notifications:", e);
-      setNotifications(initialMockNotifications);
     }
   }, []);
+
+  // Fire real streak-milestone notifications based on actual streakData,
+  // not hardcoded content. Each milestone notifies exactly once per
+  // account, even across deletes/reloads.
+  useEffect(() => {
+    if (!mounted) return;
+    const fired = readFiredMilestones();
+
+    STREAK_MILESTONES.forEach((milestone) => {
+      const id = `streak-${milestone}`;
+      if (streakData.current >= milestone && !fired.has(id)) {
+        addNotification({
+          id,
+          category: "Streak",
+          title: `🔥 ${milestone} Day Streak Achieved`,
+          message: `You've practiced for ${milestone} days in a row. Keep it up!`,
+          timestamp: new Date().toISOString(),
+          read: false,
+          priority: "high",
+          actionUrl: "/arena",
+        });
+        markMilestoneFired(id);
+      }
+    });
+  }, [mounted, streakData.current, addNotification]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const solvedCount = Object.values(progress).filter(
+      (entry) => (typeof entry === "string" ? entry : entry?.status) === "Completed"
+    ).length;
+    const fired = readFiredMilestones();
+
+    SOLVED_MILESTONES.forEach((milestone) => {
+      const id = `solved-${milestone}`;
+      if (solvedCount >= milestone && !fired.has(id)) {
+        addNotification({
+          id,
+          category: "Achievement",
+          title: "🏆 Achievement Unlocked",
+          message: `You have completed ${milestone} algorithms! Keep up the momentum.`,
+          timestamp: new Date().toISOString(),
+          read: false,
+          priority: "high",
+          actionUrl: "/profile",
+        });
+        markMilestoneFired(id);
+      }
+    });
+  }, [mounted, progress, addNotification]);
 
   useEffect(() => {
     if (!mounted || !user) return;

@@ -1,7 +1,6 @@
 import Animation from "@/app/visualizer/ai/minmax/animation";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "@/app/visualizer/ai/minmax/codeBlock";
-import Quiz from "@/app/visualizer/ai/minmax/quiz";
 import Content from "@/app/visualizer/ai/minmax/content";
 import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
@@ -19,7 +18,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      quiz={<Quiz />}
       moduleCard={
         <ModuleCard
           moduleId={MODULE_MAPS.minMax}

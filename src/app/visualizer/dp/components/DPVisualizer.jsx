@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Settings2, BarChart3, Info, Play, RotateCcw } from "lucide-react";
+import React, { useState, useMemo, useCallback } from "react";
+import { Settings2, Info, Play, RotateCcw } from "lucide-react";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
@@ -9,17 +9,18 @@ import { knapsackGenerator } from "@/features/algorithms/dp/knapsackLogic";
 import { lcsGenerator } from "@/features/algorithms/dp/lcsLogic";
 import { coinChangeGenerator } from "@/features/algorithms/dp/coinChangeLogic";
 import { dpTopics } from "../data";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { dpComplexity, getOperationsCount } from "../complexityData";
+import ComplexityPanel from "@/app/components/ComplexityPanel";
 
 export default function DPVisualizer({ algorithm = "knapsack" }) {
   const topic = dpTopics[algorithm];
-  
+
   const [isEditing, setIsEditing] = useState(true);
 
   // Inputs for Knapsack
   const [capacity, setCapacity] = useState(topic.defaultInput.capacity || 5);
   const [items, setItems] = useState(topic.defaultInput.items || []);
-  
+
   // Inputs for LCS
   const [str1, setStr1] = useState(topic.defaultInput.str1 || "");
   const [str2, setStr2] = useState(topic.defaultInput.str2 || "");
@@ -31,7 +32,9 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
   const frames = useMemo(() => {
     try {
       if (algorithm === "knapsack") {
-        return Array.from(knapsackGenerator(items.map(i => i.weight), items.map(i => i.value), capacity));
+        return Array.from(
+          knapsackGenerator(items.map((i) => i.weight), items.map((i) => i.value), capacity)
+        );
       }
       if (algorithm === "lcs") {
         return Array.from(lcsGenerator(str1, str2));
@@ -98,7 +101,12 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
             <tr>
               <th className="p-2 border border-surface-200 dark:border-surface-800 text-surface-500">Item \ Cap</th>
               {Array.from({ length: capacity + 1 }).map((_, w) => (
-                <th key={w} className={`p-2 border border-surface-200 dark:border-surface-800 ${currentFrame.col === w ? 'text-primary' : 'text-surface-600 dark:text-surface-300'}`}>
+                <th
+                  key={w}
+                  className={`p-2 border border-surface-200 dark:border-surface-800 ${
+                    currentFrame.col === w ? "text-primary" : "text-surface-600 dark:text-surface-300"
+                  }`}
+                >
                   {w}
                 </th>
               ))}
@@ -107,19 +115,22 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
           <tbody>
             {dp.map((rowArr, i) => (
               <tr key={i}>
-                <th className={`p-2 border border-surface-200 dark:border-surface-800 ${currentFrame.row === i ? 'text-primary' : 'text-surface-600 dark:text-surface-300'}`}>
-                  {i === 0 ? "0" : `i=${i} (w:${items[i-1].weight}, v:${items[i-1].value})`}
+                <th
+                  className={`p-2 border border-surface-200 dark:border-surface-800 ${
+                    currentFrame.row === i ? "text-primary" : "text-surface-600 dark:text-surface-300"
+                  }`}
+                >
+                  {i === 0 ? "0" : `i=${i} (w:${items[i - 1].weight}, v:${items[i - 1].value})`}
                 </th>
                 {rowArr.map((val, w) => {
                   const isCurrent = currentFrame.row === i && currentFrame.col === w;
-                  const isReferenced = !isCurrent && (
-                    (currentFrame.row === i && currentFrame.row > 0 && currentFrame.col !== w) || 
-                    false // Could highlight referenced cells if we add them to the frame state
-                  );
                   return (
-                    <td key={w} className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
-                      ${isCurrent ? 'bg-primary text-white font-bold scale-110 shadow-md' : 'bg-white dark:bg-surface-900'}
-                    `}>
+                    <td
+                      key={w}
+                      className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
+                      ${isCurrent ? "bg-primary text-white font-bold scale-110 shadow-md" : "bg-white dark:bg-surface-900"}
+                    `}
+                    >
                       {val}
                     </td>
                   );
@@ -142,8 +153,13 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
             <tr>
               <th className="p-2 border border-surface-200 dark:border-surface-800 text-surface-500"></th>
               <th className="p-2 border border-surface-200 dark:border-surface-800 text-surface-500">""</th>
-              {str2.split('').map((char, j) => (
-                <th key={j} className={`p-2 border border-surface-200 dark:border-surface-800 ${currentFrame.col === j + 1 ? 'text-primary' : 'text-surface-600 dark:text-surface-300'}`}>
+              {str2.split("").map((char, j) => (
+                <th
+                  key={j}
+                  className={`p-2 border border-surface-200 dark:border-surface-800 ${
+                    currentFrame.col === j + 1 ? "text-primary" : "text-surface-600 dark:text-surface-300"
+                  }`}
+                >
                   {char}
                 </th>
               ))}
@@ -152,15 +168,22 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
           <tbody>
             {dp.map((rowArr, i) => (
               <tr key={i}>
-                <th className={`p-2 border border-surface-200 dark:border-surface-800 ${currentFrame.row === i ? 'text-primary' : 'text-surface-600 dark:text-surface-300'}`}>
+                <th
+                  className={`p-2 border border-surface-200 dark:border-surface-800 ${
+                    currentFrame.row === i ? "text-primary" : "text-surface-600 dark:text-surface-300"
+                  }`}
+                >
                   {i === 0 ? '""' : str1[i - 1]}
                 </th>
                 {rowArr.map((val, j) => {
                   const isCurrent = currentFrame.row === i && currentFrame.col === j;
                   return (
-                    <td key={j} className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
-                      ${isCurrent ? 'bg-primary text-white font-bold scale-110 shadow-md' : 'bg-white dark:bg-surface-900'}
-                    `}>
+                    <td
+                      key={j}
+                      className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
+                      ${isCurrent ? "bg-primary text-white font-bold scale-110 shadow-md" : "bg-white dark:bg-surface-900"}
+                    `}
+                    >
                       {val}
                     </td>
                   );
@@ -183,7 +206,12 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
             <tr>
               <th className="p-2 border border-surface-200 dark:border-surface-800 text-surface-500">Amount</th>
               {dp.map((_, i) => (
-                <th key={i} className={`p-2 border border-surface-200 dark:border-surface-800 ${currentFrame.index === i ? 'text-primary' : 'text-surface-600 dark:text-surface-300'}`}>
+                <th
+                  key={i}
+                  className={`p-2 border border-surface-200 dark:border-surface-800 ${
+                    currentFrame.index === i ? "text-primary" : "text-surface-600 dark:text-surface-300"
+                  }`}
+                >
                   {i}
                 </th>
               ))}
@@ -195,9 +223,12 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               {dp.map((val, i) => {
                 const isCurrent = currentFrame.index === i;
                 return (
-                  <td key={i} className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
-                    ${isCurrent ? 'bg-primary text-white font-bold scale-110 shadow-md' : 'bg-white dark:bg-surface-900'}
-                  `}>
+                  <td
+                    key={i}
+                    className={`p-2 border border-surface-200 dark:border-surface-800 transition-colors duration-300
+                    ${isCurrent ? "bg-primary text-white font-bold scale-110 shadow-md" : "bg-white dark:bg-surface-900"}
+                  `}
+                  >
                     {val === Infinity || val === null ? "∞" : val}
                   </td>
                 );
@@ -217,8 +248,8 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isEditing 
-                  ? "bg-primary text-white" 
+                isEditing
+                  ? "bg-primary text-white"
                   : "bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300"
               }`}
             >
@@ -235,7 +266,7 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               </div>
             )}
           </div>
-          
+
           <div className="flex gap-2">
             <button type="button" onClick={togglePlay} className="btn-base bg-primary text-white hover:bg-primary-dark">
               <Play className="h-4 w-4" /> {engine.isPlaying ? "Pause" : "Play"}
@@ -253,21 +284,30 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold">Knapsack Capacity (W)</label>
-                  <input type="number" min="1" max="20" value={capacity} onChange={(e) => setCapacity(parseInt(e.target.value) || 0)} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={capacity}
+                    onChange={(e) => setCapacity(parseInt(e.target.value) || 0)}
+                    className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-semibold">Items (Weight, Value)</label>
-                  <textarea 
+                  <textarea
                     className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full font-mono text-sm"
                     rows={4}
-                    value={items.map(i => `${i.weight},${i.value}`).join('\n')}
+                    value={items.map((i) => `${i.weight},${i.value}`).join("\n")}
                     onChange={(e) => {
-                      const lines = e.target.value.split('\n');
-                      const newItems = lines.map(l => {
-                        const [w, v] = l.split(',').map(s => parseInt(s.trim()));
-                        if (!isNaN(w) && !isNaN(v)) return { weight: w, value: v };
-                        return null;
-                      }).filter(Boolean);
+                      const lines = e.target.value.split("\n");
+                      const newItems = lines
+                        .map((l) => {
+                          const [w, v] = l.split(",").map((s) => parseInt(s.trim()));
+                          if (!isNaN(w) && !isNaN(v)) return { weight: w, value: v };
+                          return null;
+                        })
+                        .filter(Boolean);
                       setItems(newItems);
                     }}
                     placeholder="Format: weight,value (one per line)"
@@ -281,11 +321,23 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold">String 1</label>
-                  <input type="text" maxLength={15} value={str1} onChange={(e) => setStr1(e.target.value.toUpperCase())} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full uppercase" />
+                  <input
+                    type="text"
+                    maxLength={15}
+                    value={str1}
+                    onChange={(e) => setStr1(e.target.value.toUpperCase())}
+                    className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full uppercase"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-semibold">String 2</label>
-                  <input type="text" maxLength={15} value={str2} onChange={(e) => setStr2(e.target.value.toUpperCase())} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full uppercase" />
+                  <input
+                    type="text"
+                    maxLength={15}
+                    value={str2}
+                    onChange={(e) => setStr2(e.target.value.toUpperCase())}
+                    className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full uppercase"
+                  />
                 </div>
               </div>
             )}
@@ -294,14 +346,30 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold">Target Amount</label>
-                  <input type="number" min="1" max="50" value={amount} onChange={(e) => setAmount(parseInt(e.target.value) || 0)} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={amount}
+                    onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                    className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-32"
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-semibold">Coins</label>
-                  <input type="text" value={coins.join(', ')} onChange={(e) => {
-                    const c = e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
-                    setCoins(c);
-                  }} className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full" placeholder="e.g. 1, 2, 5" />
+                  <input
+                    type="text"
+                    value={coins.join(", ")}
+                    onChange={(e) => {
+                      const c = e.target.value
+                        .split(",")
+                        .map((s) => parseInt(s.trim()))
+                        .filter((n) => !isNaN(n) && n > 0);
+                      setCoins(c);
+                    }}
+                    className="block mt-1 p-2 border rounded dark:bg-surface-800 dark:border-surface-700 w-full"
+                    placeholder="e.g. 1, 2, 5"
+                  />
                   <p className="text-xs text-surface-500 mt-1">Comma separated positive integers</p>
                 </div>
               </div>
@@ -310,10 +378,15 @@ export default function DPVisualizer({ algorithm = "knapsack" }) {
         )}
 
         {!isEditing && (
-          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900 min-h-[400px]">
-             {algorithm === "knapsack" && renderKnapsackGrid()}
-             {algorithm === "lcs" && renderLCSGrid()}
-             {algorithm === "coin-change" && renderCoinChangeGrid()}
+          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm dark:border-surface-800 dark:bg-surface-900 min-h-[400px] space-y-6">
+            {algorithm === "knapsack" && renderKnapsackGrid()}
+            {algorithm === "lcs" && renderLCSGrid()}
+            {algorithm === "coin-change" && renderCoinChangeGrid()}
+
+            <ComplexityPanel
+              complexity={dpComplexity[algorithm]}
+              operationsCount={getOperationsCount(engine.currentStep)}
+            />
           </div>
         )}
 

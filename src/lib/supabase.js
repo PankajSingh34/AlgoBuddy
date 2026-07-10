@@ -1,31 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseConfig } from "./shared-utils.js";
 
 const SUPABASE_ENV_ERROR =
   "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.local and add your Supabase project URL and anon key.";
-
-function isValidHttpUrl(value) {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function getSupabaseConfig() {
-  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey || !isValidHttpUrl(supabaseUrl)) {
-    return null;
-  }
-
-  if (supabaseUrl.startsWith("http://localhost:")) {
-    supabaseUrl = supabaseUrl.replace("http://localhost:", "http://127.0.0.1:");
-  }
-
-  return { supabaseUrl, supabaseAnonKey };
-}
 
 function createMissingQueryBuilder() {
   const result = {

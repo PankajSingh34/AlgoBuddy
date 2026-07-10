@@ -1,11 +1,9 @@
 import Animation from "./animation";
 import Code from "./codeBlock";
 import Content from "./content";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -17,13 +15,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.slidingWindow}
-          description="Mark Sliding Window as done and track your progress"
-          initialDone={false}
-        />
-      }
     />
   );
 }

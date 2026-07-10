@@ -31,6 +31,8 @@ export default function useVisualizerKeyboard({
   onSpeedChange,
   onTogglePlayPause,
   onStepForward,
+  onNextStep,
+  onPrevStep,
   speed,
   sorting,
   sorted,
@@ -40,8 +42,9 @@ export default function useVisualizerKeyboard({
     if (!enabled) return;
 
     function handleKeyDown(e) {
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      const activeEl = document.activeElement;
+      const tag = activeEl?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select" || activeEl?.isContentEditable) return;
 
       switch (e.key) {
         case " ":
@@ -97,5 +100,5 @@ export default function useVisualizerKeyboard({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, speed, sorting, sorted]);
+  }, [enabled, onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, onNextStep, onPrevStep, speed, sorting, sorted]);
 }

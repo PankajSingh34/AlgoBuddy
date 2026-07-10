@@ -641,7 +641,7 @@ const res = await fetch("/api/chatbot", {
             exit={{ opacity: 0, scale: 0.88, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 30 }}
             style={{ transformOrigin: "bottom right" }}
-            className="bottom-[148px] sm:bottom-[92px] right-4 sm:right-6 z-[10000] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-120px)] flex flex-col rounded-2xl overflow-hidden
+            className=" fixed bottom-[148px] sm:bottom-[92px] right-4 sm:right-6 z-[10000] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-120px)] flex flex-col rounded-2xl overflow-hidden
               bg-white/95 dark:bg-[#1c1d1f]/95 border border-purple-100 dark:border-purple-900/30 shadow-2xl backdrop-blur-xl transition-all duration-300"
           >
             {/* Header */}

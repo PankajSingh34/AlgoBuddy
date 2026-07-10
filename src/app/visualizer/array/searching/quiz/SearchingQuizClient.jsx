@@ -20,6 +20,43 @@ export default function SearchingQuizClient() {
       filename: "binary_search_quiz.js",
       themeColor: "from-blue-500 to-indigo-600",
     },
+    {
+      title: "Ternary Search Quiz",
+      description: "Practice Ternary Search concepts, divide-and-conquer strategy, search intervals, and time complexities.",
+      href: "/visualizer/array/ternary-search/quiz",
+      filename: "ternary_search_quiz.js",
+      themeColor: "from-violet-500 to-purple-600",
+    },
+    {
+      title: "Jump Search Quiz",
+      description: "Practice Jump Search concepts, block jumping, linear scanning, and square-root time complexity.",
+      href: "/visualizer/array/jump-search/quiz",
+      filename: "jump_search_quiz.js",
+      themeColor: "from-emerald-500 to-teal-600",
+    },
+    {
+      title: "Fibonacci Search Quiz",
+      description: "Practice Fibonacci Search concepts, Fibonacci sequence, logarithmic search, and time complexity.",
+      href: "/visualizer/array/fibonacci-search/quiz",
+      filename: "fibonacci_search_quiz.js",
+      themeColor: "from-amber-500 to-orange-600",
+    },
+    {
+      title: "Exponential Search Quiz",
+      description:
+        "Practice Exponential Search concepts, range expansion, Binary Search integration, and time complexities.",
+      href: "/visualizer/array/exponential-search/quiz",
+      filename: "exponential_search_quiz.js",
+      themeColor: "from-orange-500 to-red-600",
+    },
+    {
+      title: "Interpolation Search Quiz",
+      description:
+        "Practice Interpolation Search concepts, interpolation formula, complexity, and applications.",
+      href: "/visualizer/array/interpolation-search/quiz",
+      filename: "interpolation_search_quiz.js",
+      themeColor: "from-cyan-500 to-blue-600",
+    },
   ];
 
   return (
@@ -38,7 +75,7 @@ export default function SearchingQuizClient() {
             Searching Quiz Portal
           </h1>
           <p className="text-[14px] text-surface-600 dark:text-surface-400 font-medium">
-            Test your understanding of linear and binary search algorithms. Select a specific challenge below.
+            Test your understanding of search algorithms. Select a specific challenge below.
           </p>
         </div>
       </section>

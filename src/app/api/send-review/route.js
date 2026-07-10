@@ -4,15 +4,7 @@ import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
 import { validateCsrf } from "@/lib/csrf";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { escapeHtml } from "@/lib/shared-utils";
 
 function isValidEmail(value) {
   const email = String(value).trim();

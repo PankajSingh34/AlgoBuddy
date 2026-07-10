@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { ALGORITHMS, REFERENCE_CURVES, generatePoints } from "@/features/algorithms/complexity/complexityVisualizerLogic";
+import { ALGORITHMS, REFERENCE_CURVES } from "./components/ComplexityVisualizer";
 
 const N_STEPS = 50;
 
@@ -114,7 +114,7 @@ export default function ComplexityVisualizer() {
             />
             <Legend wrapperStyle={{ paddingTop: "16px" }} />
 
-            {/* Selected algorithm — thick line */}
+            {/* Selected algorithm - thick line */}
             <Line
               type="monotone"
               dataKey={selectedAlgo}
@@ -124,7 +124,7 @@ export default function ComplexityVisualizer() {
               activeDot={{ r: 5 }}
             />
 
-            {/* Reference curves — thin dashed */}
+            {/* Reference curves - thin dashed */}
             {showReferences && REFERENCE_CURVES.map((ref) => (
               <Line
                 key={ref.label}

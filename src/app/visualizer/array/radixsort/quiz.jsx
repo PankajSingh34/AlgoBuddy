@@ -185,6 +185,116 @@ const RadixSortQuiz = () => {
       explanation:
         "Radix Sort processes one digit at a time using a stable sorting algorithm.",
     },
+    {
+  question: "What is the first step in LSD Radix Sort?",
+  options: [
+    "Sort by the most significant digit",
+    "Sort by the least significant digit",
+    "Find the largest number",
+    "Reverse the array"
+  ],
+  correctAnswer: 1,
+  explanation: "LSD (Least Significant Digit) Radix Sort begins by sorting numbers according to their least significant digit."
+},
+{
+  question: "Which property of Counting Sort makes it suitable for Radix Sort?",
+  options: [
+    "It is recursive",
+    "It is stable",
+    "It uses no extra space",
+    "It is comparison-based"
+  ],
+  correctAnswer: 1,
+  explanation: "Counting Sort is stable, ensuring that the relative order of equal elements is preserved across digit passes."
+},
+{
+  question: "Which type of sorting algorithm is Radix Sort?",
+  options: [
+    "Comparison-based",
+    "Non-comparison-based",
+    "Divide and Conquer",
+    "Greedy"
+  ],
+  correctAnswer: 1,
+  explanation: "Radix Sort does not compare elements directly. Instead, it sorts them based on their individual digits."
+},
+{
+  question: "What happens after each digit is processed in Radix Sort?",
+  options: [
+    "The array becomes completely sorted",
+    "The numbers are grouped according to the processed digit",
+    "The largest element is removed",
+    "The array is divided into halves"
+  ],
+  correctAnswer: 1,
+  explanation: "Each pass groups numbers according to the current digit while preserving the order established in previous passes."
+},
+{
+  question: "Which of the following is a limitation of Radix Sort?",
+  options: [
+    "It cannot sort integers",
+    "It is inefficient when the number of digits is very large",
+    "It is unstable",
+    "It always performs O(n²)"
+  ],
+  correctAnswer: 1,
+  explanation: "Radix Sort becomes less efficient as the number of digits increases because it requires one pass per digit."
+},
+{
+  question: "Can Radix Sort correctly sort duplicate values?",
+  options: [
+    "Yes",
+    "No",
+    "Only if duplicates are adjacent",
+    "Only for positive integers"
+  ],
+  correctAnswer: 0,
+  explanation: "Yes, Radix Sort correctly sorts duplicate values while preserving their relative order when using a stable sorting algorithm."
+},
+{
+  question: "Which data type is NOT naturally suitable for standard Radix Sort?",
+  options: [
+    "Positive integers",
+    "Fixed-length strings",
+    "Floating-point numbers",
+    "Employee IDs"
+  ],
+  correctAnswer: 2,
+  explanation: "Standard Radix Sort is designed for fixed-length keys like integers or strings, not floating-point numbers."
+},
+{
+  question: "How many passes does LSD Radix Sort perform?",
+  options: [
+    "One",
+    "Equal to the number of digits in the largest element",
+    "Equal to the number of elements",
+    "log₂(n)"
+  ],
+  correctAnswer: 1,
+  explanation: "LSD Radix Sort performs one pass for each digit in the largest number."
+},
+{
+  question: "Which of the following is a real-world application of Radix Sort?",
+  options: [
+    "Sorting phone numbers",
+    "Searching graphs",
+    "Finding shortest paths",
+    "Balancing binary trees"
+  ],
+  correctAnswer: 0,
+  explanation: "Radix Sort is commonly used for sorting fixed-length numeric values such as phone numbers, IDs, and ZIP codes."
+},
+{
+  question: "When is Radix Sort generally preferred over comparison-based sorting algorithms?",
+  options: [
+    "When sorting fixed-length integers with a limited digit range",
+    "When sorting floating-point numbers",
+    "When recursion must be avoided",
+    "When memory usage must always be O(1)"
+  ],
+  correctAnswer: 0,
+  explanation: "Radix Sort is especially efficient for sorting fixed-length integers or keys with a small number of digits."
+}
   ];
 
   return (

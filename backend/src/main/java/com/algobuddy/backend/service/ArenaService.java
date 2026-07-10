@@ -89,8 +89,21 @@ public class ArenaService {
     public List<ArenaMatchResponse> getMatchHistory(UUID userId) {
         List<ArenaMatch> recentMatches = matchRepository.findRecentMatchesByUserId(userId, PageRequest.of(0, 5));
         
+        List<UUID> opponentIds = recentMatches.stream()
+                .map(match -> match.getPlayer1Id().equals(userId) ? match.getPlayer2Id() : match.getPlayer1Id())
+                .distinct()
+                .collect(Collectors.toList());
+
+        java.util.Map<UUID, String> opponentNameMap = new java.util.HashMap<>();
+        if (!opponentIds.isEmpty()) {
+            List<ArenaLeaderboardProjection> profiles = profileRepository.findProfilesWithUserDetailsIn(opponentIds);
+            for (ArenaLeaderboardProjection profile : profiles) {
+                opponentNameMap.put(profile.getUserId(), profile.getName());
+            }
+        }
+
         return recentMatches.stream()
-                .map(match -> mapToMatchResponse(match, userId))
+                .map(match -> mapToMatchResponse(match, userId, opponentNameMap))
                 .collect(Collectors.toList());
     }
 
@@ -127,14 +140,12 @@ public class ArenaService {
                 .build();
     }
 
-    private ArenaMatchResponse mapToMatchResponse(ArenaMatch match, UUID requestingUserId) {
+    private ArenaMatchResponse mapToMatchResponse(ArenaMatch match, UUID requestingUserId, java.util.Map<UUID, String> opponentNameMap) {
         boolean isPlayer1 = match.getPlayer1Id().equals(requestingUserId);
         UUID opponentId = isPlayer1 ? match.getPlayer2Id() : match.getPlayer1Id();
         
-        // Fetch opponent name from db if present, default to "User [id]"
-        String opponentName = profileRepository.findProfileWithUserDetails(opponentId)
-                .map(ArenaLeaderboardProjection::getName)
-                .orElse("User " + opponentId.toString().substring(0, 4));
+        // Fetch opponent name from pre-fetched map, default to "User [id]"
+        String opponentName = opponentNameMap.getOrDefault(opponentId, "User " + opponentId.toString().substring(0, 4));
         
         String result = "In Progress";
         if (match.getStatus() == ArenaMatch.MatchStatus.EXPIRED) {
@@ -205,9 +216,10 @@ public class ArenaService {
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
         }
+        java.net.HttpURLConnection conn = null;
         try {
             java.net.URL url = new java.net.URL(socketServerUrl + "/api/verify-match/" + matchId + "/" + requestingUserId);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn = (java.net.HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
@@ -232,9 +244,12 @@ public class ArenaService {
                     }
                 }
             }
-            conn.disconnect();
         } catch (Exception e) {
             log.error("Failed to verify matchmaking pair via socket server: {}", e.getMessage());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
         throw new SecurityException("Match verification failed. Opponent has not consented to this match.");
     }
@@ -244,9 +259,10 @@ public class ArenaService {
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
         }
+        HttpURLConnection conn = null;
         try {
             URL url = new URL(socketServerUrl + "/api/verify-match-result/" + matchId + "/" + requestingUserId);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
@@ -260,7 +276,6 @@ public class ArenaService {
                     response.append(line);
                 }
                 reader.close();
-                conn.disconnect();
 
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode json = mapper.readTree(response.toString());
@@ -270,11 +285,13 @@ public class ArenaService {
                         return UUID.fromString(json.get("winnerId").asText());
                     }
                 }
-            } else {
-                conn.disconnect();
             }
         } catch (Exception e) {
             log.error("Failed to verify match result via socket server: {}", e.getMessage());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
         throw new SecurityException("Match result verification failed");
     }
@@ -300,25 +317,23 @@ public class ArenaService {
         }
 
         boolean isWinner = request.isWinner();
-
-        if (!matchIdStr.startsWith("mock-match-")) {
-            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
-            if (!verifiedWinnerId.equals(requestingUserId)) {
-                throw new SecurityException("Match result conflict: verified winner does not match claim");
-            }
-            isWinner = true;
-        }
-        final boolean finalIsWinner = isWinner;
         final int MAX_RETRIES = 3;
-
-        // Execute each retry attempt in an isolated transaction.
-        final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
-
-        // Ensure every retry starts a new transaction.
-        retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
+
+                if (!matchIdStr.startsWith("mock-match-")) {
+                    UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+                    if (!verifiedWinnerId.equals(requestingUserId)) {
+                        throw new SecurityException("Match result conflict: verified winner does not match claim");
+                    }
+                    isWinner = true;
+                }
+                final boolean finalIsWinner = isWinner;
+
+                // Execute each retry attempt in an isolated transaction.
+                final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
+                retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
                 UUID opponentId = retryTransaction.execute(status -> {
 
@@ -368,7 +383,6 @@ public class ArenaService {
                     requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
                     requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
                     requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
-                    requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (finalIsWinner ? 1 : 0));
                     if (finalIsWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
                     else requestingUserProfile.setBattlesLost(requestingUserProfile.getBattlesLost() + 1);
 
@@ -376,7 +390,6 @@ public class ArenaService {
                         opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
                         opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
                         opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
-                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!finalIsWinner ? 1 : 0));
                         if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
                         else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
                     }
@@ -425,7 +438,9 @@ public class ArenaService {
                     log.error("Failed to record match result after {} attempts", MAX_RETRIES, e);
                     throw e;
                 }
-                log.warn("Optimistic lock failure recording match result, retry {}/{}", attempt, MAX_RETRIES);
+                log.warn("Lock failure, retrying {}/{} with fresh verification", attempt, MAX_RETRIES);
+            } catch (SecurityException e) {
+                throw e;
             }
         }
     }

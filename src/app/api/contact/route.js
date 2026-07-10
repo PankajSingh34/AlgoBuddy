@@ -2,18 +2,14 @@ import nodemailer from "nodemailer";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { validateCsrf } from "@/lib/csrf";
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
+} from "@/lib/csrfConstants";
+import { validateCsrfTokenEdge } from "@/lib/csrfToken";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 import { RATE_LIMITS } from "@/config/rateLimits";
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { escapeHtml } from "@/lib/shared-utils";
 
 function isValidEmail(value) {
   const email = String(value).trim();
@@ -21,7 +17,12 @@ function isValidEmail(value) {
 }
 
 export async function POST(req) {
-  if (!validateCsrf(req)) {
+  const cookieToken = req.cookies?.get(CSRF_COOKIE_NAME)?.value;
+  const headerToken = req.headers?.get(CSRF_HEADER_NAME);
+  if (!cookieToken || !headerToken || headerToken !== cookieToken) {
+    return Response.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
+  if (!(await validateCsrfTokenEdge(cookieToken))) {
     return Response.json({ error: "Invalid CSRF token" }, { status: 403 });
   }
 

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -73,7 +74,15 @@ public class PracticeService {
         progressRepository.upsertProgress(userId, request.getProblemId(), request.getStatus());
 
         if ("Completed".equals(request.getStatus())) {
-            updateStreakWithRetry(userId);
+            LocalDate clientLocalDate = null;
+            if (request.getLocalDate() != null) {
+                try {
+                    clientLocalDate = LocalDate.parse(request.getLocalDate());
+                } catch (Exception e) {
+                    // Ignore parse errors, fallback to default behavior
+                }
+            }
+            updateStreakWithRetry(userId, clientLocalDate);
         }
 
         return getUserProgress(userId);
@@ -124,49 +133,71 @@ public class PracticeService {
         progressRepository.saveAll(toSave);
 
         if (anyCompleted) {
-            updateStreakWithRetry(userId);
+            LocalDate clientLocalDate = null;
+            if (request.getLocalDate() != null) {
+                try {
+                    clientLocalDate = LocalDate.parse(request.getLocalDate());
+                } catch (Exception e) {
+                    // Ignore parse errors, fallback to default behavior
+                }
+            }
+            updateStreakWithRetry(userId, clientLocalDate);
         }
 
         return getUserProgress(userId);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateStreak(@NonNull UUID userId) {
+        updateStreak(userId, null);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateStreak(@NonNull UUID userId, LocalDate clientLocalDate) {
         statsRepository.insertStatsIfNotExists(userId);
 
         UserPracticeStats stats = statsRepository.findAndLockByUserId(userId)
                 .orElseThrow(() -> new IllegalStateException("UserPracticeStats should exist for user: " + userId));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = clientLocalDate != null ? clientLocalDate : LocalDate.now();
         LocalDate lastActive = stats.getLastActiveDate();
 
         if (lastActive == null) {
             stats.setCurrentStreak(1);
             stats.setLongestStreak(1);
+            stats.setLastActiveDate(today);
+        } else if (today.isBefore(lastActive)) {
+            // Out of order update (e.g. past update). Keep current stats and lastActiveDate.
+            return;
         } else if (lastActive.equals(today.minusDays(1))) {
             // Consecutive day
             stats.setCurrentStreak(stats.getCurrentStreak() + 1);
             if (stats.getCurrentStreak() > stats.getLongestStreak()) {
                 stats.setLongestStreak(stats.getCurrentStreak());
             }
+            stats.setLastActiveDate(today);
         } else if (!lastActive.equals(today)) {
-            // Streak broken (not today and not yesterday)
+            // Streak broken (not today, not yesterday, and not in the past)
             stats.setCurrentStreak(1);
+            stats.setLastActiveDate(today);
         }
-        // If lastActive == today, do nothing (streak already incremented today)
+        // If lastActive.equals(today), do nothing (streak already incremented today)
 
-        stats.setLastActiveDate(today);
         statsRepository.save(stats);
     }
 
     public void updateStreakWithRetry(@NonNull UUID userId) {
+        updateStreakWithRetry(userId, null);
+    }
+
+    public void updateStreakWithRetry(@NonNull UUID userId, LocalDate clientLocalDate) {
         int maxAttempts = 3;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 if (self != null) {
-                    self.updateStreak(userId);
+                    self.updateStreak(userId, clientLocalDate);
                 } else {
-                    updateStreak(userId);
+                    updateStreak(userId, clientLocalDate);
                 }
                 return;
             } catch (org.springframework.dao.TransientDataAccessException e) {

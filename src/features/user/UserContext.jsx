@@ -30,11 +30,13 @@ export const UserProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Track daily activity when user is authenticated
+  // Track daily activity when user is authenticated (debounced)
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    const timer = setTimeout(() => {
       trackActivity();
-    }
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [user]);
 
   return (
