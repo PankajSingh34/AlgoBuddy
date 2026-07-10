@@ -8,6 +8,10 @@
  * @returns {Generator<{type: string, index?: number}, void, unknown>}
  */
 export function* linearSearchGenerator(arr, targetValue) {
+  if (arr.length === 0) {
+    yield { type: 'empty_array' };
+    return;
+  }
   for (let index = 0; index < arr.length; index++) {
     yield { type: 'checking', index };
 
