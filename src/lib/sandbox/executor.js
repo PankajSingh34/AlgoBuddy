@@ -76,7 +76,9 @@ async function executeCode(code) {
     // Create a context within the isolate
     context = await isolate.createContext();
 
-    // Create a copy of the code that wraps console.log to capture output
+    // Escape template literal sequences in user code to prevent injection
+    // via backtick or ${} sequences at string-creation time.
+    const escapedCode = code.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
     const wrappedCode = `
       (function() {
         const outputLines = [];
@@ -95,7 +97,7 @@ async function executeCode(code) {
           },
         };
         
-        ${code}
+        ${escapedCode}
         
         return outputLines.join("\\n");
       })()
