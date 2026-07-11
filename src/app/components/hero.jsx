@@ -104,7 +104,7 @@ const HeroSection = () => {
               <Link
                 href="/visualizer"
                 onClick={handleStart}
-                className="group inline-flex items-center justify-center gap-2 h-[52px] min-h-[44px] w-full sm:w-auto px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-colors duration-200"
+                className="group inline-flex items-center justify-center gap-2 h-[52px] min-h-[44px] w-full sm:w-auto px-8 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-[15px] font-bold hover:bg-primary dark:hover:bg-primary dark:hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
               >
                 Start Visualizing
                 <ArrowRight className="w-4 h-4" />
