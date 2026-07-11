@@ -19,10 +19,12 @@ export function useProfileForm(user, setUser) {
   const [formData, setFormData] = useState(buildFormDataFromUser(user));
   const [saving, setSaving] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !initializedRef.current) {
       setFormData(buildFormDataFromUser(user));
+      initializedRef.current = true;
     }
   }, [user]);
 
