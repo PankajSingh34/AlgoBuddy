@@ -949,33 +949,22 @@ app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
   try {
     const { matchId, userId } = req.params;
     const matchKey = `{arena}:match:${matchId}`;
-    const claimKey = `{arena}:claim:${matchId}`;
-
-    // Try to atomically claim this match result
-    const claimed = await redisClient.setnx(claimKey, userId);
-    if (claimed === 0) {
-      // Already claimed — check if this user is the winner
-      const winnerId = await redisClient.get(claimKey);
-      if (winnerId === userId) {
-        return res.json({ verified: true, winnerId });
-      }
-      return res.json({ verified: false, winnerId });
-    }
-
-    // First claim — set expiry
-    await redisClient.expire(claimKey, 3600);
 
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
-      await redisClient.del(claimKey);
       return res.json({ verified: false, winnerId: null });
     }
     const match = JSON.parse(matchStr);
 
+    // Only verify if the match has a completed state with a known winner
     if (match.status === "completed" && match.winnerId) {
-      return res.json({ verified: true, winnerId: match.winnerId });
+      if (match.winnerId === userId) {
+        return res.json({ verified: true, winnerId: match.winnerId });
+      }
+      return res.json({ verified: false, winnerId: match.winnerId });
     }
 
+    // Match is not yet completed — do not allow claims to prevent front-running
     return res.json({ verified: false, winnerId: null });
   } catch (err) {
     console.error("[verify-match-result] Error:", err.message);
