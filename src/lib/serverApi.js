@@ -87,7 +87,7 @@ export function errorResponse(error) {
   const status = error.status || 500;
   const message = error.message || 'Internal server error';
   return Response.json(
-    { error: message, code },
+    { success: false, error: message, code },
     { status, headers: { 'Content-Type': 'application/json' } },
   );
 }
