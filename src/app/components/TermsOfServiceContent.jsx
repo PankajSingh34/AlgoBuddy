@@ -1,5 +1,5 @@
 "use client";
-import { termsSections } from "./TermsOfServiceModal";
+import { termsSections } from "@/app/data/termsData";
 import Link from "next/link";
 
 export default function TermsOfServiceContent() {
