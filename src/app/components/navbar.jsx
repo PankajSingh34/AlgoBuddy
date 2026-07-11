@@ -22,27 +22,9 @@ import { NAV_LINKS } from "./navLinks";
 import NotificationDropdown from "./notifications/NotificationDropdown";
 import ProfileProgress from "./ui/ProfileProgress";
 import BottomNav from "./BottomNav";
+import { getStoredTheme, applyTheme } from "@/lib/theme";
 
 const MAX_AVATAR_URL_LENGTH = 512;
-
-function getStoredTheme() {
-  if (typeof window === "undefined") return "light";
-
-  const saved = window.localStorage.getItem("theme");
-  if (saved === "dark" || saved === "light") return saved;
-
-  return document.documentElement.classList.contains("dark")
-    ? "dark"
-    : "light";
-}
-
-function applyTheme(nextTheme) {
-  document.documentElement.classList.toggle(
-    "dark",
-    nextTheme === "dark"
-  );
-  window.localStorage.setItem("theme", nextTheme);
-}
 
 function getInitials(name) {
   if (!name) return "??";

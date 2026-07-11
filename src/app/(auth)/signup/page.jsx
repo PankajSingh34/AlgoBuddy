@@ -2,25 +2,7 @@
 import { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import AuthForm from "@/app/components/ui/AuthForm";
-
-function getStoredTheme() {
-  if (typeof window === "undefined") return "light";
-
-  const saved = window.localStorage.getItem("theme");
-  if (saved === "dark" || saved === "light") return saved;
-
-  return document.documentElement.classList.contains("dark")
-    ? "dark"
-    : "light";
-}
-
-function applyTheme(nextTheme) {
-  document.documentElement.classList.toggle(
-    "dark",
-    nextTheme === "dark"
-  );
-  window.localStorage.setItem("theme", nextTheme);
-}
+import { getStoredTheme, applyTheme } from "@/lib/theme";
 
 export default function SignupPage() {
   const [theme, setTheme] = useState("light");
