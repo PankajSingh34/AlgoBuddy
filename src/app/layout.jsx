@@ -3,6 +3,8 @@ import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
 import { NotificationProvider } from "@/features/notifications/NotificationContext";
+import { NarrationProvider } from "@/app/components/ui/NarrationContext";
+import NarrationPanel from "@/app/components/ui/NarrationPanel";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
 import VoiceAgent from "@/app/components/VoiceAgent";
@@ -148,9 +150,12 @@ export default async function RootLayout({ children }) {
         </a>
         <UserProvider>
           <NotificationProvider>
-            <ClientLayoutWrapper>
-              <div id="main-content">{children}</div>
-            </ClientLayoutWrapper>
+            <NarrationProvider>
+              <ClientLayoutWrapper>
+                <div id="main-content">{children}</div>
+              </ClientLayoutWrapper>
+              <NarrationPanel />
+            </NarrationProvider>
           </NotificationProvider>
         </UserProvider>
       <BackToTop />
