@@ -510,7 +510,7 @@ io.on("connection", async (socket) => {
         // Phase 3: Create match atomically (only if opponent is alive)
         const fullMatchDetails = JSON.stringify({
           matchId,
-          game_id : gameID,
+          game_id: matchId,
           topic: targetTopic,
           difficulty: targetDifficulty,
           status: "in-progress",
