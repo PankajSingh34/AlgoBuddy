@@ -8,9 +8,16 @@ jest.mock("@/lib/auth", () => ({
 
 jest.mock("@/lib/serverApi", () => ({
   getSupabaseServerClient: jest.fn(),
-  jsonResponse: (data, status = 200) => Response.json(data, { status }),
-  errorResponse: (error) =>
-    Response.json({ error: error.message || "Internal server error" }, { status: 500 }),
+  jsonResponse: (data, status = 200) => ({
+    status,
+    json: jest.fn().mockResolvedValue(data),
+  }),
+  errorResponse: (error) => ({
+    status: 500,
+    json: jest
+      .fn()
+      .mockResolvedValue({ error: error.message || "Internal server error" }),
+  }),
 }));
 
 import { cookies } from "next/headers";
@@ -35,10 +42,9 @@ function createSupabaseMock(result) {
 }
 
 function createPatchRequest(body) {
-  return new Request("http://localhost/api/notifications", {
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
+  return {
+    json: jest.fn().mockResolvedValue(body),
+  };
 }
 
 describe("notifications PATCH route", () => {
