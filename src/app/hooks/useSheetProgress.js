@@ -205,8 +205,8 @@ export function useSheetProgress() {
   // Track whether we've done the initial server sync to avoid double-syncing
   const syncedRef = useRef(false);
 
-  // Save previous progress for rollback on server failure
-  const prevProgressRef = useRef(null);
+  // Version counter to prevent race conditions during rapid progress updates
+  const updateVersionRef = useRef(0);
 
   // ── Load & sync on mount / user change ──────────────────────────────────
   useEffect(() => {
@@ -317,6 +317,8 @@ export function useSheetProgress() {
   const updateProgress = useCallback(
     async (problemId, newStatus) => {
       const updatedAt = new Date().toISOString();
+      const myVersion = ++updateVersionRef.current;
+      const previousProgress = progress;
 
       // Update local state immediately so UI reflects the change right away.
       // Use a functional update to avoid stale `progress` closure issues.
@@ -328,7 +330,6 @@ export function useSheetProgress() {
         writeLocal(next);
         return next;
       });
-
 
       // Update local streak on completion only for guests.
       // Authenticated users get their streak from the server after the sync
@@ -344,26 +345,29 @@ export function useSheetProgress() {
 
       // Sync to server asynchronously
       if (user) {
-        prevProgressRef.current = progress;
         try {
           const fresh = await postProgressToServer(problemId, newStatus);
           if (!fresh) throw new Error("Server returned no data");
-          // Use server streak data returned from either path.
-          if (fresh.currentStreak !== undefined) {
-            setStreakData({
-              current: fresh.currentStreak || 0,
-              best: fresh.longestStreak || 0,
-              dailySolved: fresh.dailySolved || 0,
-              weeklySolved: fresh.weeklySolved || 0,
-              monthlySolved: fresh.monthlySolved || 0,
-            });
+          // Only apply server response if this is still the latest update
+          if (updateVersionRef.current === myVersion) {
+            // Use server streak data returned from either path.
+            if (fresh.currentStreak !== undefined) {
+              setStreakData({
+                current: fresh.currentStreak || 0,
+                best: fresh.longestStreak || 0,
+                dailySolved: fresh.dailySolved || 0,
+                weeklySolved: fresh.weeklySolved || 0,
+                monthlySolved: fresh.monthlySolved || 0,
+              });
+            }
           }
-          prevProgressRef.current = null;
         } catch (err) {
           console.error("[useSheetProgress] Failed to sync progress, rolling back:", err);
-          if (prevProgressRef.current) {
-            setProgress(prevProgressRef.current);
-            writeLocal(prevProgressRef.current);
+          // Only rollback if this is still the latest update — prevents
+          // overwriting state from a newer concurrent update.
+          if (updateVersionRef.current === myVersion) {
+            setProgress(previousProgress);
+            writeLocal(previousProgress);
           }
         }
       }
