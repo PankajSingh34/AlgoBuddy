@@ -110,6 +110,7 @@ export default function ArenaPage() {
   const [tournamentTimeLeft, setTournamentTimeLeft] = useState({
     days: 0, hours: 0, minutes: 0, seconds: 0
   });
+  const [tournamentFilter, setTournamentFilter] = useState("Upcoming");
 
   const calculateRank = (xp) => {
     if (xp >= 10000) return { name: "Grandmaster", Icon: Crown, color: "text-purple-500", ringColor: "border-purple-500" };
@@ -1390,7 +1391,43 @@ export default function ArenaPage() {
                             </div>
                           ))}
                         </div>
-                      </div>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px">
+                      {["Live", "Upcoming", "Past"].map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => setTournamentFilter(filter)}
+                          className={`px-4 py-2 text-sm font-bold relative transition-colors ${
+                            tournamentFilter === filter
+                              ? "text-primary dark:text-primary-light"
+                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300"
+                          }`}
+                        >
+                          {filter}
+                          {tournamentFilter === filter && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"></div>
+                          )}
+                          {filter === "Live" && (
+                            <span className="absolute top-1.5 -right-1 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Content Placeholder */}
+                    <div className="py-8 text-center bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
+                      <Trophy size={48} className="mx-auto text-slate-300 dark:text-neutral-600 mb-4" />
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
+                        {tournamentFilter === "Live" ? "No Active Tournaments" : tournamentFilter === "Upcoming" ? "Upcoming Tournaments" : "Past Results"}
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-neutral-400 mt-2">
+                        {tournamentFilter === "Live" ? "Check back later for live action." : tournamentFilter === "Upcoming" ? "Registration opens soon." : "Historical tournament results will appear here."}
+                      </p>
                     </div>
                   </div>
                 )}
