@@ -75,7 +75,7 @@ const Content = () => {
                   key={index}
                   className="text-[#374151] dark:text-[#d1d5db] pl-2"
                 >
-                  <span className="font-mono bg-[#f3f4f6] dark:bg-[#222] px-2 py-1 rounded-md text-sm font-mono">
+                  <span className="font-mono bg-[#f3f4f6] dark:bg-[#222] px-2 py-1 rounded-md text-sm">
                     {item.points.split(":")[0]}:
                   </span>
                   <span className="ml-2">{item.points.split(":")[1]}</span>

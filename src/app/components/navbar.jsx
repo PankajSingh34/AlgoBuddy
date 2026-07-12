@@ -77,28 +77,7 @@ export default function Navbar() {
   );
   const displayName = user?.user_metadata?.name || "AlgoBuddy User";
 
-  useEffect(() => {
-    const currentTheme = getStoredTheme();
-    setTheme(currentTheme);
-    applyTheme(currentTheme);
-    setThemeMounted(true);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme((currentTheme) => {
-      const resolvedTheme = themeMounted
-        ? currentTheme
-        : getStoredTheme();
-
-      const nextTheme =
-        resolvedTheme === "light" ? "dark" : "light";
-
-      applyTheme(nextTheme);
-      setThemeMounted(true);
-
-      return nextTheme;
-    });
-  };
+  
 
   useEffect(() => {
     const handleScroll = () =>
@@ -402,7 +381,7 @@ export default function Navbar() {
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
-              className="hidden"
+               className="md:hidden"
             >
               {menuOpen ? (
                 <X className="w-5 h-5" />
