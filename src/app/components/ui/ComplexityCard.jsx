@@ -1,6 +1,7 @@
 "use client";
+import { memo } from "react";
 
-export default function ComplexityCard({
+const ComplexityCard = memo(function ComplexityCard({
   complexity,
   title,
   description,
@@ -40,4 +41,6 @@ export default function ComplexityCard({
       </div>
     </div>
   );
-}
+});
+
+export default ComplexityCard;

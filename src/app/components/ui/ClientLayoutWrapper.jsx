@@ -1,13 +1,22 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
+import dynamic from "next/dynamic";
 import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
-import Chatbot from "@/app/components/ui/Chatbot";
 import Navbar from "@/app/components/navbar";
-import { CommandPalette } from "@/app/components/CommandPalette";
 import { useGlobalKeyboardShortcuts } from "@/app/hooks/useGlobalKeyboardShortcuts";
 import GlobalShortcutsModal from "@/app/components/ui/GlobalShortcutsModal";
-import ProfileSetupModal from "@/app/components/profile/ProfileSetupModal";
+
+const Chatbot = lazy(() => import("@/app/components/ui/Chatbot"));
+const CommandPalette = lazy(() =>
+  import("@/app/components/CommandPalette").then((m) => ({ default: m.CommandPalette }))
+);
+const ProfileSetupModal = lazy(() => import("@/app/components/profile/ProfileSetupModal"));
+const VoiceAgent = dynamic(() => import("@/app/components/VoiceAgent"), { ssr: false });
+
+function LazyLoader({ children }) {
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -20,9 +29,10 @@ export default function ClientLayoutWrapper({ children }) {
       <Toaster position="top-right" />
       {!isAuthPage && <Navbar />}
       {children}
-      {!isAuthPage && <Chatbot />}
-      {!isAuthPage && <CommandPalette />}
-      {!isAuthPage && <ProfileSetupModal />}
+      {!isAuthPage && <LazyLoader><Chatbot /></LazyLoader>}
+      {!isAuthPage && <LazyLoader><CommandPalette /></LazyLoader>}
+      {!isAuthPage && <LazyLoader><ProfileSetupModal /></LazyLoader>}
+      <VoiceAgent />
       <GlobalShortcutsModal />
     </>
   );
