@@ -86,7 +86,7 @@ export default function PracticePage() {
 
   // Sync activeView and topic with the URL ?view= and ?topic= params so browser Back/Forward works
   useEffect(() => {
-    const view = searchParams.get("view") || "problem-list";
+    const view = searchParams.get("view") || "practice-home";
     setActiveView(view);
     
     if (view === "topic-wise") {
@@ -463,7 +463,9 @@ export default function PracticePage() {
               setCurrentPage(1);
               setSelectedCompanyFilter("All");
 
-              if (view === "topic-wise") {
+              if (view === "practice-home") {
+                router.push("/practice");
+              } else if (view === "topic-wise") {
                 router.push(`/practice?view=${view}&topic=${encodeURIComponent(selectedTopicWise)}`);
               } else {
                 router.push(`/practice?view=${view}`);
@@ -663,7 +665,7 @@ export default function PracticePage() {
                 </div>
               )}
             </section>
-          ) : activeView === "problem-list" ? (
+          ) : activeView === "practice-home" || activeView === "problem-list" ? (
             <>
 
               {/* Tab navigation */}
