@@ -1303,6 +1303,15 @@ export default function ArenaPage() {
                     </div>
                   </div>
                 )}
+                {activeTab === "badges" && (
+                  <div className="w-full text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out py-12">
+                    <Award size={64} className="mx-auto text-amber-500/50 mb-4" />
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-neutral-200">Badges Gallery Coming Soon</h2>
+                    <p className="text-slate-500 dark:text-neutral-400 max-w-md mx-auto">
+                      Track your progression and flex your earned algorithm mastery badges here!
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </main>
