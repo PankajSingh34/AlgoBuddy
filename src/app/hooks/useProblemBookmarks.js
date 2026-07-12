@@ -38,7 +38,9 @@ export function useProblemBookmarks() {
   const syncQueueRef = useRef([]);
 
   useEffect(() => {
+    let cancelled = false;
     const loadBookmarks = async () => {
+      if (cancelled) return;
       setLoading(true);
 
       let localBookmarks = [];
@@ -46,7 +48,7 @@ export function useProblemBookmarks() {
         const stored = await persistence.get("PROBLEM_BOOKMARKS");
         if (stored) {
           localBookmarks = stored;
-          setBookmarks(prev => prev.length === 0 ? stored : prev);
+          if (!cancelled) setBookmarks(prev => prev.length === 0 ? stored : prev);
         }
       } catch (e) {
         console.error("Failed to parse local bookmarks:", e);
@@ -55,6 +57,7 @@ export function useProblemBookmarks() {
       if (user) {
         try {
           const data = await apiFetch("/api/bookmarks");
+          if (cancelled) return;
           const dbBookmarks = (data || []).map((row) => ({
             id: row.problem_id || row.problemId,
             topicSlug: row.topic_slug || row.topicSlug,
@@ -66,6 +69,7 @@ export function useProblemBookmarks() {
           const dbIds = new Set(dbBookmarks.map((b) => b.id));
           const localOnly = localBookmarks.filter((b) => !dbIds.has(b.id));
           for (const b of localOnly) {
+            if (cancelled) return;
             try {
               await apiFetch("/api/bookmarks", {
                 method: "POST",
@@ -76,6 +80,7 @@ export function useProblemBookmarks() {
             }
           }
 
+          if (cancelled) return;
           // Final state = DB items + any local-only items just synced up.
           // Items deleted in another browser (in local but not DB) are dropped.
           // Use a functional updater to preserve any concurrent local mutations.
@@ -93,10 +98,12 @@ export function useProblemBookmarks() {
           console.error("Bookmark fetch failed:", e);
         }
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
 
     loadBookmarks();
+
+    return () => { cancelled = true; };
   }, [user]);
 
   const toggleBookmark = async (problemId, topicSlug) => {

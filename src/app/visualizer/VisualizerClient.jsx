@@ -570,7 +570,7 @@ export default function VisualizerClient({ initialSections }) {
     if (val.trim().length > 2) {
       setSearchHistory((prev) => {
         const updated = [val, ...prev.filter((h) => h !== val)].slice(0, 5);
-        localStorage.setItem("algobuddy_search_history", JSON.stringify(updated));
+        try { localStorage.setItem("algobuddy_search_history", JSON.stringify(updated)); } catch {}
         return updated;
       });
     }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -224,17 +224,22 @@ export default function ArenaPage() {
 
   // Fix for browser back button from Matchmaking modal (Issue #1333)
   // Fix for browser back button from Create Duel modal (Issue #1336)
+  const matchmakingOpenRef = useRef(matchmakingOpen);
+  const createDuelOpenRef = useRef(createDuelOpen);
+  useEffect(() => { matchmakingOpenRef.current = matchmakingOpen; }, [matchmakingOpen]);
+  useEffect(() => { createDuelOpenRef.current = createDuelOpen; }, [createDuelOpen]);
+
   useEffect(() => {
-    const handlePopState = (e) => {
-      if (matchmakingOpen) {
+    const handlePopState = () => {
+      if (matchmakingOpenRef.current) {
         setMatchmakingOpen(false);
-      } else if (createDuelOpen) {
+      } else if (createDuelOpenRef.current) {
         setCreateDuelOpen(false);
       }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [matchmakingOpen, createDuelOpen]);
+  }, []);
 
   const openMatchmakingModal = (options = {}) => {
     if (!ensureLoggedIn()) return;
