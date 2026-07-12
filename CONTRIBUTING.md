@@ -81,6 +81,8 @@ cd AlgoBuddy
 npm install
 ```
 
+> **Note:** If you encounter build errors with `isolated-vm`, ensure you have Python and a C++ compiler installed (required for native addon compilation).
+
 ## 5. Set Up Environment Variables
 
 Copy the example env file and fill in the required values:
@@ -89,24 +91,24 @@ Copy the example env file and fill in the required values:
 cp .env.example .env.local
 ```
 
-| Variable                           | Description                                      |
-| ---------------------------------- | ------------------------------------------------ |
-| `EMAIL_USER`                       | Gmail address used to send contact/review emails |
-| `EMAIL_PASSWORD`                   | Gmail App Password (not your account password)   |
-| `NEXT_PUBLIC_GA_ID`                | Google Analytics Measurement ID                  |
-| `NEXT_PUBLIC_SUPABASE_URL`         | Your Supabase project URL                        |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`    | Supabase anonymous/public key                    |
-| `SUPABASE_SERVICE_KEY`             | Supabase service role key (server-side only)     |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`   | Cloudflare Turnstile site key                    |
-| `TURNSTILE_SECRET_KEY`             | Cloudflare Turnstile secret key                  |
-| `TURNSTILE_BYPASS`                 | Bypass Turnstile locally (set to `true` to bypass) |
-| `UPSTASH_REDIS_REST_URL`           | Upstash Redis REST URL for rate limiting         |
-| `UPSTASH_REDIS_REST_TOKEN`         | Upstash Redis REST Token for rate limiting       |
-| `GEMINI_API_KEY`                   | Google Gemini API key for AI chatbot             |
-| `AUTO_CONFIRM_EMAIL`               | Auto confirm user email in Supabase (if set)     |
-| `NEXT_PUBLIC_SHOW_COMMUNITY_BADGE`  | Toggle visibility of community badge in UI       |
-| `NEXT_PUBLIC_USE_SPRING_BOOT_API`  | Route requests to Java Spring Boot API locally   |
-| `NEXT_PUBLIC_SPRING_BOOT_API_URL`  | URL of local Java Spring Boot API (default `http://localhost:8080`) |
+### Required Variables
+
+| Variable | Description | How to Get |
+|----------|------------|------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Supabase Dashboard → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Supabase Dashboard → Settings → API |
+| `GEMINI_API_KEY` | Google Gemini API key | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+
+### Optional But Recommended
+
+| Variable | Description |
+|----------|-------------|
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret (bypassable in dev) |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL for rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token for rate limiting |
+| `EMAIL_USER` | Gmail address for contact/review emails |
+| `EMAIL_PASSWORD` | Gmail App Password |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics Measurement ID |
 
 > ⚠️ **Never commit `.env.local` to version control.** It is already listed in `.gitignore`.
 
@@ -222,13 +224,23 @@ To ensure fair and efficient issue management, please follow these steps:
 
 Before submitting a PR:
 
-- Ensure the project builds and runs correctly (`npm run dev`)
+- Ensure the project builds without errors (`npm run build`)
+- Lint your code (`npm run lint`)
 - Test changes on multiple screen sizes (mobile, tablet, desktop)
-- Follow clean coding practices
+- Follow clean coding practices and existing code conventions
 - Avoid committing unnecessary files (e.g., `.env.local`, `node_modules`)
 - Use meaningful commit messages following the conventions above
-- Keep PRs focused on a single issue or topic
+- Keep PRs focused on a single issue or topic — no unrelated changes
 - Add screenshots or screen recordings for UI-related changes
+- For new features, include a brief description of the implementation approach
+- Reference the issue number in your PR description (e.g., `Closes #123`)
+- Ensure your branch is up-to-date with the latest main before submitting
+
+### PR Size Guidelines
+
+- **Small PRs (< 10 files):** Ideal for bug fixes and small enhancements
+- **Medium PRs (10–20 files):** Acceptable for focused feature additions
+- **Large PRs (> 20 files):** Should be discussed in an issue first
 
 ---
 

@@ -1176,6 +1176,19 @@ AlgoBuddy/
 
 <br/>
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs) directory:
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](docs/architecture-overview.md) | Project structure, tech stack, and key architectural decisions |
+| [API Reference](docs/api-reference.md) | Complete API endpoint documentation with request/response examples |
+| [Algorithm Step Contract](docs/algorithm-step-contract.md) | Guide for creating new algorithm visualizers |
+| [Contributing Guide](CONTRIBUTING.md) | How to set up, develop, and submit changes |
+
+<br/>
+
 ## 🤝 Contributing
 
 We 💜 contributions! AlgoBuddy is built by the community, for the community.
