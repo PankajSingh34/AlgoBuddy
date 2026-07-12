@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, lazy } from "react";
+import dynamic from "next/dynamic";
 import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
 import Navbar from "@/app/components/navbar";
@@ -11,6 +12,7 @@ const CommandPalette = lazy(() =>
   import("@/app/components/CommandPalette").then((m) => ({ default: m.CommandPalette }))
 );
 const ProfileSetupModal = lazy(() => import("@/app/components/profile/ProfileSetupModal"));
+const VoiceAgent = dynamic(() => import("@/app/components/VoiceAgent"), { ssr: false });
 
 function LazyLoader({ children }) {
   return <Suspense fallback={null}>{children}</Suspense>;
@@ -30,6 +32,7 @@ export default function ClientLayoutWrapper({ children }) {
       {!isAuthPage && <LazyLoader><Chatbot /></LazyLoader>}
       {!isAuthPage && <LazyLoader><CommandPalette /></LazyLoader>}
       {!isAuthPage && <LazyLoader><ProfileSetupModal /></LazyLoader>}
+      <VoiceAgent />
       <GlobalShortcutsModal />
     </>
   );
