@@ -92,9 +92,9 @@ export const NotificationProvider = ({ children }) => {
 
   useEffect(() => {
     if (!mounted) return;
-    const solvedCount = Object.values(progress).filter(
+    const solvedCount = progress ? Object.values(progress).filter(
       (entry) => (typeof entry === "string" ? entry : entry?.status) === "Completed"
-    ).length;
+    ).length : 0;
     const fired = readFiredMilestones();
 
     SOLVED_MILESTONES.forEach((milestone) => {
