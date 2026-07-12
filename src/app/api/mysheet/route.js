@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
+import { validateCsrfOrigin } from "@/lib/csrfConstants";
 
 // GET /api/mysheet — returns the user's curated sheet as a map
 export async function GET(request) {
@@ -38,6 +39,9 @@ export async function GET(request) {
 
 // POST /api/mysheet — add a problem to the user's sheet
 export async function POST(request) {
+  if (!validateCsrfOrigin(request)) {
+    return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
+  }
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {
@@ -77,6 +81,9 @@ export async function POST(request) {
 
 // DELETE /api/mysheet?problemId=xxx — remove a problem from the user's sheet
 export async function DELETE(request) {
+  if (!validateCsrfOrigin(request)) {
+    return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
+  }
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {

@@ -32,7 +32,7 @@ export const complexityInfo = [
   },
 
   {
-    complexity: "O(n²)",
+    complexity: "O(n^2)",
     title: "Quadratic Time",
     description:
       "Growth becomes expensive as datasets increase.",
@@ -40,7 +40,7 @@ export const complexityInfo = [
   },
 
   {
-    complexity: "O(n³)",
+    complexity: "O(n^3)",
     title: "Cubic Time",
     description:
       "Very expensive for medium and large datasets.",
@@ -48,7 +48,7 @@ export const complexityInfo = [
   },
 
   {
-    complexity: "O(2ⁿ)",
+    complexity: "O(2^n)",
     title: "Exponential Time",
     description:
       "Becomes impractical extremely quickly as input grows.",
@@ -59,7 +59,7 @@ export const complexityInfo = [
 export const algorithmComparisons = [
   {
     name: "Bubble Sort",
-    time: "O(n²)",
+    time: "O(n^2)",
     space: "O(1)",
   },
 

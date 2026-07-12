@@ -7,7 +7,7 @@
  * @param {number} targetValue - The value to search for.
  * @returns {Generator<{type: string, l?: number, h?: number, m?: number, step?: number, arrM?: number}, void, unknown>}
  */
-export function* binarySearchGenerator(arr, targetValue) {
+export function* binarySearchGenerator(arr, targetValue, findFirstOccurrence = false) {
   let l = 0;
   let h = arr.length - 1;
   let step = 0;
@@ -27,7 +27,8 @@ export function* binarySearchGenerator(arr, targetValue) {
 
     if (arr[m] === targetValue) {
       yield { type: 'found', m, step };
-      return;
+      if (!findFirstOccurrence) return;
+      h = m - 1; // Keep searching the left half
     } else if (arr[m] < targetValue) {
       yield { type: 'discard_left', m, step };
       l = m + 1;

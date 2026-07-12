@@ -7,6 +7,7 @@ import Navbar from "@/app/components/navbar";
 import { CommandPalette } from "@/app/components/CommandPalette";
 import { useGlobalKeyboardShortcuts } from "@/app/hooks/useGlobalKeyboardShortcuts";
 import GlobalShortcutsModal from "@/app/components/ui/GlobalShortcutsModal";
+import ProfileSetupModal from "@/app/components/profile/ProfileSetupModal";
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function ClientLayoutWrapper({ children }) {
       {children}
       {!isAuthPage && <Chatbot />}
       {!isAuthPage && <CommandPalette />}
+      {!isAuthPage && <ProfileSetupModal />}
       <GlobalShortcutsModal />
     </>
   );

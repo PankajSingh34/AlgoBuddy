@@ -24,12 +24,12 @@ test("getClientIp prefers x-real-ip over x-forwarded-for", async () => {
   assert.equal(getClientIp(headers), "203.0.113.10");
 });
 
-test("getClientIp walks x-forwarded-for right-to-left skipping private ranges", async () => {
+test("getClientIp ignores x-forwarded-for (client-controlled, untrusted)", async () => {
   const { getClientIp } = await load();
   const headers = new Headers({
     "x-forwarded-for": "10.0.0.1, 203.0.113.5, 192.168.1.9",
   });
-  assert.equal(getClientIp(headers), "203.0.113.5");
+  assert.equal(getClientIp(headers), "unknown");
 });
 
 test("getClientIp returns unknown when no IP headers exist", async () => {

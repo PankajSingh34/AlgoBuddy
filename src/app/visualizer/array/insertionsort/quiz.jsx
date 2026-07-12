@@ -135,6 +135,116 @@ const InsertionSortQuiz = () => {
   ],
   correctAnswer: 1,
   explanation: "Insertion Sort performs efficiently on small or nearly sorted datasets due to its adaptive nature."
+},
+{
+  question: "How does Insertion Sort build the sorted array?",
+  options: [
+    "By repeatedly merging subarrays",
+    "By inserting one element at a time into its correct position",
+    "By selecting the largest element first",
+    "By swapping random elements"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort builds the sorted portion one element at a time by inserting each element into its correct position."
+},
+{
+  question: "Which part of the array is considered sorted during Insertion Sort?",
+  options: [
+    "The entire array",
+    "The left portion of the array",
+    "The right portion of the array",
+    "Only the last element"
+  ],
+  correctAnswer: 1,
+  explanation: "The left portion of the array is maintained in sorted order, while the remaining elements are processed one by one."
+},
+{
+  question: "What is the auxiliary space complexity of Insertion Sort?",
+  options: [
+    "O(1)",
+    "O(log n)",
+    "O(n)",
+    "O(n²)"
+  ],
+  correctAnswer: 0,
+  explanation: "Insertion Sort is an in-place algorithm and requires only constant extra memory."
+},
+{
+  question: "What operation is performed instead of frequent swapping in Insertion Sort?",
+  options: [
+    "Merging",
+    "Partitioning",
+    "Shifting elements",
+    "Recursion"
+  ],
+  correctAnswer: 2,
+  explanation: "Insertion Sort shifts larger elements to the right to make room for the current element."
+},
+{
+  question: "How many passes are required to sort an array of n elements using Insertion Sort?",
+  options: [
+    "n",
+    "n - 1",
+    "log n",
+    "n²"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort requires n−1 passes because the first element is already considered sorted."
+},
+{
+  question: "Insertion Sort is classified as which type of sorting algorithm?",
+  options: [
+    "Comparison-based sorting",
+    "Non-comparison sorting",
+    "Hashing algorithm",
+    "Graph algorithm"
+  ],
+  correctAnswer: 0,
+  explanation: "Insertion Sort compares elements to determine their correct order, making it a comparison-based sorting algorithm."
+},
+{
+  question: "Why is Insertion Sort considered adaptive?",
+  options: [
+    "It changes into Merge Sort automatically",
+    "It performs faster on nearly sorted arrays",
+    "It uses recursion when needed",
+    "It reduces memory usage dynamically"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort takes advantage of existing order, making it efficient for nearly sorted data."
+},
+{
+  question: "Which sorting algorithm is most similar to arranging playing cards in your hand?",
+  options: [
+    "Bubble Sort",
+    "Selection Sort",
+    "Insertion Sort",
+    "Quick Sort"
+  ],
+  correctAnswer: 2,
+  explanation: "Insertion Sort mimics the way people naturally sort playing cards by inserting each card into its proper position."
+},
+{
+  question: "Which statement about Insertion Sort is TRUE?",
+  options: [
+    "It is not stable",
+    "It always runs in O(n²)",
+    "It is stable and in-place",
+    "It requires additional arrays"
+  ],
+  correctAnswer: 2,
+  explanation: "Insertion Sort is both stable and in-place, preserving the order of equal elements while using constant extra memory."
+},
+{
+  question: "Which scenario is ideal for using Insertion Sort?",
+  options: [
+    "Large random datasets",
+    "Small or nearly sorted datasets",
+    "Distributed databases",
+    "Massive external storage systems"
+  ],
+  correctAnswer: 1,
+  explanation: "Insertion Sort performs particularly well on small datasets and nearly sorted arrays because it minimizes unnecessary operations."
 }
   ];
 

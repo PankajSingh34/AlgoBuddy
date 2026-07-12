@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { 
-  Search, 
-  ChevronDown, 
-  Shuffle, 
-  Bookmark, 
-  CheckCircle2, 
+import {
+  Search,
+  ChevronDown,
+  Shuffle,
+  Bookmark,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -19,9 +19,8 @@ import {
 } from "lucide-react";
 
 import PracticeSidebar from "@/app/components/practice/PracticeSidebar";
-import PracticeRightSidebar from "@/app/components/practice/PracticeRightSidebar";
-import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
 import PracticeDashboard from "@/app/components/practice/PracticeDashboard";
+import PracticeSessionBanner from "@/app/components/practice/PracticeSessionBanner";
 import PracticeNotebook from "@/app/components/practice/PracticeNotebook";
 import CompanyLogos from "@/app/components/practice/CompanyLogos";
 import TheoryDrawer from "@/app/components/practice/TheoryDrawer";
@@ -43,20 +42,31 @@ function springBootApiBase() {
 }
 
 export default function PracticePage() {
-  const { user,loading } = useUser();
+  const { user, loading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Views: 'dashboard', 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
   const [activeView, setActiveView] = useState("problem-list");
   const [activeTab, setActiveTab] = useState("problems"); // 'problems', 'description', 'resources', 'discussion'
-  
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("All Topics");
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Topic dropdown (custom panel — mirrors NotificationDropdown pattern)
+  const [isTopicOpen, setIsTopicOpen] = useState(false);
+  const topicRef = useRef(null);
+  useEffect(() => {
+    const close = (e) => {
+      if (topicRef.current && !topicRef.current.contains(e.target)) setIsTopicOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
 
   // Selected problem for Theory Drawer
   const [selectedProblem, setSelectedProblem] = useState(null);
@@ -88,9 +98,9 @@ export default function PracticePage() {
 
   // Sync activeView and topic with the URL ?view= and ?topic= params so browser Back/Forward works
   useEffect(() => {
-    const view = searchParams.get("view") || "problem-list";
+    const view = searchParams.get("view") || "practice-home";
     setActiveView(view);
-    
+
     if (view === "topic-wise") {
       const topic = searchParams.get("topic");
       if (topic) {
@@ -102,7 +112,7 @@ export default function PracticePage() {
   }, [searchParams]);
 
   const ensureLoggedIn = () => {
-    if (loading) return false; 
+    if (loading) return false;
     if (!user) {
       toast.error("Please login to use this feature!");
       router.push("/login");
@@ -145,13 +155,38 @@ export default function PracticePage() {
     let hardSolved = 0;
     const uniqueCompanies = new Set();
 
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let dailySolved = 0;
+    let weeklySolved = 0;
+    let monthlySolved = 0;
+
     allProblems.forEach((prob) => {
       const status = getStatus(prob.id);
+      const progInfo = progress[prob.id];
+      const updatedTimeStr = progInfo?.updatedAt || progInfo?.updated_at;
+
       if (status === "Completed") {
         solved++;
         if (prob.difficulty === "Easy") easySolved++;
         else if (prob.difficulty === "Medium") mediumSolved++;
         else if (prob.difficulty === "Hard") hardSolved++;
+
+        if (updatedTimeStr) {
+          const updatedDate = new Date(updatedTimeStr);
+          if (updatedDate >= startOfToday) {
+            dailySolved++;
+          }
+          if (updatedDate >= startOfWeek) {
+            weeklySolved++;
+          }
+          if (updatedDate >= startOfMonth) {
+            monthlySolved++;
+          }
+        }
       } else if (status === "In Progress") {
         attempted++;
       }
@@ -178,10 +213,9 @@ export default function PracticePage() {
 
     return {
       solved,
-      // Prefer server-computed time-window stats; fall back to 0
-      dailySolved: streakData.dailySolved || 0,
-      weeklySolved: streakData.weeklySolved || 0,
-      monthlySolved: streakData.monthlySolved || 0,
+      dailySolved: Math.max(dailySolved, streakData.dailySolved || 0),
+      weeklySolved: Math.max(weeklySolved, streakData.weeklySolved || 0),
+      monthlySolved: Math.max(monthlySolved, streakData.monthlySolved || 0),
       attempted,
       remaining,
       total: allProblems.length,
@@ -295,11 +329,11 @@ export default function PracticePage() {
   const filteredProblems = useMemo(() => {
     let filtered = allProblems.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.topic.toLowerCase().includes(searchQuery.toLowerCase());
+        p.topic.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTopic = selectedTopic === "All Topics" || p.topic === selectedTopic;
-      
-      const matchesCompany = selectedCompanyFilter === "All" || 
-                             (p.companies && p.companies.some(c => c.toLowerCase() === selectedCompanyFilter.toLowerCase()));
+
+      const matchesCompany = selectedCompanyFilter === "All" ||
+        (p.companies && p.companies.some(c => c.toLowerCase() === selectedCompanyFilter.toLowerCase()));
 
       if (activeView === "bookmarks") {
         return matchesSearch && matchesTopic && matchesCompany && isBookmarked(p.id);
@@ -417,7 +451,7 @@ export default function PracticePage() {
 
   const dailyChallenge = useMemo(() => {
     if (allProblems.length === 0) return null;
-    const daySeed = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+    const daySeed = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
     return allProblems[daySeed % allProblems.length];
   }, [allProblems]);
 
@@ -426,22 +460,25 @@ export default function PracticePage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 transition-colors duration-300">
-      
       {/* Container holding three-column layout */}
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-y-8 lg:gap-0">
-        
+
         {/* Left Sidebar */}
-        <PracticeSidebar 
+        <PracticeSidebar
           activeView={activeView}
           onViewChange={(view) => {
             if (["my-sheet", "bookmarks", "recent-solved"].includes(view)) {
               if (!ensureLoggedIn()) return;
             }
-            setCurrentPage(1); // Reset page on view change
-            setSelectedCompanyFilter("All"); // Reset company filter
+
+            setCurrentPage(1);
+            setSelectedCompanyFilter("All");
+
             // Push to URL so the browser records a history entry;
             // the searchParams useEffect above will sync activeView in response.
-            if (view === "topic-wise") {
+            if (view === "practice-home") {
+              router.push("/practice");
+            } else if (view === "topic-wise") {
               router.push(`/practice?view=${view}&topic=${encodeURIComponent(selectedTopicWise)}`);
             } else {
               router.push(`/practice?view=${view}`);
@@ -463,7 +500,6 @@ export default function PracticePage() {
 
         {/* Center Content */}
         <div className="flex-1 min-w-0 space-y-6 lg:ml-8">
-          
           {/* Main dashboard rendering based on activeView */}
           {activeView === "dashboard" ? (
             <PracticeDashboard
@@ -512,20 +548,20 @@ export default function PracticePage() {
                           className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10"
                           title="Share your sheet with others"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
                           <span>Share</span>
                         </button>
                       )}
                     </div>
                     <p className="text-sm text-purple-200 mt-1">
                       {sheetCount > 0
-                        ? `${sheetCount} problem${sheetCount !== 1 ? 's' : ''} curated · ${Object.values(sheet).filter((_,i) => getStatus(Object.keys(sheet)[i]) === 'Completed').length} solved`
+                        ? `${sheetCount} problem${sheetCount !== 1 ? 's' : ''} curated · ${Object.values(sheet).filter((_, i) => getStatus(Object.keys(sheet)[i]) === 'Completed').length} solved`
                         : 'Add problems from the Problem List using the ＋ button'}
                     </p>
                   </div>
                   {sheetCount > 0 && (
                     <div className="flex gap-3">
-                      {['Easy','Medium','Hard'].map(diff => {
+                      {['Easy', 'Medium', 'Hard'].map(diff => {
                         const c = Object.keys(sheet).filter(id => {
                           const p = allProblems.find(x => x.id === id);
                           return p?.difficulty === diff;
@@ -533,9 +569,8 @@ export default function PracticePage() {
                         return c > 0 ? (
                           <div key={diff} className="text-center bg-white/15 rounded-2xl px-4 py-2">
                             <div className="text-lg font-black">{c}</div>
-                            <div className={`text-[10px] font-black uppercase ${
-                              diff === 'Easy' ? 'text-emerald-300' : diff === 'Medium' ? 'text-amber-300' : 'text-red-300'
-                            }`}>{diff}</div>
+                            <div className={`text-[10px] font-black uppercase ${diff === 'Easy' ? 'text-emerald-300' : diff === 'Medium' ? 'text-amber-300' : 'text-red-300'
+                              }`}>{diff}</div>
                           </div>
                         ) : null;
                       })}
@@ -591,36 +626,14 @@ export default function PracticePage() {
                               </td>
                               <td className="py-4 px-5 text-xs font-bold text-slate-500 dark:text-neutral-400">{prob.topic}</td>
                               <td className="py-4 px-5 text-center">
-                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                                  prob.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                  : prob.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                  : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                }`}>{prob.difficulty}</span>
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                    : prob.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                  }`}>{prob.difficulty}</span>
                               </td>
                               <td className="py-4 px-5 text-center">
                                 <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
-                              </td>
-                              <td className="py-4 px-5 text-center">
-                                <div className="flex justify-center">
-                                  <button
-                                    onClick={() => handleStatusToggle(prob.id, status)}
-                                    className="focus:outline-none"
-                                    title={`Status: ${status}`}
-                                  >
-                                    {status === 'Completed' ? (
-                                      <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white">
-                                        <CheckCircle2 size={12} className="stroke-[3]" />
-                                      </div>
-                                    ) : status === 'In Progress' ? (
-                                      <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                      </div>
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
+                              </td> 
                               <td className="py-4 px-5 text-center">
                                 <div className="flex items-center justify-center gap-2">
                                   <button
@@ -649,7 +662,7 @@ export default function PracticePage() {
                                   className="text-slate-300 dark:text-neutral-700 hover:text-red-500 dark:hover:text-red-400 transition p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
                                   title="Remove from My Sheet"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                                 </button>
                               </td>
                             </tr>
@@ -661,12 +674,12 @@ export default function PracticePage() {
                 </div>
               )}
             </section>
-          ) : activeView === "problem-list" ? (
+          ) : activeView === "practice-home" || activeView === "problem-list" ? (
             <>
               {/* Top Row: Banner and Session Progress */}
               <div className="flex flex-col lg:flex-row items-stretch gap-4">
                 <div className="flex-1">
-                  <PracticeSessionBanner 
+                  <PracticeSessionBanner
                     title="DSA Sheet - Most Important Interview Questions"
                     description="All DSA topics covered – from basic to advanced. Perfect for interview preparation."
                     difficulty="Beginner"
@@ -676,19 +689,13 @@ export default function PracticePage() {
                     attempted={stats.attempted}
                     remaining={stats.remaining}
                     total={stats.total}
+                    onStartSession={() => {
+                      if (!nextProblem) return;
+                      toast.success(`Starting with ${nextProblem.name}`);
+                      window.open(nextProblem.practiceUrl, "_blank");
+                    }}
                   />
                 </div>
-                {activeView === "problem-list" && (
-                  <div className="w-full lg:w-[260px] flex-shrink-0">
-                    <PracticeRightSidebar 
-                      solved={stats.solved}
-                      attempted={stats.attempted}
-                      remaining={stats.remaining}
-                      total={stats.total}
-                      onViewProgress={() => router.push("/practice?view=dashboard")}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Tab navigation */}
@@ -701,11 +708,10 @@ export default function PracticePage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${
-                      activeTab === tab.id
+                    className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === tab.id
                         ? "border-primary text-primary dark:text-purple-400"
                         : "border-transparent text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300"
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -720,33 +726,76 @@ export default function PracticePage() {
                     {/* Search */}
                     <div className="relative flex-1 w-full">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-neutral-600" />
-                      <input
+                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
                           setCurrentPage(1);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setSearchQuery("");
+                            setCurrentPage(1);
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-label="Search problems"
                         placeholder="Search problems... (Press /)"
                         className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] text-xs font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition shadow-sm"
                       />
                     </div>
 
                     {/* Topic Filter */}
-                    <div className="relative w-full sm:w-48">
-                      <select
-                        value={selectedTopic}
-                        onChange={(e) => {
-                          setSelectedTopic(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                        className="w-full h-11 pl-4 pr-10 rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#1a1b1e] text-xs font-bold text-slate-600 dark:text-neutral-300 focus:outline-none focus:border-primary transition shadow-sm appearance-none cursor-pointer"
+                    <div ref={topicRef} className="relative w-full sm:w-48">
+                      {/* Trigger — same dimensions as before so layout is unchanged */}
+                      <button
+                        type="button"
+                        onClick={() => setIsTopicOpen((o) => !o)}
+                        className="w-full h-11 pl-4 pr-10 flex items-center rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-udemy-dark-surface text-xs font-bold text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors shadow-sm cursor-pointer"
+                        aria-haspopup="listbox"
+                        aria-expanded={isTopicOpen}
                       >
-                        {uniqueTopics.map((topic) => (
-                          <option key={topic} value={topic}>{topic}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <span className="flex-1 text-left truncate">{selectedTopic}</span>
+                        <ChevronDown className={`absolute right-3.5 w-4 h-4 text-surface-500 dark:text-surface-400 transition-transform duration-200 ${isTopicOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {/* Panel — exact same classes as NotificationDropdown panel */}
+                      {isTopicOpen && (
+                        <div
+                          role="listbox"
+                          aria-label="Filter by topic"
+                          className="absolute left-0 right-0 mt-2 bg-white dark:bg-udemy-dark-surface border border-surface-200 dark:border-surface-700 shadow-xl rounded-xl z-[9999] overflow-hidden flex flex-col max-h-64"
+                        >
+                          <div className="overflow-y-auto flex-1">
+                            {uniqueTopics.map((topic) => (
+                              <button
+                                key={topic}
+                                type="button"
+                                role="option"
+                                aria-selected={selectedTopic === topic}
+                                onClick={() => {
+                                  setSelectedTopic(topic);
+                                  setCurrentPage(1);
+                                  setIsTopicOpen(false);
+                                }}
+                                className={`relative w-full text-left px-4 py-2.5 text-sm transition-all duration-200 border-b border-surface-200 dark:border-udemy-dark-border last:border-0 ${
+                                  selectedTopic === topic
+                                    ? "bg-primary/5 dark:bg-primary/10 font-bold text-primary"
+                                    : "font-semibold text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-udemy-dark-surface/50"
+                                }`}
+                              >
+                                {selectedTopic === topic && (
+                                  <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full" />
+                                )}
+                                {topic}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -754,7 +803,7 @@ export default function PracticePage() {
                   {selectedCompanyFilter !== "All" && (
                     <div className="flex items-center gap-2 text-xs font-bold bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:text-purple-400 px-3.5 py-1.5 rounded-xl w-fit">
                       <span>Filtering by company: {selectedCompanyFilter}</span>
-                      <button 
+                      <button
                         onClick={() => { setSelectedCompanyFilter("All"); setCurrentPage(1); }}
                         className="font-black text-purple-600 dark:text-purple-300 hover:opacity-85 ml-1.5"
                       >
@@ -772,17 +821,14 @@ export default function PracticePage() {
                           <th className="py-4 px-5">Problem</th>
                           <th className="py-4 px-5">Topic</th>
                           <th className="py-4 px-5 text-center">Level</th>
-                          <th className="py-4 px-5 text-center">Time</th>
                           <th className="py-4 px-5 text-center">Company</th>
-                          <th className="py-4 px-5 text-center">Status</th>
                           <th className="py-4 px-5 text-center w-12"></th>
-                          <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="8" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="6" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -795,6 +841,7 @@ export default function PracticePage() {
                             return (
                               <tr
                                 key={prob.id}
+                                onClick={() => window.open(prob.practiceUrl, "_blank", "noopener,noreferrer")}
                                 className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
                               >
                                 <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
@@ -815,18 +862,14 @@ export default function PracticePage() {
                                   {prob.topic}
                                 </td>
                                 <td className="py-4 px-5 text-center">
-                                  <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                                    prob.difficulty === "Easy"
+                                  <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === "Easy"
                                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                       : prob.difficulty === "Medium"
                                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                         : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                  }`}>
+                                    }`}>
                                     {prob.difficulty}
                                   </span>
-                                </td>
-                                <td className="py-4 px-5 text-center text-xs font-bold text-slate-400 dark:text-neutral-500">
-                                  {prob.time}
                                 </td>
                                 <td className="py-4 px-5 text-center">
                                   <div className="flex justify-center">
@@ -834,37 +877,16 @@ export default function PracticePage() {
                                   </div>
                                 </td>
                                 <td className="py-4 px-5 text-center">
-                                  <div className="flex justify-center">
-                                    <button
-                                      onClick={() => handleStatusToggle(prob.id, status)}
-                                      className="focus:outline-none focus-ring rounded-full"
-                                      title={`Click to toggle status: currently ${status}`}
-                                    >
-                                      {status === "Completed" ? (
-                                        <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
-                                          <CheckCircle2 size={12} className="stroke-[3]" />
-                                        </div>
-                                      ) : status === "In Progress" ? (
-                                        <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition">
-                                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="py-4 px-5 text-center">
                                   <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       if (!ensureLoggedIn()) return;
                                       toggleBookmark(prob.id, prob.topic.toLowerCase());
                                     }}
-                                    className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
-                                      isSaved 
-                                        ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                    className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${isSaved
+                                        ? "text-primary bg-primary/10 dark:text-purple-400"
                                         : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
-                                    }`}
+                                      }`}
                                   >
                                     <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                   </button>
@@ -882,11 +904,10 @@ export default function PracticePage() {
                                       }
                                     }}
                                     title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                    className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                      isInSheet(prob.id)
+                                    className={`focus:outline-none p-1.5 rounded-lg transition ${isInSheet(prob.id)
                                         ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
                                         : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                    }`}
+                                      }`}
                                   >
                                     <ScrollText size={14} />
                                   </button>
@@ -906,27 +927,9 @@ export default function PracticePage() {
                       {Math.min(currentPage * itemsPerPage, filteredProblems.length)} of {filteredProblems.length} problems
                     </span>
 
-                    {/* Legend circles */}
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-neutral-500">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-200 dark:border-neutral-750" />
-                        <span>Not Solved</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-500 flex items-center justify-center">
-                          <div className="w-1 h-1 rounded-full bg-amber-500" />
-                        </div>
-                        <span>Attempted</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <span>Solved</span>
-                      </div>
-                    </div>
-
                     {/* Shuffle / Random & Pagination controls */}
                     <div className="flex items-center gap-3">
-                      <button 
+                      <button
                         onClick={handleSolveRandom}
                         className="flex items-center gap-1.5 px-3 py-2 border border-purple-500/20 hover:bg-primary hover:text-white dark:hover:bg-purple-600 text-primary dark:text-purple-400 rounded-xl text-xs font-bold transition shadow-sm"
                       >
@@ -993,7 +996,7 @@ export default function PracticePage() {
                         <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-1.5 leading-normal">
                           {res.desc}
                         </p>
-                        <button 
+                        <button
                           onClick={() => router.push(res.url)}
                           className="text-[11px] font-black text-primary hover:underline mt-3 block"
                         >
@@ -1062,11 +1065,10 @@ export default function PracticePage() {
                                 </a>
                               </td>
                               <td className="py-4 px-5 text-center">
-                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                                  prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                  : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                }`}>{prob.difficulty}</span>
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                      : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                  }`}>{prob.difficulty}</span>
                               </td>
                               <td className="py-4 px-5 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">{dateStr}</td>
                               <td className="py-4 px-5 text-center">
@@ -1088,11 +1090,10 @@ export default function PracticePage() {
                                     if (!ensureLoggedIn()) return;
                                     toggleBookmark(prob.id, prob.topic.toLowerCase());
                                   }}
-                                  className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
-                                    isSaved 
-                                      ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                  className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${isSaved
+                                      ? "text-primary bg-primary/10 dark:text-purple-400"
                                       : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
-                                  }`}
+                                    }`}
                                 >
                                   <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                 </button>
@@ -1164,7 +1165,7 @@ export default function PracticePage() {
                         {filteredProblems.map((prob, idx) => {
                           const status = getStatus(prob.id);
                           const progInfo = progress[prob.id];
-                          const dateStr = progInfo?.updatedAt ? new Date(progInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) : "Recently";
+                          const dateStr = progInfo?.updatedAt ? new Date(progInfo.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Recently";
                           return (
                             <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                               <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
@@ -1178,11 +1179,10 @@ export default function PracticePage() {
                                 {prob.topic}
                               </td>
                               <td className="py-4 px-5 text-center">
-                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                                  prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                  : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                }`}>{prob.difficulty}</span>
+                                <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                      : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                  }`}>{prob.difficulty}</span>
                               </td>
                               <td className="py-4 px-5 text-center text-xs font-bold text-slate-500 dark:text-neutral-400">{dateStr}</td>
                               <td className="py-4 px-5 text-center">
@@ -1239,20 +1239,19 @@ export default function PracticePage() {
                           if (selectedTopicWise !== topic.title) {
                             setIsTopicLoading(true);
                             setSelectedTopicWise(topic.title);
-                            
+
                             // Push to URL to maintain history state
                             const params = new URLSearchParams(searchParams.toString());
                             params.set("topic", topic.title);
                             router.push(`/practice?${params.toString()}`);
-                            
+
                             setTimeout(() => setIsTopicLoading(false), 300);
                           }
                         }}
-                        className={`snap-start whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border flex-shrink-0 ${
-                          isSelected 
+                        className={`snap-start whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 border flex-shrink-0 ${isSelected
                             ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
                             : "bg-white dark:bg-[#1a1b1e] text-slate-600 dark:text-neutral-300 border-slate-200 dark:border-neutral-800 hover:border-primary/50 dark:hover:border-purple-500/50"
-                        }`}
+                          }`}
                       >
                         {topic.title}
                       </button>
@@ -1271,7 +1270,7 @@ export default function PracticePage() {
                 (() => {
                   const topicData = practiceData.find(t => t.title === selectedTopicWise);
                   const problems = topicData ? topicData.subsections.flatMap(sub => sub.items) : [];
-                  
+
                   if (problems.length === 0) {
                     return (
                       <div className="bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-3xl p-12 text-center shadow-sm">
@@ -1298,7 +1297,7 @@ export default function PracticePage() {
                               <th className="py-4 px-5 text-center">Company</th>
                               <th className="py-4 px-5 text-center">Status</th>
                               <th className="py-4 px-5 text-center w-12"></th>
-                              <th className="py-4 px-5 text-center w-12" title="Add to My Sheet">Sheet</th>
+                              
                             </tr>
                           </thead>
                           <tbody>
@@ -1306,7 +1305,8 @@ export default function PracticePage() {
                               const status = getStatus(prob.id);
                               const isSaved = isBookmarked(prob.id);
                               return (
-                                <tr key={prob.id} className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
+                                <tr key={prob.id} 
+                                onClick={() => window.open(prob.practiceUrl, "_blank", "noopener,noreferrer")}className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0">
                                   <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">{idx + 1}</td>
                                   <td className="py-4 px-5">
                                     <a
@@ -1320,11 +1320,10 @@ export default function PracticePage() {
                                     </a>
                                   </td>
                                   <td className="py-4 px-5 text-center">
-                                    <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                                      prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                      : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                      : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                    }`}>{prob.difficulty}</span>
+                                    <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full ${prob.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                        : prob.difficulty === "Medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                          : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                      }`}>{prob.difficulty}</span>
                                   </td>
                                   <td className="py-4 px-5 text-center">
                                     <div className="flex justify-center"><CompanyLogos companies={prob.companies} /></div>
@@ -1332,7 +1331,10 @@ export default function PracticePage() {
                                   <td className="py-4 px-5 text-center">
                                     <div className="relative flex justify-center group">
                                       <button
-                                        onClick={() => handleStatusToggle(prob.id, status)}
+                                        onClick={(e) =>{
+                                          s.stopPropagation();
+                                          handleStatusToggle(prob.id, status)
+                                        } }
                                         className="focus:outline-none"
                                         title={"Click once → Mark as Attempted 🟠\nDouble click → Mark as Completed 🟢"}
                                         aria-label={"Status action: click once to mark as attempted, double click to mark as completed"}
@@ -1353,15 +1355,15 @@ export default function PracticePage() {
                                   </td>
                                   <td className="py-4 px-5 text-center">
                                     <button
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         if (!ensureLoggedIn()) return;
                                         toggleBookmark(prob.id, selectedTopicWise.toLowerCase());
                                       }}
-                                      className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${
-                                        isSaved 
-                                          ? "text-primary bg-primary/10 dark:text-purple-400" 
+                                      className={`focus:outline-none focus-ring rounded-lg p-1.5 transition ${isSaved
+                                          ? "text-primary bg-primary/10 dark:text-purple-400"
                                           : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
-                                      }`}
+                                        }`}
                                     >
                                       <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
                                     </button>
@@ -1379,11 +1381,10 @@ export default function PracticePage() {
                                         }
                                       }}
                                       title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                      className={`focus:outline-none p-1.5 rounded-lg transition ${
-                                        isInSheet(prob.id)
+                                      className={`focus:outline-none p-1.5 rounded-lg transition ${isInSheet(prob.id)
                                           ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
                                           : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                      }`}
+                                        }`}
                                     >
                                       <ScrollText size={14} />
                                     </button>
@@ -1453,8 +1454,10 @@ export default function PracticePage() {
         problem={selectedProblem}
         topicSlug={selectedProblem ? selectedProblem.topic.toLowerCase() : null}
       />
-
       <Footer />
     </div>
   );
 }
+
+
+

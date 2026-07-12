@@ -2,13 +2,10 @@ import Animation from "@/app/visualizer/queue/types/circular/animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/queue/types/circular/content";
 import Code from "@/app/visualizer/queue/types/circular/codeBlock";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
-
 
 
 export default function Page() {
@@ -20,13 +17,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.circularQueue}
-          description="Mark Circular Queue as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore Other Types"

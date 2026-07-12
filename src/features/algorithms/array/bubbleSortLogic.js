@@ -66,7 +66,7 @@ export function* bubbleSortGenerator(initialArray) {
     };
 
     if (!swapped) {
-      yield { type: 'early_completion' };
+      yield { type: 'early_completion', payload: { comparisons, swaps } };
       break;
     }
   }

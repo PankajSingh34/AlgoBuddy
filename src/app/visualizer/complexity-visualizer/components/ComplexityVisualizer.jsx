@@ -1,20 +1,20 @@
-// Operation count models — pure math, no actual sorting
+// Operation count models - pure math, no actual sorting
 export const ALGORITHMS = {
   "Bubble Sort": {
     label: "Bubble Sort",
-    complexity: "O(n²)",
+    complexity: "O(n^2)",
     color: "#f87171",
     getOps: (n) => (n * (n - 1)) / 2,
   },
   "Selection Sort": {
     label: "Selection Sort",
-    complexity: "O(n²)",
+    complexity: "O(n^2)",
     color: "#fb923c",
     getOps: (n) => (n * (n - 1)) / 2,
   },
   "Insertion Sort": {
     label: "Insertion Sort",
-    complexity: "O(n²)",
+    complexity: "O(n^2)",
     color: "#facc15",
     getOps: (n) => (n * (n - 1)) / 4, // avg case
   },
@@ -49,7 +49,7 @@ export const REFERENCE_CURVES = [
   { label: "O(log n)",   color: "#818cf8", getOps: (n) => Math.log2(n || 1) },
   { label: "O(n)",       color: "#34d399", getOps: (n) => n },
   { label: "O(n log n)", color: "#fbbf24", getOps: (n) => n * Math.log2(n || 1) },
-  { label: "O(n²)",      color: "#f87171", getOps: (n) => n * n },
+  { label: "O(n^2)",      color: "#f87171", getOps: (n) => n * n },
 ];
 
 export function generatePoints(getOps, nValues) {

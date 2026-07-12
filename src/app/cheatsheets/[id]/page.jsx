@@ -9,19 +9,35 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const cheatsheet = getCheatsheetById(params.id);
-  if (!cheatsheet) return { title: "Cheatsheet Not Found | AlgoBuddy" };
+  const { id } = await params;
+
+  const cheatsheet = getCheatsheetById(id);
+
+  if (!cheatsheet) {
+    return {
+      title: "Cheatsheet Not Found | AlgoBuddy",
+    };
+  }
+
   return {
     title: `${cheatsheet.title} Cheatsheet | AlgoBuddy`,
     description: `${cheatsheet.title} — ${cheatsheet.whenToUse || ""} Time complexity: ${cheatsheet.timeComplexity.average}, Space: ${cheatsheet.spaceComplexity}.`,
   };
 }
 
-export default function CheatsheetPage({ params }) {
-  const cheatsheet = getCheatsheetById(params.id);
+import { notFound } from "next/navigation";
+
+export default async function CheatsheetPage({ params }) {
+  const { id } = await params;
+
+  const cheatsheet = getCheatsheetById(id);
+
+  if (!cheatsheet) {
+    notFound();
+  }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0f]">
       <main className="container-app section-app">
         <CheatsheetDetail cheatsheet={cheatsheet} />
       </main>

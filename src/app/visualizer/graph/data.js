@@ -73,6 +73,30 @@ export const graphTopics = {
       { label: "List neighbors", value: "O(V)" },
     ],
   },
+  "a-star": {
+    key: "a-star",
+    title: "A* Search",
+    category: "Shortest Path",
+    description: "Find the shortest path to a specific goal node by combining actual distance (g) with a heuristic estimate (h).",
+    animationType: "a-star",
+    summary: [
+      "A* evaluates nodes based on f = g + h.",
+      "g is the exact cost from the start node.",
+      "h is the estimated cost (heuristic) to the goal.",
+      "In this visualizer, the heuristic uses Euclidean distance based on the nodes' X/Y coordinates.",
+    ],
+    steps: [
+      "Initialize open set with start node (g=0, f=h).",
+      "Pick node from open set with lowest f-score.",
+      "If it's the goal, reconstruct and return the path.",
+      "Otherwise, check neighbors, update g-scores, and add to open set if shorter.",
+    ],
+    complexity: [
+      { label: "Time", value: "O(E)" },
+      { label: "Space", value: "O(V)" },
+      { label: "Heuristic", value: "Euclidean" },
+    ],
+  },
   "adjacency-list": {
     key: "adjacency-list",
     title: "Adjacency List",

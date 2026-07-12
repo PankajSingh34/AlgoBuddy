@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { jwtVerify } from "jose";
+import { jwtVerify, createRemoteJWKSet } from "jose";
 import { getClientIp } from "../getClientIp.js";
 
 const RATE_LIMIT_KEY_PREFIX = "rl";
@@ -82,20 +82,38 @@ function shouldTryRedis() {
   return false;
 }
 
+// Lazily created and cached so we don't hit Supabase's JWKS endpoint on
+// every single request — createRemoteJWKSet() caches keys internally.
+let cachedJWKS = null;
+function getSupabaseJWKS() {
+  if (!cachedJWKS) {
+    // NOTE: this MUST match the endpoint Supabase actually serves its
+    // JWKS from (see backend/.../SecurityConfig.java#jwtDecoder for the
+    // Java side using the same URL). 
+    const jwksUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + "/auth/v1/.well-known/jwks.json";
+    cachedJWKS = createRemoteJWKSet(new URL(jwksUrl));
+  }
+  return cachedJWKS;
+}
+
 async function resolveIdentityKey(request) {
-  try {
-    const authHeader = request.headers.get("authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (token) {
-      const jwksUrl = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/jwks";
-      const { createRemoteJWKSet } = await import("jose");
-      const JWKS = createRemoteJWKSet(new URL(jwksUrl));
+  const authHeader = request.headers.get("authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (token) {
+    try {
+      const JWKS = getSupabaseJWKS();
       const { payload } = await jwtVerify(token, JWKS);
       if (payload && payload.sub) {
         return `user:${payload.sub}`;
       }
+    } catch (err) {
+      // A present-but-invalid/expired token is not the same as "no token
+      // provided" — log it distinctly so a regression here (e.g. a wrong
+      // JWKS URL) is visible instead of silently degrading every limiter
+      // to IP-based keying with no signal anywhere.
+      console.warn(`[rateLimit] JWT verification failed, falling back to IP-based key: ${err.message || err}`);
     }
-  } catch {}
+  }
   const ip = getClientIp(request.headers);
   return `ip:${ip}`;
 }
@@ -113,7 +131,10 @@ export function createRateLimiter(options) {
 
     if (shouldTryRedis()) {
       try {
-        const uniqueMember = `${now}-${globalThis.crypto.randomUUID().split('-')[0]}`;
+        const uuidPart = typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID
+          ? globalThis.crypto.randomUUID().split("-")[0]
+          : Math.random().toString(36).substring(2, 10);
+        const uniqueMember = `${now}-${uuidPart}`;
         const result = await redis
           .pipeline()
           .zadd(redisKey, { score: now, member: uniqueMember })

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "arena_matches")
+@Table(name = "arena_matches", uniqueConstraints = @UniqueConstraint(columnNames = "match_id"))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

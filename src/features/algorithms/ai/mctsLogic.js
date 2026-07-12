@@ -34,7 +34,7 @@ const select = (nodes, exploreC) => {
   return path;
 };
 
-export function* mctsGenerator(initialTree, exploreC, simSize, totalSteps = 100) {
+export function* mctsGenerator(initialTree, exploreC = 1.4, simSize = 10, totalSteps = 100) {
   let tree = initialTree.map(n => ({ ...n }));
   
   for (let count = 1; count <= totalSteps; count++) {

@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Layers, GitBranch, Terminal, HelpCircle, ArrowRight, Search, Network, Brain, TreePine, Hash } from "lucide-react";
+import { Layers, GitBranch, Terminal, HelpCircle, ArrowRight, Search, Network, Brain, TreePine, Hash, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QuizPage() {
+
+  const [searchTerm, setSearchTerm] = useState("");
   
   const quizzes = [
     {
       title: "Searching Quiz",
-      description: "Practice Linear Search and Binary Search.",
+      description: "Practice all searching algorithms including liner search, binary search, ternary search, etc.",
       href: "/visualizer/array/searching/quiz",
       icon: Search,
       filename: "searching_quiz.js",
@@ -105,17 +108,6 @@ export default function QuizPage() {
       topBarBg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/20",
       iconStyle: "bg-fuchsia-500/10 border border-fuchsia-500/20 dark:border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400",
       btnBg: "bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600",
-    },
-    {
-      title: "Graph Algorithms Quiz",
-      description: "Test your understanding of Graph algorithms including BFS, DFS, Dijkstra, MST, and more.",
-      href: "/visualizer/graph/quiz",
-      icon: Network,
-      filename: "graph_algorithms_quiz.js",
-      cardBorder: "border-orange-500/20 dark:border-orange-500/30",
-      topBarBg: "bg-orange-500/10 dark:bg-orange-500/20",
-      iconStyle: "bg-orange-500/10 border border-orange-500/20 dark:border-orange-500/30 text-orange-600 dark:text-orange-400",
-      btnBg: "bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600",
     },
     {
       title: "Queue Types Quiz",
@@ -286,7 +278,7 @@ export default function QuizPage() {
     {
       title: "Graph Algorithms Quiz",
       description:
-        "Practice Dijkstra's, Floyd-Warshall, Prim's, Kruskal's, and Topological Sort algorithms.",
+        "Practice Dijkstra's, Bellman-Ford, Floyd-Warshall, Prim's, Kruskal's, Topological Sort, and Kosaraju's algorithms.",
       href: "/visualizer/graph/algorithms/quiz",
       filename: "graph_algorithms_quiz.js",
       icon: Network,
@@ -311,7 +303,38 @@ export default function QuizPage() {
       btnBg:
         "bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600",
     },
+    {
+      title: "Bit Manipulation Quiz",
+      description:
+        "Test your understanding of binary representations, bitwise operators (&, |, ^, ~, <<, >>), setting/clearing/toggling bits, power of two, Kernighan's algorithm, and bitmasking.",
+      href: "/visualizer/bit-manipulation/quiz",
+      icon: Cpu,
+      filename: "bit_manipulation_quiz.js",
+      cardBorder: "border-violet-500/20 dark:border-violet-500/30",
+      topBarBg: "bg-violet-500/10 dark:bg-violet-500/20",
+      iconStyle:
+        "bg-violet-500/10 border border-violet-500/20 dark:border-violet-500/30 text-violet-600 dark:text-violet-400",
+      btnBg:
+        "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600",
+    },
+    {
+      title: "Sliding Window Quiz",
+      description:
+        "Test your understanding of the sliding window technique, fixed vs variable size windows, and contiguous subarrays.",
+      href: "/visualizer/array/Interview-Patterns/quiz/slidingWindow",
+      icon: Terminal,
+      filename: "sliding_window_quiz.js",
+      cardBorder: "border-cyan-500/20 dark:border-cyan-500/30",
+      topBarBg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+      iconStyle:
+        "bg-cyan-500/10 border border-cyan-500/20 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400",
+      btnBg:
+        "bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+    },
   ];
+  const filteredQuizzes = quizzes.filter((quiz) =>
+    quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="min-h-screen bg-white dark:bg-[#1c1d1f] text-[var(--udemy-text)] dark:text-white transition-colors duration-300 pb-20">
       
@@ -324,12 +347,29 @@ export default function QuizPage() {
             <span className="animate-pulse text-violet-500">_</span>
           </h1>
         </div>
+        <div className="mb-8">
+          <div className="relative">
+            <Search
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+            <input
+              type="text"
+              placeholder="Search quizzes... (Press / or Ctrl+K)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] py-4 pl-12 pr-4 text-base outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-800 transition"
+            />
+          </div>
+        </div>
         <div className="grid md:grid-cols-2 gap-6 items-stretch">
-          {quizzes.map((quiz, index) => {
+          {filteredQuizzes.length > 0 ? (
+            filteredQuizzes.map((quiz, index) => {
             const IconComponent = quiz.icon;
             return (
               <motion.div
-                key={quiz.title}
+                key={quiz.href}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
@@ -374,8 +414,21 @@ export default function QuizPage() {
                 </div>
               </motion.div>
             );
-          })}
+          })
+          ) : (
+            <div className="col-span-2 text-center py-20">
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                No quizzes found.
+              </p>
+            </div>
+          )}
         </div>
+        <Link
+          href="/visualizer"
+            className="mt-16 mx-auto flex w-fit items-center gap-2 px-6 py-3 rounded-2xl border border-udemy-border dark:border-udemy-dark-border hover:border-udemy-purple hover:text-udemy-purple dark:hover:text-udemy-purple-light transition bg-white dark:hover:border-udemy-purple dark:bg-udemy-dark-surface font-medium"
+        >
+          ← Back to Visulaizer
+        </Link>
       </div>
     </div>
   );

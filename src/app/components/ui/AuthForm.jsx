@@ -11,12 +11,6 @@ import dynamic from "next/dynamic";
 import { useUser } from "@/features/user/UserContext";
 import { api } from "@/lib/apiClient";
 
-function getCsrfToken() {
-  if (typeof document === "undefined") return "";
-  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]*)/);
-  return match ? match[1] : "";
-}
-
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
   { ssr: false },
@@ -106,7 +100,6 @@ export default function AuthForm({ isLogin = true }) {
       if (isLogin) {
         const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "X-CSRF-Token": getCsrfToken() },
           body: { email, password, captchaToken, action: "login" },
         });
         if (!data.success) throw new Error(data.message || "Login failed");
@@ -119,7 +112,6 @@ export default function AuthForm({ isLogin = true }) {
       } else {
         const data = await api.request("/api/auth", {
           method: "POST",
-          headers: { "X-CSRF-Token": getCsrfToken() },
           body: { email, password, captchaToken, action: "signup", name },
         });
         if (!data.success) throw new Error(data.message || "Signup failed");

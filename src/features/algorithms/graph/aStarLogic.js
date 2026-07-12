@@ -2,148 +2,168 @@
  * Pure generator logic for A* Search Algorithm
  */
 
-export function* aStarGenerator(nodes, edges, startNode, goalNode) {
-  if (!startNode || !goalNode) return;
+export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
+  if (!startNode || !goalNode || startNode === goalNode) return;
 
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  // Build position map and weighted adjacency list (directed)
+  const pos = {};
+  nodeList.forEach((n) => { pos[n.id] = { x: n.x, y: n.y }; });
+
   const adj = {};
-  nodes.forEach(n => adj[n.id] = []);
-  edges.forEach(e => {
-    adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
-    if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
+  nodeList.forEach((n) => { adj[n.id] = []; });
+  edgeList.forEach((e) => {
+    adj[e.from] = adj[e.from] || [];
+    adj[e.from].push({ node: e.to, weight: Number(e.weight) || 1 });
   });
 
-  // Heuristic: Euclidean distance
-  const h = (nodeId) => {
-    const n1 = nodeMap.get(nodeId);
-    const n2 = nodeMap.get(goalNode);
-    if (!n1 || !n2) return 0;
-    return Math.sqrt(Math.pow(n1.x - n2.x, 2) + Math.pow(n1.y - n2.y, 2));
+  const heuristic = (a, b) => {
+    const pa = pos[a];
+    const pb = pos[b];
+    if (!pa || !pb) return 0;
+    return Math.sqrt(Math.pow(pa.x - pb.x, 2) + Math.pow(pa.y - pb.y, 2));
   };
 
-  const openSet = new Set([startNode]);
-  const visited = new Set();
-  const cameFrom = {};
-  
   const gScore = {};
   const fScore = {};
-  nodes.forEach(n => {
+  const cameFrom = {};
+  nodeList.forEach((n) => {
     gScore[n.id] = Infinity;
     fScore[n.id] = Infinity;
   });
-  
   gScore[startNode] = 0;
-  fScore[startNode] = h(startNode);
+  fScore[startNode] = heuristic(startNode, goalNode);
+
+  const openSet = new Set([startNode]);
+  const closedSet = new Set();
+
+  const reconstructPath = (current) => {
+    const path = [current];
+    let c = current;
+    while (cameFrom[c]) {
+      c = cameFrom[c];
+      path.unshift(c);
+    }
+    return path;
+  };
+
+  const cloneScores = () => ({
+    gScore: { ...gScore },
+    fScore: { ...fScore },
+  });
+
+  // State maps to distances in UI
+  const buildDistances = () => {
+    const d = {};
+    for (const k in gScore) {
+      d[k] = gScore[k] === Infinity ? Infinity : Number(gScore[k].toFixed(1));
+    }
+    return d;
+  };
 
   yield {
-    openSet: new Set(openSet),
+    visitedNodes: new Set(closedSet),
     visitingNodes: new Set(openSet),
-    visited: new Set(visited),
-    visitedNodes: new Set(visited),
-    phase: "searching",
-    distances: { ...gScore },
     currentNode: startNode,
-    description: `Initializing A*: starting at ${nodeMap.get(startNode)?.label || startNode}`,
+    path: [],
+    distances: buildDistances(),
+    activeEdge: null,
+    phase: "searching",
+    goalNode,
+    description: `A* initialized. Start: ${startNode}, Goal: ${goalNode}. g(${startNode})=0, f(${startNode})=${fScore[startNode].toFixed(1)}`,
   };
 
   while (openSet.size > 0) {
+    // Pick node with lowest fScore in open set
     let current = null;
-    let minF = Infinity;
-    for (const nodeId of openSet) {
-      if (fScore[nodeId] < minF) {
-        minF = fScore[nodeId];
-        current = nodeId;
+    let lowestF = Infinity;
+    for (const n of openSet) {
+      if (fScore[n] < lowestF) {
+        lowestF = fScore[n];
+        current = n;
       }
     }
 
     if (current === goalNode) {
-      const path = [current];
-      let curr = current;
-      while (cameFrom[curr]) {
-        curr = cameFrom[curr];
-        path.unshift(curr);
-      }
+      const finalPath = reconstructPath(current);
       yield {
-        openSet: new Set(openSet),
+        visitedNodes: new Set(closedSet),
         visitingNodes: new Set(openSet),
-        visited: new Set(visited),
-        visitedNodes: new Set(visited),
-        phase: "found",
-        aStarPath: path,
-        mstEdges: path.map((n, i) => i < path.length - 1 ? { from: path[i], to: path[i+1] } : null).filter(Boolean),
-        distances: { ...gScore },
         currentNode: current,
-        description: `Goal reached! Shortest path found.`,
+        path: finalPath,
+        distances: buildDistances(),
+        activeEdge: null,
+        phase: "found",
+        goalNode,
+        result: finalPath,
+        description: `Goal ${goalNode} reached! Path: ${finalPath.join(" → ")} (cost: ${gScore[goalNode].toFixed(1)})`,
       };
       return;
     }
 
     openSet.delete(current);
-    visited.add(current);
+    closedSet.add(current);
 
     yield {
-      openSet: new Set(openSet),
+      visitedNodes: new Set(closedSet),
       visitingNodes: new Set(openSet),
-      visited: new Set(visited),
-      visitedNodes: new Set(visited),
-      phase: "searching",
-      activeEdge: null,
-      distances: { ...gScore },
       currentNode: current,
-      description: `Evaluating node ${nodeMap.get(current)?.label || current} with f-score ${minF.toFixed(1)}`,
+      path: reconstructPath(current),
+      distances: buildDistances(),
+      activeEdge: null,
+      phase: "searching",
+      goalNode,
+      description: `Expanding node ${current} (f=${fScore[current].toFixed(1)})`,
     };
 
     const neighbors = adj[current] || [];
-    for (const edge of neighbors) {
-      const neighbor = edge.node;
-      if (visited.has(neighbor)) continue;
+    for (const { node: neighbor, weight } of neighbors) {
+      if (closedSet.has(neighbor)) continue;
 
-      const tentativeG = gScore[current] + edge.weight;
+      const tentativeG = gScore[current] + weight;
 
       yield {
-        openSet: new Set(openSet),
+        visitedNodes: new Set(closedSet),
         visitingNodes: new Set(openSet),
-        visited: new Set(visited),
-        visitedNodes: new Set(visited),
-        phase: "searching",
-        activeEdge: { from: current, to: neighbor },
-        distances: { ...gScore },
         currentNode: current,
-        description: `Checking edge to ${nodeMap.get(neighbor)?.label || neighbor}`,
+        path: reconstructPath(current),
+        distances: buildDistances(),
+        activeEdge: { from: current, to: neighbor },
+        phase: "searching",
+        goalNode,
+        description: `Checking edge ${current} → ${neighbor} (weight: ${weight}, tentative g: ${tentativeG.toFixed(1)})`,
       };
 
       if (tentativeG < gScore[neighbor]) {
         cameFrom[neighbor] = current;
         gScore[neighbor] = tentativeG;
-        fScore[neighbor] = tentativeG + h(neighbor);
-        
-        if (!openSet.has(neighbor)) {
-          openSet.add(neighbor);
-        }
+        fScore[neighbor] = tentativeG + heuristic(neighbor, goalNode);
+        openSet.add(neighbor);
 
         yield {
-          openSet: new Set(openSet),
+          visitedNodes: new Set(closedSet),
           visitingNodes: new Set(openSet),
-          visited: new Set(visited),
-          visitedNodes: new Set(visited),
-          phase: "searching",
-          activeEdge: { from: current, to: neighbor },
-          distances: { ...gScore },
           currentNode: current,
-          description: `Updated ${nodeMap.get(neighbor)?.label || neighbor}: g=${tentativeG.toFixed(1)}, f=${fScore[neighbor].toFixed(1)}`,
+          path: reconstructPath(current),
+          distances: buildDistances(),
+          activeEdge: { from: current, to: neighbor },
+          phase: "searching",
+          goalNode,
+          description: `Updated ${neighbor}: g=${gScore[neighbor].toFixed(1)}, h=${heuristic(neighbor, goalNode).toFixed(1)}, f=${fScore[neighbor].toFixed(1)}`,
         };
       }
     }
   }
 
+  // No path found
   yield {
-    openSet: new Set(openSet),
-    visitingNodes: new Set(openSet),
-    visited: new Set(visited),
-    visitedNodes: new Set(visited),
-    phase: "not_found",
-    distances: { ...gScore },
+    visitedNodes: new Set(closedSet),
+    visitingNodes: new Set(),
     currentNode: null,
-    description: `Open set empty. Goal not reachable.`,
+    path: [],
+    distances: buildDistances(),
+    activeEdge: null,
+    phase: "no_path",
+    goalNode,
+    description: `No path exists from ${startNode} to ${goalNode}.`,
   };
 }

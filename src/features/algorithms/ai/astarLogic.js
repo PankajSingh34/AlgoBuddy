@@ -22,16 +22,23 @@ const reconstructPath = (cameFrom, currentKey) => {
   return path.reverse();
 };
 
-const getNeighbors = (row, col, size) => {
+const getNeighbors = (row, col, size, allowDiagonal = false) => {
   const neighbors = [];
   if (row > 0) neighbors.push({ row: row - 1, col });
   if (row < size - 1) neighbors.push({ row: row + 1, col });
   if (col > 0) neighbors.push({ row, col: col - 1 });
   if (col < size - 1) neighbors.push({ row, col: col + 1 });
+  
+  if (allowDiagonal) {
+    if (row > 0 && col > 0) neighbors.push({ row: row - 1, col: col - 1 });
+    if (row > 0 && col < size - 1) neighbors.push({ row: row - 1, col: col + 1 });
+    if (row < size - 1 && col > 0) neighbors.push({ row: row + 1, col: col - 1 });
+    if (row < size - 1 && col < size - 1) neighbors.push({ row: row + 1, col: col + 1 });
+  }
   return neighbors;
 };
 
-export function* astarGenerator(start, goal, walls, gridSize, heuristic) {
+export function* astarGenerator(start, goal, walls, gridSize, heuristic, allowDiagonal = false) {
   const startKey = pointKey(start.row, start.col);
   const goalKey = pointKey(goal.row, goal.col);
   const wallSet = new Set([...walls].filter((cell) => cell !== startKey && cell !== goalKey));
@@ -128,7 +135,7 @@ export function* astarGenerator(start, goal, walls, gridSize, heuristic) {
       currentKey
     );
 
-    for (const neighbor of getNeighbors(currentPoint.row, currentPoint.col, gridSize)) {
+    for (const neighbor of getNeighbors(currentPoint.row, currentPoint.col, gridSize, allowDiagonal)) {
       const neighborKey = pointKey(neighbor.row, neighbor.col);
       if (wallSet.has(neighborKey) || closedSet.has(neighborKey)) continue;
 

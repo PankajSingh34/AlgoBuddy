@@ -1,4 +1,5 @@
-export function* generatePalindromeFrames(str) {
+export function* generatePalindromeFrames(rawStr) {
+  const str = rawStr.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const stack = [];
   const len = str.length;
   let frameIdCounter = 0;

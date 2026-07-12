@@ -7,8 +7,6 @@ import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 
 export default function StackClient() {
   return (
@@ -19,13 +17,6 @@ export default function StackClient() {
       animation={<FactorialAnimation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.recursionFactorial}
-          description="Mark Call Stack Visualization (Factorial Stack) as done"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other topics"

@@ -110,14 +110,16 @@ export async function PATCH(request) {
     // the authenticated user. The .eq("student_id", ...) above ensures the
     // operation is always scoped to the requesting user.
 
-    const { error, count } = await query;
+    const { data: updatedRows, error, count } = await query.select("id");
 
     if (error) {
       console.error("[/api/notifications PATCH] Supabase error:", error.message);
       return jsonResponse({ error: error.message }, 500);
     }
 
-    return jsonResponse({ success: true, updated: count ?? 0 });
+    const updated = Array.isArray(updatedRows) ? updatedRows.length : count ?? 0;
+
+    return jsonResponse({ success: true, updated });
   } catch (error) {
     return errorResponse(error);
   }

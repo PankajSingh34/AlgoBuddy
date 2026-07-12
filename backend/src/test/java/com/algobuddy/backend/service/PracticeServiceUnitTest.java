@@ -151,4 +151,61 @@ public class PracticeServiceUnitTest {
         assertEquals(6, sharedStats.getCurrentStreak(), "Final streak should be 6");
         assertEquals(LocalDate.now(), sharedStats.getLastActiveDate(), "Last active date should be today");
     }
+
+    @Test
+    public void testUpdateStreakWithClientLocalDateConsecutive() {
+        UUID userId = UUID.randomUUID();
+        LocalDate clientToday = LocalDate.of(2026, 7, 9);
+        UserPracticeStats stats = new UserPracticeStats(userId, 5, 5, clientToday.minusDays(1), 0);
+
+        doNothing().when(statsRepository).insertStatsIfNotExists(userId);
+        when(statsRepository.findAndLockByUserId(userId)).thenReturn(Optional.of(stats));
+
+        practiceService.updateStreak(userId, clientToday);
+
+        assertEquals(6, stats.getCurrentStreak());
+        assertEquals(6, stats.getLongestStreak());
+        assertEquals(clientToday, stats.getLastActiveDate());
+        verify(statsRepository, times(1)).save(stats);
+    }
+
+    @Test
+    public void testUpdateStreakWithClientLocalDateOutOfOrder() {
+        UUID userId = UUID.randomUUID();
+        LocalDate lastActive = LocalDate.of(2026, 7, 9);
+        // User solved today, but an out of order completion arrives for yesterday
+        LocalDate clientYesterday = lastActive.minusDays(1);
+        UserPracticeStats stats = new UserPracticeStats(userId, 5, 5, lastActive, 0);
+
+        doNothing().when(statsRepository).insertStatsIfNotExists(userId);
+        when(statsRepository.findAndLockByUserId(userId)).thenReturn(Optional.of(stats));
+
+        practiceService.updateStreak(userId, clientYesterday);
+
+        // Streak and last active date should not be changed/reset
+        assertEquals(5, stats.getCurrentStreak());
+        assertEquals(5, stats.getLongestStreak());
+        assertEquals(lastActive, stats.getLastActiveDate());
+        verify(statsRepository, never()).save(any(UserPracticeStats.class));
+    }
+
+    @Test
+    public void testUpdateStreakWithClientLocalDateFutureBreak() {
+        UUID userId = UUID.randomUUID();
+        LocalDate lastActive = LocalDate.of(2026, 7, 5);
+        // User starts practicing again on July 9th (gap of 4 days)
+        LocalDate clientFuture = LocalDate.of(2026, 7, 9);
+        UserPracticeStats stats = new UserPracticeStats(userId, 5, 5, lastActive, 0);
+
+        doNothing().when(statsRepository).insertStatsIfNotExists(userId);
+        when(statsRepository.findAndLockByUserId(userId)).thenReturn(Optional.of(stats));
+
+        practiceService.updateStreak(userId, clientFuture);
+
+        // Streak should be broken and reset to 1
+        assertEquals(1, stats.getCurrentStreak());
+        assertEquals(5, stats.getLongestStreak());
+        assertEquals(clientFuture, stats.getLastActiveDate());
+        verify(statsRepository, times(1)).save(stats);
+    }
 }

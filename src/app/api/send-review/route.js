@@ -1,18 +1,11 @@
-import nodemailer from "nodemailer";
+import { getTransporter } from "@/lib/emailTransporter";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { validateCsrf } from "@/lib/csrf";
+import { validateCsrfTokenEdge } from "@/lib/csrfToken";
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/csrfConstants";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { escapeHtml } from "@/lib/shared-utils";
 
 function isValidEmail(value) {
   const email = String(value).trim();
@@ -28,7 +21,9 @@ function clampInt(value, min, max) {
 }
 
 export async function POST(request) {
-  if (!validateCsrf(request)) {
+  const cookieToken = request.cookies?.get(CSRF_COOKIE_NAME)?.value;
+  const headerToken = request.headers?.get(CSRF_HEADER_NAME);
+  if (!cookieToken || !headerToken || cookieToken !== headerToken || !(await validateCsrfTokenEdge(headerToken))) {
     return jsonResponse({ error: "Invalid CSRF token" }, 403);
   }
 
@@ -107,13 +102,7 @@ export async function POST(request) {
 
     const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    const transporter = getTransporter();
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -132,7 +121,12 @@ export async function POST(request) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      console.error("[review] Email send failed:", mailErr);
+      return jsonResponse({ success: false, message: "Failed to send email. Please try again later." }, 503);
+    }
 
     return jsonResponse({ message: "Email sent successfully" }, 200, {
       "X-RateLimit-Limit": "5",

@@ -101,6 +101,15 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/array/bubblesort/AlgorithmClient')),
   },
+  "array/bucketsort": {
+    metadata: {
+      title: "Bucket Sort Algorithm | Step-by-Step Animation",
+      description: "Learn Bucket Sort with interactive animations.",
+      robots: "index, follow",
+      openGraph: { images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Bucket Sort" }] },
+    },
+    component: dynamic(() => import('@/app/visualizer/array/bucketsort/AlgorithmClient')),
+  },
   "array/comparison": {
     metadata: {
   title: "Sorting Algorithm Comparison Mode | Side-by-Side Visualizer",
@@ -243,6 +252,28 @@ export const algorithmRegistry = {
   },
 },
     component: dynamic(() => import('@/app/visualizer/array/quicksort/AlgorithmClient')),
+  },
+  "array/shellsort": {
+    metadata: {
+  title: "Shell Sort Algorithm | Step-by-Step Visualization",
+  description: "Learn Shell Sort with interactive animations and step-by-step gap-based insertion sorting visualization.",
+  robots: "index, follow",
+  openGraph: {
+    images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Shell Sort Algorithm Visualization" }],
+  },
+},
+    component: dynamic(() => import('@/app/visualizer/array/shellsort/AlgorithmClient')),
+  },
+  "array/timsort": {
+    metadata: {
+  title: "Tim Sort Algorithm | Step-by-Step Visualization",
+  description: "Learn Tim Sort with interactive animations showing run detection, insertion sorting, and merging.",
+  robots: "index, follow",
+  openGraph: {
+    images: [{ url: "/og/visualizer.png", width: 1200, height: 630, alt: "Tim Sort Algorithm Visualization" }],
+  },
+},
+    component: dynamic(() => import('@/app/visualizer/array/timsort/AlgorithmClient')),
   },
   "array/selectionsort": {
     metadata: {
@@ -1916,4 +1947,40 @@ export const algorithmRegistry = {
 },
     component: dynamic(() => import('@/app/visualizer/tree/traversing/pre-order/AlgorithmClient')),
   },
+  "string/reverse-string": {
+  metadata: {
+    title: "Reverse String | AlgoBuddy",
+    description:
+      "Visualize the Reverse String algorithm with step-by-step animation.",
+    keywords: [
+      "Reverse String",
+      "String",
+      "String Visualizer",
+      "Reverse String Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/reverse-string/page")
+  ),
+},
+"string/palindrome-check": {
+  metadata: {
+    title: "Palindrome Check | AlgoBuddy",
+    description:
+      "Visualize the Palindrome Check algorithm with step-by-step animation.",
+    keywords: [
+      "Palindrome Check",
+      "Palindrome",
+      "String",
+      "String Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/palindrome-check/page")
+  ),
+},
 };

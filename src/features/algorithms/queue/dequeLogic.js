@@ -44,7 +44,7 @@ export function* enqueueRearGenerator(currentDeque, value) {
 
 export function* dequeueFrontGenerator(currentDeque) {
   if (currentDeque.length === 0) {
-    yield { type: 'error', message: 'Deque is empty!' };
+    yield { phase: 'error', action: 'dequeue_front', message: 'Deque is empty!' };
     return;
   }
   const frontNode = currentDeque[0];
@@ -67,7 +67,7 @@ export function* dequeueFrontGenerator(currentDeque) {
 
 export function* dequeueRearGenerator(currentDeque) {
   if (currentDeque.length === 0) {
-    yield { type: 'error', message: 'Deque is empty!' };
+    yield { phase: 'error', action: 'dequeue_rear', message: 'Deque is empty!' };
     return;
   }
   const rearNode = currentDeque[currentDeque.length - 1];

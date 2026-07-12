@@ -2,12 +2,10 @@ import Animation from "@/app/visualizer/hashmap/insert/animation";
 import ArticleActions from "@/app/components/ui/ArticleActions";
 import Content from "@/app/visualizer/hashmap/insert/content";
 import Code from "@/app/visualizer/hashmap/insert/codeBlock";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -20,13 +18,6 @@ export default function Page() {
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
-      moduleCard={
-        <ModuleCard
-          moduleId={MODULE_MAPS.hashmapInsert}
-          description="Mark HashMap : Insert as done and track your progress"
-          initialDone={false}
-        />
-      }
       exploreOther={
         <ExploreOther
           title="Explore other operations"

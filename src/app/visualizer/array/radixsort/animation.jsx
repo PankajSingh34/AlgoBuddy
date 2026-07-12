@@ -73,6 +73,19 @@ else if (type === "digit_complete") {
   });
 }
 
+else if (type === "sign_complete") {
+  steps.push({
+    array: [...payload.arr],
+    comparisons: payload.comparisons,
+    swaps: payload.swaps,
+    currentIndices: { current: -1 },
+    currentPhase: "Signed Merge",
+    stepExplanation: "Negative values are placed before non-negative values after digit sorting.",
+    sorted: false,
+    totalSteps: payload.totalSteps,
+  });
+}
+
 else if (type === "completed") {
   steps.push({
     array: [...payload.arr],

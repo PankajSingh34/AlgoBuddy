@@ -19,8 +19,14 @@ export async function GET(request) {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
 
-    // Fetch progress rows and streak stats in parallel.
-    const [progressResult, statsResult] = await Promise.all([
+    // Return streak data and counts.
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).toISOString();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    // Fetch progress rows, streak stats, and counts in parallel.
+    const [progressResult, statsResult, dailyResult, weeklyResult, monthlyResult] = await Promise.all([
       supabase
         .from("user_progress")
         .select("problem_id, status, updated_at")
@@ -30,6 +36,18 @@ export async function GET(request) {
         .select("current_streak, longest_streak")
         .eq("user_id", authResult.user.id)
         .maybeSingle(),
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfDay),
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfWeek),
+      supabase.from("user_progress").select("id", { count: "exact", head: true })
+        .eq("user_id", authResult.user.id)
+        .eq("status", "Completed")
+        .gte("updated_at", startOfMonth),
     ]);
 
     if (progressResult.error) return jsonResponse({ error: progressResult.error.message }, 500);
@@ -50,6 +68,9 @@ export async function GET(request) {
       progress: progressMap,
       currentStreak: stats?.current_streak ?? 0,
       longestStreak: stats?.longest_streak ?? 0,
+      dailySolved: dailyResult.count ?? 0,
+      weeklySolved: weeklyResult.count ?? 0,
+      monthlySolved: monthlyResult.count ?? 0,
     });
   } catch (error) {
     return errorResponse(error);
@@ -68,7 +89,7 @@ export async function POST(request) {
       );
     }
     const body = await request.json().catch(() => ({}));
-    const { problemId, status } = body;
+    const { problemId, status, localDate } = body;
 
     if (!problemId || !status) {
       return jsonResponse({ error: "problemId and status are required" }, 400);
@@ -81,28 +102,45 @@ export async function POST(request) {
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
-    const { error } = await supabase.from("user_progress").upsert(
-      {
-        user_id: authResult.user.id,
-        problem_id: problemId,
-        status: status,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: ["user_id", "problem_id"] }
-    );
-
-    if (error) return jsonResponse({ error: error.message }, 500);
-
-    // Atomic streak update via Supabase RPC (fixes TOCTOU race condition)
     let currentStreak = 0;
     let longestStreak = 0;
+
     if (status === "Completed") {
-      const { data, error } = await supabase.rpc('increment_streak_on_completion', {
+      let verifiedLocalDate = typeof localDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+        ? localDate
+        : new Date().toISOString().split("T")[0];
+
+      const { data, error } = await supabase.rpc('upsert_progress_and_update_streak', {
         p_user_id: authResult.user.id,
+        p_problem_id: problemId,
+        p_status: status,
+        p_updated_at: new Date().toISOString(),
+        p_local_date: verifiedLocalDate
       });
       if (error) return jsonResponse({ error: error.message }, 500);
       currentStreak = data?.[0]?.current_streak ?? 0;
       longestStreak = data?.[0]?.longest_streak ?? 0;
+    } else {
+      const { data, error } = await supabase.from("user_progress").upsert(
+        {
+          user_id: authResult.user.id,
+          problem_id: problemId,
+          status: status,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: ["user_id", "problem_id"] }
+      );
+      if (error) return jsonResponse({ error: error.message }, 500);
+
+      const { data: streakData, error: streakError } = await supabase
+        .from("user_practice_stats")
+        .select("current_streak, longest_streak")
+        .eq("user_id", authResult.user.id)
+        .maybeSingle();
+      if (!streakError && streakData) {
+        currentStreak = streakData.current_streak ?? 0;
+        longestStreak = streakData.longest_streak ?? 0;
+      }
     }
 
     // Return streak data so the client can always trust the server value.

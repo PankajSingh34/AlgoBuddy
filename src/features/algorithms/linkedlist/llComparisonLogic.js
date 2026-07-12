@@ -38,6 +38,7 @@ export function* compareListsGenerator(list1, list2) {
         match: false,
         list1Index: node1 ? i : -1,
         list2Index: node2 ? i : -1,
+        errorIndex: i,
         explanation: `Mismatch found at index ${i}! ${reason}`
       };
       return;

@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { getSupabaseConfig as _getSupabaseConfig } from "./shared-utils.js";
 
 // For testing purposes, allow overriding the dependency functions
 let cookiesImpl = null;
@@ -9,43 +10,13 @@ export function setMockDependencies(cookies, createServerClient) {
   createServerClientImpl = createServerClient;
 }
 
-function isValidSupabaseUrl(value) {
-  if (!value) return false;
-  const trimmed = String(value).trim();
-  if (trimmed.startsWith("Your ")) return false;
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function isValidKey(value) {
-  if (!value) return false;
-  const trimmed = String(value).trim();
-  return trimmed && !trimmed.startsWith("Your ");
-}
-
 export function getSupabaseConfig() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!isValidSupabaseUrl(supabaseUrl) || !isValidKey(supabaseAnonKey) || !isValidKey(supabaseServiceKey)) {
-    return null;
-  }
-
-  let finalUrl = String(supabaseUrl).trim();
-  if (finalUrl.startsWith("http://localhost:")) {
-    finalUrl = finalUrl.replace("http://localhost:", "http://127.0.0.1:");
-  }
-
-  return {
-    supabaseUrl: finalUrl,
-    supabaseAnonKey: String(supabaseAnonKey).trim(),
-    supabaseServiceKey: String(supabaseServiceKey).trim(),
-  };
+  const config = _getSupabaseConfig();
+  if (!config) return null;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey || String(serviceKey).trim().startsWith("Your ")) return null;
+  config.supabaseServiceKey = String(serviceKey).trim();
+  return config;
 }
 
 export async function getAuthenticatedUser() {

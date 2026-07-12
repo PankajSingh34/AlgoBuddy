@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/serverApi";
 import nodemailer from "nodemailer";
+import { escapeHtml } from "@/lib/shared-utils";
 
 export async function GET(req) {
   // Add a simple cron secret check to prevent unauthorized execution
@@ -42,7 +43,7 @@ export async function GET(req) {
           from: process.env.EMAIL_USER,
           replyTo: email,
           to: process.env.EMAIL_USER,
-          subject: `[DELAYED] New Contact Form Submission: ${subject}`,
+          subject: `[DELAYED] New Contact Form Submission: ${escapeHtml(subject)}`,
           text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`,
         });
 
@@ -57,13 +58,11 @@ export async function GET(req) {
         const { name, email, review, rating } = msg.payload;
         const inboxEmail = process.env.REVIEW_INBOX_EMAIL || process.env.EMAIL_USER;
 
-        const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-        
         await transporter.sendMail({
           from: process.env.EMAIL_USER,
           replyTo: email,
           to: inboxEmail,
-          subject: `[DELAYED] New Review Submission from ${name}`,
+          subject: `[DELAYED] New Review Submission from ${escapeHtml(name)}`,
           html: `
         <h2>New Review Received (Delayed)</h2>
         <p><strong>Name:</strong> ${escapeHtml(name)}</p>

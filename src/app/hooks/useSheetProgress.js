@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
 import { api } from "@/lib/apiClient";
+import { getLocalISODate } from "@/lib/activity";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -89,13 +90,14 @@ async function fetchProgressFromServer() {
 
 /** Update a single problem's status */
 async function postProgressToServer(problemId, status) {
+  const localDate = getLocalISODate();
   if (isUsingSpringBoot()) {
     const headers = await getAuthHeader();
     if (!headers.Authorization) return;
     const res = await fetch(`${springBootBase()}/api/v1/practice/progress`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ problemId, status }),
+      body: JSON.stringify({ problemId, status, localDate }),
     });
     if (!res.ok) return null;
     return await res.json();
@@ -105,7 +107,7 @@ async function postProgressToServer(problemId, status) {
   try {
     const fresh = await api.request("/api/progress", {
       method: "POST",
-      body: { problemId, status },
+      body: { problemId, status, localDate },
     });
     return fresh || null;
   } catch {
@@ -203,8 +205,8 @@ export function useSheetProgress() {
   // Track whether we've done the initial server sync to avoid double-syncing
   const syncedRef = useRef(false);
 
-  // Save previous progress for rollback on server failure
-  const prevProgressRef = useRef(null);
+  // Version counter to prevent race conditions during rapid progress updates
+  const updateVersionRef = useRef(0);
 
   // ── Load & sync on mount / user change ──────────────────────────────────
   useEffect(() => {
@@ -315,12 +317,19 @@ export function useSheetProgress() {
   const updateProgress = useCallback(
     async (problemId, newStatus) => {
       const updatedAt = new Date().toISOString();
-      const updated = {
-        ...progress,
-        [problemId]: { status: newStatus, updatedAt },
-      };
-      setProgress(updated);
-      writeLocal(updated);
+      const myVersion = ++updateVersionRef.current;
+      const previousProgress = progress;
+
+      // Update local state immediately so UI reflects the change right away.
+      // Use a functional update to avoid stale `progress` closure issues.
+      setProgress((prev) => {
+        const next = {
+          ...prev,
+          [problemId]: { status: newStatus, updatedAt },
+        };
+        writeLocal(next);
+        return next;
+      });
 
       // Update local streak on completion only for guests.
       // Authenticated users get their streak from the server after the sync
@@ -336,26 +345,29 @@ export function useSheetProgress() {
 
       // Sync to server asynchronously
       if (user) {
-        prevProgressRef.current = progress;
         try {
           const fresh = await postProgressToServer(problemId, newStatus);
           if (!fresh) throw new Error("Server returned no data");
-          // Use server streak data returned from either path.
-          if (fresh.currentStreak !== undefined) {
-            setStreakData({
-              current: fresh.currentStreak || 0,
-              best: fresh.longestStreak || 0,
-              dailySolved: fresh.dailySolved || 0,
-              weeklySolved: fresh.weeklySolved || 0,
-              monthlySolved: fresh.monthlySolved || 0,
-            });
+          // Only apply server response if this is still the latest update
+          if (updateVersionRef.current === myVersion) {
+            // Use server streak data returned from either path.
+            if (fresh.currentStreak !== undefined) {
+              setStreakData({
+                current: fresh.currentStreak || 0,
+                best: fresh.longestStreak || 0,
+                dailySolved: fresh.dailySolved || 0,
+                weeklySolved: fresh.weeklySolved || 0,
+                monthlySolved: fresh.monthlySolved || 0,
+              });
+            }
           }
-          prevProgressRef.current = null;
         } catch (err) {
           console.error("[useSheetProgress] Failed to sync progress, rolling back:", err);
-          if (prevProgressRef.current) {
-            setProgress(prevProgressRef.current);
-            writeLocal(prevProgressRef.current);
+          // Only rollback if this is still the latest update — prevents
+          // overwriting state from a newer concurrent update.
+          if (updateVersionRef.current === myVersion) {
+            setProgress(previousProgress);
+            writeLocal(previousProgress);
           }
         }
       }

@@ -32,6 +32,11 @@ export const sections = [
         items: [
           { name: "Linear Search", path: "/visualizer/array/linearsearch" },
           { name: "Binary Search", path: "/visualizer/array/binarysearch" },
+          { name: "Ternary Search", path: "/visualizer/array/ternary-search" },
+          { name: "Jump Search", path: "/visualizer/array/jump-search" },
+          { name: "Fibonacci Search", path: "/visualizer/array/fibonacci-search" },
+          { name: "Exponential Search", path: "/visualizer/array/exponential-search" },
+          { name: "Interpolation Search", path: "/visualizer/array/interpolation-search"},
         ],
       },
       {
@@ -42,6 +47,9 @@ export const sections = [
           { name: "Insertion Sort", path: "/visualizer/array/insertionsort" },
           { name: "Merge Sort", path: "/visualizer/array/mergesort" },
           { name: "Quick Sort", path: "/visualizer/array/quicksort" },
+          { name: "Shell Sort", path: "/visualizer/array/shellsort" },
+          { name: "Tim Sort", path: "/visualizer/array/timsort" },
+          { name: "Bucket Sort", path: "/visualizer/array/bucketsort" },
           { name: "Heap Sort", path: "/visualizer/array/heapsort" },
           { name: "Radix Sort", path: "/visualizer/array/radixsort"},
           { name: "Counting Sort", path: "/visualizer/array/countingsort" },
@@ -57,6 +65,26 @@ export const sections = [
       },
     ],
   },
+  {
+    title: "String",
+    slug: "string",
+    desc: "Pattern matching, string manipulation, and interview-based string algorithms",
+    subsections: [
+      {
+        title: "Basic Operations",
+        items: [
+          {
+            name: "Reverse String",
+            path: "/visualizer/string/reverse-string",
+          },
+          {
+            name: "Palindrome Check",
+            path: "/visualizer/string/palindrome-check",
+          },
+        ],
+      },
+    ],
+  },  
   {
     title: "Recursion",
     slug: "recursion",

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
 import { X, Trophy } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
-import ShortcutsButton from "@/components/ui/ShortcutsButton";
+import { sections } from "@/lib/visualizerSections";
 
 const DS_THEME = {
   Array: {
@@ -15,6 +15,26 @@ const DS_THEME = {
     icon: (c) => (
       <svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
         <rect x="3" y="3" width="4" height="18" rx="1" /><rect x="10" y="8" width="4" height="13" rx="1" /><rect x="17" y="5" width="4" height="16" rx="1" />
+      </svg>
+    ),
+  },
+  String: {
+    color: "#ec4899",
+    bg: "#fdf2f8",
+    border: "#fbcfe8",
+    icon: (c) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={c}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-full h-full"
+      >
+        <path d="M7 8h10" />
+        <path d="M7 12h8" />
+        <path d="M7 16h6" />
       </svg>
     ),
   },
@@ -394,8 +414,31 @@ function DPMiniViz({ color }) {
   );
 }
 
+function StringMiniViz({ color }) {
+  const chars = ["H", "E", "L", "L", "O"];
+
+  return (
+    <div className="flex items-center justify-center gap-2 h-[48px]">
+      {chars.map((ch, index) => (
+        <div
+          key={index}
+          className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm border transition-all"
+          style={{
+            background: index === 2 ? color : color + "20",
+            borderColor: color,
+            color: index === 2 ? "#fff" : color,
+          }}
+        >
+          {ch}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const MINI_VIZ = {
   Array: ArrayMiniViz,
+  String: StringMiniViz,
   Stack: StackMiniViz,
   Queue: QueueMiniViz,
   "Linked List": LinkedListMiniViz,
@@ -494,7 +537,7 @@ function DSCard({ section, theme, delay }) {
   );
 }
 
-export default function VisualizerClient({ initialSections }) {
+export default function VisualizerClient({initialSections = sections,}) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
   const searchRef = useRef(null);
@@ -578,6 +621,7 @@ export default function VisualizerClient({ initialSections }) {
       <style>{`
         .dark [data-theme-card="Code Lab"] { background: #2d2f31 !important; border-color: #4b5563 !important; }
         .dark [data-theme-card="Array"] { background: #1a0e2d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-card="String"] { background: #2d1023 !important; border-color: #be185d !important;}
         .dark [data-theme-card="Stack"] { background: #111d33 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-card="Queue"] { background: #122b19 !important; border-color: #166534 !important; }
         .dark [data-theme-card="Linked List"] { background: #2b1a08 !important; border-color: #92400e !important; }
@@ -592,6 +636,7 @@ export default function VisualizerClient({ initialSections }) {
         .dark [data-theme-card="Collaborative Sessions"] { background: #022c22 !important; border-color: #047857 !important; }
         .dark [data-theme-header="Code Lab"] { background: #3e4143 !important; border-color: #4b5563 !important; }
         .dark [data-theme-header="Array"] { background: #23133d !important; border-color: #5b21b6 !important; }
+        .dark [data-theme-header="String"] { background: #3b132b !important; border-color: #be185d !important;}
         .dark [data-theme-header="Stack"] { background: #182847 !important; border-color: #1e3a8a !important; }
         .dark [data-theme-header="Queue"] { background: #173820 !important; border-color: #166534 !important; }
         .dark [data-theme-header="Linked List"] { background: #3d240a !important; border-color: #92400e !important; }
@@ -726,10 +771,6 @@ export default function VisualizerClient({ initialSections }) {
           )}
         </div>
       </section>
-
-      <div className="fixed bottom-6 right-6 z-50">
-        <ShortcutsButton position="controls" />
-      </div>
     </div>
   );
 }

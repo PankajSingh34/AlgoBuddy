@@ -185,6 +185,116 @@ const CountingSortQuiz = () => {
       explanation:
         "Counting Sort sorts values based on their frequencies instead of comparing elements.",
     },
+    {
+  question: "What is the primary purpose of the count array in Counting Sort?",
+  options: [
+    "Store sorted elements",
+    "Store the frequency of each value",
+    "Store pivot elements",
+    "Store recursive calls"
+  ],
+  correctAnswer: 1,
+  explanation: "The count array records how many times each value appears in the input array."
+},
+{
+  question: "Which type of sorting algorithm is Counting Sort?",
+  options: [
+    "Comparison-based",
+    "Non-comparison-based",
+    "Divide and Conquer",
+    "Greedy"
+  ],
+  correctAnswer: 1,
+  explanation: "Counting Sort sorts elements using their frequencies instead of comparing them."
+},
+{
+  question: "What happens after the frequencies are counted in Counting Sort?",
+  options: [
+    "The array is divided into halves",
+    "Prefix sums are calculated",
+    "The heap is built",
+    "The array is reversed"
+  ],
+  correctAnswer: 1,
+  explanation: "After counting frequencies, prefix sums are computed to determine the correct positions of elements."
+},
+{
+  question: "Why is an output array used in Counting Sort?",
+  options: [
+    "To reduce comparisons",
+    "To place elements in their correct sorted positions",
+    "To build a heap",
+    "To remove duplicates"
+  ],
+  correctAnswer: 1,
+  explanation: "The output array stores elements in their final sorted order while maintaining stability."
+},
+{
+  question: "What is the best-case time complexity of Counting Sort?",
+  options: [
+    "O(log n)",
+    "O(n)",
+    "O(n + k)",
+    "O(n²)"
+  ],
+  correctAnswer: 2,
+  explanation: "Counting Sort always runs in O(n + k) time regardless of the input order."
+},
+{
+  question: "Which of the following is a limitation of Counting Sort?",
+  options: [
+    "Cannot sort integers",
+    "Requires large memory when the value range is large",
+    "Always performs O(n²)",
+    "Cannot handle duplicate values"
+  ],
+  correctAnswer: 1,
+  explanation: "If the range of input values is very large, the count array becomes memory-intensive."
+},
+{
+  question: "Can Counting Sort correctly sort duplicate elements?",
+  options: [
+    "Yes",
+    "No",
+    "Only if duplicates are adjacent",
+    "Only after removing duplicates"
+  ],
+  correctAnswer: 0,
+  explanation: "Yes, Counting Sort correctly sorts duplicate values while preserving their relative order."
+},
+{
+  question: "Which scenario is ideal for using Counting Sort?",
+  options: [
+    "Sorting integers within a small value range",
+    "Sorting floating-point numbers",
+    "Sorting large-range values",
+    "Sorting graphs"
+  ],
+  correctAnswer: 0,
+  explanation: "Counting Sort is most efficient when sorting integers whose values fall within a limited range."
+},
+{
+  question: "Why is Counting Sort considered a stable sorting algorithm?",
+  options: [
+    "It performs recursive calls",
+    "It preserves the relative order of equal elements",
+    "It uses constant memory",
+    "It always sorts in-place"
+  ],
+  correctAnswer: 1,
+  explanation: "A stable sorting algorithm keeps equal elements in the same order as they appeared in the original array."
+},
+{
+  question: "Which real-world application is suitable for Counting Sort?",
+  options: [
+    "Sorting student marks within a fixed range",
+    "Sorting floating-point temperatures",
+    "Sorting web pages by content",
+    "Finding shortest paths in a graph"
+  ],
+  correctAnswer: 0,
+  explanation: "Counting Sort is well suited for sorting values like exam marks, ages, or grades that fall within a known limited range."
+}
   ];
 
   return (

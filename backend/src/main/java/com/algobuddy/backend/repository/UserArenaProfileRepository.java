@@ -26,7 +26,7 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 p.rating as rating, 
                 p.battles_won as battlesWon, 
                 p.battles_lost as battlesLost, 
-                p.total_problems_solved as totalProblemsSolved,
+                (SELECT COALESCE(COUNT(*), 0) FROM public.user_progress up WHERE up.user_id = p.user_id AND up.status = 'Completed') as totalProblemsSolved,
                 COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as name,
                 COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
             FROM public.user_arena_profiles p
@@ -44,7 +44,7 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
                 p.rating as rating, 
                 p.battles_won as battlesWon, 
                 p.battles_lost as battlesLost, 
-                p.total_problems_solved as totalProblemsSolved,
+                (SELECT COALESCE(COUNT(*), 0) FROM public.user_progress up WHERE up.user_id = p.user_id AND up.status = 'Completed') as totalProblemsSolved,
                 COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as name,
                 COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
             FROM public.user_arena_profiles p
@@ -52,6 +52,24 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
             WHERE p.user_id = :userId
             """, nativeQuery = true)
     Optional<ArenaLeaderboardProjection> findProfileWithUserDetails(@Param("userId") UUID userId);
+
+    @Query(value = """
+            SELECT 
+                p.user_id as userId, 
+                p.xp as xp, 
+                p.level as level, 
+                p.rating as rating, 
+                p.battles_won as battlesWon, 
+                p.battles_lost as battlesLost, 
+                p.total_problems_solved as totalProblemsSolved,
+                COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as name,
+                COALESCE(u.raw_user_meta_data->>'avatar_url', u.raw_user_meta_data->>'picture', '') as avatarUrl
+            FROM public.user_arena_profiles p
+            LEFT JOIN auth.users u ON p.user_id = u.id
+            WHERE p.user_id IN :userIds
+            """, nativeQuery = true)
+    List<ArenaLeaderboardProjection> findProfilesWithUserDetailsIn(@Param("userIds") List<UUID> userIds);
+
 
     @Query(value = """
             SELECT COUNT(p.user_id) + 1
@@ -67,4 +85,14 @@ public interface UserArenaProfileRepository extends JpaRepository<UserArenaProfi
     Integer findRankByUserId(@Param("userId") UUID userId);
 
     List<UserArenaProfile> findTop100ByOrderByRatingDesc();
+
+    @Query("""
+        SELECT new com.algobuddy.backend.dto.LeaderboardEntryDto(
+            0, a.userId, COALESCE(p.username, 'Anonymous'), p.avatarUrl, a.rating
+        )
+        FROM UserArenaProfile a
+        LEFT JOIN UserProfile p ON a.userId = p.userId
+        ORDER BY a.rating DESC
+        """)
+    List<com.algobuddy.backend.dto.LeaderboardEntryDto> findTop100ArenaLeaderboard(Pageable pageable);
 }

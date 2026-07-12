@@ -58,7 +58,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     const neighbors = adj[u] || [];
     for (const edge of neighbors) {
       const v = edge.node;
-      const weight = edge.weight;
+      const weight = Number(edge.weight);
 
       if (!visited.has(v)) {
         const newDist = distances[u] + weight;
@@ -98,6 +98,8 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     distances: { ...distances },
     pq: [],
     currentNode: null,
-    description: `Dijkstra's algorithm complete`,
+    description: (targetNode && !visited.has(targetNode))
+      ? `Target node ${targetNode} is unreachable.`
+      : `Dijkstra's algorithm complete`,
   };
 }

@@ -7,11 +7,11 @@ export const complexityFunctions = {
 
   "O(n log n)": (n) => n * Math.log2(n),
 
-  "O(n²)": (n) => n * n,
+  "O(n^2)": (n) => n * n,
 
-  "O(n³)": (n) => n * n * n,
+  "O(n^3)": (n) => n * n * n,
 
-  "O(2ⁿ)": (n) => Math.pow(2, n / 5),
+  "O(2^n)": (n) => Math.pow(2, n / 5),
 };
 
 export const generateComplexityData = (maxN = 100) => {
@@ -24,9 +24,9 @@ export const generateComplexityData = (maxN = 100) => {
       "O(log n)": complexityFunctions["O(log n)"](n),
       "O(n)": complexityFunctions["O(n)"](n),
       "O(n log n)": complexityFunctions["O(n log n)"](n),
-      "O(n²)": complexityFunctions["O(n²)"](n),
-      "O(n³)": complexityFunctions["O(n³)"](n),
-      "O(2ⁿ)": complexityFunctions["O(2ⁿ)"](n),
+      "O(n^2)": complexityFunctions["O(n^2)"](n),
+      "O(n^3)": complexityFunctions["O(n^3)"](n),
+      "O(2^n)": complexityFunctions["O(2^n)"](n),
     });
   }
 

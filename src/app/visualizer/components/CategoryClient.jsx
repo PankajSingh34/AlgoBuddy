@@ -16,6 +16,26 @@ const DS_THEME = {
       </svg>
     ),
   },
+  String: {
+    color: "#ec4899",
+    bg: "#fdf2f8",
+    border: "#fbcfe8",
+    icon: (c) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={c}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-full h-full"
+      >
+        <path d="M7 8h10" />
+        <path d="M7 12h8" />
+        <path d="M7 16h6" />
+      </svg>
+    ),
+  },
   Stack: {
     color: "#2563eb",
     bg: "#eff6ff",

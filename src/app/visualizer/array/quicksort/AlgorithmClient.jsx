@@ -2,12 +2,10 @@ import Animation from "@/app/visualizer/array/quicksort/animation";
 import Content from "@/app/visualizer/array/quicksort/content";
 import Code from "@/app/visualizer/array/quicksort/codeBlock";
 import ExploreOther from "@/app/components/ui/exploreOther";
-import ModuleCard from "@/app/components/ui/ModuleCard";
 import TrackVisit from "@/app/components/ui/TrackVisit";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
-import { MODULE_MAPS } from "@/lib/modulesMap";
 
 
 
@@ -21,7 +19,6 @@ export default function Page() {
         animation={<Animation />}
         content={<Content />}
         code={<Code />}
-        moduleCard={<ModuleCard moduleId={MODULE_MAPS.quickSort} description="Mark Quick Sort as done and track your progress" initialDone={false} />}
         exploreOther={
           <ExploreOther
             title="Explore Sorting Algorithms"
