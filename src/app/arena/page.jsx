@@ -10,6 +10,7 @@ import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
 import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
 import SpectatorSimulatorModal from "@/app/components/ui/SpectatorSimulatorModal";
 import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
+import TournamentCard from "@/app/components/ui/TournamentCard";
 import Footer from "@/app/components/footer";
 import {
   Search,
@@ -1420,15 +1421,42 @@ export default function ArenaPage() {
                     </div>
 
                     {/* Content Placeholder */}
-                    <div className="py-8 text-center bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
-                      <Trophy size={48} className="mx-auto text-slate-300 dark:text-neutral-600 mb-4" />
-                      <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
-                        {tournamentFilter === "Live" ? "No Active Tournaments" : tournamentFilter === "Upcoming" ? "Upcoming Tournaments" : "Past Results"}
-                      </h3>
-                      <p className="text-sm text-slate-500 dark:text-neutral-400 mt-2">
-                        {tournamentFilter === "Live" ? "Check back later for live action." : tournamentFilter === "Upcoming" ? "Registration opens soon." : "Historical tournament results will appear here."}
-                      </p>
-                    </div>
+                    {tournamentFilter === "Upcoming" ? (
+                      <div className="space-y-4">
+                        <TournamentCard tournament={{
+                          title: "AlgoBuddy Weekly Cup",
+                          status: "upcoming",
+                          description: "The official weekly algorithmic showdown. Solve 4 problems in 90 minutes.",
+                          date: "Sunday, 6:00 PM UTC",
+                          duration: "90 mins",
+                          participants: 1250,
+                          prize: "10k XP + Weekly Champion Badge",
+                          color: "bg-primary/5 group-hover:bg-primary/10",
+                          iconBg: "bg-primary/10 text-primary"
+                        }} />
+                        <TournamentCard tournament={{
+                          title: "Dynamic Programming Sprint",
+                          status: "upcoming",
+                          description: "A rapid-fire contest focusing exclusively on DP problems. 1D, 2D, and Trees.",
+                          date: "Tuesday, 4:00 PM UTC",
+                          duration: "60 mins",
+                          participants: 840,
+                          prize: "5k XP",
+                          color: "bg-blue-500/5 group-hover:bg-blue-500/10",
+                          iconBg: "bg-blue-500/10 text-blue-500"
+                        }} />
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center bg-slate-50 dark:bg-neutral-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
+                        <Trophy size={48} className="mx-auto text-slate-300 dark:text-neutral-600 mb-4" />
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-200">
+                          {tournamentFilter === "Live" ? "No Active Tournaments" : "Past Results"}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-neutral-400 mt-2">
+                          {tournamentFilter === "Live" ? "Check back later for live action." : "Historical tournament results will appear here."}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
