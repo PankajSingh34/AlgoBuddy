@@ -25,7 +25,7 @@ const Breadcrumbs = memo(function Breadcrumbs({ paths }) {
       return categoryHref;
     }
     return null;
-  }, [isVisualizer, categoryHref]);
+  }, [isVisualizer, categoryHref, paths.length]);
 
   return (
     <nav className="flex items-center text-sm text-gray-600 dark:text-gray-300" aria-label="Breadcrumb">
