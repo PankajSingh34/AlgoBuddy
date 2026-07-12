@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { FiSearch, FiChevronRight, FiBookmark } from "react-icons/fi";
 import { X, Trophy } from "lucide-react";
 import { useBookmark } from "@/app/hooks/useBookmark";
+import { sections } from "@/lib/visualizerSections";
 
 const DS_THEME = {
   Array: {
@@ -536,7 +537,7 @@ function DSCard({ section, theme, delay }) {
   );
 }
 
-export default function VisualizerClient({ initialSections }) {
+export default function VisualizerClient({initialSections = sections,}) {
   const [search, setSearch] = useState("");
   const { addBookmark, removeBookmark, isBookmarked } = useBookmark();
   const searchRef = useRef(null);
