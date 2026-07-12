@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { getTransporter } from "@/lib/emailTransporter";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
@@ -99,13 +99,7 @@ export async function POST(req) {
       }, 503);
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    const transporter = getTransporter();
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -128,7 +122,12 @@ export async function POST(req) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      console.error("[contact] Email send failed:", mailErr);
+      return jsonResponse({ success: false, message: "Failed to send email. Please try again later." }, 503);
+    }
 
     return jsonResponse({ message: "Email sent successfully" }, 200, {
       "X-RateLimit-Limit": RATE_LIMITS.CONTACT_API.LIMIT.toString(),
