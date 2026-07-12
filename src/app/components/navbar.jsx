@@ -1,10 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/features/user/UserContext";
 import { supabase } from "@/lib/supabase";
+import { useClickOutside } from "@/app/hooks/useClickOutside";
+import { useScrollPosition } from "@/app/hooks/useScrollPosition";
 import { useTheme } from "@/app/hooks/useTheme";
 import {
   Search,
@@ -46,85 +48,45 @@ function safeAvatarUrl(value) {
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const scrolled = useScrollPosition(4);
   const { theme, mounted: themeMounted, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   
   const { user, setUser } = useUser();
-  const userRef = useRef(null);
+  const userRef = useClickOutside(useCallback(() => setUserMenuOpen(false), []));
   const avatarSrc = safeAvatarUrl(
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture
   );
   const displayName = user?.user_metadata?.name || "AlgoBuddy User";
 
   useEffect(() => {
-    const handleScroll = () =>
-      setScrolled(window.scrollY > 4);
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () =>
-      window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const fn = (e) => {
-      if (
-        userRef.current &&
-        !userRef.current.contains(e.target)
-      ) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", fn);
-
-    return () =>
-      document.removeEventListener("mousedown", fn);
-  }, []);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
+    function handleEscape(e) {
       if (e.key === "Escape") {
         setMenuOpen(false);
         setUserMenuOpen(false);
       }
-    };
-
+    }
     document.addEventListener("keydown", handleEscape);
-
-    return () =>
-      document.removeEventListener(
-        "keydown",
-        handleEscape
-      );
+    return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
   useEffect(() => {
-    const handleGlobalEscape = () => {
+    function handleGlobalEscape() {
       setUserMenuOpen(false);
       setMenuOpen(false);
-    };
-
+    }
     window.addEventListener("global-escape", handleGlobalEscape);
-
-    return () => {
-      window.removeEventListener("global-escape", handleGlobalEscape);
-    };
+    return () => window.removeEventListener("global-escape", handleGlobalEscape);
   }, []);
 
-  // FIX: Prevent background scrolling when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
   const handleLogout = async () => {
