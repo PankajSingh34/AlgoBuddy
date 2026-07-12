@@ -1965,4 +1965,22 @@ export const algorithmRegistry = {
     import("@/app/visualizer/string/reverse-string/page")
   ),
 },
+"string/palindrome-check": {
+  metadata: {
+    title: "Palindrome Check | AlgoBuddy",
+    description:
+      "Visualize the Palindrome Check algorithm with step-by-step animation.",
+    keywords: [
+      "Palindrome Check",
+      "Palindrome",
+      "String",
+      "String Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/palindrome-check/page")
+  ),
+},
 };
