@@ -201,9 +201,6 @@ public class ArenaService {
 
     @Transactional
     public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request) {
-        if (request.getMatchId() == null || request.getMatchId().isEmpty()) {
-            throw new IllegalArgumentException("matchId is required");
-        }
 
         checkInitMatchRateLimit(requestingUserId);
 
@@ -212,7 +209,7 @@ public class ArenaService {
         }
 
         UUID opponentId;
-        if (request.getMatchId() != null && request.getMatchId().startsWith("mock-match-")) {
+        if (request.getMatchId().startsWith("mock-match-")) {
             // Bypass socket matchmaking verification for offline practice matches against AI Bots
             opponentId = UUID.fromString("00000000-0000-0000-0000-000000000000");
         } else {
