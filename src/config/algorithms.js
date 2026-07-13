@@ -2020,4 +2020,22 @@ export const algorithmRegistry = {
     import("@/app/visualizer/string/anagram-check/page")
   ),
 },
+"string/longest-common-prefix": {
+  metadata: {
+    title: "Longest Common Prefix | AlgoBuddy",
+    description:
+      "Visualize the Longest Common Prefix algorithm with step-by-step animation.",
+    keywords: [
+      "Longest Common Prefix",
+      "LCP",
+      "String",
+      "String Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/longest-common-prefix/page")
+  ),
+},
 };
