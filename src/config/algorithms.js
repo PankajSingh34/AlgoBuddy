@@ -2002,4 +2002,22 @@ export const algorithmRegistry = {
     import("@/app/visualizer/string/character-frequency/page")
   ),
 },
+"string/anagram-check": {
+  metadata: {
+    title: "Anagram Check | AlgoBuddy",
+    description:
+      "Visualize the Anagram Check algorithm with step-by-step animation.",
+    keywords: [
+      "Anagram Check",
+      "String",
+      "HashMap",
+      "Anagram Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/anagram-check/page")
+  ),
+},
 };

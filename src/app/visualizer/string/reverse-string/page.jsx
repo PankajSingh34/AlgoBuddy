@@ -26,6 +26,10 @@ export default function Page() {
             text: "Character Frequency",
             url: "../character-frequency",
           },
+          {
+            text: "Anagram Check",
+            url: "../anagram-check",
+          },
           ]}
         />
       }

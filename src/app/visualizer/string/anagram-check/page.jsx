@@ -10,8 +10,8 @@ import VisualizerPageLayout, {
 export default function Page() {
   return (
     <VisualizerPageLayout
-      paths={createVisualizerPaths("String", "Character Frequency")}
-      title="Character Frequency"
+      paths={createVisualizerPaths("String", "Anagram Check")}
+      title="Anagram Check"
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
@@ -28,8 +28,8 @@ export default function Page() {
               url: "../palindrome-check",
             },
             {
-              text: "Anagram Check",
-              url: "../anagram-check",
+              text: "Character Frequency",
+              url: "../character-frequency",
             },
           ]}
         />
