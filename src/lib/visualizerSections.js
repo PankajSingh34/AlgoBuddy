@@ -89,6 +89,10 @@ export const sections = [
             name: "Anagram Check",
             path: "/visualizer/string/anagram-check",
           },
+          {
+            name: "Longest Common Prefix",
+            path: "/visualizer/string/longest-common-prefix",
+          },
         ],
       },
     ],
