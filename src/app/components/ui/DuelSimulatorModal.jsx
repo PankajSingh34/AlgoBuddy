@@ -244,13 +244,11 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
 
     newSocket.on("match_ended", (data) => {
       setBattleFinished(true);
-      if (data.winnerId === currentUserStats?.userId) {
-        setVictoryState("victory");
-        addLog("VICTORY! You won the battle!");
-      } else {
-        setVictoryState("defeat");
-        addLog("DEFEAT! Your opponent finished first.");
-        recordMatchResultToBackend(false); // Make sure the loser records the loss!
+      const iAmWinner = data.winnerId === currentUserStats?.userId;
+      setVictoryState(iAmWinner ? "victory" : "defeat");
+      addLog(iAmWinner ? "VICTORY! You won the battle!" : "DEFEAT! Your opponent finished first.");
+      if (!iAmWinner) {
+        recordMatchResultToBackend(false);
       }
     });
 
