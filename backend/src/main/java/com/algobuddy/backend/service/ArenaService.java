@@ -352,17 +352,15 @@ public class ArenaService {
             throw new IllegalStateException("This match has expired and cannot accept results");
         }
 
-        boolean isWinner = request.isWinner();
+        boolean isWinner;
         final int MAX_RETRIES = 3;
+
+        UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+        isWinner = requestingUserId.equals(verifiedWinnerId);
+        final boolean finalIsWinner = isWinner;
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-
-                if (!matchIdStr.startsWith("mock-match-")) {
-                    UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
-                    isWinner = requestingUserId.equals(verifiedWinnerId);
-                }
-                final boolean finalIsWinner = isWinner;
 
                 // Execute each retry attempt in an isolated transaction.
                 final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
