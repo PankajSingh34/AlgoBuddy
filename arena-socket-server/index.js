@@ -504,6 +504,21 @@ io.on("connection", async (socket) => {
           });
           await redisClient.rpush(queueKey, opponentEntry);
           console.log(`Opponent disconnected, re-queued opponent: ${opponent.userId}`);
+
+          // Re-queue the requesting player so they can be matched next cycle
+          const reQueueEntry = JSON.stringify({
+            userId: socket.data.userId,
+            socketId: socket.id,
+            name: socket.data.name || "Player",
+            rating: socket.data.rating || 1200,
+            level: socket.data.level || 1,
+            topic: targetTopic,
+            difficulty: targetDifficulty,
+          });
+          await redisClient.rpush(queueKey, reQueueEntry);
+          await redisClient.hset(`{arena}:socket:${socket.id}`, 'queueKey', queueKey);
+
+          socket.emit("matchmaking_retry", { message: "Opponent unavailable, searching for another..." });
           return;
         }
 

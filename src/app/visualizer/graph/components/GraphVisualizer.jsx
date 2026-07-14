@@ -5,6 +5,7 @@ import {
   Settings2,
   BarChart3,
   Info,
+  Trash2,
   Wand2
 } from "lucide-react";
 import { 
@@ -580,6 +581,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     engine.reset();
   };
 
+  const clearGraph = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    engine.reset();
+  }, [engine]);
+
   const generateRandomGraph = useCallback(() => {
     const input = window.prompt("Enter number of nodes (max 20):", "6");
     if (!input) return;
@@ -659,13 +666,22 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             </button>
 
             {isEditing && (
-              <button
-                onClick={generateRandomGraph}
-                className="flex items-center gap-2 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
-              >
-                <Wand2 className="h-4 w-4" />
-                Random Graph
-              </button>
+              <>
+                <button
+                  onClick={clearGraph}
+                  className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear Graph
+                </button>
+                <button
+                  onClick={generateRandomGraph}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Random Graph
+                </button>
+              </>
             )}
 
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
