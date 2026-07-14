@@ -9,7 +9,7 @@ import com.algobuddy.backend.repository.UserPracticeStatsRepository;
 import com.algobuddy.backend.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationContext;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -32,8 +32,7 @@ public class PracticeService {
     private final UserPracticeStatsRepository statsRepository;
 
     @Autowired
-    @Lazy
-    private PracticeService self;
+    private ApplicationContext applicationContext;
 
 
     @Transactional(readOnly = true)
@@ -194,8 +193,16 @@ public class PracticeService {
         int maxAttempts = 3;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                if (self != null) {
-                    self.updateStreak(userId, clientLocalDate);
+                PracticeService selfProxy = null;
+                if (applicationContext != null) {
+                    try {
+                        selfProxy = applicationContext.getBean(PracticeService.class);
+                    } catch (Exception e) {
+                        // Fallback if bean not ready
+                    }
+                }
+                if (selfProxy != null) {
+                    selfProxy.updateStreak(userId, clientLocalDate);
                 } else {
                     updateStreak(userId, clientLocalDate);
                 }
