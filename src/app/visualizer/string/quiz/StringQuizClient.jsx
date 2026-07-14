@@ -34,6 +34,13 @@ export default function StringQuizClient() {
       href: "/visualizer/string/longest-common-prefix/quiz",
       filename: "longest_common_prefix_quiz.js",
     },
+    {
+      title: "Anagram Check Quiz",
+      description:
+        "Practice Anagram Check concepts using sorting, hashing, and frequency comparison.",
+      href: "/visualizer/string/anagram-check/quiz",
+      filename: "anagram_check_quiz.js",
+    },
    
   ];
 
