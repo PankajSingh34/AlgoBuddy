@@ -44,7 +44,7 @@ export async function proxy(request) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              sameSite: "strict",
+              sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             }),
           );

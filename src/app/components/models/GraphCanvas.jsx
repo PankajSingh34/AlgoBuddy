@@ -1,6 +1,7 @@
 // app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 const NODE_RADIUS = 26;
 const COLORS = {
@@ -108,7 +109,12 @@ export default function GraphCanvas({
       if (!interactive || !onAddNode) return;
       if (e.target !== svgRef.current) return;
       const rect = svgRef.current.getBoundingClientRect();
-      onAddNode({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      const scaleX = rect.width / svgRef.current.clientWidth;
+      const scaleY = rect.height / svgRef.current.clientHeight;
+      onAddNode({ 
+        x: (e.clientX - rect.left) / scaleX, 
+        y: (e.clientY - rect.top) / scaleY 
+      });
       setEdgeStart(null);
     },
     [interactive, onAddNode]
@@ -146,11 +152,31 @@ const handleMouseMove = useCallback(
     if (!draggingNode || !onMoveNode || !svgRef.current) return;
 
     const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = rect.width / svgRef.current.clientWidth;
+    const scaleY = rect.height / svgRef.current.clientHeight;
 
     onMoveNode(
       draggingNode,
-      e.clientX - rect.left,
-      e.clientY - rect.top
+      (e.clientX - rect.left) / scaleX,
+      (e.clientY - rect.top) / scaleY
+    );
+  },
+  [draggingNode, onMoveNode]
+);
+
+const handleTouchMove = useCallback(
+  (e) => {
+    if (!draggingNode || !onMoveNode || !svgRef.current) return;
+    
+    const touch = e.touches[0];
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = rect.width / svgRef.current.clientWidth;
+    const scaleY = rect.height / svgRef.current.clientHeight;
+
+    onMoveNode(
+      draggingNode,
+      (touch.clientX - rect.left) / scaleX,
+      (touch.clientY - rect.top) / scaleY
     );
   },
   [draggingNode, onMoveNode]
@@ -246,7 +272,7 @@ const handleMouseUp = useCallback(() => {
           <path
             d="M2 1L8 5L2 9"
             fill="none"
-            stroke="#22c55e"
+            className="stroke-gray-500 dark:stroke-gray-400"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -264,7 +290,7 @@ const handleMouseUp = useCallback(() => {
           <path
             d="M2 1L8 5L2 9"
             fill="none"
-            stroke="#f97316"
+            className="stroke-orange-500"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -282,7 +308,7 @@ const handleMouseUp = useCallback(() => {
         }
 
         const isActive = isActiveEdge(edge) || currentNode === edge.from || currentNode === edge.to;
-        const edgeColor = isActive ? "#f97316" : "#6b7280";
+        const edgeClass = isActive ? "stroke-orange-500" : "stroke-gray-500 dark:stroke-gray-400";
         const markerEnd = edge.directed
           ? isActive ? "url(#arrowhead-active)" : "url(#arrowhead)"
           : undefined;
@@ -291,9 +317,6 @@ const handleMouseUp = useCallback(() => {
           ? edgeEndpoint(src.x, src.y, tgt.x, tgt.y, NODE_RADIUS)
           : { x: tgt.x, y: tgt.y };
 
-        const labelX = (src.x + tgt.x) / 2;
-        const labelY = (src.y + tgt.y) / 2;
-
         return (
           <g key={idx}>
             <line
@@ -301,7 +324,7 @@ const handleMouseUp = useCallback(() => {
               y1={src.y}
               x2={ex}
               y2={ey}
-              stroke={edgeColor}
+              className={edgeClass}
               strokeWidth={isActive ? 2 : 1.5}
               markerEnd={markerEnd}
               style={{ cursor: interactive ? "pointer" : "default" }}
@@ -334,6 +357,7 @@ const handleMouseUp = useCallback(() => {
         return (
           <g
             key={node.id}
+            className="nodrag"
             onClick={(e) => handleNodeClick(e, node.id)}
             onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
             onTouchStart={(e) => handleNodeMouseDown(e, node.id)}
@@ -394,6 +418,9 @@ const handleMouseUp = useCallback(() => {
           Click another node to connect · click same node or press Esc to cancel
         </text>
       )}
-    </svg>
+      </svg>
+        </TransformComponent>
+      </TransformWrapper>
+    </div>
   );
 }

@@ -128,6 +128,7 @@ export default function DuelLobbyPage({ params }) {
         isOpen={simulatorOpen}
         onClose={() => setSimulatorOpen(false)}
         opponent={opponent}
+        currentUserStats={{ userId: user?.id, name: user?.user_metadata?.name || user?.email?.split('@')[0] }}
         problem="Arrays"
       />
     </div>

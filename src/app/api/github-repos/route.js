@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // GET /api/github-repos?username=shrutssss
 export async function GET(request) {
+  const authResult = await getAuthenticatedUser();
+  if (!authResult.success) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const username = searchParams.get("username")?.trim();
 
