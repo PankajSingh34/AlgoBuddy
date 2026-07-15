@@ -22,7 +22,9 @@ export async function GET(request) {
     // Return streak data and counts.
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).toISOString();
+    const dayOfWeek = now.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday).toISOString();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     // Fetch progress rows, streak stats, and counts in parallel.
@@ -106,9 +108,17 @@ export async function POST(request) {
     let longestStreak = 0;
 
     if (status === "Completed") {
+      const today = new Date().toISOString().split("T")[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
       let verifiedLocalDate = typeof localDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
         ? localDate
-        : new Date().toISOString().split("T")[0];
+        : today;
+
+      // Reject dates outside [yesterday, today] to prevent streak fabrication
+      if (verifiedLocalDate < yesterday || verifiedLocalDate > today) {
+        verifiedLocalDate = today;
+      }
 
       const { data, error } = await supabase.rpc('upsert_progress_and_update_streak', {
         p_user_id: authResult.user.id,
@@ -146,7 +156,9 @@ export async function POST(request) {
     // Return streak data so the client can always trust the server value.
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).toISOString();
+    const dayOfWeek = now.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday).toISOString();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     const [dailyResult, weeklyResult, monthlyResult] = await Promise.all([

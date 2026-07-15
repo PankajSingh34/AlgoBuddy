@@ -8,7 +8,8 @@ export async function GET() {
   const cookieStore = await cookies();
   cookieStore.set(CSRF_COOKIE_NAME, token, {
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
+    httpOnly: true,
     path: "/",
     maxAge: 86400,
   });

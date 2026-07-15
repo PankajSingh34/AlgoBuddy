@@ -504,6 +504,21 @@ io.on("connection", async (socket) => {
           });
           await redisClient.rpush(queueKey, opponentEntry);
           console.log(`Opponent disconnected, re-queued opponent: ${opponent.userId}`);
+
+          // Re-queue the requesting player so they can be matched next cycle
+          const reQueueEntry = JSON.stringify({
+            userId: socket.data.userId,
+            socketId: socket.id,
+            name: socket.data.name || "Player",
+            rating: socket.data.rating || 1200,
+            level: socket.data.level || 1,
+            topic: targetTopic,
+            difficulty: targetDifficulty,
+          });
+          await redisClient.rpush(queueKey, reQueueEntry);
+          await redisClient.hset(`{arena}:socket:${socket.id}`, 'queueKey', queueKey);
+
+          socket.emit("matchmaking_retry", { message: "Opponent unavailable, searching for another..." });
           return;
         }
 
@@ -897,7 +912,7 @@ app.get("/debug", async (req, res) => {
 
     const debugKey = process.env.DEBUG_KEY;
     const providedKey = req.headers['x-debug-key'];
-    if (debugKey && providedKey !== debugKey) {
+    if (!debugKey || providedKey !== debugKey) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -921,7 +936,20 @@ app.get("/debug", async (req, res) => {
 
 app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyAuthToken(token);
+    if (!decoded || !decoded.sub) {
+      return res.status(401).json({ error: "Invalid authentication token" });
+    }
+
     const { matchId, userId } = req.params;
+    if (decoded.sub !== userId) {
+      return res.status(403).json({ error: "userId does not match authenticated user" });
+    }
     const matchKey = `{arena}:match:${matchId}`;
     const matchStr = await redisClient.get(matchKey);
     if (!matchStr) {
@@ -946,7 +974,20 @@ app.get("/api/verify-match/:matchId/:userId", async (req, res) => {
 
 app.get("/api/verify-match-result/:matchId/:userId", async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyAuthToken(token);
+    if (!decoded || !decoded.sub) {
+      return res.status(401).json({ error: "Invalid authentication token" });
+    }
+
     const { matchId, userId } = req.params;
+    if (decoded.sub !== userId) {
+      return res.status(403).json({ error: "userId does not match authenticated user" });
+    }
     const matchKey = `{arena}:match:${matchId}`;
 
     const matchStr = await redisClient.get(matchKey);
@@ -979,6 +1020,16 @@ app.get("/health", (req, res) => {
 
 app.get("/api/matches/active", async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyAuthToken(token);
+    if (!decoded || !decoded.sub) {
+      return res.status(401).json({ error: "Invalid authentication token" });
+    }
+
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
     for (const key of matchKeys) {

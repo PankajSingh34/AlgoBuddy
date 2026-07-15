@@ -923,6 +923,8 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 
 ## 🏗 Architecture
 
+For a comprehensive guide on component boundaries, database triggers, data flows, and codebase principles, see the detailed [System Architecture Guide](./Architecture.md).
+
 ```mermaid
 graph TB
     subgraph Client["🖥 Client — Next.js 16 App Router"]

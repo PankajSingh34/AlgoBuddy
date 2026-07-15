@@ -44,6 +44,20 @@ export default function QuizPage() {
       btnBg: "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600",
     },
     {
+      title: "String Operations Quiz",
+      description:
+        "Practice Reverse String, Palindrome Check, Character Frequency, Longest Common Prefix, and Anagram Check.",
+      href: "/visualizer/string/quiz",
+      icon: Search,
+      filename: "string_operations_quiz.js",
+      cardBorder: "border-pink-500/20 dark:border-pink-500/30",
+      topBarBg: "bg-pink-500/10 dark:bg-pink-500/20",
+      iconStyle:
+        "bg-pink-500/10 border border-pink-500/20 dark:border-pink-500/30 text-pink-600 dark:text-pink-400",
+      btnBg:
+        "bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600",
+    },
+    {
       title: "Recursion Quiz",
       description: "Practice all recursion topics.",
       href: "/visualizer/recursion/quiz",

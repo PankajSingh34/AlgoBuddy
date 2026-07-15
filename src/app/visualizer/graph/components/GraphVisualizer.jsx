@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Settings2,
   BarChart3,
@@ -397,9 +397,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
 
+  const [isDirectedManual, setIsDirectedManual] = useState(null);
+
+  useEffect(() => {
+    setIsDirectedManual(null);
+  }, [algorithm]);
+
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
-  const isDirected = directedAlgorithms.has(algorithm);
+  const isDirected = isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(algorithm);
 
   const frames = useMemo(() => {
     const adj = {};
@@ -710,12 +716,24 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </span>
             )}
 
-            {/* Directed badge */}
-            {isDirected && (
-              <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                Directed
-              </span>
-            )}
+            {/* Directed/Undirected Toggle */}
+            <button
+              onClick={() => {
+                if (!isEditing) return;
+                const nextIsDirected = !isDirected;
+                setIsDirectedManual(nextIsDirected);
+                setEdges(prev => prev.map(e => ({ ...e, directed: nextIsDirected })));
+                engine.reset();
+              }}
+              disabled={!isEditing}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                isDirected 
+                  ? "border-primary/30 bg-primary/10 text-primary" 
+                  : "border-surface-400/30 bg-surface-400/10 text-surface-600 dark:text-surface-400"
+              } ${isEditing ? "hover:bg-primary/20 cursor-pointer" : "cursor-default"}`}
+            >
+              {isDirected ? "Directed" : "Undirected"}
+            </button>
 
 
 
