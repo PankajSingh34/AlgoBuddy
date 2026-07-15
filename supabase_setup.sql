@@ -111,6 +111,18 @@ CREATE TABLE IF NOT EXISTS pending_messages (
 
 ALTER TABLE pending_messages ENABLE ROW LEVEL SECURITY;
 
+CREATE POLICY "Service role can insert pending_messages" ON pending_messages
+  FOR INSERT
+  WITH CHECK (auth.role() = 'service_role');
+
+CREATE POLICY "Service role can read pending_messages" ON pending_messages
+  FOR SELECT
+  USING (auth.role() = 'service_role');
+
+CREATE POLICY "Service role can update pending_messages" ON pending_messages
+  FOR UPDATE
+  USING (auth.role() = 'service_role');
+
 -- ====================================================================
 -- newsletter_subscriptions table for Footer Newsletter
 -- ====================================================================
