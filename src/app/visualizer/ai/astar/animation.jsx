@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, PenLine, Target, ShieldAlert, Trash2 } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
@@ -24,6 +24,7 @@ const AStarAnimation = () => {
   const [walls, setWalls] = useState(() => new Set());
   
   const [frames, setFrames] = useState([]);
+  const replayTimerRef = useRef(null);
 
   useEffect(() => saveToStorage("astar-grid-size", gridSize), [gridSize]);
   useEffect(() => saveToStorage("astar-heuristic", heuristic), [heuristic]);
@@ -48,6 +49,10 @@ const AStarAnimation = () => {
   }, [gridSize]);
 
   const resetBoard = useCallback(() => {
+    if (replayTimerRef.current) {
+      clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
     setFrames([]);
     setStart({ row: 0, col: 0 });
     setGoal({ row: gridSize - 1, col: gridSize - 1 });
@@ -71,7 +76,11 @@ const AStarAnimation = () => {
   const togglePlay = () => {
     if (engine.currentStep === frames.length - 1 && frames.length > 0) {
       engine.reset();
-      setTimeout(() => engine.play(), 50);
+      if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = setTimeout(() => {
+        replayTimerRef.current = null;
+        engine.play();
+      }, 50);
     } else if (engine.isPlaying) {
       engine.pause();
     } else {
@@ -84,6 +93,10 @@ const AStarAnimation = () => {
     onTogglePlayPause: togglePlay,
     sorting: engine.isPlaying,
     onReset: () => {
+        if (replayTimerRef.current) {
+          clearTimeout(replayTimerRef.current);
+          replayTimerRef.current = null;
+        }
         setFrames([]);
         engine.reset();
     },
@@ -128,6 +141,10 @@ const AStarAnimation = () => {
       return next;
     });
   }, [editMode, goal.col, goal.row, engine.isPlaying, start.col, start.row]);
+
+  useEffect(() => () => {
+    if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+  }, []);
 
   // Derived state for rendering
   const renderedFrame = frames.length > 0 ? frames[engine.currentStep] : {
