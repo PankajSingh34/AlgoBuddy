@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   Settings2,
   BarChart3,
@@ -396,6 +396,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
+  const replayTimerRef = useRef(null);
 
   const [isDirectedManual, setIsDirectedManual] = useState(null);
 
@@ -454,21 +455,31 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   const engine = useAnimationEngine({ steps: frames, onStep, initialSpeed: 1000 });
 
+  const clearReplayTimer = useCallback(() => {
+    if (replayTimerRef.current) {
+      clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
+  }, []);
+
   // Handle edge weight updates from GraphCanvas
   const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
+    clearReplayTimer();
     setEdges((prev) =>
       prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
     );
     engine.reset();
-  }, [engine]);
+  }, [clearReplayTimer, engine]);
 
   // When adding an edge, default weight = 1
   const handleAddEdge = useCallback((edge) => {
+    clearReplayTimer();
     setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
     engine.reset();
-  }, [isDirected, engine]);
+  }, [clearReplayTimer, isDirected, engine]);
 
   const handleCustomGraphInput = useCallback((parsedEdges) => {
+    clearReplayTimer();
     if (parsedEdges === null) {
       setNodes(defaultGraphs[algorithm]?.nodes || []);
       setEdges(defaultGraphs[algorithm]?.edges || []);
@@ -503,12 +514,16 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       setEdges(newEdges);
     }
     engine.reset();
-  }, [algorithm, isDirected, engine]);
+  }, [algorithm, clearReplayTimer, isDirected, engine]);
 
   const togglePlay = () => {
     if (engine.currentStep === frames.length - 1 && frames.length > 0) {
       engine.reset();
-      setTimeout(() => engine.play(), 50);
+      clearReplayTimer();
+      replayTimerRef.current = setTimeout(() => {
+        replayTimerRef.current = null;
+        engine.play();
+      }, 50);
     } else if (engine.isPlaying) {
       engine.pause();
     } else {
@@ -518,6 +533,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const reset = () => {
+    clearReplayTimer();
     engine.reset();
     setIsEditing(true);
   };
@@ -546,6 +562,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
   const addNode = ({ x, y }) => {
+    clearReplayTimer();
     const usedIds = new Set(nodes.map((node) => node.id));
     let nextId = `${nodes.length}`;
     let counter = nodes.length;
@@ -577,23 +594,27 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const removeNode = (id) => {
+    clearReplayTimer();
     setNodes((current) => current.filter((node) => node.id !== id));
     setEdges((current) => current.filter((edge) => edge.from !== id && edge.to !== id));
     engine.reset();
   };
 
   const removeEdge = (edgeIndex) => {
+    clearReplayTimer();
     setEdges((current) => current.filter((_, index) => index !== edgeIndex));
     engine.reset();
   };
 
   const clearGraph = useCallback(() => {
+    clearReplayTimer();
     setNodes([]);
     setEdges([]);
     engine.reset();
-  }, [engine]);
+  }, [clearReplayTimer, engine]);
 
   const generateRandomGraph = useCallback(() => {
+    clearReplayTimer();
     const input = window.prompt("Enter number of nodes (max 20):", "6");
     if (!input) return;
     const count = parseInt(input, 10);
@@ -643,9 +664,10 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     setNodes(newNodes);
     setEdges(newEdges);
     engine.reset();
-  }, [isWeighted, isDirected, engine]);
+  }, [clearReplayTimer, isWeighted, isDirected, engine]);
 
   const reverseEdge = (edgeIndex) => {
+    clearReplayTimer();
     setEdges((current) =>
       current.map((edge, index) =>
         index === edgeIndex ? { ...edge, from: edge.to, to: edge.from } : edge,
@@ -653,6 +675,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     );
     engine.reset();
   };
+
+  useEffect(() => clearReplayTimer, [clearReplayTimer]);
 
   return (
     <div className="mt-8 space-y-6">
