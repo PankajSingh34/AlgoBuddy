@@ -18,6 +18,7 @@ export function* kosarajuGenerator(adj, nodes) {
     sccs: [],
     phase: "Pass 1: DFS",
     description: "Phase 1: Run DFS to compute finishing times.",
+      line: 0,
   };
 
   function* dfs1(u) {
@@ -30,6 +31,7 @@ export function* kosarajuGenerator(adj, nodes) {
       sccs: [],
       phase: "Pass 1: DFS",
       description: `Visiting node ${u}`,
+      line: 0,
     };
 
     const neighbors = adj[u] || [];
@@ -44,6 +46,7 @@ export function* kosarajuGenerator(adj, nodes) {
           sccs: [],
           phase: "Pass 1: DFS",
           description: `Traversing edge ${u} → ${neighborId}`,
+      line: 0,
         };
         yield* dfs1(neighborId);
       }
@@ -57,6 +60,7 @@ export function* kosarajuGenerator(adj, nodes) {
       sccs: [],
       phase: "Pass 1: DFS",
       description: `Finished ${u}, pushing to stack`,
+      line: 0,
     };
   }
 
@@ -85,6 +89,7 @@ export function* kosarajuGenerator(adj, nodes) {
     sccs: [],
     phase: "Pass 2: Transpose Graph",
     description: "Graph edges transposed. Now popping from stack for Phase 2 DFS.",
+      line: 0,
   };
 
   visited.clear();
@@ -102,6 +107,7 @@ export function* kosarajuGenerator(adj, nodes) {
       sccs: [...sccs, [...currentScc]],
       phase: "Pass 2: SCC DFS",
       description: `Visiting ${u} in reversed graph, adding to current SCC`,
+      line: 0,
     };
 
     const neighbors = revAdj[u] || [];
@@ -115,6 +121,7 @@ export function* kosarajuGenerator(adj, nodes) {
           sccs: [...sccs, [...currentScc]],
           phase: "Pass 2: SCC DFS",
           description: `Traversing reversed edge ${u} → ${neighborId}`,
+      line: 0,
         };
         yield* dfs2(neighborId, currentScc);
       }
@@ -132,6 +139,7 @@ export function* kosarajuGenerator(adj, nodes) {
       sccs: [...sccs],
       phase: "Pass 2: Pop Stack",
       description: `Popped ${u} from stack`,
+      line: 0,
     };
 
     if (!visited.has(u)) {
@@ -147,6 +155,7 @@ export function* kosarajuGenerator(adj, nodes) {
         sccs: [...sccs],
         phase: "Pass 2: SCC Found",
         description: `Found SCC: [${currentScc.join(', ')}]`,
+      line: 0,
       };
     }
   }
@@ -159,5 +168,6 @@ export function* kosarajuGenerator(adj, nodes) {
     sccs: [...sccs],
     phase: "Done",
     description: `Kosaraju's algorithm complete. Found ${sccs.length} SCCs.`,
+      line: 0,
   };
 }

@@ -6,7 +6,8 @@ import {
   BarChart3,
   Info,
   Trash2,
-  Wand2
+  Wand2,
+  Code2
 } from "lucide-react";
 import { 
   BarChart, 
@@ -40,6 +41,7 @@ import {
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
+import { ALGORITHM_PSEUDOCODE } from "../constants/pseudocode";
 
 const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star", "ford-fulkerson"]);
 const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan", "a-star", "ford-fulkerson"]);
@@ -394,7 +396,8 @@ const comparisonData = [
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
   const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPseudocodeOpen, setIsPseudocodeOpen] = useState(true);
   const [targetNode, setTargetNode] = useState("");
 
   const [isDirectedManual, setIsDirectedManual] = useState(null);
@@ -690,6 +693,18 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </>
             )}
 
+            <button
+              onClick={() => setIsPseudocodeOpen(!isPseudocodeOpen)}
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                isPseudocodeOpen 
+                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" 
+                  : "bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300"
+              }`}
+            >
+              <Code2 className="h-4 w-4" />
+              Pseudocode
+            </button>
+
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
               <div className="flex items-center gap-2 ml-2">
                 <label className="text-sm font-medium text-surface-600 dark:text-surface-300">Target Node:</label>
@@ -784,25 +799,55 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             )}
           </div>
         </div>
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch min-h-[420px]">
+          <div className="flex-1 border rounded-xl overflow-hidden bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col">
+            <GraphCanvas
+              nodes={nodes}
+              edges={edges}
+              onAddNode={addNode}
+              onAddEdge={handleAddEdge}
+              onRemoveNode={removeNode}
+              onRemoveEdge={removeEdge}
+              onReverseEdge={reverseEdge}
+              onMoveNode={moveNode}
+              onUpdateEdgeWeight={handleUpdateEdgeWeight}
+              animationState={!isEditing ? currentFrameData : {}}
+              interactive={isEditing}
+              isWeighted={isWeighted}
+              isDirected={isDirected}
+              visitedSet={currentFrameData.visitedNodes}
+              currentNode={currentFrameData.currentNode}
+              className="w-full h-full flex-1"
+            />
+          </div>
 
-        <GraphCanvas
-          nodes={nodes}
-          edges={edges}
-          onAddNode={addNode}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={removeNode}
-          onRemoveEdge={removeEdge}
-          onReverseEdge={reverseEdge}
-          onMoveNode={moveNode}
-          onUpdateEdgeWeight={handleUpdateEdgeWeight}
-          animationState={!isEditing ? currentFrameData : {}}
-          interactive={isEditing}
-          isWeighted={isWeighted}
-          isDirected={isDirected}
-          visitedSet={currentFrameData.visitedNodes}
-          currentNode={currentFrameData.currentNode}
-          className="w-full"
-        />
+          {isPseudocodeOpen && ALGORITHM_PSEUDOCODE[algorithm] && (
+            <div className="w-full lg:w-80 border rounded-xl bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col overflow-hidden shrink-0 shadow-sm">
+              <div className="bg-surface-50 dark:bg-surface-800/50 p-3 border-b border-surface-200 dark:border-surface-700">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                  Pseudocode
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-xs leading-relaxed">
+                {ALGORITHM_PSEUDOCODE[algorithm].map((lineText, idx) => {
+                  const isActive = !isEditing && currentFrameData.line === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`px-2 py-0.5 rounded whitespace-pre ${
+                        isActive
+                          ? "bg-primary/30 text-primary-300 font-bold border-l-2 border-primary"
+                          : "border-l-2 border-transparent text-surface-400"
+                      }`}
+                    >
+                      {lineText}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Controls Bar */}
         <PlaybackControls

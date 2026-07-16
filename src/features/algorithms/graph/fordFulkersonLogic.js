@@ -38,6 +38,7 @@ export function* fordFulkersonGenerator(nodes, edges, sourceNode, sinkNode) {
     flowData: { flow: JSON.parse(JSON.stringify(flow)), capacity: JSON.parse(JSON.stringify(capacity)) },
     maxFlow,
     description: `Initializing Ford-Fulkerson (Edmonds-Karp). Source: ${nodeMap.get(sourceNode)?.label || sourceNode}, Sink: ${nodeMap.get(sinkNode)?.label || sinkNode}`,
+      line: 0,
   };
 
   while (true) {
@@ -88,6 +89,7 @@ export function* fordFulkersonGenerator(nodes, edges, sourceNode, sinkNode) {
       flowData: { flow: JSON.parse(JSON.stringify(flow)), capacity: JSON.parse(JSON.stringify(capacity)) },
       maxFlow,
       description: `Found augmenting path with bottleneck capacity: ${minCapacity}`,
+      line: 0,
     };
 
     // Augment flow
@@ -105,6 +107,7 @@ export function* fordFulkersonGenerator(nodes, edges, sourceNode, sinkNode) {
       flowData: { flow: JSON.parse(JSON.stringify(flow)), capacity: JSON.parse(JSON.stringify(capacity)) },
       maxFlow,
       description: `Augmented flow by ${minCapacity}. Current max flow is ${maxFlow}.`,
+      line: 0,
     };
   }
 
@@ -114,5 +117,6 @@ export function* fordFulkersonGenerator(nodes, edges, sourceNode, sinkNode) {
     flowData: { flow, capacity },
     maxFlow,
     description: `No more augmenting paths. Algorithm complete. Maximum Flow = ${maxFlow} across ${pathsFound} paths.`,
+      line: 0,
   };
 }

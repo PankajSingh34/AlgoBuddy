@@ -18,6 +18,7 @@ export function* dfsGenerator(adj, startNode) {
       stack: [...stack],
       currentNode: u,
       description: `Visiting node ${u}`,
+      line: 1,
     };
 
     const neighbors = adj[u] || [];
@@ -35,6 +36,7 @@ export function* dfsGenerator(adj, startNode) {
           stack: [...stack],
           currentNode: u,
           description: `Backtracking to node ${u}`,
+          line: 5,
         };
       }
     }
@@ -50,5 +52,6 @@ export function* dfsGenerator(adj, startNode) {
     stack: [...stack],
     currentNode: null,
     description: `DFS traversal complete`,
+    line: 6,
   };
 }
