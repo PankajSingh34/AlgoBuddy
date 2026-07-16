@@ -6,7 +6,9 @@ import {
   BarChart3,
   Info,
   Trash2,
-  Wand2
+  Wand2,
+  Download,
+  AlertTriangle
 } from "lucide-react";
 import { 
   BarChart, 
@@ -447,6 +449,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     return [];
   }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
 
+  const hasNegativeWeightError = algorithm === "dijkstra" && edges.some(e => Number(e.weight) < 0);
+
   const onStep = useCallback((step) => {
     // No specific local state needs to be updated here 
     // since the visual representation is fully derived from `frames[engine.currentStep]`.
@@ -805,17 +809,27 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         />
 
         {/* Controls Bar */}
-        <PlaybackControls
-          isPlaying={engine.isPlaying}
-          onPlayPause={togglePlay}
-          speed={engine.speed / 1000}
-          onSpeedChange={(s) => engine.setSpeed(s * 1000)}
-          onStepForward={stepForward}
-          onStepBackward={stepBackward}
-          onReset={reset}
-          progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
-          disabled={frames.length === 0}
-        />
+        <div className="flex flex-col gap-2">
+          {hasNegativeWeightError && (
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+              <p>
+                <strong>Dijkstra's Algorithm cannot handle negative edge weights.</strong> It assumes all weights are non-negative to guarantee shortest paths. Please use <strong>Bellman-Ford</strong> instead, or remove the negative weights.
+              </p>
+            </div>
+          )}
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            onPlayPause={togglePlay}
+            speed={engine.speed / 1000}
+            onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={reset}
+            progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+            disabled={frames.length === 0 || hasNegativeWeightError}
+          />
+        </div>
       </div>
 
       {/* Info & Charts Section */}
