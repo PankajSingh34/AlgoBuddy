@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   Settings2,
   BarChart3,
   Info,
   Trash2,
-  Wand2
+  Wand2,
+  Download
 } from "lucide-react";
 import { 
   BarChart, 
@@ -396,6 +397,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
   const [isEditing, setIsEditing] = useState(true);
   const [targetNode, setTargetNode] = useState("");
+  const canvasContainerRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [isDirectedManual, setIsDirectedManual] = useState(null);
 
@@ -690,6 +693,34 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </>
             )}
 
+            <button
+              onClick={async () => {
+                if (!canvasContainerRef.current || isExporting) return;
+                setIsExporting(true);
+                try {
+                  const html2canvas = (await import("html2canvas")).default;
+                  const canvas = await html2canvas(canvasContainerRef.current, {
+                    backgroundColor: document.documentElement.classList.contains("dark") ? "#0f172a" : "#ffffff",
+                    scale: 2, // High resolution
+                  });
+                  const dataUrl = canvas.toDataURL("image/png");
+                  const a = document.createElement("a");
+                  a.href = dataUrl;
+                  a.download = `algobuddy-${algorithm}-graph.png`;
+                  a.click();
+                } catch (err) {
+                  console.error("Export failed", err);
+                } finally {
+                  setIsExporting(false);
+                }
+              }}
+              disabled={isExporting}
+              className="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? "Exporting..." : "Export PNG"}
+            </button>
+
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
               <div className="flex items-center gap-2 ml-2">
                 <label className="text-sm font-medium text-surface-600 dark:text-surface-300">Target Node:</label>
@@ -785,24 +816,26 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
           </div>
         </div>
 
-        <GraphCanvas
-          nodes={nodes}
-          edges={edges}
-          onAddNode={addNode}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={removeNode}
-          onRemoveEdge={removeEdge}
-          onReverseEdge={reverseEdge}
-          onMoveNode={moveNode}
-          onUpdateEdgeWeight={handleUpdateEdgeWeight}
-          animationState={!isEditing ? currentFrameData : {}}
-          interactive={isEditing}
-          isWeighted={isWeighted}
-          isDirected={isDirected}
-          visitedSet={currentFrameData.visitedNodes}
-          currentNode={currentFrameData.currentNode}
-          className="w-full"
-        />
+        <div ref={canvasContainerRef} className="w-full relative overflow-hidden bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl min-h-[420px] flex">
+          <GraphCanvas
+            nodes={nodes}
+            edges={edges}
+            onAddNode={addNode}
+            onAddEdge={handleAddEdge}
+            onRemoveNode={removeNode}
+            onRemoveEdge={removeEdge}
+            onReverseEdge={reverseEdge}
+            onMoveNode={moveNode}
+            onUpdateEdgeWeight={handleUpdateEdgeWeight}
+            animationState={!isEditing ? currentFrameData : {}}
+            interactive={isEditing}
+            isWeighted={isWeighted}
+            isDirected={isDirected}
+            visitedSet={currentFrameData.visitedNodes}
+            currentNode={currentFrameData.currentNode}
+            className="w-full h-full flex-1"
+          />
+        </div>
 
         {/* Controls Bar */}
         <PlaybackControls
