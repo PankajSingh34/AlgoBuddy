@@ -44,6 +44,11 @@ export async function POST(request) {
       .eq("job_id", jobId)
       .maybeSingle();
 
+    if (existingError) {
+      console.error("[/api/applications POST] Supabase duplicate check error:", existingError.message);
+      return jsonResponse({ error: existingError.message }, 500);
+    }
+
     if (existing) {
       return jsonResponse({ error: "You have already applied to this job" }, 409);
     }
