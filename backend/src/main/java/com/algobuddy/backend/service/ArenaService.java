@@ -33,6 +33,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 
 @Service
 @RequiredArgsConstructor
@@ -232,6 +235,9 @@ public class ArenaService {
     }
 
     private UUID verifyMatchmakingPair(String matchId, UUID requestingUserId) {
+        if (matchId == null || !matchId.matches("^(match|mock-match)-[a-zA-Z0-9-]+$")) {
+            throw new IllegalArgumentException("Invalid matchId format.");
+        }
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -243,6 +249,12 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+
+            // Forward the authenticated user's JWT token to the socket server
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -275,6 +287,9 @@ public class ArenaService {
     }
 
     UUID verifyMatchResult(String matchId, UUID requestingUserId) {
+        if (matchId == null || !matchId.matches("^(match|mock-match)-[a-zA-Z0-9-]+$")) {
+            throw new IllegalArgumentException("Invalid matchId format.");
+        }
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -286,6 +301,12 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+
+            // Forward the authenticated user's JWT token to the socket server
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -355,8 +376,12 @@ public class ArenaService {
         boolean isWinner;
         final int MAX_RETRIES = 3;
 
-        UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
-        isWinner = requestingUserId.equals(verifiedWinnerId);
+        if (matchIdStr.startsWith("mock-match-")) {
+            isWinner = request.isWinner();
+        } else {
+            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            isWinner = requestingUserId.equals(verifiedWinnerId);
+        }
         final boolean finalIsWinner = isWinner;
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {

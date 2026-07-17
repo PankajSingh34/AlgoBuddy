@@ -58,6 +58,20 @@ export default function QuizPage() {
         "bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600",
     },
     {
+      title: "Pattern Matching Quiz",
+      description:
+        "Practice String algorithms including Reverse String, Palindrome Check, Character Frequency, Longest Common Prefix, Anagram Check, KMP Algorithm, Rabin-Karp, and Z Algorithm.",
+      href: "/visualizer/string/pattern-matching/quiz",
+      icon: Search,
+      filename: "string_operations_quiz.js",
+      cardBorder: "border-pink-500/20 dark:border-pink-500/30",
+      topBarBg: "bg-pink-500/10 dark:bg-pink-500/20",
+      iconStyle:
+        "bg-pink-500/10 border border-pink-500/20 dark:border-pink-500/30 text-pink-600 dark:text-pink-400",
+      btnBg:
+        "bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600",
+    },
+    {
       title: "Recursion Quiz",
       description: "Practice all recursion topics.",
       href: "/visualizer/recursion/quiz",
