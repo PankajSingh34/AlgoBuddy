@@ -4,6 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getClientIp } from "@/lib/getClientIp";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -73,9 +74,7 @@ export async function POST(request) {
     // ── 1. RATE LIMITING ──────────────────────────────────────────────────────
     // Use the user's IP address as the rate-limit identifier.
     // In production on Vercel, the real IP is in the x-forwarded-for header.
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      "anonymous";
+    const ip = getClientIp(request) || "anonymous";
 
     const { success, limit, remaining, reset } = await ratelimit.limit(ip);
 

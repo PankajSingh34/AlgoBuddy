@@ -52,7 +52,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { problemId, note = "", isPublic } = body;
+    const { problemId, note = "", isPublic, sharedNotes } = body;
     if (!problemId) return jsonResponse({ error: "problemId is required" }, 400);
 
     const cookieStore = await cookies();
@@ -66,6 +66,9 @@ export async function POST(request) {
     };
     if (typeof isPublic === "boolean") {
       row.is_public = isPublic;
+    }
+    if (typeof sharedNotes === "boolean") {
+      row.shared_notes = sharedNotes;
     }
 
     const { error } = await supabase.from("my_sheet").upsert(row, {
