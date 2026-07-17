@@ -30,6 +30,8 @@
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 </div>
+
+
 ## 📚 Table of Contents
 
 - [🎯 Why AlgoBuddy?](#-why-algobuddy)
@@ -460,6 +462,40 @@ create table if not exists public.user_profiles (
 );
 
 alter table public.user_profiles enable row level security;
+
+-- Avatar storage used by the profile photo uploader
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do update set public = true;
+
+create policy "Avatar images are publicly readable"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+create policy "Users can upload own avatars"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
+create policy "Users can update own avatars"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+)
+with check (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
+create policy "Users can delete own avatars"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
 
 create policy "Users can read own profile"
 on public.user_profiles
@@ -1051,6 +1087,40 @@ create table if not exists public.user_profiles (
 
 alter table public.user_profiles enable row level security;
 
+-- Avatar storage used by the profile photo uploader
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do update set public = true;
+
+create policy "Avatar images are publicly readable"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+create policy "Users can upload own avatars"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
+create policy "Users can update own avatars"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+)
+with check (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
+create policy "Users can delete own avatars"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'avatars' and
+  (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
 create policy "Users can read own profile"
 on public.user_profiles
 for select
@@ -1294,5 +1364,3 @@ This project is licensed under the **MIT License** — see the [**LICENSE**](LIC
 [🌐 Website](https://www.algobuddy.me/) · [📢 Discord](https://discord.gg/Gv2N4U3KAc) · [🐛 Issues](https://github.com/PankajSingh34/AlgoBuddy/issues) · [🔀 Pull Requests](https://github.com/PankajSingh34/AlgoBuddy/pulls)
 
 </div>
-
-
