@@ -843,7 +843,9 @@ io.on("connection", async (socket) => {
 
       // Clean up rate limit and socket key
       await redisClient.del(`{arena}:socket:${socket.id}`);
-      await redisClient.del(`{arena}:ratelimit:${socket.id}`);
+      if (socket.data && socket.data.userId) {
+        await redisClient.del(`{arena}:ratelimit:${socket.data.userId}`);
+      }
 
       console.log(`User disconnected: ${socket.id}`);
     } catch (error) {

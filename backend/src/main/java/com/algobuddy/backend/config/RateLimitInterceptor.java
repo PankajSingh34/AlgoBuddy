@@ -84,8 +84,19 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPrivateIp(String ip) {
-        return ip.startsWith("10.") || ip.startsWith("172.16.") || ip.startsWith("192.168.")
-            || ip.startsWith("127.") || ip.equals("::1") || ip.startsWith("fc") || ip.startsWith("fd");
+        if (ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("127.") || ip.equals("::1") || ip.startsWith("fc") || ip.startsWith("fd")) {
+            return true;
+        }
+        if (ip.startsWith("172.")) {
+            try {
+                String[] parts = ip.split("\\.");
+                if (parts.length >= 2) {
+                    int secondOctet = Integer.parseInt(parts[1]);
+                    return secondOctet >= 16 && secondOctet <= 31;
+                }
+            } catch (Exception e) {}
+        }
+        return false;
     }
 
     private boolean isValidIp(String ip) {
