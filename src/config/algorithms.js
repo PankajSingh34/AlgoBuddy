@@ -2054,4 +2054,38 @@ export const algorithmRegistry = {
     import("@/app/visualizer/string/longest-common-prefix/page")
   ),
 },
+"string/kmp-algorithm": {
+  metadata: {
+    title: "KMP Algorithm | AlgoBuddy",
+    description:
+      "Visualize the Knuth-Morris-Pratt string matching algorithm step by step.",
+    keywords: [
+      "KMP",
+      "Knuth Morris Pratt",
+      "Pattern Matching",
+      "String",
+    ],
+    robots: "index,follow",
+  },
+  component: dynamic(() =>
+    import("@/app/visualizer/string/kmp-algorithm/page")
+  ),
+},
+"string/rabin-karp": {
+  metadata: {
+    title: "Rabin-Karp Algorithm Visualizer | AlgoBuddy",
+    description:
+      "Learn and visualize the Rabin-Karp string matching algorithm step by step using rolling hash, interactive animations, code examples, and quizzes.",
+    keywords: [
+      "Rabin-Karp",
+      "String Matching",
+      "Pattern Matching",
+      "Rolling Hash",
+      "Algorithms",
+      "AlgoBuddy",
+    ],
+    category: "String",
+    difficulty: "Medium",
+  },
+},
 };

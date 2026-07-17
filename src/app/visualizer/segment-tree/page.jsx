@@ -120,6 +120,7 @@ export default function SegmentTreeVisualizer() {
   const [playing, setPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState("query"); // "query" | "update"
   const [buildError, setBuildError] = useState("");
+  const [pendingUpdate, setPendingUpdate] = useState(null);
   const intervalRef = useRef(null);
 
   // Build tree from array
@@ -142,6 +143,7 @@ export default function SegmentTreeVisualizer() {
     setSteps([]);
     setCurrentStep(-1);
     setPlaying(false);
+    setPendingUpdate(null);
   }, [inputVal]);
 
   useEffect(() => { handleBuild(); }, []); // eslint-disable-line
@@ -167,11 +169,14 @@ export default function SegmentTreeVisualizer() {
       map[s.node] = s.type;
     }
     setHighlightMap(map);
-    // Show result on last step
-    if (currentStep === steps.length - 1 && result !== null) {
-      // already set
+    // If we have a pending update, and we reached the last step (the leaf node)
+    if (currentStep === steps.length - 1 && pendingUpdate) {
+      setArr(pendingUpdate.arr);
+      setTree(pendingUpdate.tree);
+      setResultLabel(`arr[${pendingUpdate.idx}] updated to ${pendingUpdate.val}`);
+      setPendingUpdate(null);
     }
-  }, [currentStep, steps, result]);
+  }, [currentStep, steps, pendingUpdate]);
 
   const runQuery = () => {
     if (!Object.keys(tree).length) return;
@@ -206,13 +211,12 @@ export default function SegmentTreeVisualizer() {
     const newTree = { ...tree };
     const visited = [];
     updateTree(newArr, 1, 0, newArr.length - 1, idx, val, newTree, visited);
-    setArr(newArr);
-    setTree(newTree);
+    setPendingUpdate({ arr: newArr, tree: newTree, val, idx });
     setSteps(visited);
     setCurrentStep(-1);
     setHighlightMap({});
     setResult(val);
-    setResultLabel(`arr[${idx}] updated to ${val}`);
+    setResultLabel(`arr[${idx}] updating to ${val}...`);
     setPlaying(false);
   };
 
@@ -228,7 +232,7 @@ export default function SegmentTreeVisualizer() {
   };
 
   const handlePause = () => setPlaying(false);
-  const handleReset = () => { setHighlightMap({}); setCurrentStep(-1); setPlaying(false); };
+  const handleReset = () => { setHighlightMap({}); setCurrentStep(-1); setPlaying(false); setPendingUpdate(null); };
 
   // SVG edges
   const edges = [];
