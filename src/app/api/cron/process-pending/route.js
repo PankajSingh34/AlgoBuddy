@@ -5,8 +5,12 @@ import { escapeHtml } from "@/lib/shared-utils";
 
 export async function GET(req) {
   // Add a simple cron secret check to prevent unauthorized execution
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json({ message: "CRON_SECRET not configured" }, { status: 500 });
+  }
   const authHeader = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || process.env.CRON_SECRET.trim() === "" || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
