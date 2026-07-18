@@ -1353,6 +1353,16 @@ export default function ArenaPage() {
                       <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none"></div>
                       <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
                       
+                      {/* Dynamic Background Particles (Grid & Floating Orbs) */}
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+                        <div className="absolute top-[20%] left-[10%] w-2 h-2 rounded-full bg-cyan-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '3s' }}></div>
+                        <div className="absolute top-[60%] left-[30%] w-3 h-3 rounded-full bg-indigo-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+                        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-cyan-300/50 blur-[1px] animate-pulse" style={{ animationDuration: '2.5s' }}></div>
+                        <div className="absolute bottom-[20%] right-[15%] w-2.5 h-2.5 rounded-full bg-purple-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '3.5s' }}></div>
+                        <div className="absolute top-[80%] left-[50%] w-2 h-2 rounded-full bg-cyan-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '2s' }}></div>
+                      </div>
+                      
                       <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
                         <Trophy size={300} className="text-white transform -rotate-12" />
                       </div>
