@@ -106,6 +106,7 @@ export default function ArenaPage() {
   const [leaderboardFilter, setLeaderboardFilter] = useState("Global");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
+  const [hasFreeze, setHasFreeze] = useState(false);
 
   // Tournament Timer State
   const [tournamentTimeLeft, setTournamentTimeLeft] = useState({
@@ -1243,6 +1244,53 @@ export default function ArenaPage() {
                           <Share2 size={18} className="group-hover:scale-110 transition-transform" />
                           Share My Streak
                         </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="absolute -left-6 -bottom-6 opacity-5 text-indigo-500 pointer-events-none">
+                        <Shield size={160} />
+                      </div>
+                      <div className="relative z-10 text-center md:text-left flex-1">
+                        <h5 className="text-lg font-bold text-slate-800 dark:text-neutral-200 flex items-center justify-center md:justify-start gap-2">
+                          <Shield size={20} className="text-indigo-500" />
+                          Streak Freeze
+                        </h5>
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-2 leading-relaxed">
+                          Protect your hard-earned streak! A Streak Freeze saves your streak if you miss a day of coding. It will be consumed automatically.
+                        </p>
+                      </div>
+                      <div className="relative z-10 shrink-0">
+                        {hasFreeze ? (
+                          <div className="flex flex-col items-center">
+                            <button 
+                              onClick={() => setHasFreeze(false)}
+                              className="px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-xl text-sm font-bold shadow-inner flex items-center gap-2 border border-indigo-200 dark:border-indigo-800/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
+                            >
+                              <Shield size={16} />
+                              Equipped
+                            </button>
+                            <span className="text-[10px] text-slate-400 mt-2 font-semibold">Ready to protect your streak.</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <button 
+                              onClick={() => {
+                                if ((profile?.xp || 0) >= 500) {
+                                  setHasFreeze(true);
+                                  toast.success("Streak Freeze equipped!");
+                                } else {
+                                  toast.error("Not enough XP! You need 500 XP.");
+                                }
+                              }}
+                              className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 transition flex items-center gap-2 group"
+                            >
+                              <Shield size={16} className="group-hover:scale-110 transition-transform" />
+                              Equip Freeze
+                            </button>
+                            <span className="text-[10px] font-bold text-slate-500 mt-2">Cost: 500 XP</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
