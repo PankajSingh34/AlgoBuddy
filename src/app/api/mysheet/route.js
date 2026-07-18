@@ -3,7 +3,6 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
 import { validateCsrfOrigin } from "@/lib/csrfConstants";
 
-// GET /api/mysheet — returns the user's curated sheet as a map
 export async function GET(request) {
   try {
     const authResult = await getAuthenticatedUser();
@@ -37,7 +36,6 @@ export async function GET(request) {
   }
 }
 
-// POST /api/mysheet — add a problem to the user's sheet
 export async function POST(request) {
   if (!validateCsrfOrigin(request)) {
     return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
@@ -58,11 +56,18 @@ export async function POST(request) {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
 
+    const { data: existing } = await supabase
+      .from("my_sheet")
+      .select("added_at")
+      .eq("user_id", authResult.user.id)
+      .eq("problem_id", problemId)
+      .maybeSingle();
+
     const row = {
       user_id: authResult.user.id,
       problem_id: problemId,
       note,
-      added_at: new Date().toISOString(),
+      added_at: existing?.added_at ?? new Date().toISOString(),
     };
     if (typeof isPublic === "boolean") {
       row.is_public = isPublic;
@@ -82,7 +87,6 @@ export async function POST(request) {
   }
 }
 
-// DELETE /api/mysheet?problemId=xxx — remove a problem from the user's sheet
 export async function DELETE(request) {
   if (!validateCsrfOrigin(request)) {
     return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
