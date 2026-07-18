@@ -1,6 +1,7 @@
 "use client";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
+import CookieConsent from "@/app/components/cookiesconsent";
 import { usePathname } from "next/navigation";
 import Chatbot from "@/app/components/ui/Chatbot";
 import Navbar from "@/app/components/navbar";
@@ -18,6 +19,7 @@ export default function ClientLayoutWrapper({ children }) {
   return (
     <>
       <Toaster position="top-right" />
+      <CookieConsent />
       {!isAuthPage && <Navbar />}
       {children}
       {!isAuthPage && <Chatbot />}
