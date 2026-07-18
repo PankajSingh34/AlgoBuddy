@@ -1371,10 +1371,11 @@ export default function ArenaPage() {
                         </p>
                       </div>
 
-                      <div className="z-10 mt-8 md:mt-0 flex flex-col items-center bg-black/20 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                        <div className="flex items-center gap-2 mb-4 text-indigo-200">
-                          <Clock size={16} />
-                          <span className="text-xs font-bold uppercase tracking-wider">Tournament Starts In</span>
+                      <div className="z-10 mt-8 md:mt-0 flex flex-col items-center bg-black/40 backdrop-blur-xl border border-indigo-500/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(79,70,229,0.3)] relative overflow-hidden">
+                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50"></div>
+                        <div className="flex items-center gap-2 mb-5 text-cyan-300 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
+                          <Clock size={18} className="animate-pulse" />
+                          <span className="text-xs font-bold uppercase tracking-widest">Starts In</span>
                         </div>
                         <div className="flex gap-3">
                           {[
@@ -1383,17 +1384,18 @@ export default function ArenaPage() {
                             { label: 'Mins', value: tournamentTimeLeft.minutes },
                             { label: 'Secs', value: tournamentTimeLeft.seconds }
                           ].map((unit, idx) => (
-                            <div key={idx} className="flex flex-col items-center">
-                              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center border border-white/5 shadow-inner mb-2">
-                                <span className={`text-xl font-black ${unit.label === 'Secs' ? 'text-cyan-400' : 'text-white'}`}>
+                            <div key={idx} className="flex flex-col items-center group">
+                              <div className="w-14 h-14 bg-indigo-950/60 rounded-xl flex items-center justify-center border border-indigo-400/20 shadow-inner mb-2 relative overflow-hidden transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></div>
+                                <span className={`text-2xl font-black tabular-nums tracking-tighter ${unit.label === 'Secs' ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse' : 'text-white drop-shadow-md'}`}>
                                   {unit.value.toString().padStart(2, '0')}
                                 </span>
                               </div>
-                              <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest">{unit.label}</span>
+                              <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest group-hover:text-cyan-300 transition-colors">{unit.label}</span>
                             </div>
                           ))}
                         </div>
-                    </div>
+                      </div>
 
                     {/* Filter Tabs */}
                     <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px overflow-x-auto no-scrollbar">
