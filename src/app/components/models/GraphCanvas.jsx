@@ -353,7 +353,7 @@ const handleMouseUp = useCallback(() => {
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
                 readOnlyLabel={
                   animationState?.flowData
-                    ? `${animationState.flowData.flow[edge.from][edge.to]}/${animationState.flowData.capacity[edge.from][edge.to]}`
+                    ? `${animationState.flowData.flow[edge.from]?.[edge.to] ?? "-"}/${animationState.flowData.capacity[edge.from]?.[edge.to] ?? "-"}`
                     : undefined
                 }
               />
