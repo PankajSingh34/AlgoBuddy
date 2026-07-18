@@ -1,7 +1,7 @@
 // app/components/models/GraphCanvas.jsx
 "use client";
 import { useRef, useState, useCallback } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+
 
 const NODE_RADIUS = 26;
 const COLORS = {

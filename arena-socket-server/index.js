@@ -633,14 +633,22 @@ io.on("connection", async (socket) => {
       const matchStr = await redisClient.get(`{arena}:match:${data.matchId}`);
       if (!matchStr) return;
       
-      // Spectator simply joins the socket.io room to receive broadcasts.
-      socket.join(data.matchId);
-      // We explicitly DO NOT set {arena}:socket:${socket.id} -> matchId in Redis, 
-      // preventing the spectator from emitting events.
+      const room = `${data.matchId}-spectators`;
+      socket.join(room);
+      const sockets = await io.in(room).fetchSockets();
+      io.in(room).emit("spectator_count", { count: sockets.length });
       console.log(`Spectator ${socket.data.userId} joined match ${data.matchId}`);
     } catch (error) {
       console.error(`[join_spectator] Error for user ${socket.data.userId}:`, error);
     }
+  });
+
+  socket.on("leave_spectator", async (data) => {
+    if (!data.matchId) return;
+    const room = `${data.matchId}-spectators`;
+    socket.leave(room);
+    const sockets = await io.in(room).fetchSockets();
+    io.in(room).emit("spectator_count", { count: sockets.length });
   });
 
   // Duel Room Events
@@ -701,22 +709,6 @@ io.on("connection", async (socket) => {
     } catch (error) {
       console.error(`[test_result] Error for user ${socket.data.userId}:`, error);
     }
-  });
-
-  socket.on("spectate_match", async (data) => {
-    if (!data.matchId) return;
-    const room = `${data.matchId}-spectators`;
-    socket.join(room);
-    const sockets = await io.in(room).fetchSockets();
-    io.in(room).emit("spectator_count", { count: sockets.length });
-  });
-
-  socket.on("leave_spectate_match", async (data) => {
-    if (!data.matchId) return;
-    const room = `${data.matchId}-spectators`;
-    socket.leave(room);
-    const sockets = await io.in(room).fetchSockets();
-    io.in(room).emit("spectator_count", { count: sockets.length });
   });
 
   socket.on("disconnecting", async () => {

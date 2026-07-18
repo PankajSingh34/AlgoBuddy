@@ -140,7 +140,12 @@ public class PracticeService {
             LocalDate clientLocalDate = null;
             if (request.getLocalDate() != null) {
                 try {
-                    clientLocalDate = LocalDate.parse(request.getLocalDate());
+                    LocalDate parsed = LocalDate.parse(request.getLocalDate());
+                    LocalDate today = LocalDate.now();
+                    LocalDate yesterday = today.minusDays(1);
+                    if (!parsed.isBefore(yesterday) && !parsed.isAfter(today)) {
+                        clientLocalDate = parsed;
+                    }
                 } catch (Exception e) {
                     // Ignore parse errors, fallback to default behavior
                 }

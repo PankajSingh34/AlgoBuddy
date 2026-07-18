@@ -799,19 +799,6 @@ export default function PracticePage() {
                     </div>
                   </div>
 
-                  {/* Company specific filter badge indicator */}
-                  {selectedCompanyFilter !== "All" && (
-                    <div className="flex items-center gap-2 text-xs font-bold bg-purple-500/10 text-primary dark:bg-purple-950/20 dark:text-purple-400 px-3.5 py-1.5 rounded-xl w-fit">
-                      <span>Filtering by company: {selectedCompanyFilter}</span>
-                      <button
-                        onClick={() => { setSelectedCompanyFilter("All"); setCurrentPage(1); }}
-                        className="font-black text-purple-600 dark:text-purple-300 hover:opacity-85 ml-1.5"
-                      >
-                        ✕ Remove
-                      </button>
-                    </div>
-                  )}
-
                   {/* Problem Table */}
                   <div className="overflow-x-auto bg-white dark:bg-[#1a1b1e] border border-slate-100 dark:border-neutral-800/80 rounded-2xl shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <table className="w-full text-left border-collapse min-w-[700px]">

@@ -304,7 +304,7 @@ export default function DPVisualizer() {
     setPlaying(false);
   }, [problem, fibN, lisArr, ksWeights, ksValues, ksW, lcsS1, lcsS2]);
 
-  useEffect(() => { buildSteps(); }, [problem]);
+  useEffect(() => { buildSteps(); }, [buildSteps]);
 
   useEffect(() => {
     if (!playing) { clearInterval(intervalRef.current); return; }

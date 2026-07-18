@@ -47,7 +47,7 @@ public class MySheetController {
     @ApiResponse(responseCode = "200", description = "Successfully added to sheet")
     public ResponseEntity<Void> addToSheet(@CurrentUserId UUID userId,
                                            @Valid @RequestBody MySheetRequestDto request) {
-        mySheetService.addToSheet(userId, request.getProblemId(), request.getNote(), request.getIsPublic());
+        mySheetService.addToSheet(userId, request.getProblemId(), request.getNote(), request.getIsPublic(), request.getSharedNotes());
         return ResponseEntity.ok().build();
     }
 
