@@ -37,17 +37,6 @@ export async function POST(request) {
       return jsonResponse({ error: "This job is not open for applications" }, 400);
     }
 
-    const { data: existing, error: existingError } = await supabase
-      .from("applications")
-      .select("id")
-      .eq("student_id", authResult.user.id)
-      .eq("job_id", jobId)
-      .maybeSingle();
-
-    if (existing) {
-      return jsonResponse({ error: "You have already applied to this job" }, 409);
-    }
-
     const meta = authResult.user.user_metadata || {};
     const studentName = meta.name || authResult.user.email?.split("@")[0] || "Student";
     const studentBranch = meta.branch || null;
@@ -72,6 +61,9 @@ export async function POST(request) {
       .single();
 
     if (insertError) {
+      if (insertError.code === '23505') {
+        return jsonResponse({ error: "You have already applied to this job" }, 409);
+      }
       console.error("[/api/applications POST] Supabase error:", insertError.message);
       return jsonResponse({ error: insertError.message }, 500);
     }
