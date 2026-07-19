@@ -106,7 +106,6 @@ export default function ArenaPage() {
   const [leaderboardFilter, setLeaderboardFilter] = useState("Global");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
-  const [hasFreeze, setHasFreeze] = useState(false);
 
   // Tournament Timer State
   const [tournamentTimeLeft, setTournamentTimeLeft] = useState({
@@ -114,6 +113,7 @@ export default function ArenaPage() {
   });
   const [tournamentFilter, setTournamentFilter] = useState("Upcoming");
   const [badgeCategory, setBadgeCategory] = useState("All");
+  const [hasFreeze, setHasFreeze] = useState(false);
 
   const calculateRank = (xp) => {
     if (xp >= 10000) return { name: "Grandmaster", Icon: Crown, color: "text-purple-500", ringColor: "border-purple-500" };
@@ -369,7 +369,7 @@ export default function ArenaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_300px] gap-6">
 
           {/* ─── Column 1: Left Sidebar ────────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Navigation Menu */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-3 shadow-sm">
               <nav className="space-y-0.5">
@@ -1204,23 +1204,121 @@ export default function ArenaPage() {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <Flame size={32} className="mx-auto mb-2 text-amber-500 animate-pulse group-hover:scale-110 transition-transform" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{streakData?.current || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Current Streak</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-amber-500/30 animate-in zoom-in-95 duration-500 delay-200 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                          <Flame size={28} className="animate-pulse" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Current Streak</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.current || 0}</div>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <Trophy size={32} className="mx-auto mb-2 text-primary group-hover:scale-110 transition-transform" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{streakData?.longest || streakData?.best || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Longest Streak</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30 animate-in zoom-in-95 duration-500 delay-300 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-primary/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <Trophy size={28} />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Longest Streak</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">{streakData?.longest || 0}</div>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 text-center relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <Calendar size={32} className="mx-auto mb-2 text-indigo-500 group-hover:scale-110 transition-transform" />
-                        <div className="text-2xl font-black text-slate-800 dark:text-neutral-200 relative z-10">{(streakData?.longest || streakData?.best || 0) + (streakData?.current || 0)}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide relative z-10">Total Days Active</div>
+                      <div className="group bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-indigo-500/30 animate-in zoom-in-95 duration-500 delay-400 fill-mode-both relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-500"></div>
+                        <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 shrink-0">
+                          <Calendar size={28} />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Days Active</div>
+                          <div className="text-2xl font-black text-slate-800 dark:text-neutral-200">14</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Heatmap */}
+                    <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both relative">
+                      <div className="flex items-center justify-between mb-6">
+                        <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Activity Heatmap</h5>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-neutral-900 px-2 py-1 rounded-md">Last 30 Days</span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 overflow-x-auto pb-2">
+                        {/* Heatmap Grid */}
+                        <div className="flex gap-2 min-w-max">
+                          {/* Day Labels */}
+                          <div className="flex flex-col gap-2 pt-6 text-[10px] font-semibold text-slate-400 mr-2 justify-between">
+                            <span className="h-5 flex items-center">Mon</span>
+                            <span className="h-5 flex items-center">Wed</span>
+                            <span className="h-5 flex items-center">Fri</span>
+                          </div>
+                          {Array.from({ length: 6 }).map((_, weekIdx) => {
+                            // 6 columns (weeks), each 5 days (mon-fri approx) or 7 days.
+                            // The original design had 30 days flat. Let's make it a realistic 7x5 or 5x6 grid.
+                            // Let's use 5 weeks x 7 days = 35 days for a better layout.
+                            return (
+                              <div key={weekIdx} className="flex flex-col gap-2">
+                                {/* Week/Month Label roughly */}
+                                {weekIdx % 2 === 0 ? (
+                                  <div className="text-[10px] font-semibold text-slate-400 h-4 text-center">
+                                    {new Date(Date.now() - (5 - weekIdx) * 7 * 24 * 60 * 60 * 1000).toLocaleDateString(undefined, { month: 'short' })}
+                                  </div>
+                                ) : (
+                                  <div className="h-4"></div>
+                                )}
+                                {Array.from({ length: 7 }).map((_, dayIdx) => {
+                                  const totalDays = 35;
+                                  const daysAgo = totalDays - 1 - (weekIdx * 7 + dayIdx);
+                                  
+                                  // Don't render future days if daysAgo < 0
+                                  if (daysAgo < 0 || daysAgo >= 30) return <div key={dayIdx} className="w-5 h-5 opacity-0"></div>;
+
+                                  const current = streakData?.current || 0;
+                                  let isActive = daysAgo < current;
+                                  if (!isActive) {
+                                    isActive = (daysAgo * 7) % 11 < 4 && daysAgo < 25; 
+                                  }
+                                  
+                                  const d = new Date();
+                                  d.setDate(d.getDate() - daysAgo);
+                                  const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+                                  
+                                  // Intensity based on 'activity'
+                                  const intensityClass = isActive? ((daysAgo % 3 === 0)  
+                                  ? "bg-primary dark:bg-primary-light shadow-[0_0_8px_rgba(164,53,240,0.35)]"   
+                                  : "bg-primary/70 dark:bg-primary-light/70 shadow-[0_0_8px_rgba(164,53,240,0.25)]")
+                                  : "bg-slate-100 dark:bg-neutral-700/50";
+
+                                  return (
+                                    <div 
+                                      key={dayIdx} 
+                                      className={`w-5 h-5 rounded-[4px] transition-all duration-300 ${intensityClass} hover:scale-125 hover:ring-2 hover:ring-primary/50 cursor-pointer relative group`}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2.5 py-1.5 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl flex flex-col items-center">
+                                        <span>{isActive ? "Active Day 🔥" : "No Activity"}</span>
+                                        <span className="text-slate-400 font-medium">{dateStr}</span>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center gap-2 mt-6 justify-end text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span>Less</span>
+                        <div className="flex gap-1">
+                          <div className="w-3 h-3 rounded-[3px] bg-slate-100 dark:bg-neutral-700/50"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary/40"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary/70"></div>
+                          <div className="w-3 h-3 rounded-[3px] bg-primary dark:bg-primary-light"></div>
+                        </div>
+                        <span>More</span>
                       </div>
                     </div>
 
@@ -1295,13 +1393,249 @@ export default function ArenaPage() {
                     </div>
                   </div>
                 )}
+                {activeTab === "tournaments" && (
+                  <div className="w-full text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+                    {/* Hero Section */}
+                    <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 rounded-3xl p-8 relative overflow-hidden text-white flex flex-col md:flex-row items-center justify-between border border-indigo-500/30 shadow-2xl shadow-indigo-500/20">
+                      {/* Abstract Background Shapes */}
+                      <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                      
+                      <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                        <Trophy size={300} className="text-white transform -rotate-12" />
+                      </div>
+                      
+                      <div className="space-y-4 z-10 text-center md:text-left flex-1">
+                        <span className="text-[10px] bg-white/10 text-cyan-300 border border-cyan-400/30 font-bold uppercase tracking-wider px-3 py-1.5 rounded-full inline-flex items-center gap-2 mb-2 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                          Registrations Open
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-black tracking-tight drop-shadow-lg leading-tight">
+                          AlgoBuddy <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-primary-light">Weekly Cup</span>
+                        </h2>
+                        <p className="text-sm md:text-base text-indigo-200 max-w-lg font-medium">
+                          Compete in our premier weekly algorithmic showdown. Solve 4 problems in 90 minutes. 
+                          Win exclusive badges, massive XP, and global glory.
+                        </p>
+                      </div>
+
+                      <div className="z-10 mt-8 md:mt-0 flex flex-col items-center bg-black/20 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-4 text-indigo-200">
+                          <Clock size={16} />
+                          <span className="text-xs font-bold uppercase tracking-wider">Tournament Starts In</span>
+                        </div>
+                        <div className="flex gap-3">
+                          {[
+                            { label: 'Days', value: tournamentTimeLeft.days },
+                            { label: 'Hours', value: tournamentTimeLeft.hours },
+                            { label: 'Mins', value: tournamentTimeLeft.minutes },
+                            { label: 'Secs', value: tournamentTimeLeft.seconds }
+                          ].map((unit, idx) => (
+                            <div key={idx} className="flex flex-col items-center">
+                              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center border border-white/5 shadow-inner mb-2">
+                                <span className={`text-xl font-black ${unit.label === 'Secs' ? 'text-cyan-400' : 'text-white'}`}>
+                                  {unit.value.toString().padStart(2, '0')}
+                                </span>
+                              </div>
+                              <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest">{unit.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px overflow-x-auto no-scrollbar">
+                      {["Live", "Upcoming", "Past"].map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => setTournamentFilter(filter)}
+                          className={`px-4 py-2 text-sm font-bold relative transition-colors ${
+                            tournamentFilter === filter
+                              ? "text-primary dark:text-primary-light"
+                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300"
+                          }`}
+                        >
+                          {filter}
+                          {tournamentFilter === filter && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"></div>
+                          )}
+                          {filter === "Live" && (
+                            <span className="absolute top-1.5 -right-1 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Content Placeholder */}
+                    {tournamentFilter === "Live" ? (
+                      <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">Current Live Standings</h3>
+                          <span className="px-2 py-1 rounded bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            Live
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { rank: 1, name: "Alex Chen", score: 400, time: "45:12" },
+                            { rank: 2, name: "Sarah J.", score: 380, time: "48:05" },
+                            { rank: 3, name: "Mike T.", score: 350, time: "52:10" },
+                            { rank: 4, name: "You", score: 200, time: "15:00", isYou: true },
+                            { rank: 5, name: "David K.", score: 180, time: "18:20" },
+                          ].map((player) => (
+                            <div key={player.rank} className={`flex items-center justify-between p-3 rounded-xl border ${player.isYou ? 'bg-primary/5 border-primary/30' : 'bg-slate-50 dark:bg-neutral-900/50 border-slate-100 dark:border-neutral-800'}`}>
+                              <div className="flex items-center gap-4">
+                                <span className={`w-6 text-center font-black ${player.rank === 1 ? 'text-amber-500' : player.rank === 2 ? 'text-slate-400' : player.rank === 3 ? 'text-orange-700' : 'text-slate-500'}`}>#{player.rank}</span>
+                                <span className={`font-bold ${player.isYou ? 'text-primary' : 'text-slate-700 dark:text-neutral-200'}`}>{player.name}</span>
+                              </div>
+                              <div className="flex items-center gap-6 text-sm font-semibold">
+                                <span className="text-slate-500 dark:text-neutral-400">{player.time}</span>
+                                <span className="w-12 text-right text-slate-800 dark:text-neutral-100">{player.score} pts</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : tournamentFilter === "Upcoming" ? (
+                      <div className="space-y-4">
+                        <TournamentCard tournament={{
+                          title: "AlgoBuddy Weekly Cup",
+                          status: "upcoming",
+                          description: "The official weekly algorithmic showdown. Solve 4 problems in 90 minutes.",
+                          date: "Sunday, 6:00 PM UTC",
+                          duration: "90 mins",
+                          participants: 1250,
+                          prize: "10k XP + Weekly Champion Badge",
+                          color: "bg-primary/5 group-hover:bg-primary/10",
+                          iconBg: "bg-primary/10 text-primary"
+                        }} />
+                        <TournamentCard tournament={{
+                          title: "Dynamic Programming Sprint",
+                          status: "upcoming",
+                          description: "A rapid-fire contest focusing exclusively on DP problems. 1D, 2D, and Trees.",
+                          date: "Tuesday, 4:00 PM UTC",
+                          duration: "60 mins",
+                          participants: 840,
+                          prize: "5k XP",
+                          color: "bg-blue-500/5 group-hover:bg-blue-500/10",
+                          iconBg: "bg-blue-500/10 text-blue-500"
+                        }} />
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {[
+                          { title: "Graph Theory Masterclass", date: "Last Sunday", winner: "Alex Chen", score: "400/400", time: "38:15", yourRank: 12 },
+                          { title: "Beginner's Array Challenge", date: "2 weeks ago", winner: "Sarah J.", score: "400/400", time: "42:01", yourRank: 5 },
+                        ].map((past, idx) => (
+                          <div key={idx} className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 opacity-75 hover:opacity-100 transition-opacity">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-slate-800 dark:text-neutral-100 mb-1">{past.title}</h4>
+                              <span className="text-xs text-slate-500 dark:text-neutral-400">{past.date}</span>
+                            </div>
+                            <div className="flex items-center gap-8 text-sm">
+                              <div>
+                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Winner</span>
+                                <span className="font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5"><Crown size={14} className="text-amber-500" /> {past.winner}</span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Top Score</span>
+                                <span className="font-bold text-slate-700 dark:text-neutral-200">{past.score}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Your Rank</span>
+                                <span className="font-bold text-primary">#{past.yourRank}</span>
+                              </div>
+                            </div>
+                            <button className="px-4 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 text-xs font-bold text-slate-600 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-700/50 transition-colors">
+                              View Full Results
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 {activeTab === "badges" && (
-                  <div className="w-full text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out py-12">
-                    <Award size={64} className="mx-auto text-amber-500/50 mb-4" />
-                    <h2 className="text-2xl font-black text-slate-800 dark:text-neutral-200">Badges Gallery Coming Soon</h2>
-                    <p className="text-slate-500 dark:text-neutral-400 max-w-md mx-auto">
-                      Track your progression and flex your earned algorithm mastery badges here!
-                    </p>
+                  <div className="w-full text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+                    {/* Hero Section */}
+                    <div className="bg-gradient-to-br from-amber-600 via-orange-500 to-red-500 rounded-3xl p-8 relative overflow-hidden text-white flex flex-col md:flex-row items-center justify-between shadow-2xl shadow-orange-500/20">
+                      {/* Abstract Background Shapes */}
+                      <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white/20 rounded-full blur-3xl pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-yellow-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                      
+                      <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                        <Crown size={300} className="text-white transform rotate-12" />
+                      </div>
+                      
+                      <div className="space-y-4 z-10 text-center md:text-left flex-1">
+                        <span className="text-[10px] bg-white/20 text-white font-bold uppercase tracking-wider px-3 py-1.5 rounded-full inline-block mb-2 backdrop-blur-sm border border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                          Achievement Unlocked
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-black tracking-tight drop-shadow-md">
+                          Your Badges
+                        </h2>
+                        <p className="text-orange-100 max-w-lg text-sm md:text-base font-medium drop-shadow">
+                          Showcase your algorithmic mastery. Earn exclusive badges by completing challenges, winning tournaments, and maintaining long streaks.
+                        </p>
+                      </div>
+                      
+                      <div className="mt-8 md:mt-0 z-10 bg-white/10 p-5 rounded-2xl backdrop-blur-md border border-white/20 flex flex-col items-center min-w-[160px] shadow-xl">
+                        <span className="text-xs font-bold uppercase tracking-wider text-orange-200 mb-2">Total Earned</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-5xl font-black text-white drop-shadow-md">12</span>
+                          <span className="text-lg font-bold text-orange-300">/ 50</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Badge Category Filters */}
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+                      {["All", "Combat", "Learning", "Tournaments"].map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setBadgeCategory(category)}
+                          className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${
+                            badgeCategory === category
+                              ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 border border-slate-200 dark:border-neutral-700"
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Badges Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {[
+                        { title: "First Blood", desc: "Win your first duel", icon: <Award size={24} />, earned: true, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+                        { title: "Hot Streak", desc: "Win 3 duels in a row", icon: <Flame size={24} />, earned: true, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+                        { title: "Speed Demon", desc: "Solve under 2 minutes", icon: <Zap size={24} />, earned: true, color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+                        { title: "Champion", desc: "Win a weekly tournament", icon: <Trophy size={24} />, earned: false, color: "text-slate-400", bg: "bg-slate-100 dark:bg-neutral-800", border: "border-slate-200 dark:border-neutral-700" },
+                        { title: "Flawless", desc: "No syntax errors in a match", icon: <Star size={24} />, earned: false, color: "text-slate-400", bg: "bg-slate-100 dark:bg-neutral-800", border: "border-slate-200 dark:border-neutral-700" },
+                        { title: "Grandmaster", desc: "Reach 10,000 XP", icon: <Crown size={24} />, earned: false, color: "text-slate-400", bg: "bg-slate-100 dark:bg-neutral-800", border: "border-slate-200 dark:border-neutral-700" },
+                        { title: "Defender", desc: "Block 5 hacks", icon: <ShieldCheck size={24} />, earned: true, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                        { title: "Veteran", desc: "Play 100 matches", icon: <Users size={24} />, earned: false, color: "text-slate-400", bg: "bg-slate-100 dark:bg-neutral-800", border: "border-slate-200 dark:border-neutral-700" },
+                      ].map((badge, idx) => (
+                        <div key={idx} className={`relative p-5 rounded-2xl border flex flex-col items-center text-center transition-all duration-300 ${badge.earned ? `${badge.border} bg-white dark:bg-neutral-800 shadow-sm hover:shadow-md hover:-translate-y-1` : `${badge.border} ${badge.bg} opacity-60 grayscale hover:grayscale-0`}`}>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${badge.bg} ${badge.color}`}>
+                            {badge.icon}
+                          </div>
+                          <h4 className={`font-bold text-sm mb-1 ${badge.earned ? 'text-slate-800 dark:text-neutral-100' : 'text-slate-500 dark:text-neutral-400'}`}>{badge.title}</h4>
+                          <p className="text-[10px] text-slate-500 dark:text-neutral-400 leading-tight">{badge.desc}</p>
+                          {!badge.earned && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/5 dark:bg-black/20 rounded-2xl opacity-0 hover:opacity-100 transition-opacity">
+                              <span className="text-xs font-bold text-slate-700 dark:text-neutral-300 bg-white/90 dark:bg-neutral-800/90 px-2 py-1 rounded shadow-sm backdrop-blur-sm">Locked</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1309,7 +1643,7 @@ export default function ArenaPage() {
           </main>
 
           {/* ─── Column 3: Right Sidebar ───────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Daily Streak Card */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
