@@ -1591,8 +1591,59 @@ export default function ArenaPage() {
                           iconBg: "bg-blue-500/10 text-blue-500"
                         }} />
                       </div>
-                    ) : tournamentFilter === "Past" ? (
-                      <div className="space-y-4">
+                    ) : (
+                      <div className="space-y-8">
+                        {/* Hall of Fame Podium */}
+                        <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm">
+                          <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200 mb-8 flex items-center gap-2">
+                            <Trophy className="text-amber-500" size={18} /> Hall of Fame - All Time
+                          </h3>
+                          <div className="flex items-end justify-center gap-4 md:gap-8 h-48 mt-8">
+                            {/* 2nd Place */}
+                            <div className="flex flex-col items-center group">
+                              <div className="relative mb-2 transition-transform duration-300 group-hover:-translate-y-2">
+                                <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Sarah J." className="w-12 h-12 rounded-full border-2 border-slate-300" />
+                                <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-slate-200 border-2 border-white dark:border-neutral-800 flex items-center justify-center text-xs font-bold text-slate-600 shadow-sm">2</div>
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 dark:text-neutral-300 mb-1">Sarah J.</span>
+                              <div className="w-20 md:w-24 h-24 bg-gradient-to-t from-slate-200 to-slate-100 dark:from-neutral-700 dark:to-neutral-600 rounded-t-lg border-t-4 border-slate-300 flex items-center justify-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-black/[0.03] dark:bg-white/[0.02]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(0,0,0,0.1) 1px, transparent 0)", backgroundSize: "8px 8px" }}></div>
+                                <span className="text-xl font-black text-slate-400">18K</span>
+                              </div>
+                            </div>
+                            
+                            {/* 1st Place */}
+                            <div className="flex flex-col items-center group z-10">
+                              <div className="relative mb-2 transition-transform duration-300 group-hover:-translate-y-2">
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                                  <Crown size={24} className="text-amber-400 drop-shadow-sm" />
+                                </div>
+                                <img src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="Alex Chen" className="w-16 h-16 rounded-full border-2 border-amber-400 ring-4 ring-amber-400/20" />
+                                <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-amber-400 border-2 border-white dark:border-neutral-800 flex items-center justify-center text-xs font-bold text-white shadow-sm">1</div>
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 dark:text-neutral-300 mb-1">Alex Chen</span>
+                              <div className="w-24 md:w-28 h-32 bg-gradient-to-t from-amber-200 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/40 rounded-t-lg border-t-4 border-amber-400 flex items-center justify-center relative overflow-hidden shadow-[0_-10px_20px_rgba(251,191,36,0.15)]">
+                                <div className="absolute inset-0 bg-black/[0.03] dark:bg-white/[0.02]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(0,0,0,0.1) 1px, transparent 0)", backgroundSize: "8px 8px" }}></div>
+                                <span className="text-2xl font-black text-amber-600 dark:text-amber-400 drop-shadow-sm">24K</span>
+                              </div>
+                            </div>
+
+                            {/* 3rd Place */}
+                            <div className="flex flex-col items-center group">
+                              <div className="relative mb-2 transition-transform duration-300 group-hover:-translate-y-2">
+                                <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="Mike T." className="w-12 h-12 rounded-full border-2 border-orange-700/50" />
+                                <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-orange-700/50 border-2 border-white dark:border-neutral-800 flex items-center justify-center text-xs font-bold text-white shadow-sm">3</div>
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 dark:text-neutral-300 mb-1">Mike T.</span>
+                              <div className="w-20 md:w-24 h-20 bg-gradient-to-t from-orange-900/20 to-orange-800/20 rounded-t-lg border-t-4 border-orange-700/50 flex items-center justify-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-black/[0.03] dark:bg-white/[0.02]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(0,0,0,0.1) 1px, transparent 0)", backgroundSize: "8px 8px" }}></div>
+                                <span className="text-xl font-black text-orange-700/70 dark:text-orange-600/70">15K</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
                         {[
                           { title: "Graph Theory Masterclass", date: "Last Sunday", winner: "Alex Chen", score: "400/400", time: "38:15", yourRank: 12 },
                           { title: "Beginner's Array Challenge", date: "2 weeks ago", winner: "Sarah J.", score: "400/400", time: "42:01", yourRank: 5 },
