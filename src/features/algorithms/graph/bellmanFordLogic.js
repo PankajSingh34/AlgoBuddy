@@ -18,6 +18,7 @@ export function* bellmanFordGenerator(nodes, edges, startNode) {
     phase: "relaxing",
     negativeCycle: false,
     description: `Initialize: distance to ${startNode} = 0, all others = ∞`,
+      line: 0,
   };
 
   const V = nodeIds.length;
@@ -37,6 +38,7 @@ export function* bellmanFordGenerator(nodes, edges, startNode) {
         phase: "relaxing",
         negativeCycle: false,
         description: `Pass ${pass}: checking edge ${from} → ${to} (weight: ${w})`,
+      line: 0,
       };
       
       if (distances[from] !== Infinity && distances[from] + w < distances[to]) {
@@ -52,6 +54,7 @@ export function* bellmanFordGenerator(nodes, edges, startNode) {
           phase: "relaxing",
           negativeCycle: false,
           description: `Relaxed! dist[${to}] updated to ${distances[to]} via ${from}`,
+      line: 0,
         };
       }
     }

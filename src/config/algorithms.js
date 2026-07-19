@@ -1999,4 +1999,93 @@ export const algorithmRegistry = {
     import("@/app/visualizer/string/palindrome-check/page")
   ),
 },
+"string/character-frequency": {
+  metadata: {
+    title: "Character Frequency | AlgoBuddy",
+    description:
+      "Visualize the Character Frequency algorithm with step-by-step animation.",
+    keywords: [
+      "Character Frequency",
+      "String",
+      "HashMap",
+      "Frequency Counter",
+      "Character Frequency Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/character-frequency/page")
+  ),
+},
+"string/anagram-check": {
+  metadata: {
+    title: "Anagram Check | AlgoBuddy",
+    description:
+      "Visualize the Anagram Check algorithm with step-by-step animation.",
+    keywords: [
+      "Anagram Check",
+      "String",
+      "HashMap",
+      "Anagram Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/anagram-check/page")
+  ),
+},
+"string/longest-common-prefix": {
+  metadata: {
+    title: "Longest Common Prefix | AlgoBuddy",
+    description:
+      "Visualize the Longest Common Prefix algorithm with step-by-step animation.",
+    keywords: [
+      "Longest Common Prefix",
+      "LCP",
+      "String",
+      "String Visualizer",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/longest-common-prefix/page")
+  ),
+},
+"string/kmp-algorithm": {
+  metadata: {
+    title: "KMP Algorithm | AlgoBuddy",
+    description:
+      "Visualize the Knuth-Morris-Pratt string matching algorithm step by step.",
+    keywords: [
+      "KMP",
+      "Knuth Morris Pratt",
+      "Pattern Matching",
+      "String",
+    ],
+    robots: "index,follow",
+  },
+  component: dynamic(() =>
+    import("@/app/visualizer/string/kmp-algorithm/page")
+  ),
+},
+"string/rabin-karp": {
+  metadata: {
+    title: "Rabin-Karp Algorithm Visualizer | AlgoBuddy",
+    description:
+      "Learn and visualize the Rabin-Karp string matching algorithm step by step using rolling hash, interactive animations, code examples, and quizzes.",
+    keywords: [
+      "Rabin-Karp",
+      "String Matching",
+      "Pattern Matching",
+      "Rolling Hash",
+      "Algorithms",
+      "AlgoBuddy",
+    ],
+    category: "String",
+    difficulty: "Medium",
+  },
+},
 };

@@ -15,4 +15,5 @@ public class MySheetRequestDto {
     private String problemId;
     private String note;
     private Boolean isPublic;
+    private Boolean sharedNotes;
 }

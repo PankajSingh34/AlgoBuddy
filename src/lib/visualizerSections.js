@@ -81,6 +81,35 @@ export const sections = [
             name: "Palindrome Check",
             path: "/visualizer/string/palindrome-check",
           },
+          {
+            name: "Character Frequency",
+            path: "/visualizer/string/character-frequency",
+          },
+          {
+            name: "Anagram Check",
+            path: "/visualizer/string/anagram-check",
+          },
+          {
+            name: "Longest Common Prefix",
+            path: "/visualizer/string/longest-common-prefix",
+          },
+        ],
+      },
+      {
+        title: "Pattern Matching",
+        items: [
+          {
+            name: "KMP Algorithm",
+            path: "/visualizer/string/kmp-algorithm",
+          },
+          {
+            name: "Rabin-Karp",
+            path: "/visualizer/string/rabin-karp",
+          },
+          {
+            name: "Z Algorithm",
+            path: "/visualizer/string/z-algorithm",
+          },
         ],
       },
     ],

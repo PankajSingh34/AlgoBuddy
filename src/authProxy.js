@@ -44,7 +44,6 @@ export async function proxy(request) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              sameSite: "strict",
               secure: process.env.NODE_ENV === "production",
             }),
           );
@@ -54,25 +53,23 @@ export async function proxy(request) {
   );
 
   const { data: { user }, error } = await supabase.auth.getUser();
+// Forward the verified user to route handlers so they can skip
+// a redundant getUser() call, cutting auth latency in half.
+const requestHeaders = new Headers(request.headers);
 
-  // Forward the verified user to route handlers so they can skip
-  // a redundant getUser() call, cutting auth latency in half.
-  const requestHeaders = new Headers(request.headers);
+// Always strip client-supplied identity headers first
+requestHeaders.delete('x-user-id');
+requestHeaders.delete('x-user-email');
 
-  // Always strip client-supplied identity headers first
-  requestHeaders.delete('x-user-id');
-  requestHeaders.delete('x-user-email');
+if (user) {
+  // Only set after Supabase has verified the session
+  requestHeaders.set('x-user-id', user.id);
+  requestHeaders.set('x-user-email', user.email || '');
+}
 
-  if (user) {
-    // Only set after Supabase has verified the session
-    requestHeaders.set('x-user-id', user.id);
-    requestHeaders.set('x-user-email', user.email || '');
-  }
-
-  supabaseResponse = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-
+supabaseResponse = NextResponse.next({
+  request: { headers: requestHeaders },
+});
   const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
@@ -87,10 +84,6 @@ export async function proxy(request) {
     isStateChangingMethod(request.method) &&
     !CSRF_EXEMPT_ROUTES.has(pathname)
   ) {
-    if (request.nextUrl.pathname.startsWith('/api/chatbot')) {
-      return NextResponse.next();
-    }
-
     if (!validateCsrfOrigin(request)) {
       return NextResponse.json(
         { error: "CSRF validation failed: untrusted origin" },

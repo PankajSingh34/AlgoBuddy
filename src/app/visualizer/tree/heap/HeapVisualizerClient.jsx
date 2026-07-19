@@ -8,7 +8,7 @@ import {
   computeTreeLayout,
 } from './heapVisualizerLogic';
 
-const DEFAULT_ARRAY = [50, 30, 40, 10, 20, 35, 15];
+const DEFAULT_ARRAY = [10, 15, 30, 40, 50, 35, 45];
 
 export default function HeapVisualizerClient() {
   const [heapType, setHeapType] = useState('min');
@@ -46,14 +46,14 @@ export default function HeapVisualizerClient() {
   const handleInsert = () => {
     const value = parseInt(inputValue, 10);
     if (Number.isNaN(value)) return;
-    const currentArray = currentStep.array;
+    const currentArray = steps.length > 0 ? steps[steps.length - 1].array : array;
     const newSteps = generateInsertSteps(currentArray, value, heapType);
     runSteps(newSteps);
     setInputValue('');
   };
 
   const handleExtract = () => {
-    const currentArray = currentStep.array;
+    const currentArray = steps.length > 0 ? steps[steps.length - 1].array : array;
     if (currentArray.length === 0) return;
     const newSteps = generateExtractSteps(currentArray, heapType);
     runSteps(newSteps);
@@ -75,7 +75,8 @@ export default function HeapVisualizerClient() {
 
   const handleHeapTypeChange = (type) => {
     setHeapType(type);
-    const newSteps = generateHeapifySteps(currentStep.array, type);
+    const currentArray = steps.length > 0 ? steps[steps.length - 1].array : array;
+    const newSteps = generateHeapifySteps(currentArray, type);
     runSteps(newSteps);
   };
 
@@ -114,10 +115,10 @@ export default function HeapVisualizerClient() {
         <div className="border rounded-xl p-4 space-y-3">
           <h3 className="text-xs font-semibold uppercase text-gray-500">Heap Type</h3>
           <div className="flex gap-2">
-            <button onClick={() => handleHeapTypeChange('min')} className={`flex-1 py-2 rounded-lg font-medium ${heapType === 'min' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}>
+            <button onClick={() => handleHeapTypeChange('min')} disabled={isPlaying} className={`flex-1 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed ${heapType === 'min' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}>
               Min-Heap
             </button>
-            <button onClick={() => handleHeapTypeChange('max')} className={`flex-1 py-2 rounded-lg font-medium ${heapType === 'max' ? 'bg-purple-600 text-white' : 'bg-gray-100'}`}>
+            <button onClick={() => handleHeapTypeChange('max')} disabled={isPlaying} className={`flex-1 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed ${heapType === 'max' ? 'bg-purple-600 text-white' : 'bg-gray-100'}`}>
               Max-Heap
             </button>
           </div>
@@ -126,19 +127,19 @@ export default function HeapVisualizerClient() {
         <div className="border rounded-xl p-4 space-y-3">
           <h3 className="text-xs font-semibold uppercase text-gray-500">Insert / Extract</h3>
           <div className="flex gap-2">
-            <input type="number" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Value" className="flex-1 border rounded-lg px-3 py-2 text-sm" />
-            <button onClick={handleInsert} className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium">
+            <input type="number" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={isPlaying} placeholder="Value" className="flex-1 border rounded-lg px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed" />
+            <button onClick={handleInsert} disabled={isPlaying} className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
               Insert
             </button>
           </div>
-          <button onClick={handleExtract} className="w-full py-2 rounded-lg bg-rose-600 text-white text-sm font-medium">
+          <button onClick={handleExtract} disabled={isPlaying} className="w-full py-2 rounded-lg bg-rose-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
             Extract {heapType === 'min' ? 'Min' : 'Max'} (Root)
           </button>
         </div>
 
         <div className="border rounded-xl p-4 space-y-3">
           <h3 className="text-xs font-semibold uppercase text-gray-500">Dataset</h3>
-          <button onClick={handleRandomArray} className="w-full py-2 rounded-lg bg-indigo-100 text-indigo-700 text-sm font-medium">
+          <button onClick={handleRandomArray} disabled={isPlaying} className="w-full py-2 rounded-lg bg-indigo-100 text-indigo-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
             Generate Random Array
           </button>
           <button onClick={handleReset} className="w-full py-2 rounded-lg bg-gray-100 text-sm font-medium">

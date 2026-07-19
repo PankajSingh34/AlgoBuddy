@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
     const supabase = getSupabaseAnonClient();
     const { data, error } = await supabase
       .from("my_sheet")
-      .select("problem_id, added_at, note")
+      .select("problem_id, added_at, note, shared_notes")
       .eq("user_id", userId)
       .eq("is_public", true);
 
@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
     const items = (data || []).map((row) => ({
       problemId: row.problem_id,
       addedAt: row.added_at,
-      note: row.note || "",
+      note: row.shared_notes ? (row.note || "") : "",
     }));
 
     return jsonResponse({ items });

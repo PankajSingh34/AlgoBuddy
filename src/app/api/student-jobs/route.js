@@ -7,6 +7,7 @@ import { getClientIp } from "@/lib/getClientIp";
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const SEARCH_SAFE_PATTERN = /^[\w\s.,'&-]+$/;
 
 function parsePagination(searchParams) {
   const page = Number(searchParams.get("page") ?? DEFAULT_PAGE);
@@ -27,6 +28,13 @@ function parsePagination(searchParams) {
   };
 }
 
+function sanitizeSearchTerm(raw) {
+  // Strip anything that isn't a "safe" character for a PostgREST filter value,
+  // and escape commas/parens defensively in case they slip through.
+  const cleaned = raw.replace(/[^\w\s.,'&-]/g, "");
+  return cleaned.replace(/[,()]/g, "");
+}
+
 export async function GET(request) {
   try {
     const ip = getClientIp(request.headers);
@@ -38,7 +46,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
-    const search = (searchParams.get("search") || "").trim();
+    const rawSearch = (searchParams.get("search") || "").trim();
 
     if (pagination.error) {
       return jsonResponse({
@@ -52,12 +60,14 @@ export async function GET(request) {
 
     const { page, limit, skip } = pagination;
 
-    if (search && search.length < 2) {
+    if (rawSearch && rawSearch.length < 2) {
       return jsonResponse({
         error: "Search term must be at least 2 characters.",
         jobs: [], totalPages: 0, currentPage: page, totalJobs: 0,
       }, 400);
     }
+
+    const search = sanitizeSearchTerm(rawSearch);
 
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);

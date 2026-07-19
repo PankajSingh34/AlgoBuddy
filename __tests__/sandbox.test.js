@@ -39,6 +39,15 @@ describe("executeCode — sandbox guarantees", () => {
     expect(result.output).toBe("1\n2\n3");
   });
 
+  test("handles template literals correctly without syntax errors", async () => {
+    const result = await executeCode(`
+      const val = 42;
+      console.log(\`value is \${val}\`);
+    `);
+    expect(result.status).toBe(EXECUTION_STATUS.SUCCESS);
+    expect(result.output).toContain("value is 42");
+  });
+
   // ── Syntax error ──────────────────────────────────────────────────
   test("returns RUNTIME_ERROR for syntax errors (never reaches execution)", async () => {
     const result = await executeCode(`const x = (`); // unterminated

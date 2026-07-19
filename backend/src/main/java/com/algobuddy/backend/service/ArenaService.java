@@ -33,6 +33,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 
 @Service
 @RequiredArgsConstructor
@@ -201,9 +204,6 @@ public class ArenaService {
 
     @Transactional
     public void initMatch(UUID requestingUserId, com.algobuddy.backend.dto.InitMatchRequest request) {
-        if (request.getMatchId() == null || request.getMatchId().isEmpty()) {
-            throw new IllegalArgumentException("matchId is required");
-        }
 
         checkInitMatchRateLimit(requestingUserId);
 
@@ -212,7 +212,7 @@ public class ArenaService {
         }
 
         UUID opponentId;
-        if (request.getMatchId() != null && request.getMatchId().startsWith("mock-match-")) {
+        if (request.getMatchId().startsWith("mock-match-")) {
             // Bypass socket matchmaking verification for offline practice matches against AI Bots
             opponentId = UUID.fromString("00000000-0000-0000-0000-000000000000");
         } else {
@@ -235,6 +235,9 @@ public class ArenaService {
     }
 
     private UUID verifyMatchmakingPair(String matchId, UUID requestingUserId) {
+        if (matchId == null || !matchId.matches("^(match|mock-match)-[a-zA-Z0-9-]+$")) {
+            throw new IllegalArgumentException("Invalid matchId format.");
+        }
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -246,6 +249,12 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+
+            // Forward the authenticated user's JWT token to the socket server
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -278,6 +287,9 @@ public class ArenaService {
     }
 
     UUID verifyMatchResult(String matchId, UUID requestingUserId) {
+        if (matchId == null || !matchId.matches("^(match|mock-match)-[a-zA-Z0-9-]+$")) {
+            throw new IllegalArgumentException("Invalid matchId format.");
+        }
         String socketServerUrl = System.getenv("SOCKET_SERVER_URL");
         if (socketServerUrl == null || socketServerUrl.isEmpty()) {
             socketServerUrl = "http://localhost:4000";
@@ -289,6 +301,12 @@ public class ArenaService {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
+
+            // Forward the authenticated user's JWT token to the socket server
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
+            }
 
             int status = conn.getResponseCode();
             if (status == 200) {
@@ -355,17 +373,19 @@ public class ArenaService {
             throw new IllegalStateException("This match has expired and cannot accept results");
         }
 
-        boolean isWinner = request.isWinner();
+        boolean isWinner;
         final int MAX_RETRIES = 3;
+
+        if (matchIdStr.startsWith("mock-match-")) {
+            isWinner = request.isWinner();
+        } else {
+            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            isWinner = requestingUserId.equals(verifiedWinnerId);
+        }
+        final boolean finalIsWinner = isWinner;
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-
-                if (!matchIdStr.startsWith("mock-match-")) {
-                    UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
-                    isWinner = requestingUserId.equals(verifiedWinnerId);
-                }
-                final boolean finalIsWinner = isWinner;
 
                 // Execute each retry attempt in an isolated transaction.
                 final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);

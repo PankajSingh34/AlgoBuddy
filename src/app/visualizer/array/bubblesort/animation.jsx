@@ -124,14 +124,16 @@ const precomputeSteps = (inputArray) => {
         sorted: false, totalSteps: payload.totalSteps,
       });
     } else if (type === "early_completion") {
+      const prev = steps[steps.length - 1] || {};
       steps.push({
-        array: payload.arr,
-        comparisons: payload.comparisons, swaps: payload.swaps,
-        currentStep: payload.step,
+        array: payload?.arr || prev.array || [],
+        comparisons: payload?.comparisons || prev.comparisons || 0,
+        swaps: payload?.swaps || prev.swaps || 0,
+        currentStep: payload?.step || prev.currentStep || 0,
         currentIndices: { i: -1, j: -1 },
         currentPhase: "Completion Check",
         stepExplanation: "No swaps occurred; the array is already sorted.",
-        sorted: false, totalSteps: payload.totalSteps,
+        sorted: false, totalSteps: payload?.totalSteps || prev.totalSteps || 0,
       });
     } else if (type === "completed") {
       const last = steps[steps.length - 1] || {};

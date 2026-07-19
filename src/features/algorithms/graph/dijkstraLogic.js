@@ -22,6 +22,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     pq: [...pq],
     currentNode: startNode,
     description: `Initializing Dijkstra: start node ${startNode} distance set to 0`,
+    line: 3,
   };
 
   while (pq.length > 0) {
@@ -40,6 +41,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
       pq: [...pq],
       currentNode: u,
       description: `Processing node ${u} with current shortest distance ${d}`,
+      line: 6,
     };
 
     if (targetNode && String(u) === String(targetNode)) {
@@ -51,6 +53,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
         pq: [...pq],
         currentNode: u,
         description: `Target node ${u} reached! Shortest path distance is ${d}.`,
+        line: 6,
       };
       return; // Early exit
     }
@@ -71,6 +74,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
           pq: [...pq],
           currentNode: u,
           description: `Checking edge ${u} -> ${v} (weight: ${weight})`,
+          line: 8,
         };
 
         if (newDist < distances[v]) {
@@ -85,6 +89,7 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
             pq: [...pq],
             currentNode: u,
             description: `Relaxed distance to ${v}: ${newDist}`,
+            line: 10,
           };
         }
       }
@@ -101,5 +106,6 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     description: (targetNode && !visited.has(targetNode))
       ? `Target node ${targetNode} is unreachable.`
       : `Dijkstra's algorithm complete`,
+    line: 5,
   };
 }

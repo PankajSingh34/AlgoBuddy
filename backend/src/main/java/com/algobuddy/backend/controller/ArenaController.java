@@ -58,7 +58,7 @@ public class ArenaController {
     @PostMapping("/match/init")
     @Operation(summary = "Initialize match", description = "Creates a match record before the duel begins. Must be called when both players are matched.")
     @ApiResponse(responseCode = "200", description = "Match initialized successfully")
-    public ResponseEntity<String> initMatch(@CurrentUserId UUID userId, @RequestBody InitMatchRequest request) {
+    public ResponseEntity<String> initMatch(@CurrentUserId UUID userId, @Valid @RequestBody InitMatchRequest request) {
         arenaService.initMatch(userId, request);
         return ResponseEntity.ok("Match initialized successfully");
     }

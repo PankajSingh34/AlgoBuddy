@@ -19,28 +19,7 @@ export function getSupabaseConfig() {
   return config;
 }
 
-export async function getAuthenticatedUser() {
-  // If the middleware has already verified the user, use that directly
-  // to avoid a redundant getUser() network call.
-  try {
-    const nextHeaders = await import("next/headers");
-    const headersList = await nextHeaders.headers();
-    const middlewareUserId = headersList.get("x-user-id");
-    const middlewareUserEmail = headersList.get("x-user-email");
-    if (middlewareUserId) {
-      return {
-        success: true,
-        user: {
-          id: middlewareUserId,
-          email: middlewareUserEmail || "",
-        },
-      };
-    }
-  } catch {
-    // headers() is not available in all contexts (e.g. WebSocket server).
-    // Fall through to the normal getUser() path.
-  }
-
+export async function getAuthenticatedUser() {  
   const config = getSupabaseConfig();
   if (!config) {
     console.error("[Authentication Helper] Config error: Missing or invalid Supabase environment variables.");
@@ -77,13 +56,22 @@ export async function getAuthenticatedUser() {
     // Race getUser() against a 5-second timeout so that network issues
     // (ConnectTimeoutError to Supabase) fail fast instead of blocking
     // every API route for the full 10-second fetch timeout.
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Auth check timed out")), 5000)
-    );
-    const { data, error } = await Promise.race([
-      client.auth.getUser(),
-      timeoutPromise,
-    ]);
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Auth check timed out")), 5000);
+    }).catch(() => {});
+
+    let raceResult;
+    try {
+      raceResult = await Promise.race([
+        client.auth.getUser(),
+        timeoutPromise,
+      ]);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    const { data, error } = raceResult;
 
     if (error) {
       console.error("[Authentication Helper] Auth provider error during getUser:", error.message || error);
