@@ -28,6 +28,7 @@ export function* tarjanGenerator(adj, nodes) {
     ids: { ...ids },
     low: { ...low },
     description: "Initializing Tarjan's Algorithm: variables (id, low) set to -1.",
+      line: 0,
   };
 
   function* dfs(u) {
@@ -44,6 +45,7 @@ export function* tarjanGenerator(adj, nodes) {
       ids: { ...ids },
       low: { ...low },
       description: `Visiting ${u}: id=${ids[u]}, low=${low[u]}, pushed to stack.`,
+      line: 0,
     };
 
     const neighbors = adj[u] || [];
@@ -59,6 +61,7 @@ export function* tarjanGenerator(adj, nodes) {
         ids: { ...ids },
         low: { ...low },
         description: `Checking edge ${u} → ${neighborId}`,
+      line: 0,
       };
 
       if (ids[neighborId] === -1) {
@@ -74,6 +77,7 @@ export function* tarjanGenerator(adj, nodes) {
           ids: { ...ids },
           low: { ...low },
           description: `Returned to ${u} from ${neighborId}. Updated low[${u}] = ${low[u]}.`,
+      line: 0,
         };
       } else if (onStack[neighborId]) {
         // Visited and on stack (back edge)
@@ -87,6 +91,7 @@ export function* tarjanGenerator(adj, nodes) {
           ids: { ...ids },
           low: { ...low },
           description: `Node ${neighborId} is on stack. Updated low[${u}] = ${low[u]}.`,
+      line: 0,
         };
       }
     }
@@ -112,6 +117,7 @@ export function* tarjanGenerator(adj, nodes) {
         ids: { ...ids },
         low: { ...low },
         description: `ids[${u}] == low[${u}]. Popped SCC: [${currentScc.join(', ')}]`,
+      line: 0,
       };
     }
   }
@@ -131,5 +137,6 @@ export function* tarjanGenerator(adj, nodes) {
     ids: { ...ids },
     low: { ...low },
     description: `Tarjan's Algorithm complete. Found ${sccs.length} SCCs.`,
+      line: 0,
   };
 }

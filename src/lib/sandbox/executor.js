@@ -76,9 +76,9 @@ async function executeCode(code) {
     // Create a context within the isolate
     context = await isolate.createContext();
 
-    // Escape template literal sequences in user code to prevent injection
-    // via backtick or ${} sequences at string-creation time.
-    const escapedCode = code.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+    // Set user code as a global in the context to prevent injection and escaping issues
+    await context.global.set("__userCode__", code);
+
     const wrappedCode = `
       (function() {
         const outputLines = [];
@@ -97,7 +97,7 @@ async function executeCode(code) {
           },
         };
         
-        ${escapedCode}
+        eval(__userCode__);
         
         return outputLines.join("\\n");
       })()

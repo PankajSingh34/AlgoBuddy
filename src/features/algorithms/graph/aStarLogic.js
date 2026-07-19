@@ -70,6 +70,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
     phase: "searching",
     goalNode,
     description: `A* initialized. Start: ${startNode}, Goal: ${goalNode}. g(${startNode})=0, f(${startNode})=${fScore[startNode].toFixed(1)}`,
+    line: 5,
   };
 
   while (openSet.size > 0) {
@@ -96,6 +97,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
         goalNode,
         result: finalPath,
         description: `Goal ${goalNode} reached! Path: ${finalPath.join(" → ")} (cost: ${gScore[goalNode].toFixed(1)})`,
+        line: 8,
       };
       return;
     }
@@ -113,6 +115,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
       phase: "searching",
       goalNode,
       description: `Expanding node ${current} (f=${fScore[current].toFixed(1)})`,
+      line: 7,
     };
 
     const neighbors = adj[current] || [];
@@ -131,6 +134,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
         phase: "searching",
         goalNode,
         description: `Checking edge ${current} → ${neighbor} (weight: ${weight}, tentative g: ${tentativeG.toFixed(1)})`,
+        line: 9,
       };
 
       if (tentativeG < gScore[neighbor]) {
@@ -149,6 +153,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
           phase: "searching",
           goalNode,
           description: `Updated ${neighbor}: g=${gScore[neighbor].toFixed(1)}, h=${heuristic(neighbor, goalNode).toFixed(1)}, f=${fScore[neighbor].toFixed(1)}`,
+          line: 11,
         };
       }
     }
@@ -165,5 +170,6 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
     phase: "no_path",
     goalNode,
     description: `No path exists from ${startNode} to ${goalNode}.`,
+    line: 6,
   };
 }

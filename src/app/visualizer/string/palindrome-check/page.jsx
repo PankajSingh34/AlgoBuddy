@@ -29,6 +29,14 @@ export default function Page() {
                 text: "Reverse String",
                 url: "../reverse-string",
             },
+            {
+              text: "Character Frequency",
+              url: "../character-frequency",
+            },
+            {
+              text: "Anagram Check",
+              url: "../anagram-check",
+            },
             ]}
         />
         }

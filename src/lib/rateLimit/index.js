@@ -229,9 +229,22 @@ export function shouldBypassRateLimit() {
   return process.env.DISABLE_RATE_LIMIT === "true";
 }
 
-export async function checkRateLimit(key) {
+const dynamicLimiters = new Map();
+
+export async function checkRateLimit(key, maxRequests, windowSeconds) {
   if (shouldBypassRateLimit()) {
     return { allowed: true, remaining: 999, retryAfter: 0 };
+  }
+  if (maxRequests !== undefined && windowSeconds !== undefined) {
+    const cacheKey = `${maxRequests}:${windowSeconds}`;
+    if (!dynamicLimiters.has(cacheKey)) {
+      dynamicLimiters.set(cacheKey, createRateLimiter({
+        maxRequests,
+        windowSeconds,
+        prefix: `dynamic-${cacheKey}`
+      }));
+    }
+    return dynamicLimiters.get(cacheKey).check(key);
   }
   return apiLimiter.check(key);
 }

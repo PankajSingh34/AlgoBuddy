@@ -113,6 +113,7 @@ export default function ArenaPage() {
   });
   const [tournamentFilter, setTournamentFilter] = useState("Upcoming");
   const [badgeCategory, setBadgeCategory] = useState("All");
+  const [hasFreeze, setHasFreeze] = useState(false);
 
   const calculateRank = (xp) => {
     if (xp >= 10000) return { name: "Grandmaster", Icon: Crown, color: "text-purple-500", ringColor: "border-purple-500" };
@@ -345,6 +346,16 @@ export default function ArenaPage() {
 
   const [spectatorModalOpen, setSpectatorModalOpen] = useState(false);
   const [spectatingMatch, setSpectatingMatch] = useState(null);
+  const [isLoadingTournaments, setIsLoadingTournaments] = useState(true);
+
+  useEffect(() => {
+    if (activeTab === "tournaments" && isLoadingTournaments) {
+      const timer = setTimeout(() => {
+        setIsLoadingTournaments(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, isLoadingTournaments]);
 
   const handleCreateMatchLaunch = (matchConfig) => {
     setCreateDuelOpen(false);
@@ -368,7 +379,7 @@ export default function ArenaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_300px] gap-6">
 
           {/* ─── Column 1: Left Sidebar ────────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Navigation Menu */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-3 shadow-sm">
               <nav className="space-y-0.5">
@@ -1343,6 +1354,53 @@ export default function ArenaPage() {
                         </button>
                       </div>
                     </div>
+
+                    <div className="bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="absolute -left-6 -bottom-6 opacity-5 text-indigo-500 pointer-events-none">
+                        <Shield size={160} />
+                      </div>
+                      <div className="relative z-10 text-center md:text-left flex-1">
+                        <h5 className="text-lg font-bold text-slate-800 dark:text-neutral-200 flex items-center justify-center md:justify-start gap-2">
+                          <Shield size={20} className="text-indigo-500" />
+                          Streak Freeze
+                        </h5>
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-2 leading-relaxed">
+                          Protect your hard-earned streak! A Streak Freeze saves your streak if you miss a day of coding. It will be consumed automatically.
+                        </p>
+                      </div>
+                      <div className="relative z-10 shrink-0">
+                        {hasFreeze ? (
+                          <div className="flex flex-col items-center">
+                            <button 
+                              onClick={() => setHasFreeze(false)}
+                              className="px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-xl text-sm font-bold shadow-inner flex items-center gap-2 border border-indigo-200 dark:border-indigo-800/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
+                            >
+                              <Shield size={16} />
+                              Equipped
+                            </button>
+                            <span className="text-[10px] text-slate-400 mt-2 font-semibold">Ready to protect your streak.</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <button 
+                              onClick={() => {
+                                if ((profile?.xp || 0) >= 500) {
+                                  setHasFreeze(true);
+                                  toast.success("Streak Freeze equipped!");
+                                } else {
+                                  toast.error("Not enough XP! You need 500 XP.");
+                                }
+                              }}
+                              className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 transition flex items-center gap-2 group"
+                            >
+                              <Shield size={16} className="group-hover:scale-110 transition-transform" />
+                              Equip Freeze
+                            </button>
+                            <span className="text-[10px] font-bold text-slate-500 mt-2">Cost: 500 XP</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
                 {activeTab === "tournaments" && (
@@ -1352,6 +1410,16 @@ export default function ArenaPage() {
                       {/* Abstract Background Shapes */}
                       <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none"></div>
                       <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                      
+                      {/* Dynamic Background Particles (Grid & Floating Orbs) */}
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+                        <div className="absolute top-[20%] left-[10%] w-2 h-2 rounded-full bg-cyan-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '3s' }}></div>
+                        <div className="absolute top-[60%] left-[30%] w-3 h-3 rounded-full bg-indigo-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+                        <div className="absolute top-[30%] right-[25%] w-1.5 h-1.5 rounded-full bg-cyan-300/50 blur-[1px] animate-pulse" style={{ animationDuration: '2.5s' }}></div>
+                        <div className="absolute bottom-[20%] right-[15%] w-2.5 h-2.5 rounded-full bg-purple-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '3.5s' }}></div>
+                        <div className="absolute top-[80%] left-[50%] w-2 h-2 rounded-full bg-cyan-400/40 blur-[1px] animate-pulse" style={{ animationDuration: '2s' }}></div>
+                      </div>
                       
                       <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
                         <Trophy size={300} className="text-white transform -rotate-12" />
@@ -1418,25 +1486,53 @@ export default function ArenaPage() {
                           ))}
                         </div>
                     </div>
+                    </div>
+
+                    {/* Player Stats Dashboard Card */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex flex-col border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Trophy size={12} className="text-amber-500" /> Tournaments Won</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">4</span>
+                      </div>
+                      <div className="flex flex-col md:border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Award size={12} className="text-purple-500" /> Average Rank</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">Top 12%</span>
+                      </div>
+                      <div className="flex flex-col border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Flame size={12} className="text-red-500" /> Best Win Streak</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">3</span>
+                      </div>
+                      <div className="flex flex-col relative group">
+                        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><TrendingUp size={12} className="text-emerald-500" /> Total Earnings</span>
+                        <span className="text-2xl font-black text-emerald-500 drop-shadow-sm">12,500 XP</span>
+                      </div>
+                    </div>
 
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-neutral-800 pb-px overflow-x-auto no-scrollbar">
-                      {["Live", "Upcoming", "Past"].map((filter) => (
+                    <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800/50 rounded-xl overflow-x-auto no-scrollbar">
+                      {[
+                        { id: "Live", icon: Play },
+                        { id: "Upcoming", icon: Calendar },
+                        { id: "Past", icon: History },
+                        { id: "Bracket", icon: Trophy }
+                      ].map((filter) => (
                         <button
-                          key={filter}
-                          onClick={() => setTournamentFilter(filter)}
-                          className={`px-4 py-2 text-sm font-bold relative transition-colors ${
-                            tournamentFilter === filter
-                              ? "text-primary dark:text-primary-light"
-                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300"
+                          key={filter.id}
+                          onClick={() => setTournamentFilter(filter.id)}
+                          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${
+                            tournamentFilter === filter.id
+                              ? "bg-white dark:bg-neutral-700 text-primary dark:text-primary-light shadow-sm"
+                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300 hover:bg-slate-200/50 dark:hover:bg-neutral-700/50"
                           }`}
                         >
-                          {filter}
-                          {tournamentFilter === filter && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"></div>
-                          )}
-                          {filter === "Live" && (
-                            <span className="absolute top-1.5 -right-1 flex h-2 w-2">
+                          <filter.icon size={16} className={tournamentFilter === filter.id ? "text-primary dark:text-primary-light" : "opacity-70"} />
+                          {filter.id}
+                          {filter.id === "Live" && (
+                            <span className="relative flex h-2 w-2 ml-1">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                             </span>
@@ -1476,7 +1572,26 @@ export default function ArenaPage() {
                         </div>
                       </div>
                     ) : tournamentFilter === "Upcoming" ? (
-                      <div className="space-y-4">
+                      isLoadingTournaments ? (
+                        <div className="space-y-4">
+                          {[1, 2].map((i) => (
+                            <div key={i} className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center">
+                              <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-neutral-700 animate-pulse shrink-0"></div>
+                              <div className="flex-1 w-full space-y-3">
+                                <div className="h-5 bg-slate-200 dark:bg-neutral-700 rounded w-1/3 animate-pulse"></div>
+                                <div className="h-4 bg-slate-200 dark:bg-neutral-700 rounded w-2/3 animate-pulse"></div>
+                                <div className="flex gap-4 pt-2">
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-16 animate-pulse"></div>
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-16 animate-pulse"></div>
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-24 animate-pulse"></div>
+                                </div>
+                              </div>
+                              <div className="w-full md:w-[140px] h-24 bg-slate-200 dark:bg-neutral-700 rounded-xl animate-pulse shrink-0 mt-4 md:mt-0"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
                         <TournamentCard tournament={{
                           title: "AlgoBuddy Weekly Cup",
                           status: "upcoming",
@@ -1500,7 +1615,7 @@ export default function ArenaPage() {
                           iconBg: "bg-blue-500/10 text-blue-500"
                         }} />
                       </div>
-                    ) : (
+                    ) : tournamentFilter === "Past" ? (
                       <div className="space-y-4">
                         {[
                           { title: "Graph Theory Masterclass", date: "Last Sunday", winner: "Alex Chen", score: "400/400", time: "38:15", yourRank: 12 },
@@ -1530,6 +1645,94 @@ export default function ArenaPage() {
                             </button>
                           </div>
                         ))}
+                      </div>
+                    ) : tournamentFilter === "Bracket" ? (
+                      <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm overflow-x-auto">
+                        <div className="min-w-[700px]">
+                          <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-neutral-200">Weekly Cup - Playoffs</h3>
+                            <div className="flex gap-4 text-xs font-bold text-slate-500">
+                              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Winner</span>
+                              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-neutral-600"></div> Eliminated</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between relative">
+                            {/* Round 1: Quarterfinals */}
+                            <div className="flex flex-col justify-around h-[400px] w-64 z-10">
+                              {[
+                                { p1: "Alex Chen", s1: 400, p2: "David K.", s2: 320, w: 1 },
+                                { p1: "Sarah J.", s1: 380, p2: "Mike T.", s2: 390, w: 2 },
+                                { p1: "You", s1: 400, p2: "Anna L.", s2: 350, w: 1, isYou: true },
+                                { p1: "John D.", s1: 310, p2: "Emma W.", s2: 370, w: 2 }
+                              ].map((match, i) => (
+                                <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 1 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 1 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p1}</span>
+                                    <span>{match.s1}</span>
+                                  </div>
+                                  <div className="h-px w-full bg-slate-100 dark:bg-neutral-800"></div>
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 2 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 2 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p2}</span>
+                                    <span>{match.s2}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Connecting Lines QF to SF */}
+                            <svg className="absolute left-64 top-0 w-16 h-full pointer-events-none stroke-slate-200 dark:stroke-neutral-700 stroke-2 fill-none" preserveAspectRatio="none">
+                              <path d="M0,50 L32,50 L32,150 L64,150" />
+                              <path d="M0,150 L32,150" />
+                              <path d="M0,250 L32,250 L32,350 L64,350" />
+                              <path d="M0,350 L32,350" />
+                            </svg>
+
+                            {/* Round 2: Semifinals */}
+                            <div className="flex flex-col justify-around h-[400px] w-64 ml-16 z-10">
+                              {[
+                                { p1: "Alex Chen", s1: 390, p2: "Mike T.", s2: 400, w: 2 },
+                                { p1: "You", s1: 400, p2: "Emma W.", s2: 380, w: 1, isYou: true }
+                              ].map((match, i) => (
+                                <div key={i} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow relative">
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 1 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 1 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p1}</span>
+                                    <span>{match.s1}</span>
+                                  </div>
+                                  <div className="h-px w-full bg-slate-100 dark:bg-neutral-800"></div>
+                                  <div className={`p-2 flex justify-between items-center text-sm ${match.w === 2 ? 'bg-emerald-50 dark:bg-emerald-900/10 font-bold text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-neutral-400 opacity-70'} ${match.isYou && match.w === 2 ? 'border-l-2 border-primary' : ''}`}>
+                                    <span>{match.p2}</span>
+                                    <span>{match.s2}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Connecting Lines SF to Final */}
+                            <svg className="absolute left-[34rem] top-0 w-16 h-full pointer-events-none stroke-slate-200 dark:stroke-neutral-700 stroke-2 fill-none" preserveAspectRatio="none">
+                              <path d="M0,150 L32,150 L32,250 L64,250" />
+                              <path d="M0,350 L32,350 L32,250" />
+                            </svg>
+
+                            {/* Round 3: Final */}
+                            <div className="flex flex-col justify-center h-[400px] w-64 ml-16 z-10">
+                              <div className="bg-white dark:bg-neutral-900 border-2 border-amber-400/50 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow relative ring-4 ring-amber-400/10">
+                                <div className="absolute top-0 right-0 p-1">
+                                  <Crown size={12} className="text-amber-500 opacity-50" />
+                                </div>
+                                <div className="p-3 flex justify-between items-center font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-base">
+                                  <span className="flex items-center gap-2"><Trophy size={14} /> You</span>
+                                  <span>400</span>
+                                </div>
+                                <div className="h-px w-full bg-amber-200 dark:bg-amber-900/50"></div>
+                                <div className="p-3 flex justify-between items-center text-sm text-slate-500 dark:text-neutral-400 opacity-70">
+                                  <span>Mike T.</span>
+                                  <span>395</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1618,7 +1821,7 @@ export default function ArenaPage() {
           </main>
 
           {/* ─── Column 3: Right Sidebar ───────────────────────────────────────── */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 h-max">
             {/* Daily Streak Card */}
             <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-500"></div>
@@ -1725,6 +1928,35 @@ export default function ArenaPage() {
                     Leaderboard is currently empty.
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Rules & Scoring Accordion */}
+            <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-neutral-200 flex items-center gap-2 mb-4">
+                <ShieldCheck size={16} className="text-emerald-500" />
+                Rules & Scoring
+              </h3>
+              
+              <div className="space-y-2">
+                {[
+                  { q: "How is XP calculated?", a: "XP is based on problem difficulty, execution speed, and optimal memory usage. First solver bonus applies." },
+                  { q: "Penalty for wrong submissions?", a: "Each incorrect submission adds a 5-minute time penalty to your total duration." },
+                  { q: "Can I use external libraries?", a: "Only standard language libraries are allowed. External dependencies will cause compilation errors." },
+                  { q: "How does matchmaking work?", a: "You are matched with opponents within ±100 rating points to ensure fair competition." }
+                ].map((rule, idx) => (
+                  <details key={idx} className="group border border-slate-200 dark:border-neutral-700 rounded-lg bg-slate-50 dark:bg-neutral-900/50 open:bg-white dark:open:bg-neutral-800 transition-colors">
+                    <summary className="flex items-center justify-between p-3 cursor-pointer list-none font-bold text-xs text-slate-700 dark:text-neutral-300 group-open:text-primary dark:group-open:text-primary-light select-none">
+                      {rule.q}
+                      <span className="transition-transform duration-200 group-open:rotate-90">
+                        <ChevronRight size={14} className="text-slate-400 group-open:text-primary" />
+                      </span>
+                    </summary>
+                    <div className="px-3 pb-3 pt-1 text-[11px] text-slate-500 dark:text-neutral-400 leading-relaxed">
+                      {rule.a}
+                    </div>
+                  </details>
+                ))}
               </div>
             </div>
 

@@ -2,7 +2,14 @@
 import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 
 const CustomArrayInput = ({ 
-  onUseCustomArray = (numbers) => console.log("Received:", numbers),
+  onUseCustomArray = (numbers) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "CustomArrayInput: no `onUseCustomArray` handler was provided, so this array will be discarded:",
+        numbers
+      );
+    }
+  },
   disabled = false, 
   className = "",
   currentArray = []

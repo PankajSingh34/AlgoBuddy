@@ -15,6 +15,7 @@ export function* primGenerator(adj, startNode) {
     activeEdge: null,
     mstEdges: [],
     description: `Starting Prim's algorithm from node ${startNode}`,
+      line: 0,
   };
 
   while (pq.length > 0) {
@@ -31,6 +32,7 @@ export function* primGenerator(adj, startNode) {
       activeEdge: p ? { from: p, to: u } : null,
       mstEdges: [...mstEdges],
       description: `Adding node ${u} to MST${p ? ` via edge from ${p}` : ""}`,
+      line: 0,
     };
 
     const neighbors = adj[u] || [];
@@ -44,6 +46,7 @@ export function* primGenerator(adj, startNode) {
           activeEdge: { from: u, to: v },
           mstEdges: [...mstEdges],
           description: `Considering edge ${u} → ${v} with weight ${edge.weight}`,
+      line: 0,
         };
       }
     }
@@ -55,5 +58,6 @@ export function* primGenerator(adj, startNode) {
     activeEdge: null,
     mstEdges: [...mstEdges],
     description: `Prim's algorithm complete. MST constructed.`,
+      line: 0,
   };
 }

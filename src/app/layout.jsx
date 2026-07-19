@@ -3,9 +3,12 @@ import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { UserProvider } from "@/features/user/UserContext";
 import { NotificationProvider } from "@/features/notifications/NotificationContext";
+import { NarrationProvider } from "@/app/components/ui/NarrationContext";
+import NarrationPanel from "@/app/components/ui/NarrationPanel";
 import ClientLayoutWrapper from "@/app/components/ui/ClientLayoutWrapper";
 import BackToTop from "@/app/components/ui/backtotop";
 import VoiceAgent from "@/app/components/VoiceAgent";
+import AnalyticsScripts from "@/app/components/AnalyticsScripts";
 import { Inter, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 
 const inter = Inter({
@@ -113,36 +116,10 @@ export default async function RootLayout({ children }) {
             `,
           }}
         />
-        {/* Google AdSense Script */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5588131730389378"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-
-
-        {/* Google Analytics Script */}
-        {GA_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GA_ID}', {
-                  page_path: window.location.pathname,
-                });
-              `}
-            </Script>
-          </>
-        )}
+      {/* Google AdSense + Analytics — gated on cookie consent (see AnalyticsScripts.jsx) */}
+<AnalyticsScripts gaId={GA_ID} adsenseClientId="ca-pub-5588131730389378" />
       </head>
-     <body suppressHydrationWarning className="bg-white text-[var(--udemy-text)] dark:bg-[var(--udemy-dark-bg)] dark:text-[var(--udemy-dark-text)]">
+      <body suppressHydrationWarning className="bg-white text-[var(--udemy-text)] dark:bg-[var(--udemy-dark-bg)] dark:text-[var(--udemy-dark-text)]">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[var(--color-primary)] focus:text-white focus:rounded-[var(--radius-md)]"
@@ -151,9 +128,12 @@ export default async function RootLayout({ children }) {
         </a>
         <UserProvider>
           <NotificationProvider>
-            <ClientLayoutWrapper>
-              <div id="main-content">{children}</div>
-            </ClientLayoutWrapper>
+            <NarrationProvider>
+              <ClientLayoutWrapper>
+                <div id="main-content">{children}</div>
+              </ClientLayoutWrapper>
+              <NarrationPanel />
+            </NarrationProvider>
           </NotificationProvider>
         </UserProvider>
       <BackToTop />

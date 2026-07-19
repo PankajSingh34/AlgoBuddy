@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   Settings2,
   BarChart3,
   Info,
-  Wand2
+  Trash2,
+  Wand2,
+  Code2,
+  Download,
+  AlertTriangle
 } from "lucide-react";
 import { 
   BarChart, 
@@ -39,6 +43,7 @@ import {
   adjacencyListFrames,
   adjacencyMatrixFrames
 } from "../utils/algorithms";
+import { ALGORITHM_PSEUDOCODE } from "../constants/pseudocode";
 
 const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star", "ford-fulkerson"]);
 const directedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "topological-sort", "kosaraju", "tarjan", "a-star", "ford-fulkerson"]);
@@ -393,12 +398,48 @@ const comparisonData = [
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
   const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
   const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isPseudocodeOpen, setIsPseudocodeOpen] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedNodes = localStorage.getItem(`algobuddy_custom_nodes_${algorithm}`);
+      const savedEdges = localStorage.getItem(`algobuddy_custom_edges_${algorithm}`);
+      if (savedNodes && savedEdges) {
+        setNodes(JSON.parse(savedNodes));
+        setEdges(JSON.parse(savedEdges));
+      } else {
+        setNodes(defaultGraphs[algorithm]?.nodes || []);
+        setEdges(defaultGraphs[algorithm]?.edges || []);
+      }
+    } catch (e) {
+      console.error("Failed to parse custom graph from localStorage", e);
+      setNodes(defaultGraphs[algorithm]?.nodes || []);
+      setEdges(defaultGraphs[algorithm]?.edges || []);
+    }
+    setIsLoaded(true);
+  }, [algorithm]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(`algobuddy_custom_nodes_${algorithm}`, JSON.stringify(nodes));
+      localStorage.setItem(`algobuddy_custom_edges_${algorithm}`, JSON.stringify(edges));
+    }
+  }, [nodes, edges, algorithm, isLoaded]);
+  const [isEditing, setIsEditing] = useState(false);
   const [targetNode, setTargetNode] = useState("");
+  const canvasContainerRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const [isDirectedManual, setIsDirectedManual] = useState(null);
+
+  useEffect(() => {
+    setIsDirectedManual(null);
+  }, [algorithm]);
 
   // Derived flags
   const isWeighted = weightedAlgorithms.has(algorithm);
-  const isDirected = directedAlgorithms.has(algorithm);
+  const isDirected = isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(algorithm);
 
   const frames = useMemo(() => {
     const adj = {};
@@ -439,6 +480,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
     return [];
   }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
+
+  const hasNegativeWeightError = algorithm === "dijkstra" && edges.some(e => Number(e.weight) < 0);
 
   const onStep = useCallback((step) => {
     // No specific local state needs to be updated here 
@@ -580,6 +623,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     engine.reset();
   };
 
+  const clearGraph = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    engine.reset();
+  }, [engine]);
+
   const generateRandomGraph = useCallback(() => {
     const input = window.prompt("Enter number of nodes (max 20):", "6");
     if (!input) return;
@@ -659,14 +708,51 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             </button>
 
             {isEditing && (
-              <button
-                onClick={generateRandomGraph}
-                className="flex items-center gap-2 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
-              >
-                <Wand2 className="h-4 w-4" />
-                Random Graph
-              </button>
+              <>
+                <button
+                  onClick={clearGraph}
+                  className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear Graph
+                </button>
+                <button
+                  onClick={generateRandomGraph}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Random Graph
+                </button>
+              </>
             )}
+
+            <button
+              onClick={async () => {
+                if (!canvasContainerRef.current || isExporting) return;
+                setIsExporting(true);
+                try {
+                  const html2canvas = (await import("html2canvas")).default;
+                  const canvas = await html2canvas(canvasContainerRef.current, {
+                    backgroundColor: document.documentElement.classList.contains("dark") ? "#0f172a" : "#ffffff",
+                    scale: 2, // High resolution
+                  });
+                  const dataUrl = canvas.toDataURL("image/png");
+                  const a = document.createElement("a");
+                  a.href = dataUrl;
+                  a.download = `algobuddy-${algorithm}-graph.png`;
+                  a.click();
+                } catch (err) {
+                  console.error("Export failed", err);
+                } finally {
+                  setIsExporting(false);
+                }
+              }}
+              disabled={isExporting}
+              className="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? "Exporting..." : "Export PNG"}
+            </button>
 
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
               <div className="flex items-center gap-2 ml-2">
@@ -694,12 +780,24 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               </span>
             )}
 
-            {/* Directed badge */}
-            {isDirected && (
-              <span className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                Directed
-              </span>
-            )}
+            {/* Directed/Undirected Toggle */}
+            <button
+              onClick={() => {
+                if (!isEditing) return;
+                const nextIsDirected = !isDirected;
+                setIsDirectedManual(nextIsDirected);
+                setEdges(prev => prev.map(e => ({ ...e, directed: nextIsDirected })));
+                engine.reset();
+              }}
+              disabled={!isEditing}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                isDirected 
+                  ? "border-primary/30 bg-primary/10 text-primary" 
+                  : "border-surface-400/30 bg-surface-400/10 text-surface-600 dark:text-surface-400"
+              } ${isEditing ? "hover:bg-primary/20 cursor-pointer" : "cursor-default"}`}
+            >
+              {isDirected ? "Directed" : "Undirected"}
+            </button>
 
 
 
@@ -750,38 +848,71 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             )}
           </div>
         </div>
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch min-h-[420px]">
+          <div className="flex-1 border rounded-xl overflow-hidden bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col">
+            <GraphCanvas
+              nodes={nodes}
+              edges={edges}
+              onAddNode={addNode}
+              onAddEdge={handleAddEdge}
+              onRemoveNode={removeNode}
+              onRemoveEdge={removeEdge}
+              onReverseEdge={reverseEdge}
+              onMoveNode={moveNode}
+              onUpdateEdgeWeight={handleUpdateEdgeWeight}
+              animationState={!isEditing ? currentFrameData : {}}
+              interactive={isEditing}
+              isWeighted={isWeighted}
+              isDirected={isDirected}
+              visitedSet={currentFrameData.visitedNodes}
+              currentNode={currentFrameData.currentNode}
+              className="w-full h-full flex-1"
+            />
+          </div>
 
-        <GraphCanvas
-          nodes={nodes}
-          edges={edges}
-          onAddNode={addNode}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={removeNode}
-          onRemoveEdge={removeEdge}
-          onReverseEdge={reverseEdge}
-          onMoveNode={moveNode}
-          onUpdateEdgeWeight={handleUpdateEdgeWeight}
-          animationState={!isEditing ? currentFrameData : {}}
-          interactive={isEditing}
-          isWeighted={isWeighted}
-          isDirected={isDirected}
-          visitedSet={currentFrameData.visitedNodes}
-          currentNode={currentFrameData.currentNode}
-          className="w-full"
-        />
+        <div ref={canvasContainerRef} className="w-full relative overflow-hidden bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl min-h-[420px] flex">
+          <GraphCanvas
+            nodes={nodes}
+            edges={edges}
+            onAddNode={addNode}
+            onAddEdge={handleAddEdge}
+            onRemoveNode={removeNode}
+            onRemoveEdge={removeEdge}
+            onReverseEdge={reverseEdge}
+            onMoveNode={moveNode}
+            onUpdateEdgeWeight={handleUpdateEdgeWeight}
+            animationState={!isEditing ? currentFrameData : {}}
+            interactive={isEditing}
+            isWeighted={isWeighted}
+            isDirected={isDirected}
+            visitedSet={currentFrameData.visitedNodes}
+            currentNode={currentFrameData.currentNode}
+            className="w-full h-full flex-1"
+          />
+        </div>
 
         {/* Controls Bar */}
-        <PlaybackControls
-          isPlaying={engine.isPlaying}
-          onPlayPause={togglePlay}
-          speed={engine.speed / 1000}
-          onSpeedChange={(s) => engine.setSpeed(s * 1000)}
-          onStepForward={stepForward}
-          onStepBackward={stepBackward}
-          onReset={reset}
-          progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
-          disabled={frames.length === 0}
-        />
+        <div className="flex flex-col gap-2">
+          {hasNegativeWeightError && (
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+              <p>
+                <strong>Dijkstra's Algorithm cannot handle negative edge weights.</strong> It assumes all weights are non-negative to guarantee shortest paths. Please use <strong>Bellman-Ford</strong> instead, or remove the negative weights.
+              </p>
+            </div>
+          )}
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            onPlayPause={togglePlay}
+            speed={engine.speed / 1000}
+            onSpeedChange={(s) => engine.setSpeed(s * 1000)}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={reset}
+            progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
+            disabled={frames.length === 0 || hasNegativeWeightError}
+          />
+        </div>
       </div>
 
       {/* Info & Charts Section */}

@@ -2,6 +2,7 @@
 "use client";
 import { useRef, useState, useCallback } from "react";
 
+
 const NODE_RADIUS = 26;
 const COLORS = {
   unvisited: { fill: "#111", stroke: "#22c55e" },
@@ -39,15 +40,20 @@ function EdgeWeightLabel({ x1, y1, x2, y2, weight, onWeightChange, readOnlyLabel
   const my = (y1 + y2) / 2;
 
   if (readOnlyLabel !== undefined) {
+    const labelStr = String(readOnlyLabel);
+    const width = Math.max(24, labelStr.length * 8 + 12);
     return (
-      <text
-        x={mx}
-        y={my - 8}
-        textAnchor="middle"
-        className="fill-yellow-500 text-[10px] font-bold pointer-events-none"
+      <foreignObject
+        x={mx - width / 2}
+        y={my - 12}
+        width={width}
+        height={20}
+        className="pointer-events-none"
       >
-        {readOnlyLabel}
-      </text>
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-yellow-600 dark:text-yellow-500 shadow-sm backdrop-blur-sm">
+          {labelStr}
+        </div>
+      </foreignObject>
     );
   }
 
@@ -97,6 +103,7 @@ export default function GraphCanvas({
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
   const [draggingNode, setDraggingNode] = useState(null);
+  const [hoveredNode, setHoveredNode] = useState(null);
   const getNodeState = (id) => {
     if (animationState.visitingNodes?.has(id) || id === currentNode) return "visiting";
     if (animationState.visitedNodes?.has(id) || visitedSet?.has(id)) return "visited";
@@ -108,7 +115,12 @@ export default function GraphCanvas({
       if (!interactive || !onAddNode) return;
       if (e.target !== svgRef.current) return;
       const rect = svgRef.current.getBoundingClientRect();
-      onAddNode({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      const scaleX = rect.width / svgRef.current.clientWidth;
+      const scaleY = rect.height / svgRef.current.clientHeight;
+      onAddNode({ 
+        x: (e.clientX - rect.left) / scaleX, 
+        y: (e.clientY - rect.top) / scaleY 
+      });
       setEdgeStart(null);
     },
     [interactive, onAddNode]
@@ -146,11 +158,31 @@ const handleMouseMove = useCallback(
     if (!draggingNode || !onMoveNode || !svgRef.current) return;
 
     const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = rect.width / svgRef.current.clientWidth;
+    const scaleY = rect.height / svgRef.current.clientHeight;
 
     onMoveNode(
       draggingNode,
-      e.clientX - rect.left,
-      e.clientY - rect.top
+      (e.clientX - rect.left) / scaleX,
+      (e.clientY - rect.top) / scaleY
+    );
+  },
+  [draggingNode, onMoveNode]
+);
+
+const handleTouchMove = useCallback(
+  (e) => {
+    if (!draggingNode || !onMoveNode || !svgRef.current) return;
+    
+    const touch = e.touches[0];
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = rect.width / svgRef.current.clientWidth;
+    const scaleY = rect.height / svgRef.current.clientHeight;
+
+    onMoveNode(
+      draggingNode,
+      (touch.clientX - rect.left) / scaleX,
+      (touch.clientY - rect.top) / scaleY
     );
   },
   [draggingNode, onMoveNode]
@@ -186,6 +218,26 @@ const handleMouseUp = useCallback(() => {
 
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
 
+  const formatMetric = (value) => {
+    if (value === undefined || value === null) return null;
+    return value === Infinity ? "Infinity" : String(value);
+  };
+
+  const getNodeTooltip = (node) => {
+    const metrics = [
+      ["Distance", animationState.distances?.[node.id]],
+      ["gScore", animationState.gScore?.[node.id]],
+      ["fScore", animationState.fScore?.[node.id]],
+    ]
+      .map(([label, value]) => [label, formatMetric(value)])
+      .filter(([, value]) => value !== null);
+
+    return {
+      state: getNodeState(node.id),
+      metrics,
+    };
+  };
+
   const isActiveEdge = (edge) => {
     const active = animationState.activeEdge;
     const mstEdges = animationState.mstEdges || [];
@@ -203,17 +255,23 @@ const handleMouseUp = useCallback(() => {
   };
 
   return (
-    <svg
-      ref={svgRef}
-      width="100%"
-      height="100%"
-      className={className}
-      style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
-      onClick={handleCanvasClick}
-      onMouseMove={handleMouseMove}
-onMouseUp={handleMouseUp}
-onMouseLeave={handleMouseUp}
-    >
+    <div className="relative w-full overflow-hidden">
+      <TransformWrapper>
+        <TransformComponent>
+        <svg
+          ref={svgRef}
+          width="100%"
+          height="100%"
+          className={className}
+          style={{ cursor: interactive && edgeStart !== null ? "crosshair" : "default", minHeight: 420 }}
+          onClick={handleCanvasClick}
+          onMouseMove={handleMouseMove}
+          onTouchMove={handleTouchMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
+        >
       <defs>
         <marker
           id="arrowhead"
@@ -227,7 +285,7 @@ onMouseLeave={handleMouseUp}
           <path
             d="M2 1L8 5L2 9"
             fill="none"
-            stroke="#22c55e"
+            className="stroke-gray-500 dark:stroke-gray-400"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -245,7 +303,7 @@ onMouseLeave={handleMouseUp}
           <path
             d="M2 1L8 5L2 9"
             fill="none"
-            stroke="#f97316"
+            className="stroke-orange-500"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -263,7 +321,7 @@ onMouseLeave={handleMouseUp}
         }
 
         const isActive = isActiveEdge(edge) || currentNode === edge.from || currentNode === edge.to;
-        const edgeColor = isActive ? "#f97316" : "#6b7280";
+        const edgeClass = isActive ? "stroke-orange-500" : "stroke-gray-500 dark:stroke-gray-400";
         const markerEnd = edge.directed
           ? isActive ? "url(#arrowhead-active)" : "url(#arrowhead)"
           : undefined;
@@ -272,9 +330,6 @@ onMouseLeave={handleMouseUp}
           ? edgeEndpoint(src.x, src.y, tgt.x, tgt.y, NODE_RADIUS)
           : { x: tgt.x, y: tgt.y };
 
-        const labelX = (src.x + tgt.x) / 2;
-        const labelY = (src.y + tgt.y) / 2;
-
         return (
           <g key={idx}>
             <line
@@ -282,7 +337,7 @@ onMouseLeave={handleMouseUp}
               y1={src.y}
               x2={ex}
               y2={ey}
-              stroke={edgeColor}
+              className={edgeClass}
               strokeWidth={isActive ? 2 : 1.5}
               markerEnd={markerEnd}
               style={{ cursor: interactive ? "pointer" : "default" }}
@@ -298,7 +353,7 @@ onMouseLeave={handleMouseUp}
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
                 readOnlyLabel={
                   animationState?.flowData
-                    ? `${animationState.flowData.flow[edge.from][edge.to]}/${animationState.flowData.capacity[edge.from][edge.to]}`
+                    ? `${animationState.flowData.flow[edge.from]?.[edge.to] ?? "-"}/${animationState.flowData.capacity[edge.from]?.[edge.to] ?? "-"}`
                     : undefined
                 }
               />
@@ -315,11 +370,21 @@ onMouseLeave={handleMouseUp}
         return (
           <g
             key={node.id}
+            className="nodrag"
             onClick={(e) => handleNodeClick(e, node.id)}
             onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+            onTouchStart={(e) => handleNodeMouseDown(e, node.id)}
             onContextMenu={(e) => handleNodeRightClick(e, node.id)}
+            onMouseEnter={() => setHoveredNode(node.id)}
+            onMouseLeave={() => setHoveredNode(null)}
+            onFocus={() => setHoveredNode(node.id)}
+            onBlur={() => setHoveredNode(null)}
+            tabIndex={0}
             style={{ cursor: interactive ? "pointer" : "default" }}
           >
+            <title>
+              {`${node.label || node.id}: ${getNodeTooltip(node).state}`}
+            </title>
             {isSelected && (
               <circle
                 cx={node.x}
@@ -352,9 +417,76 @@ onMouseLeave={handleMouseUp}
             >
               {node.id}
             </text>
+            {hoveredNode === node.id && (() => {
+              const tooltip = getNodeTooltip(node);
+              return (
+                <foreignObject
+                  x={node.x - 70}
+                  y={node.y - NODE_RADIUS - 82}
+                  width={140}
+                  height={72}
+                  className="pointer-events-none overflow-visible"
+                >
+                  <div className="rounded-md border border-slate-600 bg-slate-950/95 px-2 py-1.5 text-[10px] leading-4 text-white shadow-lg">
+                    <div className="font-semibold">{node.label || node.id}</div>
+                    <div>State: {tooltip.state}</div>
+                    {tooltip.metrics.map(([label, value]) => (
+                      <div key={label}>{label}: {value}</div>
+                    ))}
+                  </div>
+                </foreignObject>
+              );
+            })()}
           </g>
         );
       })}
+
+      {hoveredNode && (() => {
+        const hNode = nodes.find((n) => n.id === hoveredNode);
+        if (!hNode || interactive) return null;
+
+        const info = [];
+        if (animationState?.distances?.[hNode.id] !== undefined) {
+          const d = animationState.distances[hNode.id];
+          info.push(`Distance: ${d === Infinity ? "∞" : d}`);
+        }
+        if (animationState?.pq) {
+          const item = animationState.pq.find((i) => i.node === hNode.id);
+          if (item) info.push(`In PQ (dist: ${item.dist})`);
+        }
+        if (animationState?.queue?.includes(hNode.id)) {
+          info.push("In Queue");
+        }
+        if (animationState?.stack?.includes(hNode.id)) {
+          info.push("In Stack");
+        }
+        if (animationState?.visitedNodes?.has(hNode.id)) {
+          info.push("State: Visited");
+        } else if (animationState?.visitingNodes?.has(hNode.id)) {
+          info.push("State: Visiting");
+        }
+
+        if (info.length === 0) info.push("State: Unvisited");
+
+        return (
+          <foreignObject
+            x={hNode.x - 60}
+            y={hNode.y - NODE_RADIUS - 60}
+            width={120}
+            height={60}
+            className="pointer-events-none"
+            style={{ overflow: "visible" }}
+          >
+            <div className="flex flex-col items-center justify-end h-full pb-2">
+              <div className="bg-slate-900/90 dark:bg-slate-800 text-white text-[10px] font-mono px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-xl backdrop-blur-sm">
+                {info.map((line, i) => (
+                  <div key={i} className="whitespace-nowrap leading-tight">{line}</div>
+                ))}
+              </div>
+            </div>
+          </foreignObject>
+        );
+      })()}
 
       {nodes.length === 0 && (
         <text
@@ -374,6 +506,9 @@ onMouseLeave={handleMouseUp}
           Click another node to connect · click same node or press Esc to cancel
         </text>
       )}
-    </svg>
+          </svg>
+        </TransformComponent>
+      </TransformWrapper>
+    </div>
   );
 }

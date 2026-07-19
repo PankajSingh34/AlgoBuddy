@@ -1,22 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { api } from "./apiClient";
 
-const isRlsPolicyError = (error) => {
-  const combined = [error?.message, error?.details, error?.hint]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return Boolean(
-    combined && (
-      combined.includes("row level security") ||
-      combined.includes("permission denied") ||
-      combined.includes("policy") ||
-      combined.includes("rls")
-    )
-  );
-};
-
 const trackActivity = async (type = "site_visit") => {
   try {
     await api.request("/api/activity", {
@@ -108,4 +92,4 @@ const getStreakData = async (userId, days = 30) => {
   }
 };
 
-export { trackActivity, getStreakData, computeStreak, getLocalISODate, isRlsPolicyError };
+export { trackActivity, getStreakData, computeStreak, getLocalISODate };
