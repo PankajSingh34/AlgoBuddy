@@ -60,7 +60,10 @@ export async function GET(request) {
       return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
     }
     const { searchParams } = new URL(request.url);
-    const days = parseInt(searchParams.get("days") || "30", 10);
+    const parsedDays = parseInt(searchParams.get("days") || "30", 10);
+    const days = Number.isFinite(parsedDays)
+      ? Math.min(Math.max(parsedDays, 1), 365)
+      : 30;
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
