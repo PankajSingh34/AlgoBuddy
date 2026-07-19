@@ -1437,6 +1437,30 @@ export default function ArenaPage() {
                           Compete in our premier weekly algorithmic showdown. Solve 4 problems in 90 minutes. 
                           Win exclusive badges, massive XP, and global glory.
                         </p>
+                        
+                        <div className="flex items-center gap-4 mt-6">
+                          <div className="flex items-center gap-3 bg-black/20 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 shadow-inner">
+                            <div className="relative">
+                              <Users size={20} className="text-cyan-400" />
+                              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400"></span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-widest leading-none mb-1">Registered</span>
+                              <span className="text-xl font-black text-white leading-none tracking-tight">1,248</span>
+                            </div>
+                          </div>
+                          <div className="flex -space-x-3 drop-shadow-md hidden sm:flex">
+                            {[1, 2, 3, 4].map((i) => (
+                              <div key={i} className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-slate-800 overflow-hidden relative">
+                                <Image src={`https://i.pravatar.cc/100?img=${i + 15}`} alt="avatar" fill className="object-cover" />
+                              </div>
+                            ))}
+                            <div className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-indigo-800 flex items-center justify-center text-[10px] font-bold shadow-inner">
+                              +1.2k
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <div className="z-10 mt-8 md:mt-0 flex flex-col items-center bg-black/20 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
