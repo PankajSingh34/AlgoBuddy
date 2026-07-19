@@ -18,7 +18,6 @@ const LinkedListSorting = () => {
     if (list.length === 0) return [];
     return Array.from(sortingGenerator(list));
   }, [list]);
-  console.log("Frames:", frames);
 
   const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
 

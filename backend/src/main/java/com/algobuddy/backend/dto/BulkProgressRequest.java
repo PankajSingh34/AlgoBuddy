@@ -16,6 +16,7 @@ public class BulkProgressRequest {
     @Size(max = 100, message = "Bulk update limited to 100 items per request")
     private List<Item> items;
 
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Invalid date format. Must be YYYY-MM-DD")
     private String localDate;
 
     @Data

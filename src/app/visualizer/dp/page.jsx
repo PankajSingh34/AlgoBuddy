@@ -94,8 +94,8 @@ function FibViz({ steps, stepIdx }) {
           const { bg, text } = cellColor(val, max, isCurrent, isDep);
           return (
             <div key={i} className="flex flex-col items-center">
-              <div className="text-xs text-slate-500 mb-1">F({i})</div>
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-sm font-mono font-bold border border-slate-700 transition-all duration-300"
+              <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">F({i})</div>
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-sm font-mono font-bold border border-slate-200 dark:border-slate-700 transition-all duration-300"
                 style={{ backgroundColor: bg, color: text }}>
                 {val}
               </div>
@@ -103,7 +103,7 @@ function FibViz({ steps, stepIdx }) {
           );
         })}
       </div>
-      <div className="mt-4 text-sm text-slate-400 font-mono">
+      <div className="mt-4 text-sm text-slate-500 dark:text-slate-400 font-mono">
         {s.current >= 2
           ? `F(${s.current}) = F(${s.current - 1}) + F(${s.current - 2}) = ${s.dp[s.current - 1]} + ${s.dp[s.current - 2]} = ${s.dp[s.current]}`
           : `F(${s.current}) = ${s.dp[s.current]} (base case)`}
@@ -125,16 +125,16 @@ function LISViz({ steps, stepIdx, arr }) {
           const { bg, text } = cellColor(s.dp[i], max, isCurrent, isDep);
           return (
             <div key={i} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-mono font-bold border border-slate-700 transition-all duration-300"
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-mono font-bold border border-slate-200 dark:border-slate-700 transition-all duration-300"
                 style={{ backgroundColor: bg, color: text }}>
                 {val}
               </div>
-              <div className="text-xs text-slate-400">LIS:{s.dp[i]}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">LIS:{s.dp[i]}</div>
             </div>
           );
         })}
       </div>
-      <div className="mt-3 text-sm text-slate-400 font-mono">
+      <div className="mt-3 text-sm text-slate-500 dark:text-slate-400 font-mono">
         dp[{s.current}] = {s.dp[s.current]} — arr[{s.current}]={arr[s.current]}
       </div>
     </div>
@@ -151,16 +151,16 @@ function KnapsackViz({ steps, stepIdx, weights, values, W }) {
       <table className="mt-4 border-collapse text-xs font-mono">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-slate-500">i\w</th>
+            <th className="px-2 py-1 text-slate-500 dark:text-slate-400">i\w</th>
             {Array.from({ length: W + 1 }, (_, w) => (
-              <th key={w} className="px-2 py-1 text-slate-500">{w}</th>
+              <th key={w} className="px-2 py-1 text-slate-500 dark:text-slate-400">{w}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {s.dp.map((row, i) => (
             <tr key={i}>
-              <td className="px-2 py-1 text-slate-400">
+              <td className="px-2 py-1 text-slate-500 dark:text-slate-400">
                 {i === 0 ? "—" : `i${i}(w${weights[i - 1]},v${values[i - 1]})`}
               </td>
               {row.map((val, w) => {
@@ -179,7 +179,7 @@ function KnapsackViz({ steps, stepIdx, weights, values, W }) {
           ))}
         </tbody>
       </table>
-      <div className="mt-2 text-sm text-slate-400 font-mono">
+      <div className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-mono">
         dp[{ci}][{cw}] = {s.dp[ci][cw]}
       </div>
     </div>
@@ -196,17 +196,17 @@ function LCSViz({ steps, stepIdx, s1, s2 }) {
       <table className="mt-4 border-collapse text-xs font-mono">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-slate-500"></th>
-            <th className="px-2 py-1 text-slate-500">""</th>
+            <th className="px-2 py-1 text-slate-500 dark:text-slate-400"></th>
+            <th className="px-2 py-1 text-slate-500 dark:text-slate-400">""</th>
             {s2.split("").map((c, j) => (
-              <th key={j} className="px-2 py-1 text-indigo-400">{c}</th>
+              <th key={j} className="px-2 py-1 text-indigo-500 dark:text-indigo-400">{c}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {s.dp.map((row, i) => (
             <tr key={i}>
-              <td className="px-2 py-1 text-indigo-400">
+              <td className="px-2 py-1 text-indigo-500 dark:text-indigo-400">
                 {i === 0 ? '""' : s1[i - 1]}
               </td>
               {row.map((val, j) => {
@@ -228,8 +228,8 @@ function LCSViz({ steps, stepIdx, s1, s2 }) {
       </table>
       <div className="mt-2 text-sm font-mono">
         {s.match
-          ? <span className="text-emerald-400">s1[{ci - 1}]='{s1[ci - 1]}' matches s2[{cj - 1}]='{s2[cj - 1]}' → dp[{ci}][{cj}] = {s.dp[ci][cj]}</span>
-          : <span className="text-slate-400">No match → dp[{ci}][{cj}] = max(dp[{ci - 1}][{cj}], dp[{ci}][{cj - 1}]) = {s.dp[ci][cj]}</span>
+          ? <span className="text-emerald-600 dark:text-emerald-400">s1[{ci - 1}]='{s1[ci - 1]}' matches s2[{cj - 1}]='{s2[cj - 1]}' → dp[{ci}][{cj}] = {s.dp[ci][cj]}</span>
+          : <span className="text-slate-500 dark:text-slate-400">No match → dp[{ci}][{cj}] = max(dp[{ci - 1}][{cj}], dp[{ci}][{cj - 1}]) = {s.dp[ci][cj]}</span>
         }
       </div>
     </div>
@@ -304,7 +304,7 @@ export default function DPVisualizer() {
     setPlaying(false);
   }, [problem, fibN, lisArr, ksWeights, ksValues, ksW, lcsS1, lcsS2]);
 
-  useEffect(() => { buildSteps(); }, [problem]);
+  useEffect(() => { buildSteps(); }, [buildSteps]);
 
   useEffect(() => {
     if (!playing) { clearInterval(intervalRef.current); return; }
@@ -318,75 +318,75 @@ export default function DPVisualizer() {
   }, [playing, steps, speed]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <div className="border-b border-slate-800 px-6 py-5">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans dark:bg-slate-950 dark:text-slate-100">
+      <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           Dynamic Programming Visualizer
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Step-by-step DP table animation — understand how subproblems build the final answer
         </p>
       </div>
 
       <div className="flex flex-col lg:flex-row min-h-screen">
-        <div className="w-full lg:w-72 border-r border-slate-800 p-5 flex flex-col gap-5 shrink-0">
+        <div className="w-full lg:w-72 border-r border-slate-200 p-5 flex flex-col gap-5 shrink-0 dark:border-slate-800">
 
           <section>
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+            <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
               1. Choose Problem
             </h2>
             <div className="flex flex-col gap-2">
               {PROBLEMS.map(p => (
                 <button key={p}
                   onClick={() => setProblem(p)}
-                  className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${problem === p ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-400 hover:text-white border border-slate-700"}`}>
+                  className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${problem === p ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white dark:border-slate-700"}`}>
                   {p}
                 </button>
               ))}
             </div>
           </section>
 
-          <hr className="border-slate-800" />
+          <hr className="border-slate-200 dark:border-slate-800" />
 
           <section>
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+            <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
               2. Set Input
             </h2>
 
             {problem === "Fibonacci" && (
               <div>
-                <label className="text-xs text-slate-400 block mb-1">N (max 15)</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">N (max 15)</label>
                 <input type="number" min={2} max={15} value={fibN}
                   onChange={e => setFibN(parseInt(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                  className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
               </div>
             )}
 
             {problem === "LIS" && (
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Array (comma separated, max 10)</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Array (comma separated, max 10)</label>
                 <input value={lisArr} onChange={e => setLisArr(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                  className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
               </div>
             )}
 
             {problem === "0/1 Knapsack" && (
               <div className="flex flex-col gap-2">
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Weights (max 6 items)</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Weights (max 6 items)</label>
                   <input value={ksWeights} onChange={e => setKsWeights(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                    className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Values</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Values</label>
                   <input value={ksValues} onChange={e => setKsValues(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                    className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Capacity W (max 10)</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Capacity W (max 10)</label>
                   <input type="number" min={1} max={10} value={ksW}
                     onChange={e => setKsW(parseInt(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                    className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
                 </div>
               </div>
             )}
@@ -394,14 +394,14 @@ export default function DPVisualizer() {
             {problem === "LCS" && (
               <div className="flex flex-col gap-2">
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">String 1 (max 8 chars)</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">String 1 (max 8 chars)</label>
                   <input value={lcsS1} onChange={e => setLcsS1(e.target.value.slice(0, 8).toUpperCase())}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                    className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">String 2 (max 8 chars)</label>
+                  <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">String 2 (max 8 chars)</label>
                   <input value={lcsS2} onChange={e => setLcsS2(e.target.value.slice(0, 8).toUpperCase())}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
+                    className="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 font-mono dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
                 </div>
               </div>
             )}
@@ -469,10 +469,10 @@ export default function DPVisualizer() {
             )}
           </section>
 
-          <hr className="border-slate-800" />
+          <hr className="border-slate-200 dark:border-slate-800" />
 
           <section>
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Legend</h2>
+            <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Legend</h2>
             {[
               { color: "#6366f1", label: "Current cell" },
               { color: "#f59e0b", label: "Dependency" },
@@ -481,7 +481,7 @@ export default function DPVisualizer() {
             ].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-2 mb-1.5">
                 <span className="w-3 h-3 rounded inline-block" style={{ backgroundColor: color }} />
-                <span className="text-xs text-slate-400">{label}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
               </div>
             ))}
           </section>
@@ -494,16 +494,16 @@ export default function DPVisualizer() {
               { label: "Space", val: COMPLEXITY[problem].space },
               { label: "Steps", val: steps.length },
             ].map(({ label, val }) => (
-              <div key={label} className="bg-slate-900 border border-slate-800 rounded-lg px-4 py-3 text-center min-w-[80px]">
-                <p className="text-xs text-slate-500">{label}</p>
-                <p className="text-sm font-mono font-bold text-indigo-400 mt-0.5">{val}</p>
+              <div key={label} className="bg-white border border-slate-200 rounded-lg px-4 py-3 text-center min-w-[80px] dark:bg-slate-900 dark:border-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+                <p className="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{val}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
-            <h2 className="text-sm font-semibold text-white mb-1">{problem} — DP Table</h2>
-            <p className="text-xs text-slate-500 mb-3">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 dark:bg-slate-900 dark:border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{problem} — DP Table</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
               {problem === "Fibonacci" && "Each cell = sum of previous two"}
               {problem === "LIS" && "Each cell = length of LIS ending at that index"}
               {problem === "0/1 Knapsack" && "Each cell = max value for given capacity"}
@@ -515,9 +515,9 @@ export default function DPVisualizer() {
             {problem === "LCS" && <LCSViz steps={steps} stepIdx={stepIdx} s1={lcsS1.slice(0, 8)} s2={lcsS2.slice(0, 8)} />}
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-3">Pseudocode</h2>
-            <pre className="text-xs text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 dark:bg-slate-900 dark:border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Pseudocode</h2>
+            <pre className="text-xs text-emerald-600 dark:text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
               {PSEUDOCODE[problem]}
             </pre>
           </div>

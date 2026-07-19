@@ -23,6 +23,7 @@ export function* topologicalSortGenerator(adj, nodes) {
     queue: [...queue],
     result: [],
     description: "Initializing Topological Sort: computing in-degrees.",
+      line: 0,
   };
 
   while (queue.length > 0) {
@@ -36,6 +37,7 @@ export function* topologicalSortGenerator(adj, nodes) {
       queue: [...queue],
       result: [...result],
       description: `Processing node ${u} (in-degree 0), adding to result.`,
+      line: 0,
     };
 
     const neighbors = adj[u] || [];
@@ -50,6 +52,7 @@ export function* topologicalSortGenerator(adj, nodes) {
         queue: [...queue],
         result: [...result],
         description: `Decreasing in-degree of neighbor ${vId}.`,
+      line: 0,
       };
 
       if (inDegree[vId] === 0) {
@@ -61,6 +64,7 @@ export function* topologicalSortGenerator(adj, nodes) {
           queue: [...queue],
           result: [...result],
           description: `Node ${vId} now has in-degree 0, adding to queue.`,
+      line: 0,
         };
       }
     }

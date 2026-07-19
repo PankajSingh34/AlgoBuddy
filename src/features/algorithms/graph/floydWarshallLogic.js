@@ -28,6 +28,7 @@ export function* floydWarshallGenerator(nodes, edges) {
     matrix: cloneMatrix(),
     matrixNodes: ids,
     description: "Initialize the distance matrix with 0 on the diagonal and infinity elsewhere.",
+      line: 0,
   };
 
   for (const edge of edges) {
@@ -47,6 +48,7 @@ export function* floydWarshallGenerator(nodes, edges) {
       row: edge.from,
       col: edge.to,
       description: `Set direct distance ${labels[edge.from]} → ${labels[edge.to]} to ${weight}.`,
+      line: 0,
     };
   }
 
@@ -59,6 +61,7 @@ export function* floydWarshallGenerator(nodes, edges) {
       matrixNodes: ids,
       intermediate: k,
       description: `Allow ${labels[k]} as an intermediate vertex.`,
+      line: 0,
     };
 
     for (const i of ids) {
@@ -81,6 +84,7 @@ export function* floydWarshallGenerator(nodes, edges) {
           col: j,
           via: viaK,
           description: `Check ${labels[i]} → ${labels[j]} through ${labels[k]}: ${formatDistance(current)} vs ${formatDistance(viaK)}.`,
+      line: 0,
         };
 
         if (improves) {
@@ -96,6 +100,7 @@ export function* floydWarshallGenerator(nodes, edges) {
             col: j,
             updatedCell: { row: i, col: j },
             description: `Update ${labels[i]} → ${labels[j]} to ${viaK} using ${labels[k]}.`,
+      line: 0,
           };
         }
       }
@@ -109,5 +114,6 @@ export function* floydWarshallGenerator(nodes, edges) {
     matrix: cloneMatrix(),
     matrixNodes: ids,
     description: "Floyd-Warshall complete. The matrix now contains all-pairs shortest paths.",
+      line: 0,
   };
 }

@@ -22,6 +22,14 @@ export default function Page() {
               text: "Palindrome Check",
               url: "../palindrome",
             },
+            {
+            text: "Character Frequency",
+            url: "../character-frequency",
+          },
+          {
+            text: "Anagram Check",
+            url: "../anagram-check",
+          },
           ]}
         />
       }

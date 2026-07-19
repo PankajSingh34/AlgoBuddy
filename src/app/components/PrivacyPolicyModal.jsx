@@ -204,8 +204,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const scrollToSection = (id) => {
-    console.log("Scrolling to:", id);
+    const scrollToSection = (id) => {
     const scroller = scrollRef.current;
     const section = sectionRefs.current[id];
     if (!scroller || !section) return;

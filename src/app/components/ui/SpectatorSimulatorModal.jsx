@@ -75,7 +75,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
 
     socket.on("connect", () => {
       console.log("Spectator Socket Connected");
-      socket.emit("spectate_match", { matchId: matchData.matchId });
+      socket.emit("join_spectator", { matchId: matchData.matchId });
     });
 
     socket.on("spectator_count", (data) => {
@@ -160,7 +160,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
     return () => {
       if (p1TypingTimeoutRef.current) clearTimeout(p1TypingTimeoutRef.current);
       if (p2TypingTimeoutRef.current) clearTimeout(p2TypingTimeoutRef.current);
-      socket.emit("leave_spectate_match", { matchId: matchData.matchId });
+      socket.emit("leave_spectator", { matchId: matchData.matchId });
       socket.disconnect();
       socketRef.current = null;
     };
@@ -356,7 +356,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
               </div>
 
               {/* Player 1 View */}
-              <div className="w-full lg:w-3/4 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800 bg-slate-50/50 dark:bg-[#0a0a0f] overflow-y-auto">
+              <div className="w-full lg:w-1/2 flex flex-col bg-slate-50/50 dark:bg-[#0a0a0f] overflow-y-auto border-r border-slate-200 dark:border-slate-800">
                 <div className="h-14 border-b border-slate-200 dark:border-neutral-800 flex flex-col justify-center px-4 bg-white dark:bg-[#111116]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -435,7 +435,7 @@ export default function SpectatorSimulatorModal({ isOpen, onClose, matchData }) 
               </div>
 
               {/* Player 2 View */}
-              <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0a0a0c]">
+              <div className="w-full lg:w-1/2 flex flex-col bg-slate-50 dark:bg-[#0a0a0c] overflow-y-auto">
                 <div className="h-14 border-b border-slate-200 dark:border-neutral-800 flex flex-col justify-center px-4 bg-white dark:bg-[#111116]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

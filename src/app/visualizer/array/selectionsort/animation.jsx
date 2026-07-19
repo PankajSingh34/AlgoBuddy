@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
@@ -38,7 +38,7 @@ const createSelectionMinimumQuestion = (arr, minIndex, passIndex) => {
 const SelectionSortVisualizer = () => {
     const [array, setArray] = useState([]);
     const [challengeEnabled, setChallengeEnabled] = useState(false);
-    
+    const replayTimeoutRef = useRef(null);
     const [visualState, setVisualState] = useState({
         comparisons: 0,
         swaps: 0,
@@ -129,17 +129,21 @@ const SelectionSortVisualizer = () => {
         if (!array.length) return;
         if (sorted) {
             engine.reset();
-            setTimeout(() => engine.play(), 50);
+            replayTimeoutRef.current = setTimeout(() => engine.play(), 50);
         } else {
             engine.play();
         }
     };
 
     const reset = () => {
+      clearTimeout(replayTimeoutRef.current);
       engine.reset();
       setArray([]);
       resetStats();
     };
+    useEffect(() => {
+    return () => clearTimeout(replayTimeoutRef.current);
+    }, []);
   
     useVisualizerKeyboard({
       onStart: startSelectionSort,

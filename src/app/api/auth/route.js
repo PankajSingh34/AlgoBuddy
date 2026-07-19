@@ -333,6 +333,12 @@ export async function POST(req) {
       });
 
       if (error) {
+        if (error.message.includes("already") || error.code === "email_exists") {
+          return jsonResponse({
+            success: true,
+            message: "Signup request received. If the email is not registered, a verification link has been sent.",
+          });
+        }
         return jsonResponse({ success: false, message: error.message }, 400);
       }
 

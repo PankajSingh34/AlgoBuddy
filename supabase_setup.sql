@@ -113,15 +113,15 @@ ALTER TABLE pending_messages ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Service role can insert pending_messages" ON pending_messages
   FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (auth.role() = 'service_role');
 
 CREATE POLICY "Service role can read pending_messages" ON pending_messages
   FOR SELECT
-  USING (true);
+  USING (auth.role() = 'service_role');
 
 CREATE POLICY "Service role can update pending_messages" ON pending_messages
   FOR UPDATE
-  USING (true);
+  USING (auth.role() = 'service_role');
 
 -- ====================================================================
 -- newsletter_subscriptions table for Footer Newsletter
@@ -134,9 +134,6 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
 );
 
 ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Service role can manage newsletter_subscriptions" ON newsletter_subscriptions
-  USING (true) WITH CHECK (true);
 
 -- ====================================================================
 -- topic_comments table for visualizer discussion threads

@@ -16,6 +16,7 @@ export function* bfsGenerator(adj, startNode) {
     queue: [...queue],
     currentNode: startNode,
     description: `Starting BFS from node ${startNode}`,
+    line: 0,
   };
 
   while (queue.length > 0) {
@@ -28,6 +29,7 @@ export function* bfsGenerator(adj, startNode) {
       queue: [...queue],
       currentNode: u,
       description: `Exploring neighbors of node ${u}`,
+      line: 5,
     };
 
     const neighbors = adj[u] || [];
@@ -42,6 +44,7 @@ export function* bfsGenerator(adj, startNode) {
           queue: [...queue],
           currentNode: u,
           description: `Found unvisited neighbor ${neighborId}, adding to queue`,
+          line: 7,
         };
 
         visited.add(neighborId);
@@ -54,6 +57,7 @@ export function* bfsGenerator(adj, startNode) {
           queue: [...queue],
           currentNode: u,
           description: `Node ${neighborId} is now in queue`,
+          line: 9,
         };
       }
     }
@@ -65,6 +69,7 @@ export function* bfsGenerator(adj, startNode) {
       queue: [...queue],
       currentNode: u,
       description: `Finished exploring node ${u}`,
+      line: 4,
     };
   }
 }

@@ -1,3 +1,8 @@
+import {
+  CONSENT_STATUS_KEY,
+  getStoredPreferences,
+  saveStoredPreferences,
+} from "@/lib/cookieConsent";
 import React, { useState, useEffect } from "react";
 
 const CookieConsent = () => {
@@ -13,40 +18,43 @@ const CookieConsent = () => {
 
   // Check if user has already given consent
   useEffect(() => {
-    const consent = localStorage.getItem("cookieConsent");
-    if (!consent) {
-      setShowBanner(true);
-    }
-  }, []);
+  const consent = localStorage.getItem(CONSENT_STATUS_KEY);
+  if (!consent) {
+    setShowBanner(true);
+  } else {
+    setPreferences(getStoredPreferences());
+  }
+}, []);
 
-  const saveConsent = (type) => {
-    localStorage.setItem("cookieConsent", type);
-    setShowBanner(false);
-    setShowPreferences(false);
+const saveConsent = (type, prefsOverride) => {
+  const finalPreferences = prefsOverride ?? preferences;
+  localStorage.setItem(CONSENT_STATUS_KEY, type);
+  saveStoredPreferences(finalPreferences);
+  setShowBanner(false);
+  setShowPreferences(false);
+};
 
-    // You can add actual cookie setting logic here
-    console.log(`Cookies ${type} - Preferences:`, preferences);
+const handleAcceptAll = () => {
+  const allAccepted = {
+    essential: true,
+    analytics: true,
+    functional: true,
+    marketing: true,
   };
+  setPreferences(allAccepted);
+  saveConsent("accepted", allAccepted);
+};
 
-  const handleAcceptAll = () => {
-    setPreferences({
-      essential: true,
-      analytics: true,
-      functional: true,
-      marketing: true,
-    });
-    saveConsent("accepted");
+const handleRejectNonEssential = () => {
+  const essentialOnly = {
+    essential: true,
+    analytics: false,
+    functional: false,
+    marketing: false,
   };
-
-  const handleRejectNonEssential = () => {
-    setPreferences({
-      essential: true,
-      analytics: false,
-      functional: false,
-      marketing: false,
-    });
-    saveConsent("rejected");
-  };
+  setPreferences(essentialOnly);
+  saveConsent("rejected", essentialOnly);
+};
 
   const handleSavePreferences = () => {
     saveConsent("preferences_saved");

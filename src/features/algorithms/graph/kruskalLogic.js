@@ -30,6 +30,7 @@ export function* kruskalGenerator(nodes, edges) {
     activeEdge: null,
     mstEdges: [],
     description: "Starting Kruskal's algorithm. Edges sorted by weight.",
+      line: 0,
   };
 
   for (const edge of sortedEdges) {
@@ -39,6 +40,7 @@ export function* kruskalGenerator(nodes, edges) {
       activeEdge: { from: edge.from, to: edge.to },
       mstEdges: [...mstEdges],
       description: `Checking smallest remaining edge: ${edge.from} — ${edge.to} (weight: ${edge.weight})`,
+      line: 0,
     };
 
     if (find(edge.from) !== find(edge.to)) {
@@ -50,6 +52,7 @@ export function* kruskalGenerator(nodes, edges) {
         activeEdge: { from: edge.from, to: edge.to },
         mstEdges: [...mstEdges],
         description: `Edge ${edge.from} — ${edge.to} doesn't form a cycle. Adding to MST.`,
+      line: 0,
       };
     } else {
       yield {
@@ -58,6 +61,7 @@ export function* kruskalGenerator(nodes, edges) {
         activeEdge: { from: edge.from, to: edge.to },
         mstEdges: [...mstEdges],
         description: `Edge ${edge.from} — ${edge.to} forms a cycle. Skipping.`,
+      line: 0,
       };
     }
   }
@@ -68,5 +72,6 @@ export function* kruskalGenerator(nodes, edges) {
     activeEdge: null,
     mstEdges: [...mstEdges],
     description: "Kruskal's algorithm complete. MST constructed.",
+      line: 0,
   };
 }

@@ -37,7 +37,7 @@ public class MySheetService {
     }
 
     @Transactional
-    public void addToSheet(UUID userId, String problemId, String note, Boolean isPublic) {
+    public void addToSheet(UUID userId, String problemId, String note, Boolean isPublic, Boolean sharedNotes) {
         Optional<MySheet> existing = mySheetRepository.findByUserIdAndProblemId(userId, problemId);
         if (existing.isPresent()) {
             MySheet item = existing.get();
@@ -48,6 +48,9 @@ public class MySheetService {
                 if (isPublic != null) {
                     item.setPublic(isPublic);
                 }
+                if (sharedNotes != null) {
+                    item.setSharedNotes(sharedNotes);
+                }
                 mySheetRepository.save(item);
             }
         } else {
@@ -56,15 +59,21 @@ public class MySheetService {
             item.setProblemId(problemId);
             item.setNote(note == null ? "" : note);
             item.setPublic(isPublic != null && isPublic);
+            if (sharedNotes != null) {
+                item.setSharedNotes(sharedNotes);
+            }
             mySheetRepository.save(item);
         }
     }
 
     @Transactional
-    public void updateVisibility(UUID userId, String problemId, boolean isPublic) {
+    public void updateVisibility(UUID userId, String problemId, boolean isPublic, Boolean sharedNotes) {
         mySheetRepository.findByUserIdAndProblemId(userId, problemId)
                 .ifPresent(item -> {
                     item.setPublic(isPublic);
+                    if (sharedNotes != null) {
+                        item.setSharedNotes(sharedNotes);
+                    }
                     mySheetRepository.save(item);
                 });
     }

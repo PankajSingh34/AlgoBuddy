@@ -23,8 +23,14 @@ export function validateCsrfOrigin(request) {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
 
-  const source = origin || referer || "";
-  const normalized = source.replace(/\/+$/, "");
+  let normalized = "";
+  if (origin) {
+    normalized = origin.replace(/\/+$/, "");
+  } else if (referer) {
+    try {
+      normalized = new URL(referer).origin;
+    } catch {}
+  }
 
   if (TRUSTED_ORIGINS.has(normalized)) return true;
   if (VERCEL_PREVIEW_REGEX.test(normalized)) return true;

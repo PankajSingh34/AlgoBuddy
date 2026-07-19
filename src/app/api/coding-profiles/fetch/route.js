@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 // GET /api/coding-profiles/fetch?platform=leetcode&username=shruti
 export async function GET(request) {
+  const authResult = await getAuthenticatedUser();
+  if (!authResult.success) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const platform = searchParams.get("platform");
   const username = searchParams.get("username")?.trim();
