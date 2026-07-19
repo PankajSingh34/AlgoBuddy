@@ -1023,6 +1023,7 @@ app.get("/api/matches/active", async (req, res) => {
     if (!decoded || !decoded.sub) {
       return res.status(401).json({ error: "Invalid authentication token" });
     }
+    const userId = decoded.sub;
 
     const matchKeys = await scanRedisKeys("{arena}:match:*");
     const activeMatches = [];
@@ -1031,8 +1032,21 @@ app.get("/api/matches/active", async (req, res) => {
       const matchStr = await redisClient.get(key);
       if (matchStr) {
         const match = JSON.parse(matchStr);
-        if (match.status === "in-progress") {
-          activeMatches.push(match);
+        const players = Array.isArray(match.players) ? match.players : [];
+        if (
+          match.status === "in-progress" &&
+          players.some((player) => player.userId === userId)
+        ) {
+          activeMatches.push({
+            matchId: match.matchId,
+            topic: match.topic,
+            difficulty: match.difficulty,
+            status: match.status,
+            players: players.map((player) => ({
+              userId: player.userId,
+              name: player.name,
+            })),
+          });
         }
       }
     }
