@@ -1454,6 +1454,30 @@ export default function ArenaPage() {
                     </div>
                     </div>
 
+                    {/* Player Stats Dashboard Card */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex flex-col border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Trophy size={12} className="text-amber-500" /> Tournaments Won</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">4</span>
+                      </div>
+                      <div className="flex flex-col md:border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Award size={12} className="text-purple-500" /> Average Rank</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">Top 12%</span>
+                      </div>
+                      <div className="flex flex-col border-r border-slate-100 dark:border-neutral-800 pr-4 relative group">
+                        <div className="absolute inset-0 bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Flame size={12} className="text-red-500" /> Best Win Streak</span>
+                        <span className="text-2xl font-black text-slate-800 dark:text-neutral-100">3</span>
+                      </div>
+                      <div className="flex flex-col relative group">
+                        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -m-2"></div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5"><TrendingUp size={12} className="text-emerald-500" /> Total Earnings</span>
+                        <span className="text-2xl font-black text-emerald-500 drop-shadow-sm">12,500 XP</span>
+                      </div>
+                    </div>
+
                     {/* Filter Tabs */}
                     <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800/50 rounded-xl overflow-x-auto no-scrollbar">
                       {[
