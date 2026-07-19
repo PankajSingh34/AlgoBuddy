@@ -346,6 +346,16 @@ export default function ArenaPage() {
 
   const [spectatorModalOpen, setSpectatorModalOpen] = useState(false);
   const [spectatingMatch, setSpectatingMatch] = useState(null);
+  const [isLoadingTournaments, setIsLoadingTournaments] = useState(true);
+
+  useEffect(() => {
+    if (activeTab === "tournaments" && isLoadingTournaments) {
+      const timer = setTimeout(() => {
+        setIsLoadingTournaments(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, isLoadingTournaments]);
 
   const handleCreateMatchLaunch = (matchConfig) => {
     setCreateDuelOpen(false);
@@ -1501,7 +1511,26 @@ export default function ArenaPage() {
                         </div>
                       </div>
                     ) : tournamentFilter === "Upcoming" ? (
-                      <div className="space-y-4">
+                      isLoadingTournaments ? (
+                        <div className="space-y-4">
+                          {[1, 2].map((i) => (
+                            <div key={i} className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row gap-5 items-start md:items-center">
+                              <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-neutral-700 animate-pulse shrink-0"></div>
+                              <div className="flex-1 w-full space-y-3">
+                                <div className="h-5 bg-slate-200 dark:bg-neutral-700 rounded w-1/3 animate-pulse"></div>
+                                <div className="h-4 bg-slate-200 dark:bg-neutral-700 rounded w-2/3 animate-pulse"></div>
+                                <div className="flex gap-4 pt-2">
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-16 animate-pulse"></div>
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-16 animate-pulse"></div>
+                                  <div className="h-3 bg-slate-200 dark:bg-neutral-700 rounded w-24 animate-pulse"></div>
+                                </div>
+                              </div>
+                              <div className="w-full md:w-[140px] h-24 bg-slate-200 dark:bg-neutral-700 rounded-xl animate-pulse shrink-0 mt-4 md:mt-0"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
                         <TournamentCard tournament={{
                           title: "AlgoBuddy Weekly Cup",
                           status: "upcoming",
@@ -1525,7 +1554,7 @@ export default function ArenaPage() {
                           iconBg: "bg-blue-500/10 text-blue-500"
                         }} />
                       </div>
-                    ) : (
+                    ) : tournamentFilter === "Past" ? (
                       <div className="space-y-4">
                         {[
                           { title: "Graph Theory Masterclass", date: "Last Sunday", winner: "Alex Chen", score: "400/400", time: "38:15", yourRank: 12 },
