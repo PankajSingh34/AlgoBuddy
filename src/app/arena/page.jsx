@@ -1488,33 +1488,52 @@ export default function ArenaPage() {
                       </div>
                     </div>
 
-                    {/* Filter Tabs */}
-                    <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800/50 rounded-xl overflow-x-auto no-scrollbar">
-                      {[
-                        { id: "Live", icon: Play },
-                        { id: "Upcoming", icon: Calendar },
-                        { id: "Past", icon: History },
-                        { id: "Bracket", icon: Trophy }
-                      ].map((filter) => (
-                        <button
-                          key={filter.id}
-                          onClick={() => setTournamentFilter(filter.id)}
-                          className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${
-                            tournamentFilter === filter.id
-                              ? "bg-white dark:bg-neutral-700 text-primary dark:text-primary-light shadow-sm"
-                              : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300 hover:bg-slate-200/50 dark:hover:bg-neutral-700/50"
-                          }`}
-                        >
-                          <filter.icon size={16} className={tournamentFilter === filter.id ? "text-primary dark:text-primary-light" : "opacity-70"} />
-                          {filter.id}
-                          {filter.id === "Live" && (
-                            <span className="relative flex h-2 w-2 ml-1">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                            </span>
-                          )}
-                        </button>
-                      ))}
+                    {/* Advanced Category Filters */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-4">
+                      {/* Primary Filters */}
+                      <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800/50 rounded-xl">
+                        {[
+                          { id: "Live", icon: Play },
+                          { id: "Upcoming", icon: Calendar },
+                          { id: "Past", icon: History }
+                        ].map((filter) => (
+                          <button
+                            key={filter.id}
+                            onClick={() => setTournamentFilter(filter.id)}
+                            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${
+                              tournamentFilter === filter.id
+                                ? "bg-white dark:bg-neutral-700 text-primary dark:text-primary-light shadow-sm"
+                                : "text-slate-500 dark:text-neutral-400 hover:text-slate-700 dark:hover:text-neutral-300 hover:bg-slate-200/50 dark:hover:bg-neutral-700/50"
+                            }`}
+                          >
+                            <filter.icon size={16} className={tournamentFilter === filter.id ? "text-primary dark:text-primary-light" : "opacity-70"} />
+                            {filter.id}
+                            {filter.id === "Live" && (
+                              <span className="relative flex h-2 w-2 ml-1">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Secondary Tags / Advanced Chips */}
+                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+                        <span className="text-xs font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-widest mr-1 hidden md:block">Tags:</span>
+                        {["All", "Algorithms", "Data Structures", "Marathon"].map((tag, idx) => (
+                          <button 
+                            key={tag}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap ${
+                              idx === 0 
+                              ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/50" 
+                              : "bg-white dark:bg-neutral-800 text-slate-600 dark:text-neutral-400 border-slate-200 dark:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-700"
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Content Placeholder */}
