@@ -6,6 +6,8 @@ import { toast } from "react-hot-toast";
 export default function TournamentCard({ tournament }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleRegister = () => {
     setIsRegistering(true);
@@ -17,11 +19,29 @@ export default function TournamentCard({ tournament }) {
     }, 1500);
   };
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
   return (
-    <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col md:flex-row gap-5 items-start md:items-center">
-      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-colors ${tournament.color || 'bg-primary/5 group-hover:bg-primary/10'}`}></div>
+    <div 
+      className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden group flex flex-col md:flex-row gap-5 items-start md:items-center hover:-translate-y-1"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isHovered && (
+        <div 
+          className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(99, 102, 241, 0.08), transparent 40%)`,
+          }}
+        />
+      )}
+      <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-colors duration-500 ${tournament.color || 'bg-primary/5 group-hover:bg-primary/10'}`}></div>
       
-      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${tournament.iconBg || 'bg-primary/10 text-primary'}`}>
+      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${tournament.iconBg || 'bg-primary/10 text-primary'}`}>
         <Trophy size={32} />
       </div>
 
