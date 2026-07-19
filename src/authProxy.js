@@ -19,6 +19,16 @@ const protectedRoutes = ["/arena", "/practice", "/profile"];
 
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
+  let pendingCookies = [];
+  const applyPendingCookies = (response) => {
+    pendingCookies.forEach(({ name, value, options }) =>
+      response.cookies.set(name, value, {
+        ...options,
+        secure: process.env.NODE_ENV === "production",
+      }),
+    );
+    return response;
+  };
 
   const supabaseConfig = getSupabaseConfig();
   if (!supabaseConfig) {
@@ -40,13 +50,7 @@ export async function proxy(request) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, {
-              ...options,
-              secure: process.env.NODE_ENV === "production",
-            }),
-          );
+          pendingCookies = cookiesToSet;
         },
       },
     },
@@ -70,12 +74,13 @@ if (user) {
 supabaseResponse = NextResponse.next({
   request: { headers: requestHeaders },
 });
+supabaseResponse = applyPendingCookies(supabaseResponse);
   const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
       const url = new URL("/login", request.url);
       url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return applyPendingCookies(NextResponse.redirect(url));
     }
   }
 
@@ -85,34 +90,34 @@ supabaseResponse = NextResponse.next({
     !CSRF_EXEMPT_ROUTES.has(pathname)
   ) {
     if (!validateCsrfOrigin(request)) {
-      return NextResponse.json(
+      return applyPendingCookies(NextResponse.json(
         { error: "CSRF validation failed: untrusted origin" },
         { status: 403 },
-      );
+      ));
     }
 
     const headerToken = request.headers.get(CSRF_HEADER_NAME);
     const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
 
     if (!headerToken || !cookieToken) {
-      return NextResponse.json(
+      return applyPendingCookies(NextResponse.json(
         { error: "CSRF validation failed: token missing" },
         { status: 403 },
-      );
+      ));
     }
 
     if (!(await validateCsrfTokenEdge(cookieToken))) {
-      return NextResponse.json(
+      return applyPendingCookies(NextResponse.json(
         { error: "CSRF validation failed: invalid token signature" },
         { status: 403 },
-      );
+      ));
     }
 
     if (headerToken !== cookieToken) {
-      return NextResponse.json(
+      return applyPendingCookies(NextResponse.json(
         { error: "CSRF validation failed: token mismatch" },
         { status: 403 },
-      );
+      ));
     }
   }
 
