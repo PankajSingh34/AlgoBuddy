@@ -11,6 +11,7 @@ import TournamentCard from "@/app/components/ui/TournamentCard";
 import ActivityHeatmap from "@/app/components/ui/ActivityHeatmap";
 import Footer from "@/app/components/footer";
 import BadgesTab from "./tabs/BadgesTab";
+import BadgesTab from "./tabs/BadgesTab";
 
 // Lazy Load Heavy Modals to significantly reduce Initial JS Bundle size
 const MatchmakingModal = dynamic(() => import("@/app/components/ui/MatchmakingModal"), { ssr: false });
@@ -1641,7 +1642,7 @@ export default function ArenaPage() {
                 
                 {activeTab === "badges" && (
                   <BadgesTab badgeCategory={badgeCategory} setBadgeCategory={setBadgeCategory} />
-                )}}
+                )}}}
               </div>
             )}
           </main>
