@@ -9,6 +9,7 @@ import { CommandPalette } from "@/app/components/CommandPalette";
 import { useGlobalKeyboardShortcuts } from "@/app/hooks/useGlobalKeyboardShortcuts";
 import GlobalShortcutsModal from "@/app/components/ui/GlobalShortcutsModal";
 import ProfileSetupModal from "@/app/components/profile/ProfileSetupModal";
+import ErrorBoundary from "@/app/components/ErrorBoundary";
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -21,7 +22,7 @@ export default function ClientLayoutWrapper({ children }) {
       <Toaster position="top-right" />
       <CookieConsent />
       {!isAuthPage && <Navbar />}
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
       {!isAuthPage && <Chatbot />}
       {!isAuthPage && <CommandPalette />}
       {!isAuthPage && <ProfileSetupModal />}
