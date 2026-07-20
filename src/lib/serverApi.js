@@ -60,7 +60,15 @@ export function getSupabaseRequestClient(request) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value);
+          try {
+            request.cookies.set(name, value, {
+              ...options,
+              sameSite: 'strict',
+              secure: process.env.NODE_ENV === 'production',
+            });
+          } catch {
+            // Can happen during GET requests or rendering in Next.js
+          }
         });
       },
     },
