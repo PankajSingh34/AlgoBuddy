@@ -83,7 +83,10 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 50;
+    const MAX_LIMIT = 100;
+    let limit = parseInt(searchParams.get("limit")) || 50;
+    if (!Number.isFinite(limit) || limit <= 0) limit = 50;
+    if (limit > MAX_LIMIT) limit = MAX_LIMIT;
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
