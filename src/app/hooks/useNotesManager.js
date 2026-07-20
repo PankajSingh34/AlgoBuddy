@@ -67,7 +67,11 @@ export function useNotesManager() {
   // Save notes on state change
   const saveNotes = useCallback((newNotes) => {
     setNotes(newNotes);
-    localStorage.setItem("algobuddy-notebook", JSON.stringify(newNotes));
+    try {
+      localStorage.setItem("algobuddy-notebook", JSON.stringify(newNotes));
+    } catch {
+      console.error("Failed to persist notebook notes to storage");
+    }
   }, []);
 
   // Detect current topic from path or queries
