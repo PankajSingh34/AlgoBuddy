@@ -1,0 +1,16 @@
+# Global owners for all files
+* @PankajSingh34
+
+# Backend (Spring Boot) ownership
+/backend/ @PankajSingh34
+
+# Arena socket server ownership
+/arena-socket-server/ @PankajSingh34
+
+# Frontend source ownership
+/src/ @PankajSingh34
+
+# Configuration files ownership
+/*.json @PankajSingh34
+/*.js @PankajSingh34
+/*.mjs @PankajSingh34
