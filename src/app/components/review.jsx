@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiStar, FiSend, FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import dynamic from "next/dynamic";
+import { csrfFetch } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -36,7 +37,7 @@ const TestimonialsSection = () => {
         throw new Error("Please complete the captcha");
       }
 
-      const response = await fetch("/api/send-review", {
+      const response = await csrfFetch("/api/send-review", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

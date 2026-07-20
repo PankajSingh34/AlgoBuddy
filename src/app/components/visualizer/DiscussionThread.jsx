@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { csrfFetch } from '@/lib/apiClient';
 
 export default function DiscussionThread({ topicId }) {
   const [comments, setComments] = useState([]);
@@ -24,7 +25,7 @@ export default function DiscussionThread({ topicId }) {
     if (!newComment.trim()) return;
 
     try {
-      const res = await fetch('/api/comments', {
+      const res = await csrfFetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic_id: topicId, content: newComment })

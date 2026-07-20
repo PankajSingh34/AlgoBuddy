@@ -13,6 +13,7 @@ const Editor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 import { useUser } from "@/features/user/UserContext";
+import { csrfFetch } from "@/lib/apiClient";
 import ReactMarkdown from "react-markdown";
 import { 
   Code2, 
@@ -122,7 +123,7 @@ export default function CodeEstimator() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/complexity-estimator", {
+      const response = await csrfFetch("/api/complexity-estimator", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

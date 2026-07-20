@@ -162,3 +162,22 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
+/**
+ * Thin fetch wrapper for callers that can't go through api.request()
+ * (e.g. streaming responses, blob downloads, FormData bodies) but still
+ * hit a state-changing /api/* route and need the CSRF header attached.
+ */
+export async function csrfFetch(path, options = {}) {
+  const { headers = {}, method = "GET", ...rest } = options;
+  const extraHeaders = { ...headers };
+
+  if (STATE_CHANGING_METHODS.has(method)) {
+    const token = await api.getCsrfToken();
+    if (token) {
+      extraHeaders[CSRF_HEADER_NAME] = token;
+    }
+  }
+
+  return fetch(path, { ...rest, method, headers: extraHeaders });
+}
