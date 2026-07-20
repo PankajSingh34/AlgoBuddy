@@ -21,10 +21,13 @@ const MCTSAnim = () => {
   useEffect(() => { saveToStorage("mcts-explore-c", exploreC); }, [exploreC]);
   useEffect(() => { saveToStorage("mcts-sim-size", simSize); }, [simSize]);
   useEffect(() => {
-    const savedSessions = JSON.parse(
-      localStorage.getItem("mcts-session-history") || "[]"
-    );
-    setSessionHistory(savedSessions);
+    try {
+      const raw = localStorage.getItem("mcts-session-history");
+      const savedSessions = raw ? JSON.parse(raw) : [];
+      setSessionHistory(Array.isArray(savedSessions) ? savedSessions : []);
+    } catch {
+      console.error("Failed to load MCTS session history; stored value is invalid.");
+    }
   }, []);
 
   const saveSession = (stepCount) => {
@@ -41,10 +44,14 @@ const MCTSAnim = () => {
       ...sessionHistory,
     ].slice(0, 10);
 
-    localStorage.setItem(
-      "mcts-session-history",
-      JSON.stringify(updatedSessions)
-    );
+    try {
+      localStorage.setItem(
+        "mcts-session-history",
+        JSON.stringify(updatedSessions)
+      );
+    } catch {
+      console.error("Failed to persist MCTS session history to storage");
+    }
 
     setSessionHistory(updatedSessions);
   };
