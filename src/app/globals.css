@@ -102,7 +102,7 @@ body {
   letter-spacing: -0.04em;
 }
 
-.dark body {
+html.dark body {
   color: var(--udemy-dark-text);
   background: var(--udemy-dark-bg);
 }
@@ -284,13 +284,6 @@ html {
            focus-visible:ring-offset-2;
   }
 
-  .skeleton-shimmer {
-    @apply animate-pulse rounded-[var(--radius-md)] bg-[var(--color-neutral-200)];
-  }
-}
-
-.dark .skeleton-shimmer {
-  background-color: var(--color-neutral-700);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -318,13 +311,23 @@ html {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    #e0e0e0 25%,
-    #f5f5f5 50%,
-    #e0e0e0 75%
+    var(--color-neutral-200) 25%,
+    var(--color-neutral-100) 50%,
+    var(--color-neutral-200) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-700) 25%,
+    var(--color-neutral-600) 50%,
+    var(--color-neutral-700) 75%
+  );
+  background-size: 200% 100%;
 }
 
 @keyframes shimmer {

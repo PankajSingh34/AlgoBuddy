@@ -95,6 +95,7 @@ export default async function RootLayout({ children }) {
       <head>
         <meta name="application-name" content="AlgoBuddy" />
         <meta property="og:site_name" content="AlgoBuddy" />
+        <meta name="color-scheme" content="light dark" />
         <link rel="icon" href="/favicon.ico?v=3" />
 
         {/* Prevent flash: apply saved theme before React hydrates */}
