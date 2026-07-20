@@ -94,6 +94,7 @@ export default async function RootLayout({ children }) {
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${sourceSans3.variable} ${sourceSerif4.variable}`}>
       <head>
         <meta name="application-name" content="AlgoBuddy" />
+        <meta name="color-scheme" content="light dark" />
         <meta property="og:site_name" content="AlgoBuddy" />
         <link rel="icon" href="/favicon.ico?v=3" />
 

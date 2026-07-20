@@ -77,7 +77,7 @@ const Footer = () => {
 
   return (
     <>
-      <footer className="relative bg-udemy-dark-bg text-gray-400 overflow-hidden border-t border-white/5">
+      <footer className="relative bg-udemy-dark-bg dark:bg-[var(--udemy-dark-surface)] text-gray-400 overflow-hidden border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-12">
             {/* Left Section */}
