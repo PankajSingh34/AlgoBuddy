@@ -1,15 +1,7 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, errorResponse } from "@/lib/serverApi";
-
-function escapeCSV(value) {
-  if (value == null) return "";
-  const str = String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { escapeCSV } from "@/lib/shared-utils";
 
 function toCSV(rows, columns) {
   const header = columns.map((c) => escapeCSV(c.label)).join(",");

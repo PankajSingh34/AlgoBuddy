@@ -41,4 +41,27 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-export { isValidHttpUrl, getSupabaseConfig, escapeHtml };
+// Prefixes that spreadsheet software interprets as formulas. Left unescaped, a
+// CSV field beginning with one of these can execute code when opened in Excel,
+// LibreOffice, or Google Sheets (formula injection).
+const CSV_FORMULA_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+
+function sanitizeCSVField(value) {
+  if (value == null) return "";
+  const str = String(value);
+  if (CSV_FORMULA_PREFIXES.some((prefix) => str.startsWith(prefix))) {
+    // Prefix with a single quote so the value is treated as text.
+    return `'${str}`;
+  }
+  return str;
+}
+
+function escapeCSV(value) {
+  const str = sanitizeCSVField(value);
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export { isValidHttpUrl, getSupabaseConfig, escapeHtml, escapeCSV, sanitizeCSVField };
