@@ -1,23 +1,59 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+const PAGE_LIMIT = 20;
 
 export default function DiscussionThread({ topicId }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const loadComments = useCallback(async (targetPage) => {
+    const res = await fetch(`/api/comments/${encodeURIComponent(topicId)}?page=${targetPage}&limit=${PAGE_LIMIT}`);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to load comments');
+    }
+    return data;
+  }, [topicId]);
 
   useEffect(() => {
-    fetch(`/api/comments/${encodeURIComponent(topicId)}`)
-      .then(res => res.json())
+    setLoading(true);
+    setError(null);
+    loadComments(1)
       .then(data => {
         setComments(data.comments || []);
+        setTotalPages(data.totalPages || 1);
+        setPage(1);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
+        setError(err.message);
         setLoading(false);
       });
-  }, [topicId]);
+  }, [loadComments]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const nextPage = page + 1;
+      const data = await loadComments(nextPage);
+      setComments(prev => [...prev, ...(data.comments || [])]);
+      setTotalPages(data.totalPages || 1);
+      setPage(nextPage);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,6 +94,8 @@ export default function DiscussionThread({ topicId }) {
 
       {loading ? (
         <p>Loading comments...</p>
+      ) : error && comments.length === 0 ? (
+        <p className="text-red-500">{error}</p>
       ) : comments.length === 0 ? (
         <p className="text-gray-500">No comments yet. Be the first to start the discussion!</p>
       ) : (
@@ -78,6 +116,21 @@ export default function DiscussionThread({ topicId }) {
               <p>{comment.content}</p>
             </div>
           ))}
+
+          {error && (
+            <p className="text-red-500 text-sm">{error}</p>
+          )}
+
+          {page < totalPages && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="w-full py-2.5 rounded border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? 'Loading...' : 'Load more comments'}
+            </button>
+          )}
         </div>
       )}
     </div>
