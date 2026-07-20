@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { Users } from 'lucide-react'
+import { csrfFetch } from '@/lib/apiClient'
 import {
   FaGithub,
   FaLinkedin,
@@ -48,7 +49,7 @@ const Footer = () => {
     
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
+      const response = await csrfFetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: newsletterEmail }),
