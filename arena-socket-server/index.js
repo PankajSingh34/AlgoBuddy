@@ -353,7 +353,17 @@ setInterval(async () => {
         let changed = false;
         let remainingCount = elements.length;
         for (const el of elements) {
-          const parsed = JSON.parse(el);
+          let parsed;
+          try {
+            parsed = JSON.parse(el);
+          } catch {
+            // Malformed entry: remove it so one bad element can't abort the
+            // entire cleanup pass and leave other stale entries behind.
+            await redisClient.lrem(key, 0, el);
+            changed = true;
+            remainingCount--;
+            continue;
+          }
           if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
             await redisClient.lrem(key, 0, el);
             changed = true;
