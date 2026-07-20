@@ -2,8 +2,6 @@ import { getTransporter } from "@/lib/emailTransporter";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import { validateCsrfTokenEdge } from "@/lib/csrfToken";
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/lib/csrfConstants";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 import { escapeHtml } from "@/lib/shared-utils";
 
@@ -20,13 +18,9 @@ function clampInt(value, min, max) {
   return int;
 }
 
+// CSRF is validated centrally in authProxy.js for all state-changing
+// /api/* routes; no route-local check is needed here.
 export async function POST(request) {
-  const cookieToken = request.cookies?.get(CSRF_COOKIE_NAME)?.value;
-  const headerToken = request.headers?.get(CSRF_HEADER_NAME);
-  if (!cookieToken || !headerToken || cookieToken !== headerToken || !(await validateCsrfTokenEdge(headerToken))) {
-    return jsonResponse({ error: "Invalid CSRF token" }, 403);
-  }
-
   try {
     const ip = getClientIp(request.headers);
 

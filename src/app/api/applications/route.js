@@ -1,12 +1,10 @@
 import { cookies } from "next/headers";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseServerClient, jsonResponse, errorResponse } from "@/lib/serverApi";
-import { validateCsrfOrigin } from "@/lib/csrfConstants";
 
+// CSRF is validated centrally in authProxy.js for all state-changing
+// /api/* routes; no route-local check is needed here.
 export async function POST(request) {
-  if (!validateCsrfOrigin(request)) {
-    return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
-  }
   try {
     const authResult = await getAuthenticatedUser();
     if (!authResult.success) {

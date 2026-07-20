@@ -2,11 +2,6 @@ import { getTransporter } from "@/lib/emailTransporter";
 import { checkRateLimit, checkGlobalSmtpQuota } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getClientIp";
 import { verifyTurnstile } from "@/lib/verifyTurnstile";
-import {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-} from "@/lib/csrfConstants";
-import { validateCsrfTokenEdge } from "@/lib/csrfToken";
 import { jsonResponse, errorResponse, getSupabaseAdmin } from "@/lib/serverApi";
 import { RATE_LIMITS } from "@/config/rateLimits";
 import { escapeHtml } from "@/lib/shared-utils";
@@ -16,16 +11,9 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// CSRF is validated centrally in authProxy.js for all state-changing
+// /api/* routes; no route-local check is needed here.
 export async function POST(req) {
-  const cookieToken = req.cookies?.get(CSRF_COOKIE_NAME)?.value;
-  const headerToken = req.headers?.get(CSRF_HEADER_NAME);
-  if (!cookieToken || !headerToken || headerToken !== cookieToken) {
-    return Response.json({ error: "Invalid CSRF token" }, { status: 403 });
-  }
-  if (!(await validateCsrfTokenEdge(cookieToken))) {
-    return Response.json({ error: "Invalid CSRF token" }, { status: 403 });
-  }
-
   try {
     const ip = getClientIp(req.headers);
 
