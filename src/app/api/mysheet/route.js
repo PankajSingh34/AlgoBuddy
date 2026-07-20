@@ -56,12 +56,17 @@ export async function POST(request) {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
 
-    const { data: existing } = await supabase
+    const { data: existing, error: lookupError } = await supabase
       .from("my_sheet")
       .select("added_at")
       .eq("user_id", authResult.user.id)
       .eq("problem_id", problemId)
       .maybeSingle();
+
+    if (lookupError) {
+      console.error("[/api/mysheet POST] lookup error:", lookupError.message);
+      return jsonResponse({ error: lookupError.message }, 500);
+    }
 
     const row = {
       user_id: authResult.user.id,
