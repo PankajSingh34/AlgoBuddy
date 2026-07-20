@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { api } from '@/lib/apiClient';
 
 export default function DiscussionThread({ topicId }) {
   const [comments, setComments] = useState([]);
@@ -24,12 +25,10 @@ export default function DiscussionThread({ topicId }) {
     if (!newComment.trim()) return;
 
     try {
-      const res = await fetch('/api/comments', {
+      const data = await api.request('/api/comments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic_id: topicId, content: newComment })
+        body: { topic_id: topicId, content: newComment }
       });
-      const data = await res.json();
       if (data.comment) {
         setComments([data.comment, ...comments]);
         setNewComment('');

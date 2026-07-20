@@ -1,10 +1,6 @@
 import { getSupabaseAdmin, jsonResponse, errorResponse } from "@/lib/serverApi";
-import { validateCsrfOrigin } from "@/lib/csrfConstants";
 
 export async function POST(req) {
-  if (!validateCsrfOrigin(req)) {
-    return jsonResponse({ error: "CSRF validation failed: untrusted origin" }, 403);
-  }
   try {
     const { email } = await req.json();
 
