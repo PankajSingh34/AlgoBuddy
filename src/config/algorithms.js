@@ -2088,4 +2088,24 @@ export const algorithmRegistry = {
     difficulty: "Medium",
   },
 },
+"string/longest-substring": {
+  metadata: {
+    title:
+      "Longest Substring Without Repeating Characters | AlgoBuddy",
+    description:
+      "Visualize the Longest Substring Without Repeating Characters algorithm using the Sliding Window technique.",
+    keywords: [
+      "Longest Substring",
+      "Sliding Window",
+      "HashMap",
+      "String Algorithms",
+      "AlgoBuddy",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/longest-substring/page")
+  ),
+},
 };
