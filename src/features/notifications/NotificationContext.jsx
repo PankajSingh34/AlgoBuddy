@@ -190,7 +190,11 @@ export const NotificationProvider = ({ children }) => {
 
   const clearAll = () => {
     setNotifications([]);
-    localStorage.removeItem("algobuddy_notifications");
+    try {
+      localStorage.removeItem("algobuddy_notifications");
+    } catch {
+      console.error("Failed to clear notifications from storage");
+    }
   };
 
   return (
