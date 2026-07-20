@@ -27,10 +27,15 @@ export function getStoredPreferences() {
 
 export function saveStoredPreferences(preferences) {
     if (typeof window === "undefined") return;
+    try {
     window.localStorage.setItem(
-    CONSENT_PREFERENCES_KEY,
-    JSON.stringify({ ...preferences, essential: true })
+        CONSENT_PREFERENCES_KEY,
+        JSON.stringify({ ...preferences, essential: true })
     );
+    } catch {
+        // Storage may be unavailable (private mode, quota, blocked). The
+        // consent UI should not crash when persistence is not possible.
+    }
     window.dispatchEvent(new Event(CONSENT_UPDATED_EVENT));
 }
 
