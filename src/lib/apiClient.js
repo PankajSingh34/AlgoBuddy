@@ -114,7 +114,11 @@ class ApiClient {
         // refresh failed
       }
 
-      localStorage.removeItem("supabase.auth.token");
+      try {
+        localStorage.removeItem("supabase.auth.token");
+      } catch {
+        // storage may be unavailable (private mode / blocked); ignore
+      }
 
       if (typeof window !== "undefined") {
         window.location.href = "/login";
