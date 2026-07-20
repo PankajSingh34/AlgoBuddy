@@ -28,11 +28,19 @@ class PersistenceManager {
   }
 
   set(key, value) {
-    localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(value));
+    try {
+      localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(value));
+    } catch {
+      console.error(`Failed to write "${STORAGE_KEYS[key]}" to storage`);
+    }
   }
 
   remove(key) {
-    localStorage.removeItem(STORAGE_KEYS[key]);
+    try {
+      localStorage.removeItem(STORAGE_KEYS[key]);
+    } catch {
+      console.error(`Failed to remove "${STORAGE_KEYS[key]}" from storage`);
+    }
   }
 
   async loadFromServer(table, userId) {
