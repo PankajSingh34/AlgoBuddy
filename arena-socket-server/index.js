@@ -720,8 +720,23 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("spectator_chat", (data) => {
+  async function isAuthorizedSpectator(matchId) {
+    if (!matchId) return false;
+    const room = `${matchId}-spectators`;
+    // The socket must have joined the spectator room for this match...
+    if (!socket.rooms.has(room)) return false;
+    // ...and the match must actually exist.
+    try {
+      const matchStr = await redisClient.get(`{arena}:match:${matchId}`);
+      return Boolean(matchStr);
+    } catch {
+      return false;
+    }
+  }
+
+  socket.on("spectator_chat", async (data) => {
     if (!data.matchId || !data.message) return;
+    if (!(await isAuthorizedSpectator(data.matchId))) return;
     if (isSpectatorRateLimited(socket.data.userId)) return;
     if (/<[^>]*>/.test(data.message)) return;
     if (data.message.length > 500) return;
@@ -736,8 +751,9 @@ io.on("connection", async (socket) => {
 
   const ALLOWED_EMOTES = new Set(['clap', 'laugh', 'cheer', 'boo', 'wave', 'popcorn', 'cry', 'heart', 'fire', 'thumbsup']);
 
-  socket.on("spectator_emote", (data) => {
+  socket.on("spectator_emote", async (data) => {
     if (!data.matchId || !data.emote) return;
+    if (!(await isAuthorizedSpectator(data.matchId))) return;
     if (isSpectatorRateLimited(socket.data.userId)) return;
     if (typeof data.emote !== 'string') return;
     if (data.emote.length > 50) return;
