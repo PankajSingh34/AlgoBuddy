@@ -18,7 +18,7 @@ export async function POST(request) {
     const supabase = getSupabaseServerClient(cookieStore);
     const { error } = await supabase
       .from("user_profiles")
-      .upsert({ id: authResult.user.id, joined_community: joined !== false }, { onConflict: "id" });
+      .upsert({ id: authResult.user.id, joined_community: joined === true }, { onConflict: "id" });
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ success: true });
   } catch (error) {
