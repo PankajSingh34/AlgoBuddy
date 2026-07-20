@@ -339,7 +339,8 @@ export async function POST(req) {
             message: "Signup request received. If the email is not registered, a verification link has been sent.",
           });
         }
-        return jsonResponse({ success: false, message: error.message }, 400);
+        console.error("[/api/auth signup] Supabase admin createUser failed:", error.message);
+        return jsonResponse({ success: false, message: genericAuthError() }, 400);
       }
 
       if (emailConfirm) {
