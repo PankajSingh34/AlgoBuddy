@@ -24,7 +24,7 @@ export async function POST(request, { params }) {
     // Fetch shared user's public sheet items (no auth needed — RLS allows public reads)
     const { data: sharedData, error: fetchError } = await anon
       .from("my_sheet")
-      .select("problem_id, note")
+      .select("problem_id, note, shared_notes")
       .eq("user_id", sharedUserId)
       .eq("is_public", true);
 
@@ -51,7 +51,7 @@ export async function POST(request, { params }) {
       .map(item => ({
         user_id: authResult.user.id,
         problem_id: item.problem_id,
-        note: item.note || "",
+        note: item.shared_notes ? (item.note || "") : "",
         added_at: new Date().toISOString()
       }));
 
