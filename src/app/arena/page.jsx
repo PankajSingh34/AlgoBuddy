@@ -1,4 +1,5 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -6,12 +7,15 @@ import Image from "next/image";
 import { useUser } from "@/features/user/UserContext";
 import { toast } from "react-hot-toast";
 import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
-import MatchmakingModal from "@/app/components/ui/MatchmakingModal";
-import DuelSimulatorModal from "@/app/components/ui/DuelSimulatorModal";
-import SpectatorSimulatorModal from "@/app/components/ui/SpectatorSimulatorModal";
-import CreateDuelModal from "@/app/components/ui/CreateDuelModal";
 import TournamentCard from "@/app/components/ui/TournamentCard";
+import ActivityHeatmap from "@/app/components/ui/ActivityHeatmap";
 import Footer from "@/app/components/footer";
+
+// Lazy Load Heavy Modals to significantly reduce Initial JS Bundle size
+const MatchmakingModal = dynamic(() => import("@/app/components/ui/MatchmakingModal"), { ssr: false });
+const DuelSimulatorModal = dynamic(() => import("@/app/components/ui/DuelSimulatorModal"), { ssr: false });
+const SpectatorSimulatorModal = dynamic(() => import("@/app/components/ui/SpectatorSimulatorModal"), { ssr: false });
+const CreateDuelModal = dynamic(() => import("@/app/components/ui/CreateDuelModal"), { ssr: false });
 import {
   Search,
   Home,
@@ -1248,88 +1252,7 @@ export default function ArenaPage() {
 
                     {/* Heatmap */}
                     <div className="bg-white dark:bg-neutral-800 border border-slate-100 dark:border-neutral-800/80 rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500 fill-mode-both relative">
-                      <div className="flex items-center justify-between mb-6">
-                        <h5 className="text-sm font-bold text-slate-800 dark:text-neutral-200">Activity Heatmap</h5>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-neutral-900 px-2 py-1 rounded-md">Last 30 Days</span>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1 overflow-x-auto pb-2">
-                        {/* Heatmap Grid */}
-                        <div className="flex gap-2 min-w-max">
-                          {/* Day Labels */}
-                          <div className="flex flex-col gap-2 pt-6 text-[10px] font-semibold text-slate-400 mr-2 justify-between">
-                            <span className="h-5 flex items-center">Mon</span>
-                            <span className="h-5 flex items-center">Wed</span>
-                            <span className="h-5 flex items-center">Fri</span>
-                          </div>
-                          {Array.from({ length: 6 }).map((_, weekIdx) => {
-                            // 6 columns (weeks), each 5 days (mon-fri approx) or 7 days.
-                            // The original design had 30 days flat. Let's make it a realistic 7x5 or 5x6 grid.
-                            // Let's use 5 weeks x 7 days = 35 days for a better layout.
-                            return (
-                              <div key={weekIdx} className="flex flex-col gap-2">
-                                {/* Week/Month Label roughly */}
-                                {weekIdx % 2 === 0 ? (
-                                  <div className="text-[10px] font-semibold text-slate-400 h-4 text-center">
-                                    {new Date(Date.now() - (5 - weekIdx) * 7 * 24 * 60 * 60 * 1000).toLocaleDateString(undefined, { month: 'short' })}
-                                  </div>
-                                ) : (
-                                  <div className="h-4"></div>
-                                )}
-                                {Array.from({ length: 7 }).map((_, dayIdx) => {
-                                  const totalDays = 35;
-                                  const daysAgo = totalDays - 1 - (weekIdx * 7 + dayIdx);
-                                  
-                                  // Don't render future days if daysAgo < 0
-                                  if (daysAgo < 0 || daysAgo >= 30) return <div key={dayIdx} className="w-5 h-5 opacity-0"></div>;
-
-                                  const current = streakData?.current || 0;
-                                  let isActive = daysAgo < current;
-                                  if (!isActive) {
-                                    isActive = (daysAgo * 7) % 11 < 4 && daysAgo < 25; 
-                                  }
-                                  
-                                  const d = new Date();
-                                  d.setDate(d.getDate() - daysAgo);
-                                  const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
-                                  
-                                  // Intensity based on 'activity'
-                                  const intensityClass = isActive? ((daysAgo % 3 === 0)  
-                                  ? "bg-primary dark:bg-primary-light shadow-[0_0_8px_rgba(164,53,240,0.35)]"   
-                                  : "bg-primary/70 dark:bg-primary-light/70 shadow-[0_0_8px_rgba(164,53,240,0.25)]")
-                                  : "bg-slate-100 dark:bg-neutral-700/50";
-
-                                  return (
-                                    <div 
-                                      key={dayIdx} 
-                                      className={`w-5 h-5 rounded-[4px] transition-all duration-300 ${intensityClass} hover:scale-125 hover:ring-2 hover:ring-primary/50 cursor-pointer relative group`}
-                                    >
-                                      {/* Tooltip */}
-                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2.5 py-1.5 bg-slate-800 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl flex flex-col items-center">
-                                        <span>{isActive ? "Active Day 🔥" : "No Activity"}</span>
-                                        <span className="text-slate-400 font-medium">{dateStr}</span>
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Legend */}
-                      <div className="flex items-center gap-2 mt-6 justify-end text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        <span>Less</span>
-                        <div className="flex gap-1">
-                          <div className="w-3 h-3 rounded-[3px] bg-slate-100 dark:bg-neutral-700/50"></div>
-                          <div className="w-3 h-3 rounded-[3px] bg-primary/40"></div>
-                          <div className="w-3 h-3 rounded-[3px] bg-primary/70"></div>
-                          <div className="w-3 h-3 rounded-[3px] bg-primary dark:bg-primary-light"></div>
-                        </div>
-                        <span>More</span>
-                      </div>
+                      <ActivityHeatmap currentStreak={streakData?.current} longestStreak={streakData?.longest} />
                     </div>
 
                     <div className="bg-gradient-to-r from-primary to-purple-600 border border-primary/20 rounded-2xl p-6 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700 fill-mode-both">
