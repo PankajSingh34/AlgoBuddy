@@ -27,6 +27,7 @@ import {
   FolderSync
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { api } from "@/lib/apiClient";
 
 const SAMPLES = {
   JavaScript: `// JavaScript: Calculate the sum of an array
@@ -122,18 +123,15 @@ export default function CodeEstimator() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/complexity-estimator", {
+      const response = await api.request("/api/complexity-estimator", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code, language }),
+        body: { code, language },
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = response;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze code complexity.");
+      if (!data || data.error) {
+        throw new Error(data?.error || "Failed to analyze code complexity.");
       }
 
       setResult(data);

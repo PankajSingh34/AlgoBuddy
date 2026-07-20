@@ -1,14 +1,9 @@
 import { cookies } from 'next/headers';
 import { getSupabaseServerClient } from '@/lib/serverApi';
-import { validateCsrfOrigin } from '@/lib/csrfConstants';
 
 const MAX_COMMENT_LENGTH = 2000;
 
 export async function POST(req) {
-  if (!validateCsrfOrigin(req)) {
-    return Response.json({ error: "CSRF validation failed: untrusted origin" }, { status: 403 });
-  }
-
   try {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
