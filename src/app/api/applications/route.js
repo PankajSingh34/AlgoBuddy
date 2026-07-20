@@ -44,6 +44,22 @@ export async function POST(request) {
     const studentSkills = meta.skills || null;
     const studentResumeLink = meta.resume_link || null;
 
+    const { data: existingApp, error: existingError } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("student_id", authResult.user.id)
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error("[/api/applications POST] Supabase duplicate-check error:", existingError.message);
+      return jsonResponse({ error: existingError.message }, 500);
+    }
+
+    if (existingApp) {
+      return jsonResponse({ error: "You have already applied to this job" }, 409);
+    }
+
     const { data: application, error: insertError } = await supabase
       .from("applications")
       .insert({
@@ -82,8 +98,11 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 50;
+    let page = parseInt(searchParams.get("page"), 10);
+    let limit = parseInt(searchParams.get("limit"), 10);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (!Number.isFinite(limit) || limit < 1) limit = 50;
+    if (limit > 100) limit = 100;
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
