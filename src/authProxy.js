@@ -13,6 +13,10 @@ import { getSupabaseConfig } from "@/lib/shared-utils";
 const SUPABASE_ENV_ERROR =
   "Missing NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env.local and add your Supabase project URL and anon key.";
 
+// This middleware is the single CSRF enforcement boundary for state-changing
+// /api/* routes (origin check + token presence/signature/equality). Route
+// handlers should not duplicate CSRF checks; add a route here only if it
+// needs a documented exemption.
 const CSRF_EXEMPT_ROUTES = new Set(["/api/csrf-token"]);
 
 const protectedRoutes = ["/arena", "/practice", "/profile"];
