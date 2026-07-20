@@ -1025,15 +1025,23 @@ app.get("/api/matches/active", async (req, res) => {
     }
 
     const matchKeys = await scanRedisKeys("{arena}:match:*");
+    const requesterId = decoded.sub;
     const activeMatches = [];
     for (const key of matchKeys) {
       if (key.endsWith(":completed")) continue;
       const matchStr = await redisClient.get(key);
       if (matchStr) {
         const match = JSON.parse(matchStr);
-        if (match.status === "in-progress") {
-          activeMatches.push(match);
-        }
+        if (match.status !== "in-progress") continue;
+        const players = match.players || [];
+        // Only expose matches the requester participates in, and return a
+        // spectator-safe minimized payload (no internal tokens/metadata).
+        if (!players.some(p => p.userId === requesterId)) continue;
+        activeMatches.push({
+          matchId: match.matchId,
+          status: match.status,
+          players: players.map(p => ({ userId: p.userId })),
+        });
       }
     }
     res.json({ matches: activeMatches });
