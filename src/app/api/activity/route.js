@@ -60,10 +60,14 @@ export async function GET(request) {
       return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
     }
     const { searchParams } = new URL(request.url);
-    const days = parseInt(searchParams.get("days") || "30", 10);
+    const MAX_DAYS = 365;
+    let days = parseInt(searchParams.get("days") || "30", 10);
+    if (!Number.isFinite(days) || days <= 0) days = 30;
+    if (days > MAX_DAYS) days = MAX_DAYS;
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
+    const MAX_ACTIVITY_ROWS = 1000;
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
     let { data, error } = await supabase
@@ -71,7 +75,8 @@ export async function GET(request) {
       .select("activity_date, created_at")
       .eq("user_id", authResult.user.id)
       .gte("created_at", sinceStr)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(MAX_ACTIVITY_ROWS);
 
     if (error) {
       const errorCode = error?.code;
