@@ -28,6 +28,9 @@ export async function proxy(request) {
     return supabaseResponse;
   }
 
+  // Cookies set during session refresh must survive the final response
+  // reassignment below, so collect them here and apply them afterwards.
+  const refreshedCookies = [];
   const supabase = createServerClient(
     supabaseConfig.supabaseUrl,
     supabaseConfig.supabaseAnonKey,
@@ -40,12 +43,8 @@ export async function proxy(request) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, {
-              ...options,
-              secure: process.env.NODE_ENV === "production",
-            }),
+            refreshedCookies.push({ name, value, options }),
           );
         },
       },
@@ -70,6 +69,14 @@ if (user) {
 supabaseResponse = NextResponse.next({
   request: { headers: requestHeaders },
 });
+
+// Preserve any cookies set while refreshing the session during getUser().
+refreshedCookies.forEach(({ name, value, options }) =>
+  supabaseResponse.cookies.set(name, value, {
+    ...options,
+    secure: process.env.NODE_ENV === "production",
+  }),
+);
   const pathname = request.nextUrl.pathname;
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (error || !user) {
