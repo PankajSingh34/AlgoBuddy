@@ -10,19 +10,32 @@ export default function AlgorithmNotes() {
 
   // Load saved notes
   useEffect(() => {
-    const savedNotes = localStorage.getItem("algorithm-notes");
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes));
+    try {
+      const savedNotes = localStorage.getItem("algorithm-notes");
+      if (savedNotes) {
+        const parsed = JSON.parse(savedNotes);
+        if (Array.isArray(parsed)) {
+          setNotes(parsed);
+        } else {
+          console.error("Saved algorithm notes were not an array; ignoring.");
+        }
+      }
+    } catch {
+      console.error("Failed to load algorithm notes; stored value is invalid.");
     }
   }, []);
 
   // Save notes to localStorage
   const saveToStorage = (updatedNotes) => {
     setNotes(updatedNotes);
-    localStorage.setItem(
-      "algorithm-notes",
-      JSON.stringify(updatedNotes)
-    );
+    try {
+      localStorage.setItem(
+        "algorithm-notes",
+        JSON.stringify(updatedNotes)
+      );
+    } catch {
+      console.error("Failed to persist algorithm notes to storage");
+    }
   };
 
   // Add or update note
