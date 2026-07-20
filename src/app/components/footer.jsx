@@ -12,6 +12,7 @@ import {
   FaXTwitter,
   FaInstagram,
 } from 'react-icons/fa6'
+import { api } from '@/lib/apiClient'
 
 
 
@@ -48,17 +49,15 @@ const Footer = () => {
     
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/newsletter/subscribe', {
+      const response = await api.request('/api/newsletter/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newsletterEmail }),
+        body: { email: newsletterEmail },
       });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setNewsletterEmailError(data.error || "Subscription failed");
+
+      if (response.error) {
+        setNewsletterEmailError(response.error || "Subscription failed");
       } else {
-        setNewsletterSuccess(data.message || "Successfully subscribed!");
+        setNewsletterSuccess(response.message || "Successfully subscribed!");
         setNewsletterEmail("");
       }
     } catch (error) {
