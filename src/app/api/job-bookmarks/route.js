@@ -23,12 +23,17 @@ export async function POST(request) {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
 
-    const { data: existing } = await supabase
+    const { data: existing, error: lookupError } = await supabase
       .from("bookmarks")
       .select("id")
       .eq("student_id", authResult.user.id)
       .eq("job_id", jobId)
       .maybeSingle();
+
+    if (lookupError) {
+      console.error("[/api/job-bookmarks POST] Supabase lookup error:", lookupError.message);
+      return jsonResponse({ error: lookupError.message }, 500);
+    }
 
     if (existing) {
       const { error: deleteError } = await supabase
@@ -67,8 +72,11 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
+    let page = parseInt(searchParams.get("page"), 10);
+    let limit = parseInt(searchParams.get("limit"), 10);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (!Number.isFinite(limit) || limit < 1) limit = 20;
+    if (limit > 100) limit = 100;
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
