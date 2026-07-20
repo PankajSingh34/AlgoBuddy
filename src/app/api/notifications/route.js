@@ -11,8 +11,11 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 20;
+    let page = parseInt(searchParams.get("page"), 10);
+    let limit = parseInt(searchParams.get("limit"), 10);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (!Number.isFinite(limit) || limit < 1) limit = 20;
+    if (limit > 100) limit = 100;
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();
