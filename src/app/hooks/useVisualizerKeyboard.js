@@ -44,7 +44,10 @@ export default function useVisualizerKeyboard({
     function handleKeyDown(e) {
       const activeEl = document.activeElement;
       const tag = activeEl?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea" || tag === "select" || activeEl?.isContentEditable) return;
+      const isInput = tag === "input" || tag === "textarea" || tag === "select";
+      const isContentEditable = activeEl?.isContentEditable || activeEl?.getAttribute?.("contenteditable") === "true" || activeEl?.closest?.('[contenteditable="true"]');
+      
+      if (isInput || isContentEditable) return;
 
       switch (e.key) {
         case " ":
