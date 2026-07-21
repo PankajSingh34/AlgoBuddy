@@ -25,6 +25,7 @@ import GraphCanvas from "@/app/components/models/GraphCanvas";
 import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import useGraphHistory from "@/app/hooks/useGraphHistory";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 import { bfsGenerator } from "@/features/algorithms/graph/bfsLogic";
@@ -396,8 +397,13 @@ const comparisonData = [
 ];
 
 export default function GraphVisualizer({ algorithm = "bfs", startNode: initialStartNode }) {
-  const [nodes, setNodes] = useState(defaultGraphs[algorithm]?.nodes || []);
-  const [edges, setEdges] = useState(defaultGraphs[algorithm]?.edges || []);
+  const {
+    nodes, setNodes,
+    edges, setEdges,
+    updateGraph,
+    undo, redo, canUndo, canRedo,
+    resetGraph
+  } = useGraphHistory(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
   const [isPseudocodeOpen, setIsPseudocodeOpen] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -406,16 +412,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       const savedNodes = localStorage.getItem(`algobuddy_custom_nodes_${algorithm}`);
       const savedEdges = localStorage.getItem(`algobuddy_custom_edges_${algorithm}`);
       if (savedNodes && savedEdges) {
-        setNodes(JSON.parse(savedNodes));
-        setEdges(JSON.parse(savedEdges));
+        resetGraph(JSON.parse(savedNodes), JSON.parse(savedEdges));
       } else {
-        setNodes(defaultGraphs[algorithm]?.nodes || []);
-        setEdges(defaultGraphs[algorithm]?.edges || []);
+        resetGraph(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
       }
     } catch (e) {
       console.error("Failed to parse custom graph from localStorage", e);
-      setNodes(defaultGraphs[algorithm]?.nodes || []);
-      setEdges(defaultGraphs[algorithm]?.edges || []);
+      resetGraph(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
     }
     setIsLoaded(true);
   }, [algorithm]);
@@ -427,6 +430,32 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     }
   }, [nodes, edges, algorithm, isLoaded]);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleKeyDown = (e) => {
+      const activeEl = document.activeElement;
+      const tag = activeEl?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select" || activeEl?.isContentEditable) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (canRedo) redo();
+        } else {
+          if (canUndo) undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        if (canRedo) redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditing, undo, redo, canUndo, canRedo]);
+
   const [targetNode, setTargetNode] = useState("");
   const canvasContainerRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -506,8 +535,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
   const handleCustomGraphInput = useCallback((parsedEdges) => {
     if (parsedEdges === null) {
-      setNodes(defaultGraphs[algorithm]?.nodes || []);
-      setEdges(defaultGraphs[algorithm]?.edges || []);
+      resetGraph(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
     } else {
       const nodeIds = Array.from(
         new Set(parsedEdges.flatMap(e => [e.source, e.target]))
@@ -535,8 +563,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         directed: isDirected
       }));
 
-      setNodes(newNodes);
-      setEdges(newEdges);
+      resetGraph(newNodes, newEdges);
     }
     engine.reset();
   }, [algorithm, isDirected, engine]);
@@ -613,8 +640,10 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const removeNode = (id) => {
-    setNodes((current) => current.filter((node) => node.id !== id));
-    setEdges((current) => current.filter((edge) => edge.from !== id && edge.to !== id));
+    updateGraph(
+      (current) => current.filter((node) => node.id !== id),
+      (current) => current.filter((edge) => edge.from !== id && edge.to !== id)
+    );
     engine.reset();
   };
 
@@ -624,10 +653,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const clearGraph = useCallback(() => {
-    setNodes([]);
-    setEdges([]);
+    resetGraph([], []);
     engine.reset();
-  }, [engine]);
+  }, [resetGraph, engine]);
 
   const generateRandomGraph = useCallback(() => {
     const input = window.prompt("Enter number of nodes (max 20):", "6");
@@ -676,10 +704,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       }
     }
 
-    setNodes(newNodes);
-    setEdges(newEdges);
+    resetGraph(newNodes, newEdges);
     engine.reset();
-  }, [isWeighted, isDirected, engine]);
+  }, [isWeighted, isDirected, engine, resetGraph]);
 
   const reverseEdge = (edgeIndex) => {
     setEdges((current) =>
