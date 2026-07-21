@@ -45,13 +45,18 @@ export function* dfsGenerator(adj, startNode) {
 
   yield* runDFS(startNode);
   
+  const allNodesCount = Object.keys(adj).length;
+  const isDisconnected = visited.size < allNodesCount;
+
   yield {
     visitedNodes: new Set(visited),
     visitingNodes: new Set(),
     activeEdge: null,
     stack: [...stack],
     currentNode: null,
-    description: `DFS traversal complete`,
+    description: isDisconnected
+      ? `DFS traversal complete. Graph is disconnected (${allNodesCount - visited.size} nodes unreachable).`
+      : `DFS traversal complete. All reachable nodes visited.`,
     line: 6,
   };
 }
