@@ -48,6 +48,21 @@ public class UserArenaProfile {
     @Builder.Default
     private Integer totalProblemsSolved = 0;
 
+    @Column(name = "current_win_streak", nullable = false)
+    @Builder.Default
+    private Integer currentWinStreak = 0;
+
+    @Column(name = "current_daily_streak", nullable = false)
+    @Builder.Default
+    private Integer currentDailyStreak = 0;
+
+    @Column(name = "last_active_date")
+    private java.time.LocalDate lastActiveDate;
+
+    @Column(name = "streak_freezes_available", nullable = false)
+    @Builder.Default
+    private Integer streakFreezesAvailable = 0;
+
     @Version
     @Column(name = "version")
     private Integer version;
