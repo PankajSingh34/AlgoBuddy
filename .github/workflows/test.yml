@@ -1,48 +1,72 @@
-name : Test Platform
+name: Test Platform
 
 on:
-    pull_request:
-        branches:
-            - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-    test:
-        strategy:
-            matrix:
-                os: [ubuntu-latest, macos-latest, windows-latest]
-        runs-on: ${{ matrix.os }}
-        steps:
-            - uses: actions/checkout@v4
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                node-version: 22
-                cache: 'npm'
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Set up Python (required by isolated-vm native addon)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-            - name: Run tests
-              run: npm run test
+      - name: Install C++ build tools (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y build-essential
 
-            - name: Build Next.js
-              run: npm run build
+      - name: Install C++ build tools (macOS)
+        if: runner.os == 'macOS'
+        run: xcode-select --install || true
 
-    validate-backend-pom:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: backend
-        steps:
-            - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
 
-            - name: Set up JDK 21
-              uses: actions/setup-java@v4
-              with:
-                java-version: 21
-                distribution: temurin
-                cache: maven
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Validate Maven POM
-              run: bash ./mvnw validate --batch-mode
+      - name: Run lint and tests
+        run: npm run test
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          # Stub public env vars so Next.js build-time config checks don't throw.
+          # These are intentionally placeholder values — no real secrets here.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          # Must be a valid 3-part JWT format (header.payload.sig) — Supabase JS v2
+          # validates the structure on client init and throws on a plain string.
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.placeholder-signature
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: placeholder-turnstile-key
+          NEXT_PUBLIC_GA_ID: G-PLACEHOLDER
+
+  validate-backend-pom:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+          cache: maven
+
+      - name: Validate Maven POM
+        run: bash ./mvnw validate --batch-mode

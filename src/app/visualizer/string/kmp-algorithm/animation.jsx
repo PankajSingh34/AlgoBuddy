@@ -3,34 +3,91 @@
 import { useMemo, useState } from "react";
 import { Play, RotateCcw, SkipForward } from "lucide-react";
 
+/**
+ * Build the Longest Prefix Suffix (LPS / failure-function) array for the
+ * given pattern.  lps[i] is the length of the longest proper prefix of
+ * pattern[0..i] that is also a suffix.
+ */
+function buildLPS(pattern) {
+  const lps = new Array(pattern.length).fill(0);
+  let len = 0; // length of the previous longest prefix-suffix
+  let k = 1;
+
+  while (k < pattern.length) {
+    if (pattern[k] === pattern[len]) {
+      len++;
+      lps[k] = len;
+      k++;
+    } else if (len !== 0) {
+      // Do NOT increment k here — try the shorter prefix.
+      len = lps[len - 1];
+    } else {
+      lps[k] = 0;
+      k++;
+    }
+  }
+
+  return lps;
+}
+
+/**
+ * Generate one animation state per comparison step using the true KMP
+ * algorithm.  On a mismatch the pattern pointer is shifted via the LPS
+ * table instead of being naively reset to 0.
+ */
+function generateKMPStates(text, pattern) {
+  const result = [];
+  if (!pattern.length || !text.length) return result;
+
+  const lps = buildLPS(pattern);
+  let i = 0; // index into text
+  let j = 0; // index into pattern
+
+  while (i < text.length) {
+    const matched = text[i] === pattern[j];
+
+    result.push({
+      textIndex: i,
+      patternIndex: j,
+      match: matched,
+      // Snapshot the LPS row so the UI can display it.
+      lps: [...lps],
+      // Record a full match occurrence for the status panel.
+      fullMatch: matched && j === pattern.length - 1,
+    });
+
+    if (matched) {
+      i++;
+      j++;
+      if (j === pattern.length) {
+        // Full pattern matched — use LPS to continue without re-scanning.
+        j = lps[j - 1];
+      }
+    } else {
+      if (j !== 0) {
+        // Shift the pattern pointer using the failure function.
+        j = lps[j - 1];
+      } else {
+        // j is already 0; advance the text pointer.
+        i++;
+      }
+    }
+  }
+
+  return result;
+}
+
 export default function Animation() {
   const [text, setText] = useState("ABABDABACDABABCABAB");
   const [pattern, setPattern] = useState("ABABCABAB");
   const [step, setStep] = useState(0);
 
-  const states = useMemo(() => {
-    const result = [];
-    let i = 0;
-    let j = 0;
+  const lps = useMemo(() => buildLPS(pattern), [pattern]);
 
-    while (i < text.length && j < pattern.length) {
-      result.push({
-        textIndex: i,
-        patternIndex: j,
-        match: text[i] === pattern[j],
-      });
-
-      if (text[i] === pattern[j]) {
-        i++;
-        j++;
-      } else {
-        i++;
-        j = 0;
-      }
-    }
-
-    return result;
-  }, [text, pattern]);
+  const states = useMemo(
+    () => generateKMPStates(text, pattern),
+    [text, pattern]
+  );
 
   const current = states[Math.min(step, states.length - 1)] || {
     textIndex: 0,
@@ -171,20 +228,38 @@ export default function Animation() {
 
       </div>
 
-      <div className="mt-6 rounded-lg bg-gray-100 dark:bg-gray-800 p-4">
+      <div className="mt-6 rounded-lg bg-gray-100 dark:bg-gray-800 p-4 space-y-2">
 
         <p>
-          <strong>Current Text Index:</strong> {current.textIndex}
+          <strong>Current Text Index (i):</strong> {current.textIndex}
         </p>
 
         <p>
-          <strong>Current Pattern Index:</strong> {current.patternIndex}
+          <strong>Current Pattern Index (j):</strong> {current.patternIndex}
         </p>
 
         <p>
           <strong>Status:</strong>{" "}
-          {current.match ? "Characters Match ✅" : "Characters Mismatch ❌"}
+          {current.fullMatch
+            ? "✅ Full Match Found!"
+            : current.match
+            ? "Characters Match ✅"
+            : "Characters Mismatch ❌ — jumping j via LPS"}
         </p>
+
+        <div>
+          <strong>LPS Array:</strong>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {lps.map((val, idx) => (
+              <div
+                key={idx}
+                className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold border bg-violet-100 dark:bg-violet-900"
+              >
+                {val}
+              </div>
+            ))}
+          </div>
+        </div>
 
       </div>
 

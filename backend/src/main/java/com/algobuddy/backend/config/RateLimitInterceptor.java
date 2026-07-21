@@ -19,15 +19,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
-
-    private static final Pattern IP_PATTERN = Pattern.compile(
-            "^(\\d{1,3}\\.){3}\\d{1,3}$"
-    );
 
     @Value("${app.trusted-proxies:127.0.0.1,::1,10.0.0.1}")
     private String trustedProxiesConfig;
@@ -100,14 +95,29 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private boolean isValidIp(String ip) {
-        if (!IP_PATTERN.matcher(ip).matches()) {
+        if (ip == null || ip.isEmpty()) {
             return false;
         }
         try {
-            return InetAddress.getByName(ip) != null;
+            // InetAddress.getByName accepts both IPv4 and IPv6 literals.
+            // Round-tripping through getHostAddress() rejects hostnames:
+            // a hostname would resolve to a different address string.
+            InetAddress addr = InetAddress.getByName(ip);
+            return addr.getHostAddress().equalsIgnoreCase(ip)
+                    || normalizeIpv6(addr.getHostAddress()).equalsIgnoreCase(normalizeIpv6(ip));
         } catch (UnknownHostException e) {
             return false;
         }
+    }
+
+    /**
+     * Strip the zone-ID suffix (e.g. "%eth0") from an IPv6 address string
+     * before comparing, so that scoped addresses compare equal to their
+     * plain counterparts.
+     */
+    private static String normalizeIpv6(String ip) {
+        int zoneIndex = ip.indexOf('%');
+        return zoneIndex >= 0 ? ip.substring(0, zoneIndex) : ip;
     }
 
     @Override

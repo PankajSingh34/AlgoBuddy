@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import ArrayGenerator from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
@@ -166,6 +166,7 @@ const precomputeSteps = (inputArray) => {
 
 const QuickSortVisualizer = () => {
   const [array, setArray] = useState([]);
+  const replayTimeoutRef = useRef(null);
 
   const [visualState, setVisualState] = useState({
     comparisons: 0, swaps: 0, 
@@ -207,13 +208,14 @@ const QuickSortVisualizer = () => {
   const handleStart = useCallback(() => {
     if (currentStepData?.sorted) {
       engine.reset();
-      setTimeout(() => engine.play(), 50);
+      replayTimeoutRef.current = setTimeout(() => engine.play(), 50);
     } else {
       engine.play();
     }
   }, [engine, currentStepData]);
 
   const handleReset = useCallback(() => {
+    clearTimeout(replayTimeoutRef.current);
     setVisualState({
       comparisons: 0, swaps: 0, 
       currentIndices: { pivot: -1, left: -1, right: -1, partitionIndex: -1, stack: [], partitions: [] },
@@ -222,6 +224,10 @@ const QuickSortVisualizer = () => {
     engine.reset();
   }, [engine]);
 
+  useEffect(() => {
+    return () => clearTimeout(replayTimeoutRef.current);
+    }, []);
+    
   useVisualizerKeyboard({
     onStart: handleStart,
     onReset: handleReset,

@@ -1,13 +1,14 @@
 <div align="center">
 
 <!-- Animated Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=210&section=header&text=AlgoBuddy&fontSize=68&fontColor=ffffff&fontAlignY=34&desc=Visualize.%20Understand.%20Master.&descAlignY=66&descSize=20&animation=fadeIn" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=210&section=header&text=AlgoBuddy&fontSize=68&fontColor=ffffff&fontAlignY=34&desc=Visualize.%20Understand..%20Master...&descAlignY=66&descSize=20&animation=fadeIn" width="100%"/>
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-algobuddy.me-6366f1?style=for-the-badge&logoColor=white)](https://algobuddy.me)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-algobuddy.me-6366f1?style=for-the-badge&logoColor=white)](https://algobuddy.me)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![CI](https://github.com/PankajSingh34/AlgoBuddy/actions/workflows/test.yml/badge.svg)](https://github.com/PankajSingh34/AlgoBuddy/actions/workflows/test.yml)
+[![Security Policy](https://img.shields.io/badge/Security-Policy-red?style=for-the-badge&logo=shieldsdotio&logoColor=white)](SECURITY.md)
 [![Stars](https://img.shields.io/github/stars/PankajSingh34/AlgoBuddy?style=for-the-badge&color=f59e0b)](https://github.com/PankajSingh34/AlgoBuddy/stargazers)
 [![Forks](https://img.shields.io/github/forks/PankajSingh34/AlgoBuddy?style=for-the-badge&color=6366f1)](https://github.com/PankajSingh34/AlgoBuddy/forks)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-ec4899?style=for-the-badge)](CONTRIBUTING.md)
@@ -15,70 +16,58 @@
 
 <br/>
 
-<!-- Tagline -->
-> **🧠 An open-source, interactive DSA learning platform that brings algorithms to life through step-by-step animations, structured learning paths, and progress tracking.**
+> **An open-source, interactive DSA learning platform that brings algorithms to life through step-by-step animations, structured learning paths, and progress tracking.**
 >
->Built for students, developers, and interview candidates who want to <strong>see</strong> how algorithms work — not just read about them.
+> Built for students, developers, and interview candidates who want to **see** how algorithms work — not just read about them.
 
-
-<!-- Quick Links -->
-[**✨ Features**](#-features) · [**📷 Screenshots**](#-screenshots) · [**🛠 Tech Stack**](#-tech-stack) · [**🚀 Quick Start**](#-quick-start) · [**📁 Project Structure**](#-project-structure) · [**🤝 Contributing**](#-contributing) · [**📜 License**](#-license)
+[**Features**](#features) · [**Screenshots**](#screenshots) · [**Tech Stack**](#tech-stack) · [**Quick Start**](#quick-start) · [**Project Structure**](#project-structure) · [**Contributing**](#contributing) · [**License**](#license)
 
 <br/>
-
-<!-- Separator -->
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
 </div>
-## 📚 Table of Contents
 
-- [🎯 Why AlgoBuddy?](#-why-algobuddy)
-- [🚀 Quick Highlights](#-quick-highlights)
-- [✨ Features](#-features)
-- [📊 Supported Algorithms & Data Structures](#-supported-algorithms--data-structures)
-  - [🔮 Algorithm Visualizer](#-algorithm-visualizer)
-- [👤 User System & Progress Tracking](#-user-system--progress-tracking)
-- [📝 Blog Platform](#-blog-platform)
-- [🎨 UX & Design](#-ux--design)
-- [📸 Screenshots](#-screenshots)
-  - [🏠 Home Page](#-home-page)
-  - [🔐 Authentication Page](#-authentication-page)
-  - [🧠 Visualizer Dashboard](#-visualizer-dashboard)
-  - [🔄 Queue Visualization](#-queue-visualization)
-  - [📚 Queue Operations](#-queue-operations)
-- [🛠 Tech Stack](#-tech-stack)
-- [🏗 Architecture](#-architecture)
-- [🚀 Quick Start](#-quick-start)
+## Table of Contents
+
+- [Why AlgoBuddy?](#why-algobuddy)
+- [Features](#features)
+  - [Algorithm Visualizer](#algorithm-visualizer)
+  - [User System & Progress Tracking](#user-system--progress-tracking)
+  - [Blog Platform](#blog-platform)
+  - [UX & Design](#ux--design)
+- [Supported Algorithms & Data Structures](#supported-algorithms--data-structures)
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
-  - [1️⃣ Clone the Repository](#1️⃣-clone-the-repository)
-  - [2️⃣ Install Dependencies](#2️⃣-install-dependencies)
-  - [3️⃣ Configure Database Schema](#3️⃣-configure-database-schema)
-  - [4️⃣ Configure Environment Variables](#4️⃣-configure-environment-variables)
-  - [5️⃣ Start the Development Server](#5️⃣-start-the-development-server)
-  - [6️⃣ Other Commands](#6️⃣-other-commands)
-- [📁 Project Structure](#-project-structure)
-- [🛣 Project Roadmap](#-project-roadmap)
-- [🤝 Contributing](#-contributing)
-  - [Contribution Areas](#contribution-areas)
-  - [Getting Started](#getting-started)
-  - [Issue Assignment Process](#issue-assignment-process)
-- [💬 Community](#-community)
-- [🌟 Star History](#-star-history)
-- [👥 Contributors](#-contributors)
-- [📜 License](#-license)
+  - [1. Clone the Repository](#1-clone-the-repository)
+  - [2. Install Dependencies](#2-install-dependencies)
+  - [3. Configure Database Schema](#3-configure-database-schema)
+  - [4. Configure Environment Variables](#4-configure-environment-variables)
+  - [5. Start the Development Server](#5-start-the-development-server)
+  - [6. Other Commands](#6-other-commands)
+- [Project Structure](#project-structure)
+- [Project Roadmap](#project-roadmap)
+- [Contributing](#contributing)
+- [Community](#community)
+- [Star History](#star-history)
+- [Contributors](#contributors)
+- [License](#license)
 
 <br/>
 
-## 🎯 Why AlgoBuddy?
+## Why AlgoBuddy?
 
 > *"Tell me and I forget, teach me and I remember, involve me and I learn."* — Benjamin Franklin
 
 Most DSA resources are walls of text and static diagrams. **AlgoBuddy changes that** by letting you interact with every data structure and algorithm in real time.
 
+Tools like [VisuAlgo](https://visualgo.net/) show animations but are read-only. AlgoBuddy goes further: algorithms are coupled with **user progress tracking, streaks, AI-assisted explanations, and a practice sheet** — so it functions as a learning system, not just a reference. It's also fully open-source, so every visualizer is a contribution opportunity.
+
 <table>
 <td width="52%">
 
-## 😫 The Problem
+**The Problem**
 - Static textbooks don't show algorithm flow
 - Copying code doesn't build understanding
 - No feedback loop on what you've mastered
@@ -87,7 +76,7 @@ Most DSA resources are walls of text and static diagrams. **AlgoBuddy changes th
 </td>
 <td width="47%">
 
-## ✅ The AlgoBuddy Way
+**The AlgoBuddy Way**
 - **Watch** algorithms execute step-by-step
 - **Interact** with data structures directly
 - **Track** your learning journey with streaks
@@ -98,44 +87,36 @@ Most DSA resources are walls of text and static diagrams. **AlgoBuddy changes th
 
 <br/>
 
-## 🚀 Quick Highlights
+## Features
 
-- 🎬 Interactive, step-by-step algorithm and data structure visualizations.
-- 📚 Covers core DSA concepts including Sorting, Searching, Trees, Linked Lists, Stacks, Queues, and HashMaps.
-- 🤖 AI-powered assistant for concept explanations and learning support.
-- 📊 Built-in progress tracking with dashboards and learning streaks.
-- 📝 Integrated blog platform for theory and in-depth explanations.
-- 🌙 Modern, responsive UI with Dark/Light mode support.
-- 🔐 Secure authentication using Google OAuth and Cloudflare Turnstile.
-- 🌍 Open-source project welcoming community contributions.
-
-## ✨ Features
-
-### 🔮 Algorithm Visualizer
+### Algorithm Visualizer
 
 Animated, step-by-step visualizations for a wide range of DSA topics:
+
+<details>
+<summary><strong>Sorting, Searching, Stack, Queue, Linked List</strong></summary>
 
 <table>
 <tr>
 <td align="center" width="20%">
 
-**🔄 Sorting**
+**Sorting**
 </td>
 <td align="center" width="20%">
 
-**🔍 Searching**
+**Searching**
 </td>
 <td align="center" width="20%">
 
-**📚 Stack**
+**Stack**
 </td>
 <td align="center" width="20%">
 
-**🚶 Queue**
+**Queue**
 </td>
 <td align="center" width="20%">
 
-**🔗 Linked List**
+**Linked List**
 </td>
 </tr>
 <tr>
@@ -146,14 +127,17 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 - Selection Sort
 - Merge Sort
 - Quick Sort
+- Shell Sort
+- Radix Sort
+- Counting Sort
 
 </td>
 <td>
 
 - Linear Search
 - Binary Search
-- Sorting Comparison Mode
-- Sliding Window Technique
+- Comparison Mode
+- Sliding Window
 
 </td>
 <td>
@@ -185,19 +169,32 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 </tr>
 </table>
 
+</details>
+
+<details>
+<summary><strong>Trees, HashMap, Graph, String, Complexity</strong></summary>
+
 <table>
 <tr>
-<td align="center" width="33%">
+<td align="center" width="20%">
 
-**🌳 Trees**
+**Trees**
 </td>
-<td align="center" width="33%">
+<td align="center" width="20%">
 
-**#️⃣ HashMap**
+**HashMap**
 </td>
-<td align="center" width="34%">
+<td align="center" width="20%">
 
-**📊 Complexity Graphs**
+**Graph**
+</td>
+<td align="center" width="20%">
+
+**String**
+</td>
+<td align="center" width="20%">
+
+**Complexity**
 </td>
 </tr>
 <tr>
@@ -218,6 +215,24 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 </td>
 <td>
 
+- BFS / DFS
+- Dijkstra / A*
+- Bellman-Ford
+- Floyd-Warshall
+- Kruskal / Prim
+- Tarjan / Kosaraju
+- Ford-Fulkerson
+- Topological Sort
+
+</td>
+<td>
+
+- KMP Algorithm
+- Z-Algorithm
+
+</td>
+<td>
+
 - Time & Space analysis
 - Side-by-side comparisons
 - Powered by Recharts
@@ -226,131 +241,140 @@ Animated, step-by-step visualizations for a wide range of DSA topics:
 </tr>
 </table>
 
+</details>
+
 <br/>
 
-## 👤 User System & Progress Tracking
+### User System & Progress Tracking
 
 | Feature | Description |
 |---|---|
-| 🔐 **Auth** | Email/password with Cloudflare Turnstile captcha + Google OAuth |
-| 📊 **Dashboard** | Module-level progress tracking per data structure |
-| 🔥 **Streaks** | Activity heatmap (last 90 days) + daily streak counter |
-| 🤖 **AI Assistant** | Built-in chatbot powered by **Gemini** for concept help |
+| **Auth** | Email/password with Cloudflare Turnstile captcha + Google OAuth |
+| **Dashboard** | Module-level progress tracking per data structure |
+| **Streaks** | Activity heatmap (last 90 days) + daily streak counter |
+| **AI Assistant** | Built-in chatbot powered by Gemini for concept help |
+| **Bookmarks** | Save and revisit problems with the bookmark system |
 
 <br/>
-<br/>
 
-## 📝 Blog Platform
+### Blog Platform
 
 | Feature | Description |
 |---|---|
-| 🏷 **Categories** | Filter articles by DSA topic |
-| 🔎 **Full-text Search** | Instantly find relevant articles |
-| ⏱ **Reading Time** | Estimated reading time on every article |
-| 📖 **Rich Content** | In-depth articles on core DSA concepts |
+| **Categories** | Filter articles by DSA topic |
+| **Full-text Search** | Instantly find relevant articles |
+| **Reading Time** | Estimated reading time on every article |
+| **Rich Content** | In-depth articles on core DSA concepts |
 
 <br/>
-<br/>
 
-## 🎨 UX & Design
+### UX & Design
 
 | Feature | Description |
 |---|---|
-| 🌗 **Dark/Light Mode** | Theme toggle persisted to `localStorage` |
-| 📱 **Responsive** | Optimized for mobile, tablet, and desktop |
-| 🎬 **Animations** | Smooth visualizations via GSAP + Framer Motion |
-| ✨ **Particle Effects** | Interactive background using tsParticles |
+| **Dark/Light Mode** | Theme toggle persisted to `localStorage` |
+| **Responsive** | Optimized for mobile, tablet, and desktop |
+| **Animations** | Smooth visualizations via GSAP + Framer Motion |
+| **Particle Effects** | Interactive background using tsParticles |
 
 <br/>
-<br/>
 
-## 📊 Supported Algorithms & Data Structures
+## Supported Algorithms & Data Structures
 
 | Category | Coverage | Visualization |
 |----------|----------|:-------------:|
-| 🔄 Sorting | Bubble, Selection, Insertion, Merge, Quick | ✅ |
-| 🔍 Searching | Linear, Binary | ✅ |
-| 📚 Stack | Push, Pop, Peek, Array & Linked List | ✅ |
-| 🚶 Queue | Simple, Circular, Priority, Deque | ✅ |
-| 🔗 Linked List | Singly, Doubly, Circular | ✅ |
-| 🌳 Trees | Binary Tree, BST, Heap, Trie | ✅ |
-| #️⃣ HashMap | Insert, Search, Delete, Collision Handling | ✅ |
-| 📈 Complexity Analysis | Time & Space Complexity Graphs | ✅ |
+| Sorting | Bubble, Selection, Insertion, Merge, Quick, Shell, Radix, Counting | ✓ |
+| Searching | Linear, Binary, Sliding Window | ✓ |
+| Stack | Push, Pop, Peek, Array & Linked List | ✓ |
+| Queue | Simple, Circular, Priority, Deque | ✓ |
+| Linked List | Singly, Doubly, Circular | ✓ |
+| Trees | Binary Tree, BST, Heap, Trie | ✓ |
+| HashMap | Insert, Search, Delete, Collision Handling | ✓ |
+| Graph | BFS, DFS, Dijkstra, A*, Bellman-Ford, Floyd-Warshall, Kruskal, Prim, Tarjan, Kosaraju, Ford-Fulkerson, Topological Sort | ✓ |
+| String | KMP Algorithm, Z-Algorithm | ✓ |
+| Complexity Analysis | Time & Space Complexity Graphs | ✓ |
 
-## 📸 Screenshots
-
-### 🏠 Home Page
+## Screenshots
 
 ![Home Page](public/screenshots/Home-page.png)
 
----
+*Landing page with algorithm category navigation, feature overview, and community stats.*
 
-### 🔐 Authentication Page
-
-![Login Page](public/screenshots/login-page.png)
-
----
-
-### 🧠 Visualizer Dashboard
+<br/>
 
 ![Visualizer](public/screenshots/visualizer-page.png)
 
----
+*Step-by-step algorithm visualizer with controls, pseudocode panel, and complexity info.*
 
-### 🔄 Queue Visualization
+<br/>
+
+<details>
+<summary><strong>Authentication Page</strong> — Login and signup with Google OAuth or email/password, protected by Cloudflare Turnstile.</summary>
+
+![Login Page](public/screenshots/login-page.png)
+
+</details>
+
+<details>
+<summary><strong>Queue Visualization</strong> — Animated circular queue showing enqueue/dequeue operations with pointer movement.</summary>
 
 ![Queue Visualization](public/screenshots/queue-visualization-page.png)
 
----
+</details>
 
-### 📚 Queue Operations
+<details>
+<summary><strong>Queue Operations</strong> — Side-by-side operations panel with live memory-state rendering.</summary>
 
 ![Queue Operations](public/screenshots/queue-operations-page.png)
 
-<br/>
+</details>
+
+
 <br/>
 
-## 🛠 Tech Stack
+## Tech Stack
 
 <div align="center">
 
 | Layer | Technology | Purpose |
 |:---|:---|:---|
-| ⚡ **Framework** | ![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white) | App Router, SSR, API routes |
-| 🎨 **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white) | Utility-first CSS framework |
-| 🗄 **Database** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | PostgreSQL + Auth + Realtime |
-| 🎬 **Animation** | ![GSAP](https://img.shields.io/badge/GSAP-88CE02?logo=greensock&logoColor=white) ![Framer](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white) | Visualizer animations |
-| 📊 **Charts** | ![Recharts](https://img.shields.io/badge/Recharts-FF6384?logo=chartdotjs&logoColor=white) | Complexity comparison graphs |
-| ✏️ **Editor** | ![Monaco](https://img.shields.io/badge/Monaco_Editor-007ACC?logo=visualstudiocode&logoColor=white) | In-browser code editor |
-| 📧 **Email** | ![Nodemailer](https://img.shields.io/badge/Nodemailer-339933?logo=gmail&logoColor=white) | Transactional emails via Gmail |
-| 🛡 **Captcha** | ![Cloudflare](https://img.shields.io/badge/Turnstile-F38020?logo=cloudflare&logoColor=white) | Bot protection on auth |
-| 📈 **Analytics** | ![GA4](https://img.shields.io/badge/Google_Analytics_4-E37400?logo=googleanalytics&logoColor=white) | Usage tracking |
-| ⏱ **Rate Limiting** | ![Upstash](https://img.shields.io/badge/Upstash_Redis-DC382D?logo=redis&logoColor=white) | API rate limiting |
-| 🚀 **Deployment** | ![Vercel](https://img.shields.io/badge/Vercel-000?logo=vercel&logoColor=white) | Serverless hosting |
-| 🔁 **CI/CD** | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white) | Multi-OS testing pipeline |
+| **Framework** | ![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white) | App Router, SSR, API routes |
+| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white) | Utility-first CSS framework |
+| **Database** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | PostgreSQL + Auth + Realtime |
+| **Animation** | ![GSAP](https://img.shields.io/badge/GSAP-88CE02?logo=greensock&logoColor=white) ![Framer](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white) | Visualizer animations |
+| **Charts** | ![Recharts](https://img.shields.io/badge/Recharts-FF6384?logo=chartdotjs&logoColor=white) | Complexity comparison graphs |
+| **Editor** | ![Monaco](https://img.shields.io/badge/Monaco_Editor-007ACC?logo=visualstudiocode&logoColor=white) | In-browser code editor |
+| **Email** | ![Nodemailer](https://img.shields.io/badge/Nodemailer-339933?logo=gmail&logoColor=white) | Transactional emails via Gmail |
+| **Captcha** | ![Cloudflare](https://img.shields.io/badge/Turnstile-F38020?logo=cloudflare&logoColor=white) | Bot protection on auth |
+| **Analytics** | ![GA4](https://img.shields.io/badge/Google_Analytics_4-E37400?logo=googleanalytics&logoColor=white) | Usage tracking |
+| **Rate Limiting** | ![Upstash](https://img.shields.io/badge/Upstash_Redis-DC382D?logo=redis&logoColor=white) | API rate limiting |
+| **Deployment** | ![Vercel](https://img.shields.io/badge/Vercel-000?logo=vercel&logoColor=white) | Serverless hosting |
+| **CI/CD** | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white) | Multi-OS testing pipeline |
 
 </div>
 
 <br/>
 
-## 🏗 Architecture
+## Architecture
+
+For a comprehensive guide on component boundaries, database triggers, data flows, and codebase principles, see the [System Architecture Guide](./Architecture.md).
 
 ```mermaid
 graph TB
-    subgraph Client["🖥 Client — Next.js 16 App Router"]
+    subgraph Client["Client — Next.js 16 App Router"]
         UI["UI Components<br/>(React + Tailwind)"]
         VIS["Visualizer Engine<br/>(GSAP + Framer Motion)"]
         CHARTS["Complexity Graphs<br/>(Recharts)"]
         EDITOR["Code Editor<br/>(Monaco)"]
         THEME["Theme System<br/>(Dark/Light)"]
     end
-    subgraph API["⚡ API Layer"]
+    subgraph API["API Layer"]
         AUTH_API["Auth Routes"]
         CONTACT["Contact API"]
         REVIEW["Review API"]
         CHATBOT["AI Assistant<br/>(Gemini API)"]
     end
-    subgraph Services["☁️ External Services"]
+    subgraph Services["External Services"]
         SUPA["Supabase<br/>(DB + Auth)"]
         CF["Cloudflare<br/>Turnstile"]
         GA["Google<br/>Analytics"]
@@ -380,7 +404,7 @@ graph TB
 
 <br/>
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -390,105 +414,67 @@ graph TB
 | **npm** | `>= 10.x` |
 | **Git** | Latest |
 
-### 1️⃣ Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/PankajSingh34/AlgoBuddy.git
 cd AlgoBuddy
 ```
 
-### 2️⃣ Install Dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-> **⚠️ Note:** This project uses `isolated-vm` for secure code execution. If you encounter build errors, ensure you have Python and a C++ compiler installed (required for native addon compilation).
+> **Note:** This project uses `isolated-vm` for secure code execution. If you encounter build errors, ensure you have Python and a C++ compiler installed (required for native addon compilation).
 
-### 3️⃣ Configure Database Schema
+### 3. Configure Database Schema
 
-Run the following SQL in the Supabase SQL Editor to enable user progress tracking and avatar storage:
+The full schema is maintained in **[`supabase_setup.sql`](./supabase_setup.sql)** at the project root — run it in the Supabase SQL Editor. It covers RLS policies for all tables, admin policies for `community_contributors`, and two stored functions for atomic streak updates.
+
+> **Note:** Without running the full schema, progress tracking, bookmarks, avatars, and streak features will not work locally.
+
+<details>
+<summary><strong>View table overview and example RLS policy</strong></summary>
+
+| Table | Purpose |
+|---|---|
+| `user_progress` | Tracks per-problem completion status |
+| `user_activity` | Powers the 90-day activity heatmap |
+| `user_profiles` | Avatar URL and community join status |
+| `problem_bookmarks` | User-saved problem bookmarks |
+| `user_practice_stats` | Streak counters (current + longest) |
+| `community_contributors` | Public contributor registry |
+| `topic_comments` | Per-visualizer discussion threads |
+| `pending_messages` | SMTP fallback queue for contact/review emails |
+| `newsletter_subscriptions` | Footer newsletter opt-ins |
+
+Representative RLS setup for `user_progress`:
 
 ```sql
-create extension if not exists "pgcrypto";
+ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 
-create table if not exists public.user_progress (
-  id uuid primary key default gen_random_uuid(),
+CREATE POLICY "Users can read own progress" ON user_progress
+  FOR SELECT USING (auth.uid() = user_id);
 
-  user_id uuid not null references auth.users(id) on delete cascade,
+CREATE POLICY "Users can insert own progress" ON user_progress
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-  module_id text not null,
-
-  is_done boolean default false,
-
-  created_at timestamptz default now(),
-
-  updated_at timestamptz default now(),
-
-  unique(user_id, module_id)
-);
-
-alter table public.user_progress enable row level security;
-
-create policy "Users can read own progress"
-on public.user_progress
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert own progress"
-on public.user_progress
-for insert
-with check (auth.uid() = user_id);
-
-create policy "Users can update own progress"
-on public.user_progress
-for update
-using (auth.uid() = user_id);
-
-
--- Avatar / profile table
-create table if not exists public.user_profiles (
-  id uuid primary key default gen_random_uuid(),
-
-  user_id uuid not null references auth.users(id) on delete cascade unique,
-
-  avatar_url text,
-
-  created_at timestamptz default now(),
-
-  updated_at timestamptz default now()
-);
-
-alter table public.user_profiles enable row level security;
-
-create policy "Users can read own profile"
-on public.user_profiles
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert own profile"
-on public.user_profiles
-for insert
-with check (auth.uid() = user_id);
-
-create policy "Users can update own profile"
-on public.user_profiles
-for update
-using (auth.uid() = user_id);
+CREATE POLICY "Users can update own progress" ON user_progress
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 ```
 
-These tables are required for:
+The schema also defines `increment_streak_on_completion()` and `upsert_progress_and_update_streak()` — two PL/pgSQL functions that update streaks atomically to avoid TOCTOU race conditions. See [`supabase_setup.sql`](./supabase_setup.sql) for the full definitions.
 
-* Module completion tracking
-* Profile progress updates
-* Avatar profile data
-* Learning streak features
+</details>
 
-> Note: Without these tables, progress tracking, avatars, and streak features will not work locally.
+### 4. Configure Environment Variables
 
-### 4️⃣ Configure Environment Variables
+Create a `.env.local` file in the project root. See [`.env.example`](.env.example) for the full reference.
 
-Create a `.env.local` file in the project root:
+<details>
+<summary><strong>View all environment variables</strong></summary>
 
 ```env
 # ──────────── Email ────────────
@@ -520,17 +506,17 @@ ALLOWED_ORIGINS=http://localhost:3000
 APP_ENV=dev
 ```
 
-> **💡 Tip:** See [`.env.example`](.env.example) for a complete reference of all environment variables.
+</details>
 
-### 5️⃣ Start the Development Server
+### 5. Start the Development Server
 
 ```bash
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** and start visualizing! 🎉
+Open **[http://localhost:3000](http://localhost:3000)** and start visualizing!
 
-### 6️⃣ Other Commands
+### 6. Other Commands
 
 ```bash
 npm run build          # Production build
@@ -541,659 +527,97 @@ npm run test:security  # Run XSS security tests only
 ```
 
 <br/>
-<br/>
 
-## 📁 Project Structure
+## Project Structure
+
+<details>
+<summary><strong>View full directory tree</strong></summary>
 
 ```
 AlgoBuddy/
 │
-├── 📂 app/                          # Next.js App Router
-│   ├── 📂 api/                      # API routes
-│   │   ├── auth/                    #   ├── Authentication endpoints
-│   │   ├── contact/                 #   ├── Contact form handler
-│   │   ├── chatbot/                 #   ├── AI chatbot endpoint
-│   │   └── send-review/             #   └── Review submission
+├── src/app/                         # Next.js App Router
+│   ├── api/                         #   API routes (auth, chatbot, mysheet, etc.)
+│   ├── arena/                       #   Tournament / arena page
+│   ├── dashboard/                   #   User dashboard
+│   ├── login/                       #   Auth pages
+│   ├── visualizer/                  #   Algorithm visualizer pages
+│   │   ├── array/                   #     Sorting & array algorithms
+│   │   ├── graph/                   #     Graph algorithm visualizers
+│   │   ├── string/                  #     String algorithm visualizers (KMP, Z-Algo)
+│   │   └── ...                      #     Other DSA visualizers
 │   │
-│   ├── 📂 dashboard/                # User dashboard
-│   ├── 📂 login/                    # Auth pages
-│   ├── 📂 visualizer/               # Algorithm visualizer pages
+│   ├── components/                  #   Shared UI components
+│   │   ├── dashboard/               #     Heatmap, streaks
+│   │   ├── models/                  #     Data structure models
+│   │   └── ui/                      #     Reusable UI primitives
 │   │
-│   ├── 📂 components/               # Shared UI components
-│   │   ├── dashboard/               #   ├── Heatmap, streaks
-│   │   ├── models/                  #   ├── Data structure models
-│   │   └── ui/                      #   └── Reusable UI primitives
-│   │
-│   ├── layout.jsx                   # Root layout
-│   └── page.jsx                     # Landing page
+│   ├── hooks/                       #   Custom React hooks
+│   ├── layout.jsx                   #   Root layout
+│   └── page.jsx                     #   Landing page
 │
-├── 📂 lib/                          # Utility libraries
-│   ├── supabase.js                  #   ├── Supabase client config
-│   ├── activity.js                  #   ├── Activity tracking logic
-│   └── gtag.js                      #   └── Google Analytics helper
+├── src/features/algorithms/         # Algorithm logic (pure functions)
+│   ├── graph/                       #   Graph algorithm implementations
+│   └── string/                      #   String algorithm implementations
 │
-├── 📂 utils/                        # Helper functions
-├── 📂 public/                       # Static assets
-├── 📂 docs/                         # Documentation
-├── 📂 security-tests/               # Security test suite
-├── 📂 .github/                      # GitHub Actions workflows
+├── src/lib/                         # Utility libraries
+│   ├── supabase.js                  #   Supabase client config
+│   ├── auth.js                      #   Auth helpers
+│   ├── activity.js                  #   Activity tracking logic
+│   └── gtag.js                      #   Google Analytics helper
 │
-├── middleware.js                     # Next.js middleware (auth, rate limiting)
-├── tailwind.config.js                # Tailwind configuration
-├── next.config.mjs                   # Next.js configuration
-├── eslint.config.mjs                 # ESLint configuration
-├── package.json                      # Dependencies & scripts
-└── next-sitemap.config.js            # SEO sitemap generation
-```
-
-<br/>
-
-<div align="center">
-
-<!-- Animated Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,100:6366f1&height=210&section=header&text=AlgoBuddy&fontSize=68&fontColor=ffffff&fontAlignY=34&desc=Visualize.%20Understand.%20Master.&descAlignY=66&descSize=20&animation=fadeIn" width="100%"/>
-
-<br/>
-
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-algobuddy.me-6366f1?style=for-the-badge&logoColor=white)](https://algobuddy.me)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![Stars](https://img.shields.io/github/stars/PankajSingh34/AlgoBuddy?style=for-the-badge&color=f59e0b)](https://github.com/PankajSingh34/AlgoBuddy/stargazers)
-[![Forks](https://img.shields.io/github/forks/PankajSingh34/AlgoBuddy?style=for-the-badge&color=6366f1)](https://github.com/PankajSingh34/AlgoBuddy/forks)
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-ec4899?style=for-the-badge)](CONTRIBUTING.md)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/Gv2N4U3KAc)
-
-<br/>
-
-<!-- Tagline -->
-> **🧠 An open-source, interactive DSA learning platform that brings algorithms to life through step-by-step animations, structured learning paths, and progress tracking.**
->
->Built for students, developers, and interview candidates who want to <strong>see</strong> how algorithms work — not just read about them.
-
-
-<!-- Quick Links -->
-[**✨ Features**](#-features) · [**📷 Screenshots**](#-screenshots) · [**🛠 Tech Stack**](#-tech-stack) · [**🚀 Quick Start**](#-quick-start) · [**📁 Project Structure**](#-project-structure) · [**🤝 Contributing**](#-contributing) · [**📜 License**](#-license)
-
-<br/>
-
-<!-- Separator -->
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-</div>
-## 📚 Table of Contents
-
-- [🎯 Why AlgoBuddy?](#-why-algobuddy)
-- [✨ Features](#-features)
-  - [🔮 Algorithm Visualizer](#-algorithm-visualizer)
-- [👤 User System & Progress Tracking](#-user-system--progress-tracking)
-- [📝 Blog Platform](#-blog-platform)
-- [🎨 UX & Design](#-ux--design)
-- [📸 Screenshots](#-screenshots)
-  - [🏠 Home Page](#-home-page)
-  - [🔐 Authentication Page](#-authentication-page)
-  - [🧠 Visualizer Dashboard](#-visualizer-dashboard)
-  - [🔄 Queue Visualization](#-queue-visualization)
-  - [📚 Queue Operations](#-queue-operations)
-- [🛠 Tech Stack](#-tech-stack)
-- [🏗 Architecture](#-architecture)
-- [🚀 Quick Start](#-quick-start)
-  - [Prerequisites](#prerequisites)
-  - [1️⃣ Clone the Repository](#1️⃣-clone-the-repository)
-  - [2️⃣ Install Dependencies](#2️⃣-install-dependencies)
-  - [3️⃣ Configure Database Schema](#3️⃣-configure-database-schema)
-  - [4️⃣ Configure Environment Variables](#4️⃣-configure-environment-variables)
-  - [5️⃣ Start the Development Server](#5️⃣-start-the-development-server)
-  - [6️⃣ Other Commands](#6️⃣-other-commands)
-- [📁 Project Structure](#-project-structure)
-- [🤝 Contributing](#-contributing)
-  - [Contribution Areas](#contribution-areas)
-  - [Getting Started](#getting-started)
-  - [Issue Assignment Process](#issue-assignment-process)
-- [💬 Community](#-community)
-- [🌟 Star History](#-star-history)
-- [👥 Contributors](#-contributors)
-- [📜 License](#-license)
-
-<br/>
-
-## 🎯 Why AlgoBuddy?
-
-> *"Tell me and I forget, teach me and I remember, involve me and I learn."* — Benjamin Franklin
-
-Most DSA resources are walls of text and static diagrams. **AlgoBuddy changes that** by letting you interact with every data structure and algorithm in real time.
-
-<table>
-<td width="52%">
-
-## 🚀 Quick Highlights
-
-- 🎬 Interactive, step-by-step algorithm and data structure visualizations.
-- 📚 Covers core DSA concepts including Sorting, Searching, Trees, Linked Lists, Stacks, Queues, and HashMaps.
-- 🤖 AI-powered assistant for concept explanations and learning support.
-- 📊 Built-in progress tracking with dashboards and learning streaks.
-- 📝 Integrated blog platform for theory and in-depth explanations.
-- 🌙 Modern, responsive UI with Dark/Light mode support.
-- 🔐 Secure authentication using Google OAuth and Cloudflare Turnstile.
-- 🌍 Open-source project welcoming community contributions.
-
-
-## 😫 The Problem
-- Static textbooks don't show algorithm flow
-- Copying code doesn't build understanding
-- No feedback loop on what you've mastered
-- Hard to stay motivated without visible progress
-
-</td>
-<td width="47%">
-
-## ✅ The AlgoBuddy Way
-- **Watch** algorithms execute step-by-step
-- **Interact** with data structures directly
-- **Track** your learning journey with streaks
-- **Read** companion blogs for deeper theory
-
-</td>
-</table>
-
-<br/>
-
-## ✨ Features
-
-### 🔮 Algorithm Visualizer
-
-Animated, step-by-step visualizations for a wide range of DSA topics:
-
-<table>
-<tr>
-<td align="center" width="20%">
-
-**🔄 Sorting**
-</td>
-<td align="center" width="20%">
-
-**🔍 Searching**
-</td>
-<td align="center" width="20%">
-
-**📚 Stack**
-</td>
-<td align="center" width="20%">
-
-**🚶 Queue**
-</td>
-<td align="center" width="20%">
-
-**🔗 Linked List**
-</td>
-</tr>
-<tr>
-<td>
-
-- Bubble Sort
-- Insertion Sort
-- Selection Sort
-- Merge Sort
-- Quick Sort
-
-</td>
-<td>
-
-- Linear Search
-- Binary Search
-- Sorting Comparison Mode
-- Sliding Window Technique
-
-</td>
-<td>
-
-- Push / Pop
-- Peek / isEmpty
-- Polish Notation
-- Array & LL impl.
-
-</td>
-<td>
-
-- Enqueue / Dequeue
-- Circular Queue
-- Priority Queue
-- Double-ended
-- Array & LL impl.
-
-</td>
-<td>
-
-- Singly Linked
-- Doubly Linked
-- Circular
-- Insert / Delete
-- Reverse / Merge
-
-</td>
-</tr>
-</table>
-
-<table>
-<tr>
-<td align="center" width="33%">
-
-**🌳 Trees**
-</td>
-<td align="center" width="33%">
-
-**#️⃣ HashMap**
-</td>
-<td align="center" width="34%">
-
-**📊 Complexity Graphs**
-</td>
-</tr>
-<tr>
-<td>
-
-- Binary Tree types
-- In-order Traversal
-- BST operations
-- Heaps & Tries
-
-</td>
-<td>
-
-- Insert / Search / Delete
-- Collision handling
-- Visual hash buckets
-
-</td>
-<td>
-
-- Time & Space analysis
-- Side-by-side comparisons
-- Powered by Recharts
-
-</td>
-</tr>
-</table>
-
-<br/>
-
-## 👤 User System & Progress Tracking
-
-| Feature | Description |
-|---|---|
-| 🔐 **Auth** | Email/password with Cloudflare Turnstile captcha + Google OAuth |
-| 📊 **Dashboard** | Module-level progress tracking per data structure |
-| 🔥 **Streaks** | Activity heatmap (last 90 days) + daily streak counter |
-| 🤖 **AI Assistant** | Built-in chatbot powered by **Gemini** for concept help |
-
-<br/>
-<br/>
-
-## 📝 Blog Platform
-
-| Feature | Description |
-|---|---|
-| 🏷 **Categories** | Filter articles by DSA topic |
-| 🔎 **Full-text Search** | Instantly find relevant articles |
-| ⏱ **Reading Time** | Estimated reading time on every article |
-| 📖 **Rich Content** | In-depth articles on core DSA concepts |
-
-<br/>
-<br/>
-
-## 🎨 UX & Design
-
-| Feature | Description |
-|---|---|
-| 🌗 **Dark/Light Mode** | Theme toggle persisted to `localStorage` |
-| 📱 **Responsive** | Optimized for mobile, tablet, and desktop |
-| 🎬 **Animations** | Smooth visualizations via GSAP + Framer Motion |
-| ✨ **Particle Effects** | Interactive background using tsParticles |
-
-<br/>
-<br/>
-
-## 📊 Supported Algorithms & Data Structures
-
-| Category | Coverage | Visualization |
-|----------|----------|:-------------:|
-| 🔄 Sorting | Bubble, Selection, Insertion, Merge, Quick | ✅ |
-| 🔍 Searching | Linear, Binary | ✅ |
-| 📚 Stack | Push, Pop, Peek, Array & Linked List | ✅ |
-| 🚶 Queue | Simple, Circular, Priority, Deque | ✅ |
-| 🔗 Linked List | Singly, Doubly, Circular | ✅ |
-| 🌳 Trees | Binary Tree, BST, Heap, Trie | ✅ |
-| #️⃣ HashMap | Insert, Search, Delete, Collision Handling | ✅ |
-| 📈 Complexity Analysis | Time & Space Complexity Graphs | ✅ |
-
-## 📸 Screenshots
-
-### 🏠 Home Page
-
-![Home Page](public/screenshots/Home-page.png)
-
----
-
-### 🔐 Authentication Page
-
-![Login Page](public/screenshots/login-page.png)
-
----
-
-### 🧠 Visualizer Dashboard
-
-![Visualizer](public/screenshots/visualizer-page.png)
-
----
-
-### 🔄 Queue Visualization
-
-![Queue Visualization](public/screenshots/queue-visualization-page.png)
-
----
-
-### 📚 Queue Operations
-
-![Queue Operations](public/screenshots/queue-operations-page.png)
-
-<br/>
-<br/>
-
-## 🛠 Tech Stack
-
-<div align="center">
-
-| Layer | Technology | Purpose |
-|:---|:---|:---|
-| ⚡ **Framework** | ![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white) | App Router, SSR, API routes |
-| 🎨 **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white) | Utility-first CSS framework |
-| 🗄 **Database** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | PostgreSQL + Auth + Realtime |
-| 🎬 **Animation** | ![GSAP](https://img.shields.io/badge/GSAP-88CE02?logo=greensock&logoColor=white) ![Framer](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white) | Visualizer animations |
-| 📊 **Charts** | ![Recharts](https://img.shields.io/badge/Recharts-FF6384?logo=chartdotjs&logoColor=white) | Complexity comparison graphs |
-| ✏️ **Editor** | ![Monaco](https://img.shields.io/badge/Monaco_Editor-007ACC?logo=visualstudiocode&logoColor=white) | In-browser code editor |
-| 📧 **Email** | ![Nodemailer](https://img.shields.io/badge/Nodemailer-339933?logo=gmail&logoColor=white) | Transactional emails via Gmail |
-| 🛡 **Captcha** | ![Cloudflare](https://img.shields.io/badge/Turnstile-F38020?logo=cloudflare&logoColor=white) | Bot protection on auth |
-| 📈 **Analytics** | ![GA4](https://img.shields.io/badge/Google_Analytics_4-E37400?logo=googleanalytics&logoColor=white) | Usage tracking |
-| ⏱ **Rate Limiting** | ![Upstash](https://img.shields.io/badge/Upstash_Redis-DC382D?logo=redis&logoColor=white) | API rate limiting |
-| 🚀 **Deployment** | ![Vercel](https://img.shields.io/badge/Vercel-000?logo=vercel&logoColor=white) | Serverless hosting |
-| 🔁 **CI/CD** | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white) | Multi-OS testing pipeline |
-
-</div>
-
-<br/>
-
-## 🏗 Architecture
-
-For a comprehensive guide on component boundaries, database triggers, data flows, and codebase principles, see the detailed [System Architecture Guide](./Architecture.md).
-
-```mermaid
-graph TB
-    subgraph Client["🖥 Client — Next.js 16 App Router"]
-        UI["UI Components<br/>(React + Tailwind)"]
-        VIS["Visualizer Engine<br/>(GSAP + Framer Motion)"]
-        CHARTS["Complexity Graphs<br/>(Recharts)"]
-        EDITOR["Code Editor<br/>(Monaco)"]
-        THEME["Theme System<br/>(Dark/Light)"]
-    end
-    subgraph API["⚡ API Layer"]
-        AUTH_API["Auth Routes"]
-        CONTACT["Contact API"]
-        REVIEW["Review API"]
-        CHATBOT["AI Assistant<br/>(Gemini API)"]
-    end
-    subgraph Services["☁️ External Services"]
-        SUPA["Supabase<br/>(DB + Auth)"]
-        CF["Cloudflare<br/>Turnstile"]
-        GA["Google<br/>Analytics"]
-        REDIS["Upstash<br/>Redis"]
-        MAIL["Gmail<br/>(Nodemailer)"]
-        GEMINI["Google<br/>Gemini API"]
-    end
-    UI --> VIS
-    UI --> CHARTS
-    UI --> EDITOR
-    UI --> THEME
-    UI --> API
-    UI --> SUPA
-    AUTH_API --> SUPA
-    AUTH_API --> CF
-    CONTACT --> MAIL
-    CONTACT --> CF
-    REVIEW --> MAIL
-    REVIEW --> CF
-    CHATBOT --> REDIS
-    CHATBOT --> GEMINI
-    UI --> GA
-    style Client fill:#1e1b4b,stroke:#818cf8,stroke-width:3px,color:#e0e7ff
-    style API fill:#1e3a5f,stroke:#38bdf8,stroke-width:3px,color:#e0f2fe
-    style Services fill:#064e3b,stroke:#34d399,stroke-width:3px,color:#d1fae5
-```
-
-<br/>
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-| Tool | Version |
-|---|---|
-| **Node.js** | `>= 20.x` |
-| **npm** | `>= 10.x` |
-| **Git** | Latest |
-
-### 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/PankajSingh34/AlgoBuddy.git
-cd AlgoBuddy
-```
-
-### 2️⃣ Install Dependencies
-
-```bash
-npm install
-```
-
-> **⚠️ Note:** This project uses `isolated-vm` for secure code execution. If you encounter build errors, ensure you have Python and a C++ compiler installed (required for native addon compilation).
-
-### 3️⃣ Configure Database Schema
-
-Run the following SQL in the Supabase SQL Editor to enable user progress tracking and avatar storage:
-
-```sql
-create extension if not exists "pgcrypto";
-
-create table if not exists public.user_progress (
-  id uuid primary key default gen_random_uuid(),
-
-  user_id uuid not null references auth.users(id) on delete cascade,
-
-  module_id text not null,
-
-  is_done boolean default false,
-
-  created_at timestamptz default now(),
-
-  updated_at timestamptz default now(),
-
-  unique(user_id, module_id)
-);
-
-alter table public.user_progress enable row level security;
-
-create policy "Users can read own progress"
-on public.user_progress
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert own progress"
-on public.user_progress
-for insert
-with check (auth.uid() = user_id);
-
-create policy "Users can update own progress"
-on public.user_progress
-for update
-using (auth.uid() = user_id);
-
-
--- Avatar / profile table
-create table if not exists public.user_profiles (
-  id uuid primary key default gen_random_uuid(),
-
-  user_id uuid not null references auth.users(id) on delete cascade unique,
-
-  avatar_url text,
-
-  created_at timestamptz default now(),
-
-  updated_at timestamptz default now()
-);
-
-alter table public.user_profiles enable row level security;
-
-create policy "Users can read own profile"
-on public.user_profiles
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert own profile"
-on public.user_profiles
-for insert
-with check (auth.uid() = user_id);
-
-create policy "Users can update own profile"
-on public.user_profiles
-for update
-using (auth.uid() = user_id);
-```
-
-These tables are required for:
-
-* Module completion tracking
-* Profile progress updates
-* Avatar profile data
-* Learning streak features
-
-> Note: Without these tables, progress tracking, avatars, and streak features will not work locally.
-
-### 4️⃣ Configure Environment Variables
-
-Create a `.env.local` file in the project root:
-
-```env
-# ──────────── Email ────────────
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-google-app-password
-REVIEW_INBOX_EMAIL=optional-inbox@gmail.com
-
-# ──────────── Supabase ────────────
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_KEY=your-supabase-service-key
-
-# ──────────── Cloudflare Turnstile ────────────
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
-TURNSTILE_SECRET_KEY=your-turnstile-secret-key
-
-# ──────────── Google Analytics ────────────
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
-
-# ──────────── AI Chatbot ────────────
-GEMINI_API_KEY=your-gemini-api-key
-
-# ──────────── Rate Limiting (Production) ────────────
-UPSTASH_REDIS_REST_URL=your-upstash-url
-UPSTASH_REDIS_REST_TOKEN=your-upstash-token
-
-# ──────────── Spring Boot Backend CORS (Optional in dev, required in prod) ────────────
-ALLOWED_ORIGINS=http://localhost:3000
-APP_ENV=dev
-```
-
-> **💡 Tip:** See [`.env.example`](.env.example) for a complete reference of all environment variables.
-
-### 5️⃣ Start the Development Server
-
-```bash
-npm run dev
-```
-
-Open **[http://localhost:3000](http://localhost:3000)** and start visualizing! 🎉
-
-### 6️⃣ Other Commands
-
-```bash
-npm run build          # Production build
-npm run start          # Start production server
-npm run lint           # Run ESLint
-npm run test           # Run lint + security tests
-npm run test:security  # Run XSS security tests only
-```
-
-<br/>
-<br/>
-
-## 📁 Project Structure
-
-```
-AlgoBuddy/
+├── backend/                         # Spring Boot API (optional, for practice features)
+├── arena-socket-server/             # WebSocket server for tournament arena
+├── public/                          # Static assets & screenshots
+├── docs/                            # Documentation
+├── security-tests/                  # Security test suite
+├── .github/                         # GitHub Actions workflows
 │
-├── 📂 app/                          # Next.js App Router
-│   ├── 📂 api/                      # API routes
-│   │   ├── auth/                    #   ├── Authentication endpoints
-│   │   ├── contact/                 #   ├── Contact form handler
-│   │   ├── chatbot/                 #   ├── AI chatbot endpoint
-│   │   └── send-review/             #   └── Review submission
-│   │
-│   ├── 📂 dashboard/                # User dashboard
-│   ├── 📂 login/                    # Auth pages
-│   ├── 📂 visualizer/               # Algorithm visualizer pages
-│   │
-│   ├── 📂 components/               # Shared UI components
-│   │   ├── dashboard/               #   ├── Heatmap, streaks
-│   │   ├── models/                  #   ├── Data structure models
-│   │   └── ui/                      #   └── Reusable UI primitives
-│   │
-│   ├── layout.jsx                   # Root layout
-│   └── page.jsx                     # Landing page
-│
-├── 📂 lib/                          # Utility libraries
-│   ├── supabase.js                  #   ├── Supabase client config
-│   ├── activity.js                  #   ├── Activity tracking logic
-│   └── gtag.js                      #   └── Google Analytics helper
-│
-├── 📂 utils/                        # Helper functions
-├── 📂 public/                       # Static assets
-├── 📂 docs/                         # Documentation
-├── 📂 security-tests/               # Security test suite
-├── 📂 .github/                      # GitHub Actions workflows
-│
-├── middleware.js                     # Next.js middleware (auth, rate limiting)
-├── tailwind.config.js                # Tailwind configuration
-├── next.config.mjs                   # Next.js configuration
-├── eslint.config.mjs                 # ESLint configuration
-├── package.json                      # Dependencies & scripts
-└── next-sitemap.config.js            # SEO sitemap generation
+├── supabase_setup.sql               # Database schema & RLS policies
+├── middleware.js                    # Next.js middleware (auth, rate limiting)
+├── next.config.mjs                  # Next.js configuration
+├── tailwind.config.js               # Tailwind configuration
+└── package.json                     # Dependencies & scripts
 ```
+
+</details>
 
 <br/>
 
-## 🤝 Contributing
+## Project Roadmap
 
-We 💜 contributions! AlgoBuddy is built by the community, for the community.
+| Status | Item |
+|:------:|------|
+| Done | Interactive algorithm visualizations |
+| Done | User authentication and progress tracking |
+| Done | AI-powered learning assistant |
+| Done | Graph algorithm visualizers |
+| Done | String algorithm visualizers (KMP, Z-Algorithm) |
+| In Progress | Expand the collection of algorithm and data structure visualizations |
+| In Progress | Improve accessibility and mobile experience |
+| In Progress | Enhance learning resources and documentation |
+| Planned | Introduce additional educational content and practice modules |
+| Planned | Continue community-driven improvements and feature enhancements |
+
+## Contributing
+
+We welcome contributions! AlgoBuddy is built by the community, for the community.
 
 ### Contribution Areas
 
 | Area | What you can do |
 |---|---|
-| 🐛 **Bug Fixes** | Squash bugs and resolve issues |
-| 🎨 **UI/UX** | Improve responsiveness, accessibility, design |
-| 🔮 **New Visualizers** | Add new DSA visualizers & animations |
-| 📖 **Documentation** | Improve guides, README, contributor docs |
-| ⚡ **Performance** | Optimize app performance & efficiency |
-| 🌗 **Themes** | Enhance dark/light mode experience |
+| **Bug Fixes** | Squash bugs and resolve issues |
+| **UI/UX** | Improve responsiveness, accessibility, design |
+| **New Visualizers** | Add new DSA visualizers & animations |
+| **Documentation** | Improve guides, README, contributor docs |
+| **Performance** | Optimize app performance & efficiency |
+| **Themes** | Enhance dark/light mode experience |
 
 ### Getting Started
+
+<details>
+<summary><strong>Step-by-step: fork, branch, commit, PR</strong></summary>
 
 ```bash
 # 1. Fork this repo and clone your fork
@@ -1209,18 +633,20 @@ git commit -m "feat: describe your change"
 git push origin feature/your-feature-name
 ```
 
-> 📖 For detailed guidelines, please read our [**Contributing Guide**](CONTRIBUTING.md) and [**Code of Conduct**](CODE_OF_CONDUCT.md).
+</details>
+
+> For detailed guidelines, please read our [**Contributing Guide**](CONTRIBUTING.md) and [**Code of Conduct**](CODE_OF_CONDUCT.md).
 
 ### Issue Assignment Process
 
-1. 🔍 Browse [**open issues**](https://github.com/PankajSingh34/AlgoBuddy/issues) or create a new one
-2. 💬 Comment asking to be assigned
-3. ⏳ Wait for maintainer assignment before starting
-4. 🔀 Submit a PR referencing the issue number
+1. Browse [**open issues**](https://github.com/PankajSingh34/AlgoBuddy/issues) or create a new one
+2. Comment asking to be assigned
+3. Wait for maintainer assignment before starting
+4. Submit a PR referencing the issue number
 
 <br/>
 
-## 💬 Community
+## Community
 
 <div align="center">
 
@@ -1232,26 +658,11 @@ Ask questions, share ideas, show off your contributions, and connect with fellow
 
 <br/>
 
-## 🛣 Project Roadmap
-
-The following roadmap outlines the project's ongoing development goals.
-
-| Status | Roadmap Item |
-|:------:|--------------|
-| ✅ | Interactive algorithm visualizations |
-| ✅ | User authentication and progress tracking |
-| ✅ | AI-powered learning assistant |
-| 🚧 | Expand the collection of algorithm and data structure visualizations |
-| 🚧 | Improve accessibility and mobile experience |
-| 🚧 | Enhance learning resources and documentation |
-| 🔜 | Introduce additional educational content and practice modules |
-| 🔜 | Continue community-driven improvements and feature enhancements |
-
-## 🌟 Star History
+## Star History
 
 <div align="center">
 
-If AlgoBuddy helped you learn, please consider giving it a ⭐ — it means a lot!
+If AlgoBuddy helped you learn, please consider giving it a star — it means a lot!
 
 [![Star History Chart](https://api.star-history.com/svg?repos=PankajSingh34/AlgoBuddy&type=Date)](https://star-history.com/#PankajSingh34/AlgoBuddy&Date)
 
@@ -1259,7 +670,7 @@ If AlgoBuddy helped you learn, please consider giving it a ⭐ — it means a lo
 
 <br/>
 
-## 👥 Contributors
+## Contributors
 
 <div align="center">
 
@@ -1271,7 +682,7 @@ If AlgoBuddy helped you learn, please consider giving it a ⭐ — it means a lo
 
 <br/>
 
-## 📜 License
+## License
 
 <div align="center">
 
@@ -1285,14 +696,8 @@ This project is licensed under the **MIT License** — see the [**LICENSE**](LIC
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=120&section=footer" width="100%" />
+**Built with ♥ by the AlgoBuddy community**
 
-<strong>Built with 💜 by the AlgoBuddy community</strong>
-
-<br/>
-
-[🌐 Website](https://www.algobuddy.me/) · [📢 Discord](https://discord.gg/Gv2N4U3KAc) · [🐛 Issues](https://github.com/PankajSingh34/AlgoBuddy/issues) · [🔀 Pull Requests](https://github.com/PankajSingh34/AlgoBuddy/pulls)
+[Website](https://www.algobuddy.me/) · [Discord](https://discord.gg/Gv2N4U3KAc) · [Issues](https://github.com/PankajSingh34/AlgoBuddy/issues) · [Pull Requests](https://github.com/PankajSingh34/AlgoBuddy/pulls)
 
 </div>
-
-

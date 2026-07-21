@@ -67,10 +67,13 @@ public class MySheetService {
     }
 
     @Transactional
-    public void updateVisibility(UUID userId, String problemId, boolean isPublic) {
+    public void updateVisibility(UUID userId, String problemId, boolean isPublic, Boolean sharedNotes) {
         mySheetRepository.findByUserIdAndProblemId(userId, problemId)
                 .ifPresent(item -> {
                     item.setPublic(isPublic);
+                    if (sharedNotes != null) {
+                        item.setSharedNotes(sharedNotes);
+                    }
                     mySheetRepository.save(item);
                 });
     }

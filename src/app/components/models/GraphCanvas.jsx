@@ -353,7 +353,7 @@ const handleMouseUp = useCallback(() => {
                 onWeightChange={(newWeight) => onUpdateEdgeWeight(idx, newWeight)}
                 readOnlyLabel={
                   animationState?.flowData
-                    ? `${animationState.flowData.flow[edge.from][edge.to]}/${animationState.flowData.capacity[edge.from][edge.to]}`
+                    ? `${animationState.flowData.flow[edge.from]?.[edge.to] ?? "-"}/${animationState.flowData.capacity[edge.from]?.[edge.to] ?? "-"}`
                     : undefined
                 }
               />
@@ -440,6 +440,53 @@ const handleMouseUp = useCallback(() => {
           </g>
         );
       })}
+
+      {hoveredNode && (() => {
+        const hNode = nodes.find((n) => n.id === hoveredNode);
+        if (!hNode || interactive) return null;
+
+        const info = [];
+        if (animationState?.distances?.[hNode.id] !== undefined) {
+          const d = animationState.distances[hNode.id];
+          info.push(`Distance: ${d === Infinity ? "∞" : d}`);
+        }
+        if (animationState?.pq) {
+          const item = animationState.pq.find((i) => i.node === hNode.id);
+          if (item) info.push(`In PQ (dist: ${item.dist})`);
+        }
+        if (animationState?.queue?.includes(hNode.id)) {
+          info.push("In Queue");
+        }
+        if (animationState?.stack?.includes(hNode.id)) {
+          info.push("In Stack");
+        }
+        if (animationState?.visitedNodes?.has(hNode.id)) {
+          info.push("State: Visited");
+        } else if (animationState?.visitingNodes?.has(hNode.id)) {
+          info.push("State: Visiting");
+        }
+
+        if (info.length === 0) info.push("State: Unvisited");
+
+        return (
+          <foreignObject
+            x={hNode.x - 60}
+            y={hNode.y - NODE_RADIUS - 60}
+            width={120}
+            height={60}
+            className="pointer-events-none"
+            style={{ overflow: "visible" }}
+          >
+            <div className="flex flex-col items-center justify-end h-full pb-2">
+              <div className="bg-slate-900/90 dark:bg-slate-800 text-white text-[10px] font-mono px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-xl backdrop-blur-sm">
+                {info.map((line, i) => (
+                  <div key={i} className="whitespace-nowrap leading-tight">{line}</div>
+                ))}
+              </div>
+            </div>
+          </foreignObject>
+        );
+      })()}
 
       {nodes.length === 0 && (
         <text

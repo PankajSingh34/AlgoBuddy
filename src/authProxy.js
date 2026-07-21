@@ -44,7 +44,6 @@ export async function proxy(request) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             }),
           );
@@ -85,10 +84,6 @@ supabaseResponse = NextResponse.next({
     isStateChangingMethod(request.method) &&
     !CSRF_EXEMPT_ROUTES.has(pathname)
   ) {
-    if (request.nextUrl.pathname.startsWith('/api/chatbot')) {
-      return NextResponse.next();
-    }
-
     if (!validateCsrfOrigin(request)) {
       return NextResponse.json(
         { error: "CSRF validation failed: untrusted origin" },

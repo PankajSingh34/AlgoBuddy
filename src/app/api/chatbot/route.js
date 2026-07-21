@@ -72,11 +72,14 @@ politely redirect the conversation back to DSA.`;
 export async function POST(request) {
   try {
     // ── 1. RATE LIMITING ──────────────────────────────────────────────────────
-    // Use the user's IP address as the rate-limit identifier.
-    // In production on Vercel, the real IP is in the x-forwarded-for header.
-    const ip = getClientIp(request) || "anonymous";
+    // Use the authenticated user ID as the rate-limit identifier when available,
+    // falling back to IP address for unauthenticated requests.
+    // The x-user-id header is set by authProxy.js middleware after Supabase
+    // session verification.
+    const userId = request.headers.get("x-user-id");
+    const rateLimitId = userId || getClientIp(request) || "anonymous";
 
-    const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+    const { success, limit, remaining, reset } = await ratelimit.limit(rateLimitId);
 
     if (!success) {
       // Tell the user clearly AND tell the frontend how long to wait.

@@ -52,12 +52,13 @@ public class MySheetController {
     }
 
     @PatchMapping("/{problemId}/visibility")
-    @Operation(summary = "Update sheet item visibility", description = "Updates the public visibility of a sheet item.")
+    @Operation(summary = "Update sheet item visibility", description = "Updates the public visibility and shared-notes flag of a sheet item.")
     @ApiResponse(responseCode = "200", description = "Successfully updated visibility")
     public ResponseEntity<Void> updateVisibility(@CurrentUserId UUID userId,
                                                   @PathVariable String problemId,
                                                   @RequestBody java.util.Map<String, Boolean> body) {
-        mySheetService.updateVisibility(userId, problemId, body.getOrDefault("isPublic", false));
+        Boolean sharedNotes = body.get("sharedNotes");
+        mySheetService.updateVisibility(userId, problemId, body.getOrDefault("isPublic", false), sharedNotes);
         return ResponseEntity.ok().build();
     }
 

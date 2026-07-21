@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import RandomArray from "@/app/components/ui/randomArray";
 import CustomArrayInput from "@/app/components/ui/customArrayInput";
@@ -139,6 +139,7 @@ const precomputeSteps = (inputArray) => {
 const InsertionSortVisualizer = () => {
   const [array, setArray] = useState([]);
   const [challengeEnabled, setChallengeEnabled] = useState(false);
+  const replayTimeoutRef = useRef(null);
   const {
     activeQuestion,
     askChallenge,
@@ -204,18 +205,24 @@ const InsertionSortVisualizer = () => {
     if (currentStepData?.sorted) {
       engine.reset();
       setTimeout(() => engine.play(), 50);
+      replayTimeoutRef.current = setTimeout(() => engine.play(), 50);
     } else {
       engine.play();
     }
   }, [engine, currentStepData]);
 
   const handleReset = useCallback(() => {
+    clearTimeout(replayTimeoutRef.current);
     setVisualState({
       comparisons: 0, shifts: 0, currentIndices: { current: -1, comparing: -1, sortedUpTo: -1 },
       currentPhase: "", stepExplanation: "", sorted: false, totalSteps: 0,
     });
     engine.reset();
   }, [engine]);
+
+  useEffect(() => {
+    return () => clearTimeout(replayTimeoutRef.current);
+  }, []);
 
   useVisualizerKeyboard({
     onStart: handleStart,

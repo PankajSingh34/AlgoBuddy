@@ -112,6 +112,19 @@ export const sections = [
           },
         ],
       },
+      {
+        title: "Interview Problems",
+        items: [
+          {
+            name: "Longest Non-Repeating Substring",
+            path: "/visualizer/string/longest-substring",
+          },
+          {
+            name: "Minimum Window Substring",
+            path: "/visualizer/string/minimum-window",
+          },
+        ],
+      },
     ],
   },  
   {

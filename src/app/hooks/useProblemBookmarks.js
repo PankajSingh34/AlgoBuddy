@@ -111,7 +111,7 @@ export function useProblemBookmarks() {
 
       if (user) {
         try {
-          await apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}`, { method: "DELETE" });
+          await apiFetch(`/api/bookmarks?problemId=${encodeURIComponent(problemId)}&topicSlug=${encodeURIComponent(topicSlug)}`, { method: "DELETE" });
           toast.success("Bookmark removed.");
         } catch (e) {
           console.error("Failed to delete bookmark:", e);
