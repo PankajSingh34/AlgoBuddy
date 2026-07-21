@@ -8,7 +8,7 @@ function sanitizeError(err) {
   
   // Remove file paths from error messages
   message = message.replace(/[a-zA-Z]:\\[^\\]*/g, "[path]");
-  message = message.replace(/\/[^\/]*/g, "[path]");
+  message = message.replace(/(?:\/[a-zA-Z0-9_\-./]+)+/g, "[path]");
   
   // Remove internal implementation details
   message = message.replace(/vm:\d+:\d+/g, "[internal]");
