@@ -455,6 +455,7 @@ public class ArenaService {
                         opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
                         opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
                         opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!finalIsWinner ? 1 : 0));
                         if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
                         else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
                     }
