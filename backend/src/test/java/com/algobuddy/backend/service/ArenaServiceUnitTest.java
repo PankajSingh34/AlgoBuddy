@@ -97,18 +97,18 @@ public class ArenaServiceUnitTest {
         // Simulate no rank found
         when(profileRepository.findRankByUserId(userId)).thenReturn(null);
         
-        // Mock findTopPlayers to return empty list (size = 0)
-        when(profileRepository.findTopPlayers(any())).thenReturn(java.util.Collections.emptyList());
+        // Mock total user count fallback (e.g., 2000 total users -> rank 2001)
+        when(profileRepository.count()).thenReturn(2000L);
 
         ArenaProfileResponse response = arenaService.getProfile(userId);
 
         assertNotNull(response);
-        assertEquals(1, response.getRank()); // size + 1 = 0 + 1 = 1
+        assertEquals(2001, response.getRank()); // count + 1 = 2000 + 1 = 2001
 
         verify(profileRepository, times(1)).existsById(userId);
         verify(profileRepository, times(1)).findProfileWithUserDetails(userId);
         verify(profileRepository, times(1)).findRankByUserId(userId);
-        verify(profileRepository, times(1)).findTopPlayers(any());
+        verify(profileRepository, times(1)).count();
     }
 
     @Test
