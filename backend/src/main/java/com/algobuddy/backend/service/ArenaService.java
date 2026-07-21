@@ -379,7 +379,17 @@ public class ArenaService {
         if (matchIdStr.startsWith("mock-match-")) {
             isWinner = request.isWinner();
         } else {
-            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            UUID verifiedWinnerId = null;
+            for (int verifyAttempt = 1; verifyAttempt <= MAX_RETRIES; verifyAttempt++) {
+                try {
+                    verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+                    break;
+                } catch (SecurityException e) {
+                    if (verifyAttempt == MAX_RETRIES) throw e;
+                    log.warn("Verify failed, retrying {}/{}", verifyAttempt, MAX_RETRIES);
+                    try { Thread.sleep(1000L * verifyAttempt); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                }
+            }
             isWinner = requestingUserId.equals(verifiedWinnerId);
         }
         final boolean finalIsWinner = isWinner;
