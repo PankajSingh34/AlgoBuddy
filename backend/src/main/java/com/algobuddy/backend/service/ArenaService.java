@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -142,13 +143,16 @@ public class ArenaService {
                 .battlesWon(0)
                 .battlesLost(0)
                 .totalProblemsSolved(0)
+                .currentWinStreak(0)
+                .currentDailyStreak(0)
+                .streakFreezesAvailable(0)
                 .build();
         return profileRepository.save(newProfile);
     }
     
     private Integer calculateRank(UUID userId) {
         Integer rank = profileRepository.findRankByUserId(userId);
-        return rank != null ? rank : profileRepository.findTopPlayers(PageRequest.of(0, 1)).size() + 1;
+        return rank != null ? rank : (int) profileRepository.count() + 1;
     }
 
     private ArenaProfileResponse mapProjectionToResponse(ArenaLeaderboardProjection projection, Integer rank) {
@@ -170,7 +174,6 @@ public class ArenaService {
         boolean isPlayer1 = match.getPlayer1Id().equals(requestingUserId);
         UUID opponentId = isPlayer1 ? match.getPlayer2Id() : match.getPlayer1Id();
         
-        // Fetch opponent name from pre-fetched map, default to "User [id]"
         String opponentName = opponentNameMap.getOrDefault(opponentId, "User " + opponentId.toString().substring(0, 4));
         
         String result = "In Progress";
@@ -213,11 +216,8 @@ public class ArenaService {
 
         UUID opponentId;
         if (request.getMatchId().startsWith("mock-match-")) {
-            // Bypass socket matchmaking verification for offline practice matches against AI Bots
             opponentId = UUID.fromString("00000000-0000-0000-0000-000000000000");
         } else {
-            // Verify the match pair via the WebSocket matchmaking server (Redis-backed)
-            // This ensures the opponent actually consented through WebSocket matchmaking
             opponentId = verifyMatchmakingPair(request.getMatchId(), requestingUserId);
         }
 
@@ -250,7 +250,6 @@ public class ArenaService {
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
 
-            // Forward the authenticated user's JWT token to the socket server
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
                 conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
@@ -266,7 +265,6 @@ public class ArenaService {
                 }
                 reader.close();
 
-                // Parse JSON response
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(response.toString());
 
@@ -302,7 +300,6 @@ public class ArenaService {
             conn.setConnectTimeout(3000);
             conn.setReadTimeout(3000);
 
-            // Forward the authenticated user's JWT token to the socket server
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
                 conn.setRequestProperty("Authorization", "Bearer " + jwt.getTokenValue());
@@ -348,6 +345,35 @@ public class ArenaService {
         }
     }
 
+    private void processDailyStreakAndFreeze(UserArenaProfile profile) {
+        LocalDate today = LocalDate.now();
+        LocalDate lastActive = profile.getLastActiveDate();
+
+        if (lastActive == null) {
+            profile.setCurrentDailyStreak(1);
+        } else if (lastActive.equals(today.minusDays(1))) {
+            profile.setCurrentDailyStreak(profile.getCurrentDailyStreak() + 1);
+        } else if (lastActive.isBefore(today.minusDays(1))) {
+            if (profile.getStreakFreezesAvailable() != null && profile.getStreakFreezesAvailable() > 0) {
+                profile.setStreakFreezesAvailable(profile.getStreakFreezesAvailable() - 1);
+            } else {
+                profile.setCurrentDailyStreak(1);
+            }
+        }
+        profile.setLastActiveDate(today);
+    }
+
+    private int processWinStreakAndCalculateXp(UserArenaProfile profile, boolean isWinner, int baseWinXp, int baseLossXp) {
+        if (isWinner) {
+            int newStreak = (profile.getCurrentWinStreak() != null ? profile.getCurrentWinStreak() : 0) + 1;
+            profile.setCurrentWinStreak(newStreak);
+            return newStreak >= 3 ? (int) (baseWinXp * 1.5) : baseWinXp;
+        } else {
+            profile.setCurrentWinStreak(0);
+            return baseLossXp;
+        }
+    }
+
     @CacheEvict(value = "arenaLeaderboard", allEntries = true)
     public void recordMatchResult(UUID requestingUserId, com.algobuddy.backend.dto.RecordMatchRequest request) {
         checkMatchResultRateLimit(requestingUserId);
@@ -387,7 +413,6 @@ public class ArenaService {
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
 
-                // Execute each retry attempt in an isolated transaction.
                 final TransactionTemplate retryTransaction = new TransactionTemplate(transactionManager);
                 retryTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
@@ -410,8 +435,6 @@ public class ArenaService {
                     }
 
                     if (existingMatch.getWinnerId() != null) {
-                        // Match result has already been recorded. We return silently to prevent
-                        // duplicate submission exceptions from throwing 500 errors on the client.
                         return null;
                     }
 
@@ -435,16 +458,24 @@ public class ArenaService {
                     int requestingUserXp = 0;
                     int opponentXp = 0;
 
+                    // Update daily participation streak
+                    processDailyStreakAndFreeze(requestingUserProfile);
+
                     if (!isOpponentBot) {
                         requestingUserRatingChange = finalIsWinner ? 25 : -15;
                         opponentRatingChange = finalIsWinner ? -15 : 25;
-                        requestingUserXp = finalIsWinner ? 50 : 10;
-                        opponentXp = finalIsWinner ? 10 : 50;
+                        
+                        // Process win streaks & XP multipliers
+                        requestingUserXp = processWinStreakAndCalculateXp(requestingUserProfile, finalIsWinner, 50, 10);
+                        
+                        if (opponentProfile != null) {
+                            processDailyStreakAndFreeze(opponentProfile);
+                            opponentXp = processWinStreakAndCalculateXp(opponentProfile, !finalIsWinner, 50, 10);
+                        }
                     }
 
                     requestingUserProfile.setRating(Math.max(0, requestingUserProfile.getRating() + requestingUserRatingChange));
-                    requestingUserProfile.setXp(requestingUserProfile.getXp() + requestingUserXp);
-                    requestingUserProfile.setLevel((requestingUserProfile.getXp() / 1000) + 1);
+                    requestingUserProfile.addXp(requestingUserXp);
                     if (!isOpponentBot) {
                         requestingUserProfile.setTotalProblemsSolved(requestingUserProfile.getTotalProblemsSolved() + (finalIsWinner ? 1 : 0));
                         if (finalIsWinner) requestingUserProfile.setBattlesWon(requestingUserProfile.getBattlesWon() + 1);
@@ -453,8 +484,7 @@ public class ArenaService {
 
                     if (!isOpponentBot && opponentProfile != null) {
                         opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
-                        opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
-                        opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+                        opponentProfile.addXp(opponentXp);
                         if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
                         else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
                     }
@@ -512,7 +542,6 @@ public class ArenaService {
 
     @Transactional(readOnly = true)
     public com.algobuddy.backend.dto.DailyChallengeResponse getDailyChallenge() {
-        // Hardcoded list of challenges to simulate a rotating daily problem
         List<com.algobuddy.backend.dto.DailyChallengeResponse> pool = List.of(
             new com.algobuddy.backend.dto.DailyChallengeResponse("valid-anagram", "Valid Anagram", "Solve this classic string problem to earn bonus daily XP and a special profile badge.", "Easy", "Strings", 250, "https://leetcode.com/problems/valid-anagram/"),
             new com.algobuddy.backend.dto.DailyChallengeResponse("two-sum", "Two Sum", "Find two numbers in the array that add up to the target value.", "Easy", "Arrays", 200, "https://leetcode.com/problems/two-sum/"),
