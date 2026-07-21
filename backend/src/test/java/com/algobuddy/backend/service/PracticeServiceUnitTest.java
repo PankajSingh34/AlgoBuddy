@@ -101,22 +101,25 @@ public class PracticeServiceUnitTest {
             return Optional.of(currentStatsState);
         });
 
-        // We mock statsRepository.save to update the shared state and release the lock
+        // We mock statsRepository.save to update the shared state and release the lock safely inside try-finally
         when(statsRepository.save(any(UserPracticeStats.class))).thenAnswer(invocation -> {
-            UserPracticeStats savedStats = invocation.getArgument(0);
-            
-            // Update the shared stats (representing database commit/flush)
-            sharedStats.setCurrentStreak(savedStats.getCurrentStreak());
-            sharedStats.setLongestStreak(savedStats.getLongestStreak());
-            sharedStats.setLastActiveDate(savedStats.getLastActiveDate());
-            sharedStats.setVisualizedCount(savedStats.getVisualizedCount());
+            try {
+                UserPracticeStats savedStats = invocation.getArgument(0);
+                
+                // Update the shared stats (representing database commit/flush)
+                sharedStats.setCurrentStreak(savedStats.getCurrentStreak());
+                sharedStats.setLongestStreak(savedStats.getLongestStreak());
+                sharedStats.setLastActiveDate(savedStats.getLastActiveDate());
+                sharedStats.setVisualizedCount(savedStats.getVisualizedCount());
 
-            // Decrement active threads holding lock
-            activeThreadsInCriticalSection.decrementAndGet();
-            
-            // Release the lock to simulate transaction commit/end releasing the row lock
-            mockDbLock.unlock();
-            return sharedStats;
+                return sharedStats;
+            } finally {
+                // Safely decrement active threads and release lock
+                if (mockDbLock.isHeldByCurrentThread()) {
+                    activeThreadsInCriticalSection.decrementAndGet();
+                    mockDbLock.unlock();
+                }
+            }
         });
 
         // Run 2 threads concurrently
@@ -127,6 +130,11 @@ public class PracticeServiceUnitTest {
             try {
                 practiceService.updateStreak(userId);
             } finally {
+                // Safety net: ensure any held mock DB lock is released even if updateStreak throws an exception before save()
+                if (mockDbLock.isHeldByCurrentThread()) {
+                    activeThreadsInCriticalSection.decrementAndGet();
+                    mockDbLock.unlock();
+                }
                 latch.countDown();
             }
         };
@@ -137,16 +145,6 @@ public class PracticeServiceUnitTest {
         latch.await(5, TimeUnit.SECONDS);
         executor.shutdown();
 
-        // Under pessimistic locking simulation:
-        // 1. Thread A acquires mockDbLock, activeThreadsInCriticalSection = 1, reads sharedStats (streak = 5, lastActive = yesterday).
-        // 2. Thread B attempts to call findAndLockByUserId, blocks on mockDbLock.lock().
-        // 3. Thread A updates currentStreak = 6, lastActiveDate = today, calls save().
-        // 4. In save(), sharedStats is updated, activeThreadsInCriticalSection = 0, and mockDbLock.unlock() is called.
-        // 5. Thread B resumes, acquires mockDbLock, activeThreadsInCriticalSection = 1, reads sharedStats (now streak = 6, lastActive = today).
-        // 6. Thread B sees lastActive == today, does nothing (streak remains 6, lastActive = today), calls save().
-        // 7. Thread B releases lock.
-        // Thus, maximum concurrent threads in the critical section should be exactly 1, and the final streak should be 6.
-        
         assertEquals(1, maxConcurrentThreadsInCriticalSection.get(), "Pessimistic lock simulation failed to serialize transactions");
         assertEquals(6, sharedStats.getCurrentStreak(), "Final streak should be 6");
         assertEquals(LocalDate.now(), sharedStats.getLastActiveDate(), "Last active date should be today");
