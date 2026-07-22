@@ -1,35 +1,22 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+import { getTransporter } from "./emailTransporter";
 
 export async function sendEmail({ to, subject, html }) {
-  if (!RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not configured. Skipping email send.");
-    return { success: false, skipped: true };
-  }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "AlgoBuddy <notifications@algobuddy.com>",
-        to,
-        subject,
-        html,
-      }),
-    });
+    const transporter = getTransporter();
+    
+    // We expect EMAIL_USER to be set for the sender email
+    const fromEmail = process.env.EMAIL_USER || "notifications@algobuddy.com";
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[/lib/email] Resend error:", err);
-      return { success: false, error: err };
-    }
+    await transporter.sendMail({
+      from: `AlgoBuddy <${fromEmail}>`,
+      to,
+      subject,
+      html,
+    });
 
     return { success: true };
   } catch (error) {
-    console.error("[/lib/email] Failed to send email:", error);
+    console.error("[/lib/email] Failed to send email via SMTP:", error);
     return { success: false, error: error.message };
   }
 }

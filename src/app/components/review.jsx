@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiStar, FiSend, FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import dynamic from "next/dynamic";
+import { api } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -36,24 +37,19 @@ const TestimonialsSection = () => {
         throw new Error("Please complete the captcha");
       }
 
-      const response = await fetch("/api/send-review", {
+      const response = await api.request("/api/send-review", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        body: {
           name: formData.name,
           email: formData.email,
           review: formData.review,
           rating: formData.rating,
           captchaToken,
-        }),
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to submit review");
+      if (response.error) {
+        throw new Error(response.message || response.error || "Failed to submit review");
       }
 
       setSubmitSuccess(true);
