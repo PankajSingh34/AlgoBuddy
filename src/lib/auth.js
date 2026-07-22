@@ -4,10 +4,12 @@ import { getSupabaseConfig as _getSupabaseConfig } from "./shared-utils.js";
 // For testing purposes, allow overriding the dependency functions
 let cookiesImpl = null;
 let createServerClientImpl = null;
+let headersImpl = null;
 
-export function setMockDependencies(cookies, createServerClient) {
+export function setMockDependencies(cookies, createServerClient, headers) {
   cookiesImpl = cookies;
   createServerClientImpl = createServerClient;
+  headersImpl = headers;
 }
 
 export function getSupabaseConfig() {
@@ -27,8 +29,13 @@ export async function getAuthenticatedUser() {
   }
 
   try {
-    const nextHeaders = await import("next/headers");
-    const headersList = await nextHeaders.headers();
+    let headersList;
+    if (headersImpl) {
+      headersList = await headersImpl();
+    } else {
+      const nextHeaders = await import("next/headers");
+      headersList = await nextHeaders.headers();
+    }
     
     // Check if authProxy middleware already verified this session
     const preVerifiedUserId = headersList.get('x-user-id');

@@ -76,14 +76,18 @@ test("Authentication Helper - Configuration & Status Logic", async (t) => {
       },
     });
 
-    setMockDependencies(mockCookies, mockCreateServerClient);
+    const mockHeaders = () => ({
+      get: () => null,
+    });
+
+    setMockDependencies(mockCookies, mockCreateServerClient, mockHeaders);
 
     const result = await getAuthenticatedUser();
     assert.equal(result.success, false);
     assert.equal(result.type, "UNAUTHENTICATED");
 
     // Clean mocks
-    setMockDependencies(null, null);
+    setMockDependencies(null, null, null);
     process.env = originalEnv;
   });
 
@@ -105,14 +109,18 @@ test("Authentication Helper - Configuration & Status Logic", async (t) => {
       },
     });
 
-    setMockDependencies(mockCookies, mockCreateServerClient);
+    const mockHeaders = () => ({
+      get: () => null,
+    });
+
+    setMockDependencies(mockCookies, mockCreateServerClient, mockHeaders);
 
     const result = await getAuthenticatedUser();
     assert.equal(result.success, false);
     assert.equal(result.type, "AUTH_PROVIDER_ERROR");
 
     // Clean mocks
-    setMockDependencies(null, null);
+    setMockDependencies(null, null, null);
     process.env = originalEnv;
   });
 
@@ -134,7 +142,11 @@ test("Authentication Helper - Configuration & Status Logic", async (t) => {
       },
     });
 
-    setMockDependencies(mockCookies, mockCreateServerClient);
+    const mockHeaders = () => ({
+      get: () => null,
+    });
+
+    setMockDependencies(mockCookies, mockCreateServerClient, mockHeaders);
 
     const result = await getAuthenticatedUser();
     assert.equal(result.success, true);
@@ -142,7 +154,7 @@ test("Authentication Helper - Configuration & Status Logic", async (t) => {
     assert.equal(result.user.id, "user-123");
 
     // Clean mocks
-    setMockDependencies(null, null);
+    setMockDependencies(null, null, null);
     process.env = originalEnv;
   });
 });
