@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // -------------------------------------------------------------------
 import { FiX, FiMail, FiMessageSquare, FiSend, FiChevronRight } from "react-icons/fi"; // Added FiChevronRight import for Support Center icon
 import dynamic from "next/dynamic";
+import { api } from "@/lib/apiClient";
 
 const Turnstile = dynamic(
   () => import("@marsidev/react-turnstile").then((mod) => mod.Turnstile),
@@ -61,17 +62,14 @@ const ContactSupportPopup = () => {
         throw new Error("Please complete the captcha");
       }
 
-      const response = await fetch("/api/contact", {
+      const response = await api.request("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...formData, captchaToken }),
+        body: { ...formData, captchaToken },
       });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.message || "Failed to send message");
+      // apiClient automatically throws an ApiError if !res.ok, but just in case:
+      if (response.error) {
+        throw new Error(response.message || response.error || "Failed to send message");
       }
 
       setIsSubmitted(true);
