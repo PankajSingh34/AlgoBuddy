@@ -1,4 +1,4 @@
-import { Swords, Trophy } from "lucide-react";
+import { Swords, Trophy, Target, Clock } from "lucide-react";
 
 export default function HistoryTab({ }) {
   return (

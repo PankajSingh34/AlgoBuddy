@@ -1,6 +1,23 @@
+import React, { useState } from "react";
 import { Users, Swords } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function FriendTab({ joinCode, setJoinCode, handleJoinDuel, openCreateDuelModal }) {
+  const [duelMode, setDuelMode] = useState("Standard");
+  const [duelTopic, setDuelTopic] = useState("Random");
+  const [duelDifficulty, setDuelDifficulty] = useState("Medium");
+  const [duelTime, setDuelTime] = useState("30m");
+  const [duelWager, setDuelWager] = useState(0);
+  const [duelPublic, setDuelPublic] = useState(false);
+
+  const handleJoinLobby = () => {
+    if (handleJoinDuel) {
+      handleJoinDuel(joinCode);
+    } else {
+      toast.success(`Joining lobby ${joinCode}...`);
+    }
+  };
+
   return (
     <div className="w-full text-left space-y-6">
                     <div>

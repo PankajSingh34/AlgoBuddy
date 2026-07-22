@@ -1,6 +1,7 @@
-import { Trophy, ArrowUpRight, Zap, Target, Star, Swords, Layout } from "lucide-react";
+import { Trophy, ArrowUpRight, Zap, Target, Star, Swords, Layout, Flame, Gift } from "lucide-react";
 
-export default function RankedTab({ profile, rankProgress, ringDashoffset, ringCircumference, openMatchmakingModal }) {
+export default function RankedTab({ profile, rankProgress, ringDashoffset, ringCircumference, openMatchmakingModal, currentRank, rankedMatches }) {
+  const RankIcon = currentRank.Icon;
   return (
     <div className="w-full text-left space-y-6">
                     <div>

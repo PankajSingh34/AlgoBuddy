@@ -1,8 +1,8 @@
-import { Trophy, Star, TrendingUp, Search, X, Navigation } from "lucide-react";
+import { Trophy, Star, TrendingUp, Search, X, Navigation, TrendingDown, Flame, Minus } from "lucide-react";
 import Image from "next/image";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
-export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLeaderboardFilter, searchQuery, setSearchQuery, expandedRow, setExpandedRow }) {
+export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLeaderboardFilter, searchQuery, setSearchQuery, expandedRow, setExpandedRow, profile }) {
   return (
     <div className="w-full max-w-md space-y-4 text-left">
                     <div className="flex gap-2 p-1 bg-slate-100 dark:bg-neutral-800 rounded-lg">

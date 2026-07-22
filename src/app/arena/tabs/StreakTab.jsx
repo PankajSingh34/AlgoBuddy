@@ -1,4 +1,4 @@
-import { Flame, Check, HelpCircle } from "lucide-react";
+import { Flame, Check, HelpCircle, Trophy, Calendar, Share2, Shield } from "lucide-react";
 import ActivityHeatmap from "@/app/components/ui/ActivityHeatmap";
 
 export default function StreakTab({ profile }) {

@@ -1,4 +1,5 @@
-import { Trophy, Clock, Users, ArrowRight, Play, Calendar, History, Sparkles } from "lucide-react";
+import { Trophy, Clock, Users, ArrowRight, Play, Calendar, History, Sparkles, Award, Flame, TrendingUp, Crown } from "lucide-react";
+import TournamentCard from "@/app/components/ui/TournamentCard";
 
 export default function TournamentsTab({ tournamentFilter, setTournamentFilter, tournamentTimeLeft, isLoadingTournaments }) {
   return (
