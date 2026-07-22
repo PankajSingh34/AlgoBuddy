@@ -27,11 +27,23 @@ export async function getAuthenticatedUser() {
   }
 
   try {
+    const nextHeaders = await import("next/headers");
+    const headersList = await nextHeaders.headers();
+    
+    // Check if authProxy middleware already verified this session
+    const preVerifiedUserId = headersList.get('x-user-id');
+    if (preVerifiedUserId) {
+      const preVerifiedUserEmail = headersList.get('x-user-email');
+      return { 
+        success: true, 
+        user: { id: preVerifiedUserId, email: preVerifiedUserEmail } 
+      };
+    }
+
     let cookieStore;
     if (cookiesImpl) {
       cookieStore = await cookiesImpl();
     } else {
-      const nextHeaders = await import("next/headers");
       cookieStore = await nextHeaders.cookies();
     }
 
