@@ -1,5 +1,6 @@
-import { Trophy, Star, TrendingUp, Search } from "lucide-react";
+import { Trophy, Star, TrendingUp, Search, X, Navigation } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLeaderboardFilter, searchQuery, setSearchQuery, expandedRow, setExpandedRow }) {
   return (
@@ -28,8 +29,17 @@ export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLead
                           placeholder="Search players..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full pl-9 pr-9 py-2 text-xs bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                         />
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300 rounded-full hover:bg-slate-200 dark:hover:bg-neutral-800 transition-colors animate-in fade-in zoom-in duration-200"
+                            title="Clear search"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
                       </div>
                       <button 
                         onClick={() => {
