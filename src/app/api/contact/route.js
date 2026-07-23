@@ -125,8 +125,19 @@ export async function POST(req) {
     try {
       await transporter.sendMail(mailOptions);
     } catch (mailErr) {
-      console.error("[contact] Email send failed:", mailErr);
-      return jsonResponse({ success: false, message: "Failed to send email. Please try again later." }, 503);
+      console.error("[contact] Email send failed. Persisting message to pending_messages:", mailErr);
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from("pending_messages").insert({
+          type: "contact",
+          payload: { name: trimmedName, email: trimmedEmail, subject: trimmedSubject, message: trimmedMessage },
+        });
+      } catch (dbErr) {
+        console.error("[contact] Failed to persist pending message after email send failure:", dbErr);
+      }
+      return jsonResponse({
+        message: "Our messaging service is temporarily over capacity. Please try again tomorrow or contact us through other channels.",
+      }, 503);
     }
 
     return jsonResponse({ message: "Email sent successfully" }, 200, {
