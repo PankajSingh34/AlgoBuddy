@@ -252,6 +252,13 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
       }
     });
 
+    newSocket.on("opponent_disconnected", (data) => {
+      setBattleFinished(true);
+      setVictoryState("victory");
+      addLog("Your opponent disconnected. You win!");
+      recordMatchResultToBackend(true);
+    });
+
     return () => {
       clearTimeout(safetyTimeout);
       if (opponentIdleTimerRef.current) clearTimeout(opponentIdleTimerRef.current);
