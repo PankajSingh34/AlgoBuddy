@@ -2,7 +2,46 @@ import { Trophy, Star, TrendingUp, Search, X, Navigation, TrendingDown, Flame, M
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.split(" ");
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
+function getTierBadge(tier) {
+  const colors = {
+    "Grandmaster": "bg-red-500/20 text-red-500 border-red-500/50",
+    "Diamond": "bg-blue-500/20 text-blue-500 border-blue-500/50",
+    "Gold": "bg-amber-500/20 text-amber-500 border-amber-500/50",
+    "Silver": "bg-slate-400/20 text-slate-400 border-slate-400/50",
+    "Bronze": "bg-orange-700/20 text-orange-700 border-orange-700/50"
+  };
+  const colorClass = colors[tier] || colors["Bronze"];
+  return (
+    <span className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>
+      {tier}
+    </span>
+  );
+}
+
 export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLeaderboardFilter, searchQuery, setSearchQuery, expandedRow, setExpandedRow, profile }) {
+  let displayLeaderboard = leaderboardFilter === "Friends" 
+    ? (leaderboard || []).filter((_, i) => i % 5 === 0)
+    : leaderboardFilter === "Weekly"
+      ? [...(leaderboard || [])].slice(0, 15).sort((a,b) => (b.winRate || 0) - (a.winRate || 0))
+      : (leaderboard || []);
+      
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    displayLeaderboard = displayLeaderboard.filter(row => {
+      const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
+      return name.toLowerCase().includes(query);
+    });
+  }
+
   return (
     <div className="w-full max-w-md space-y-4 text-left">
                     <div className="flex gap-2 p-1 bg-slate-100 dark:bg-neutral-800 rounded-lg">
@@ -109,22 +148,8 @@ export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLead
                     )}
 
                     <div className="space-y-2">
-                      {leaderboard && leaderboard.length > 0 ? (
+                      {displayLeaderboard && displayLeaderboard.length > 0 ? (
                         (() => {
-                          let displayLeaderboard = leaderboardFilter === "Friends" 
-                            ? leaderboard.filter((_, i) => i % 5 === 0)
-                            : leaderboardFilter === "Weekly"
-                              ? [...leaderboard].slice(0, 15).sort((a,b) => b.winRate - a.winRate)
-                              : leaderboard;
-                              
-                          if (searchQuery.trim()) {
-                            const query = searchQuery.toLowerCase();
-                            displayLeaderboard = displayLeaderboard.filter(row => {
-                              const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
-                              return name.toLowerCase().includes(query);
-                            });
-                          }
-                              
                           if (displayLeaderboard.length === 0) {
                             return (
                               <div className="p-4 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
@@ -132,7 +157,6 @@ export default function LeaderboardTab({ leaderboard, leaderboardFilter, setLead
                               </div>
                             );
                           }
-
                           return displayLeaderboard.map((row, idx) => {
                             const rank = row.rank || idx + 1;
                             const name = row.name || (row.userId ? `User ${row.userId.substring(0,4)}` : "Unknown");
