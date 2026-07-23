@@ -105,28 +105,6 @@ const defaultGraphs = {
       { from: "4", to: "5", weight: 6, directed: true },
     ]
   },
-  "a-star": {
-    nodes: [
-      { id: "0", x: 100, y: 250, label: "A" },
-      { id: "1", x: 300, y: 100, label: "B" },
-      { id: "2", x: 300, y: 400, label: "C" },
-      { id: "3", x: 500, y: 100, label: "D" },
-      { id: "4", x: 500, y: 400, label: "E" },
-      { id: "5", x: 700, y: 250, label: "F" },
-    ],
-    edges: [
-      { from: "0", to: "1", weight: 4, directed: true },
-      { from: "0", to: "2", weight: 2, directed: true },
-      { from: "1", to: "3", weight: 5, directed: true },
-      { from: "1", to: "2", weight: 1, directed: true },
-      { from: "2", to: "1", weight: 8, directed: true },
-      { from: "2", to: "3", weight: 10, directed: true },
-      { from: "2", to: "4", weight: 3, directed: true },
-      { from: "3", to: "5", weight: 2, directed: true },
-      { from: "4", to: "3", weight: 4, directed: true },
-      { from: "4", to: "5", weight: 6, directed: true },
-    ]
-  },
   "floyd-warshall": {
     nodes: [
       { id: "0", x: 120, y: 160, label: "A" },
@@ -468,10 +446,6 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
     if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
     if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
-    if (algorithm === "a-star") {
-      const goalNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
-      return Array.from(aStarGenerator(nodes, edges, startNodeId, goalNodeId));
-    }
     if (algorithm === "ford-fulkerson") {
       const sinkNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
       return Array.from(fordFulkersonGenerator(nodes, edges, startNodeId, sinkNodeId));
