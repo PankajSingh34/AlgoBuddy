@@ -513,7 +513,7 @@ export default function ArenaPage() {
                   <LeaderboardTab leaderboard={leaderboard} leaderboardFilter={leaderboardFilter} setLeaderboardFilter={setLeaderboardFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} expandedRow={expandedRow} setExpandedRow={setExpandedRow} profile={profile} />
                 )}
                 {activeTab === "history" && (
-                  <HistoryTab matchHistory={matchHistory} />
+                  <HistoryTab matchHistory={matchHistory} ensureLoggedIn={ensureLoggedIn} handleWatchLive={handleWatchLive} />
                 )}
                 {activeTab === "streak" && (
                   <StreakTab profile={profile} streakData={streakData} />
