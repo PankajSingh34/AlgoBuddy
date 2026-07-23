@@ -1,6 +1,9 @@
 import { Redis } from "@upstash/redis";
 import { jwtVerify, createRemoteJWKSet } from "jose";
 import { getClientIp } from "../getClientIp.js";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("rateLimit");
 
 const RATE_LIMIT_KEY_PREFIX = "rl";
 const MAX_IN_MEMORY_ENTRIES = 10000;
@@ -28,10 +31,10 @@ function startMemorySweeper() {
           const k = iter.next().value;
           if (k !== undefined) store.delete(k);
         }
-        console.warn(`[rateLimit] Evicted ${toEvict} entries: in-memory store exceeded ${MAX_IN_MEMORY_ENTRIES} limit (size=${store.size + toEvict}, expired=${expired})`);
+        log.warn({ evicted: toEvict, storeSize: store.size + toEvict, expired }, "In-memory store exceeded limit; evicted entries.");
       }
       if (store.size > MAX_IN_MEMORY_ENTRIES * 0.9) {
-        console.warn(`[rateLimit] In-memory store near capacity: ${store.size}/${MAX_IN_MEMORY_ENTRIES}`);
+        log.warn({ storeSize: store.size, capacity: MAX_IN_MEMORY_ENTRIES }, "In-memory store near capacity.");
       }
     }
   }, MEMORY_SWEEP_INTERVAL_MS);
@@ -46,7 +49,7 @@ const redis =
     : null;
 
 if (!redis && REDIS_REQUIRED) {
-  console.error("[rateLimit] REDIS_REQUIRED is set but Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are missing. Rate limiting will fail requests.");
+  log.error("REDIS_REQUIRED is set but Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are missing. Rate limiting will fail requests.");
 }
 
 let isRedisOffline = false;
@@ -56,11 +59,11 @@ const COOLDOWN_MS = 10000;
 function markRedisOffline(err) {
   if (!isRedisOffline) {
     isRedisOffline = true;
-    const msg = `[rateLimit] Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`;
+    const msg = `Redis connection failed, activating in-memory fallback. Error: ${err.message || err}`;
     if (REDIS_REQUIRED) {
-      console.error(`[rateLimit] REDIS_REQUIRED=true — rate limiting will now reject requests until Redis recovers. ${msg}`);
+      log.error({ err }, `REDIS_REQUIRED=true — rate limiting will now reject requests until Redis recovers. ${msg}`);
     } else {
-      console.error(msg);
+      log.error({ err }, msg);
     }
   }
   redisOfflineUntil = Date.now() + COOLDOWN_MS;
@@ -69,7 +72,7 @@ function markRedisOffline(err) {
 function markRedisOnline() {
   if (isRedisOffline) {
     isRedisOffline = false;
-    console.log("[rateLimit] Redis connection restored, resuming Redis-based rate limiting.");
+    log.info("Redis connection restored, resuming Redis-based rate limiting.");
   }
 }
 
@@ -111,7 +114,7 @@ async function resolveIdentityKey(request) {
       // provided" — log it distinctly so a regression here (e.g. a wrong
       // JWKS URL) is visible instead of silently degrading every limiter
       // to IP-based keying with no signal anywhere.
-      console.warn(`[rateLimit] JWT verification failed, falling back to IP-based key: ${err.message || err}`);
+      log.warn({ err }, "JWT verification failed, falling back to IP-based key.");
     }
   }
   const ip = getClientIp(request.headers);
@@ -164,13 +167,13 @@ export function createRateLimiter(options) {
 
     if (REDIS_REQUIRED) {
       const msg = `REDIS_REQUIRED=true and Redis is unavailable (offline=${isRedisOffline}, cooldown=${redisOfflineUntil > Date.now() ? Math.ceil((redisOfflineUntil - Date.now()) / 1000) + 's' : 'expired'}).`;
-      console.error(`[rateLimit] ${msg}`);
+      log.error({ isRedisOffline, cooldownSecondsLeft: redisOfflineUntil > Date.now() ? Math.ceil((redisOfflineUntil - Date.now()) / 1000) : 0 }, "REDIS_REQUIRED=true and Redis is unavailable.");
       const retryAfter = 60;
       return { allowed: false, remaining: 0, retryAfter, resetAt: Date.now() + retryAfter * 1000 };
     }
 
     if (process.env.NODE_ENV === "production" && !redis) {
-      console.warn("Critical: Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) are not configured in production. Using in-memory fallback.");
+      log.warn("Redis connection variables (UPSTASH_REDIS_REST_URL/TOKEN) not configured in production. Using in-memory fallback.");
     }
 
     startMemorySweeper();
@@ -321,7 +324,7 @@ const ATOMIC_SMTP_QUOTA_SCRIPT = `
 export async function checkGlobalSmtpQuota(maxPerDay = 500) {
   if (!redis) {
     if (process.env.NODE_ENV === "production") {
-      console.warn("[smtp-quota] Redis unavailable in production — SMTP quota not enforced across instances");
+      log.warn("Redis unavailable in production — SMTP quota not enforced across instances.");
     }
     const today = new Date().toISOString().split("T")[0];
     if (localSmtpDate !== today) {
@@ -334,7 +337,7 @@ export async function checkGlobalSmtpQuota(maxPerDay = 500) {
     localSmtpCounter += 1;
     const usagePercent = (localSmtpCounter / maxPerDay) * 100;
     if (usagePercent >= 80) {
-      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${localSmtpCounter}/${maxPerDay}) consumed`);
+      log.warn({ usagePercent: usagePercent.toFixed(0), used: localSmtpCounter, maxPerDay }, "Daily SMTP quota threshold reached.");
     }
     return {
       allowed: true,
@@ -355,7 +358,7 @@ export async function checkGlobalSmtpQuota(maxPerDay = 500) {
     const newCount = Number(result);
     const usagePercent = (newCount / maxPerDay) * 100;
     if (usagePercent >= 80) {
-      console.warn(`[smtp-quota] ${usagePercent.toFixed(0)}% of daily SMTP quota (${newCount}/${maxPerDay}) consumed`);
+      log.warn({ usagePercent: usagePercent.toFixed(0), used: newCount, maxPerDay }, "Daily SMTP quota threshold reached.");
     }
 
     return {
@@ -363,7 +366,7 @@ export async function checkGlobalSmtpQuota(maxPerDay = 500) {
       remaining: Math.max(0, maxPerDay - newCount),
     };
   } catch (err) {
-    console.error("[smtp-quota] Redis error, failing open:", err.message);
+    log.error({ err }, "SMTP quota Redis error, failing open.");
     return { allowed: true, remaining: 1, warning: "Redis error, quota not enforced" };
   }
 }

@@ -1,3 +1,7 @@
+import { createLogger } from "./logger.js";
+
+const log = createLogger("csrf");
+
 const CSRF_TOKEN_LENGTH = 32;
 const CSRF_SECRET_ENV = "CSRF_SECRET";
 const CSRF_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -18,10 +22,7 @@ function getSecret() {
     devSecret = Array.from(array)
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    console.warn(
-      "CSRF_SECRET not set. Using a fallback development secret. " +
-      "Set CSRF_SECRET in .env.local for persistence and security in production.",
-    );
+    log.warn("CSRF_SECRET not set. Using a fallback development secret. Set CSRF_SECRET in .env.local for persistence and security in production.");
   }
   return devSecret;
 }

@@ -1,5 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import { api } from "./apiClient";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("activity");
 
 const trackActivity = async (type = "site_visit") => {
   try {
@@ -9,7 +12,7 @@ const trackActivity = async (type = "site_visit") => {
     });
     return { success: true };
   } catch (e) {
-    console.error("trackActivity failed:", e);
+    log.error({ err: e }, "trackActivity failed.");
     return { success: false, error: e };
   }
 };
@@ -78,7 +81,7 @@ const getStreakData = async (userId, days = 30) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("getStreakData error:", error);
+      log.error({ err: error }, "getStreakData error.");
       return { streak: 0, activities: [] };
     }
 
@@ -87,7 +90,7 @@ const getStreakData = async (userId, days = 30) => {
       activities: data || [],
     };
   } catch (e) {
-    console.error("getStreakData exception:", e);
+    log.error({ err: e }, "getStreakData exception.");
     return { streak: 0, activities: [] };
   }
 };
