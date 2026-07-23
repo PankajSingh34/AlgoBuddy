@@ -455,6 +455,7 @@ io.on("connection", async (socket) => {
   } else {
     // Store verified userId from the JWT payload
     socket.data.userId = authPayload.sub || authPayload.id;
+    socket.data.token = token;
     console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
   }
 
@@ -786,6 +787,58 @@ io.on("connection", async (socket) => {
         const testResults = JSON.parse(testResultsStr);
         if (!testResults.passed || testResults.passed < 1) {
           return socket.emit("error", { message: "Cannot complete match: insufficient test results" });
+        }
+
+        // Server-side verification to prevent client spoofing
+        const initialMatchStr = await redisClient.get(`{arena}:match:${matchId}`);
+        if (!initialMatchStr) {
+          return socket.emit("error", { message: "Cannot complete match: match not found" });
+        }
+        const match = JSON.parse(initialMatchStr);
+        const topic = match.topic || "Arrays";
+
+        let verificationCode = data.code || "";
+        const lang = (data.language || "javascript").toLowerCase();
+
+        if (lang === "javascript" || lang === "js") {
+          if (topic === "Arrays") {
+            verificationCode += `\n;
+if (typeof twoSum !== 'function' || JSON.stringify(twoSum([2,7,11,15], 9)) !== '[0,1]' || JSON.stringify(twoSum([3,2,4], 6)) !== '[1,2]') {
+  throw new Error("Validation test cases failed!");
+}`;
+          } else if (topic === "Strings") {
+            verificationCode += `\n;
+if (typeof isAnagram !== 'function' || isAnagram("anagram", "nagaram") !== true || isAnagram("rat", "car") !== false) {
+  throw new Error("Validation test cases failed!");
+}`;
+          }
+        }
+
+        if (lang === "javascript" || lang === "js") {
+          const origin = socket.handshake.headers.origin || "http://localhost:3000";
+          try {
+            const res = await fetch(`${origin}/api/code-lab`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${socket.data.token}`
+              },
+              body: JSON.stringify({ code: verificationCode })
+            });
+
+            if (!res.ok) {
+              return socket.emit("error", { message: "Server-side code verification failed" });
+            }
+
+            const resData = await res.json();
+            const isSuccess = resData.status === 3 || resData.status === "SUCCESS";
+            if (!isSuccess) {
+              return socket.emit("error", { message: "Your code failed verification test cases!" });
+            }
+          } catch (verErr) {
+            console.error("[match_complete] Code verification request failed:", verErr);
+            return socket.emit("error", { message: "Verification service unavailable" });
+          }
         }
 
         const resultStr = await redisClient.eval(

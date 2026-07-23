@@ -346,7 +346,9 @@ export default function DuelSimulatorModal({ isOpen, onClose, opponent, currentU
 
         if (data.status === 3 || data.status === "SUCCESS") {
           socket.emit("match_complete", {
-            matchId: opponent.matchId
+            matchId: opponent.matchId,
+            code: userCode,
+            language: language
           });
           setBattleFinished(true);
           setVictoryState("victory");
