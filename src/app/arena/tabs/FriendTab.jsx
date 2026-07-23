@@ -11,6 +11,10 @@ export default function FriendTab({ joinCode, setJoinCode, handleJoinDuel, openC
   const [duelPublic, setDuelPublic] = useState(false);
 
   const handleJoinLobby = () => {
+    if (!/^[A-Z0-9]{6}$/i.test(joinCode)) {
+      toast.error("Please enter a valid 6-character alphanumeric code.");
+      return;
+    }
     if (handleJoinDuel) {
       handleJoinDuel(joinCode);
     } else {
