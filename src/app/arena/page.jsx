@@ -77,7 +77,8 @@ function getInitials(name) {
   if (!name) return "??";
   const cleanName = name.includes("@") ? name.split("@")[0] : name;
   const parts = cleanName.trim().split(/\s+/);
-  if (parts.length >= 2) {
+  if (!parts[0]) return "??";
+  if (parts.length >= 2 && parts[parts.length - 1][0]) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return parts[0].slice(0, 2).toUpperCase();
@@ -513,10 +514,10 @@ export default function ArenaPage() {
                   <LeaderboardTab leaderboard={leaderboard} leaderboardFilter={leaderboardFilter} setLeaderboardFilter={setLeaderboardFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} expandedRow={expandedRow} setExpandedRow={setExpandedRow} profile={profile} />
                 )}
                 {activeTab === "history" && (
-                  <HistoryTab />
+                  <HistoryTab matchHistory={matchHistory} />
                 )}
                 {activeTab === "streak" && (
-                  <StreakTab profile={profile} />
+                  <StreakTab profile={profile} streakData={streakData} />
                 )}
                 {activeTab === "tournaments" && (
                   <TournamentsTab 
