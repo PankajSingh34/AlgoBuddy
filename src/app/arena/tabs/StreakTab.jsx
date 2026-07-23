@@ -1,7 +1,8 @@
 import { Flame, Check, HelpCircle, Trophy, Calendar, Share2, Shield } from "lucide-react";
+import { toast } from "react-hot-toast";
 import ActivityHeatmap from "@/app/components/ui/ActivityHeatmap";
 
-export default function StreakTab({ profile }) {
+export default function StreakTab({ profile, streakData }) {
   return (
     <div className="w-full text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
                     {/* Hero Section */}
