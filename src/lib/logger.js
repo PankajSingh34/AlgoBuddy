@@ -47,6 +47,27 @@ const LOG_LEVEL = process.env.LOG_LEVEL ?? (IS_PRODUCTION ? "info" : "debug");
 // Base pino instance
 // ─────────────────────────────────────────────────────────────
 
+// Detect whether pino-pretty is available (it's a devDependency only).
+// Gracefully fall back to plain JSON output if it is absent (e.g. CI with
+// NODE_ENV unset, or production deployments that prune devDependencies).
+let prettyTransport;
+if (!IS_PRODUCTION) {
+  try {
+    require.resolve("pino-pretty");
+    prettyTransport = {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:HH:MM:ss",
+        ignore: "pid,hostname,env",
+        messageFormat: "[{module}] {msg}",
+      },
+    };
+  } catch {
+    // pino-pretty not installed — use default JSON output
+  }
+}
+
 const baseLogger = pino({
   level: LOG_LEVEL,
 
@@ -64,19 +85,8 @@ const baseLogger = pino({
     error: pino.stdSerializers.err,
   },
 
-  // In development, output human-readable logs if pino-pretty is available.
-  // In production, emit raw NDJSON for log aggregation pipelines.
-  transport: IS_PRODUCTION
-    ? undefined
-    : {
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          translateTime: "SYS:HH:MM:ss",
-          ignore: "pid,hostname,env",
-          messageFormat: "[{module}] {msg}",
-        },
-      },
+  // Use pino-pretty in development when available; raw NDJSON otherwise.
+  transport: prettyTransport,
 });
 
 // ─────────────────────────────────────────────────────────────
