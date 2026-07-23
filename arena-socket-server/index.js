@@ -728,11 +728,14 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("disconnecting", async () => {
+  socket.on("disconnecting", () => {
     for (const room of socket.rooms) {
       if (room.endsWith("-spectators")) {
-        const sockets = await io.in(room).fetchSockets();
-        io.in(room).emit("spectator_count", { count: Math.max(0, sockets.length - 1) });
+        const roomAdapter = io.sockets.adapter.rooms.get(room);
+        if (roomAdapter) {
+          const count = Math.max(0, roomAdapter.size - 1);
+          io.in(room).emit("spectator_count", { count });
+        }
       }
     }
   });
