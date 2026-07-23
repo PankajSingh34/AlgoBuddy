@@ -139,6 +139,8 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
 
   // Call onStep with a deep-cloned snapshot to prevent mutation of steps.
   useEffect(() => {
+    let cancelled = false;
+
     if (steps && currentStep >= 0 && currentStep < stepsLength) {
       const stepData = cloneStep(steps[currentStep]);
       onStepRef.current?.(stepData, currentStep);
@@ -153,14 +155,20 @@ export function useAnimationEngine({ steps, onStep, initialSpeed = DEFAULT_SPEED
           
           isSpeakingRef.current = true;
           speakRef.current(text, rate).then(() => {
-            isSpeakingRef.current = false;
-            lastFrameTime.current = 0; 
+            if (!cancelled) {
+              isSpeakingRef.current = false;
+              lastFrameTime.current = 0; 
+            }
           });
           
           lastSpokenTextRef.current = text;
         }
       }
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentStep, steps, stepsLength]);
 
   useEffect(() => {
