@@ -3,7 +3,9 @@ import UpcomingTournament from "@/app/components/ui/UpcomingTournament";
 
 const getInitials = (name) => {
   if (!name) return "?";
-  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+  const parts = name.trim().split(/\s+/);
+  if (!parts[0]) return "?";
+  return parts.map(n => n[0]).join("").toUpperCase().substring(0, 2);
 };
 
 const ACHIEVEMENT_BADGES = [
