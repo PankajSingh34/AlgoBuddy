@@ -281,7 +281,9 @@ const io = new Server(server, {
 });
 
 io.use((socket, next) => {
-  const ip = socket.handshake.address;
+  const headers = socket.handshake.headers || {};
+  const realIp = headers["x-real-ip"];
+  const ip = (realIp && typeof realIp === "string") ? realIp.trim() : socket.handshake.address;
   if (isConnectionRateLimited(ip)) {
     return next(new Error("Rate limited"));
   }
@@ -931,7 +933,9 @@ app.get("/debug", async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const headers = req.headers || {};
+    const realIp = headers["x-real-ip"];
+    const clientIp = (realIp && typeof realIp === "string") ? realIp.trim() : (req.ip || req.connection.remoteAddress);
     if (isDebugRateLimited(clientIp)) {
       return res.status(429).json({ error: "Too many requests" });
     }
