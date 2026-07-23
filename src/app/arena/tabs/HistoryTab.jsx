@@ -1,6 +1,6 @@
 import { Swords, Trophy, Target, Clock } from "lucide-react";
 
-export default function HistoryTab({ }) {
+export default function HistoryTab({ matchHistory, ensureLoggedIn, handleWatchLive }) {
   return (
     <div className="w-full text-left space-y-4">
                     <div className="flex justify-between items-center mb-2">
