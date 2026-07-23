@@ -48,7 +48,7 @@ export default function PracticePage() {
 
   // Views: 'dashboard', 'practice-home', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
   const [activeView, setActiveView] = useState("practice-home");
-  const [activeTab, setActiveTab] = useState("problems"); // 'problems', 'description', 'resources', 'discussion'
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "problems"); // 'problems', 'description', 'resources', 'discussion'
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,6 +110,12 @@ export default function PracticePage() {
         setSelectedTopicWise(practiceData[0]?.title || "Arrays");
       }
     }
+  }, [searchParams]);
+
+  // Keep the active tab in the URL so browser Back/Forward can restore it.
+  useEffect(() => {
+    const tab = searchParams.get("tab") || "problems";
+    setActiveTab(tab);
   }, [searchParams]);
 
   const ensureLoggedIn = () => {
@@ -708,7 +714,19 @@ export default function PracticePage() {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+
+                      const params = new URLSearchParams(searchParams.toString());
+                      if (tab.id === "problems") {
+                        params.delete("tab");
+                      } else {
+                        params.set("tab", tab.id);
+                      }
+
+                      const query = params.toString();
+                      router.push(query ? `/practice?${query}` : "/practice");
+                    }}
                     className={`py-3.5 px-6 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === tab.id
                         ? "border-primary text-primary dark:text-purple-400"
                         : "border-transparent text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300"
