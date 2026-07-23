@@ -204,14 +204,30 @@ async function executeCode(code) {
 async function cleanup() {
   isShuttingDown = true;
   const shutdownError = new Error("Sandbox is shutting down");
+
+  // Reject all waiters
   waitQueue.splice(0).forEach(reject => {
     try { reject(shutdownError); } catch {}
   });
-  for (const isolate of pool) {
-    try { isolate.dispose(); } catch {}
-  }
-  pool.length = 0;
-  activeIsolateCount = 0;
+
+  // Wait for in-flight executions to finish before disposing isolates
+  const waitForDrain = () => new Promise(resolve => {
+    const check = () => {
+      if (activeIsolateCount <= pool.length) {
+        for (const isolate of pool) {
+          try { isolate.dispose(); } catch {}
+        }
+        pool.length = 0;
+        activeIsolateCount = 0;
+        resolve();
+      } else {
+        setTimeout(check, 50);
+      }
+    };
+    check();
+  });
+
+  await waitForDrain();
 }
 
 module.exports = { executeCode, cleanup };
