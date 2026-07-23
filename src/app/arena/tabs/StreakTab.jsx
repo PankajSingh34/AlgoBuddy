@@ -2,6 +2,7 @@ import { Flame, Check, HelpCircle, Trophy, Calendar, Share2, Shield } from "luci
 import ActivityHeatmap from "@/app/components/ui/ActivityHeatmap";
 
 export default function StreakTab({ profile, streakData }) {
+  const [hasFreeze, setHasFreeze] = React.useState(false);
   return (
     <div className="w-full text-left space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
                     {/* Hero Section */}
