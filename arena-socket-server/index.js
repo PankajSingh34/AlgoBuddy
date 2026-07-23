@@ -255,6 +255,14 @@ const ATOMIC_MATCH_UPDATE_SCRIPT = `
 
   elseif action == "disconnect" then
     match.status = "disconnected"
+    -- Award win to the remaining player
+    if match.players then
+      for _, p in ipairs(match.players) do
+        if p.userId ~= actorUserId then
+          match.winnerId = p.userId
+        end
+      end
+    end
     redis.call('SET', matchKey, cjson.encode(match), 'EX', 3600)
     -- Extract opponent info
     local opponentSocketId = ''
