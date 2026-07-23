@@ -225,20 +225,26 @@ RETURNS TABLE (current_streak INT, longest_streak INT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
+  v_existing_status TEXT;
   v_current INT;
   v_longest INT;
   v_last_active DATE;
   v_today DATE := CURRENT_DATE;
   v_yesterday DATE := CURRENT_DATE - 1;
 BEGIN
+  -- Get existing progress status
+  SELECT status INTO v_existing_status
+  FROM user_progress
+  WHERE user_id = p_user_id AND problem_id = p_problem_id;
+
   -- Upsert progress
   INSERT INTO user_progress (user_id, problem_id, status, updated_at)
   VALUES (p_user_id, p_problem_id, p_status, p_updated_at)
   ON CONFLICT (user_id, problem_id)
   DO UPDATE SET status = p_status, updated_at = p_updated_at;
 
-  -- Only update streak if completed
-  IF p_status = 'Completed' THEN
+  -- Only update streak if completed now AND was NOT completed before
+  IF p_status = 'Completed' AND COALESCE(v_existing_status, '') <> 'Completed' THEN
     SELECT current_streak, longest_streak, last_active_date::DATE
     INTO v_current, v_longest, v_last_active
     FROM user_practice_stats
@@ -253,7 +259,11 @@ BEGIN
       RETURN;
     END IF;
 
-    IF v_last_active = v_yesterday THEN
+    IF v_last_active > v_today THEN
+      -- Out of order update (do not modify streak)
+      RETURN QUERY SELECT v_current, v_longest;
+      RETURN;
+    ELSIF v_last_active = v_yesterday THEN
       v_current := v_current + 1;
       IF v_current > v_longest THEN
         v_longest := v_current;
@@ -264,6 +274,12 @@ BEGIN
 
     UPDATE user_practice_stats
     SET current_streak = v_current, longest_streak = v_longest, last_active_date = v_today
+    WHERE user_id = p_user_id;
+  ELSE
+    -- If it is already completed, or is not completed, we just get existing values
+    SELECT current_streak, longest_streak
+    INTO v_current, v_longest
+    FROM user_practice_stats
     WHERE user_id = p_user_id;
   END IF;
 
