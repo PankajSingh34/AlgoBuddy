@@ -203,9 +203,9 @@ async function executeCode(code) {
 // Clean up function for graceful shutdown
 async function cleanup() {
   isShuttingDown = true;
-  // Drain wait queue so waiting acquireIsolate calls throw
-  waitQueue.splice(0).forEach(resolve => {
-    try { resolve(); } catch {}
+  const shutdownError = new Error("Sandbox is shutting down");
+  waitQueue.splice(0).forEach(reject => {
+    try { reject(shutdownError); } catch {}
   });
   for (const isolate of pool) {
     try { isolate.dispose(); } catch {}

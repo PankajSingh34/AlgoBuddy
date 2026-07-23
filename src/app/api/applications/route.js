@@ -81,9 +81,11 @@ export async function GET(request) {
       return jsonResponse({ error: "Authentication required" }, 401);
     }
 
+    const MAX_LIMIT = 100;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 50;
+    const rawLimit = parseInt(searchParams.get("limit")) || 50;
+    const limit = Math.min(Math.max(rawLimit, 1), MAX_LIMIT);
     const skip = (page - 1) * limit;
 
     const cookieStore = await cookies();

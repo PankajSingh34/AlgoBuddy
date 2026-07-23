@@ -46,8 +46,8 @@ export default function PracticePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Views: 'dashboard', 'problem-list', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
-  const [activeView, setActiveView] = useState("problem-list");
+  // Views: 'dashboard', 'practice-home', 'topic-wise', 'company-wise', 'bookmarks', 'recent-solved'
+  const [activeView, setActiveView] = useState("practice-home");
   const [activeTab, setActiveTab] = useState("problems"); // 'problems', 'description', 'resources', 'discussion'
 
   // Search & Filter state
@@ -98,7 +98,8 @@ export default function PracticePage() {
 
   // Sync activeView and topic with the URL ?view= and ?topic= params so browser Back/Forward works
   useEffect(() => {
-    const view = searchParams.get("view") || "practice-home";
+    let view = searchParams.get("view") || "practice-home";
+    if (view === "problem-list") view = "practice-home";
     setActiveView(view);
 
     if (view === "topic-wise") {
@@ -495,7 +496,7 @@ export default function PracticePage() {
           bestStreak={longestStreak}
           mySheetCount={sheetCount}
           onBackToPractice={() => router.push("/")}
-          onBackToSessions={() => setActiveView("problem-list")}
+          onBackToSessions={() => setActiveView("practice-home")}
         />
 
         {/* Center Content */}
@@ -590,7 +591,7 @@ export default function PracticePage() {
                     Go to the Problem List and click the <strong>＋</strong> button on any problem to add it to your personal sheet.
                   </p>
                   <button
-                    onClick={() => setActiveView('problem-list')}
+                    onClick={() => setActiveView('practice-home')}
                     className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold transition hover:bg-primary-dark"
                   >
                     Browse Problems →
@@ -809,13 +810,14 @@ export default function PracticePage() {
                           <th className="py-4 px-5">Topic</th>
                           <th className="py-4 px-5 text-center">Level</th>
                           <th className="py-4 px-5 text-center">Company</th>
-                          <th className="py-4 px-5 text-center w-12"></th>
+                          <th className="py-4 px-5 text-center">Status</th>
+                          <th className="py-4 px-5 text-center w-12">Bookmark</th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedProblems.length === 0 ? (
                           <tr>
-                            <td colSpan="6" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
+                            <td colSpan="7" className="py-8 text-center text-xs font-bold text-slate-400 dark:text-neutral-600">
                               No matching problems found.
                             </td>
                           </tr>
@@ -829,7 +831,7 @@ export default function PracticePage() {
                               <tr
                                 key={prob.id}
                                 onClick={() => window.open(prob.practiceUrl, "_blank", "noopener,noreferrer")}
-                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0"
+                                className="border-b border-slate-50 dark:border-neutral-800/80 hover:bg-slate-50/20 dark:hover:bg-neutral-800/10 transition last:border-0 cursor-pointer"
                               >
                                 <td className="py-4 px-5 text-center font-bold text-xs text-slate-400">
                                   {indexNumber}
@@ -839,6 +841,7 @@ export default function PracticePage() {
                                     href={prob.practiceUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="font-bold text-xs text-slate-800 dark:text-white hover:text-primary dark:hover:text-purple-400 hover:underline inline-flex items-center gap-1 transition"
                                   >
                                     <span>{prob.name}</span>
@@ -864,6 +867,31 @@ export default function PracticePage() {
                                   </div>
                                 </td>
                                 <td className="py-4 px-5 text-center">
+                                  <div className="flex justify-center">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStatusToggle(prob.id, status);
+                                      }}
+                                      className="focus:outline-none focus-ring rounded-full p-1"
+                                      title={`Click to toggle status: currently ${status}`}
+                                      aria-label={`Status for ${prob.name}: ${status}`}
+                                    >
+                                      {status === "Completed" ? (
+                                        <div className="w-5 h-5 rounded-full border border-emerald-500 bg-emerald-500 flex items-center justify-center text-white scale-105 transition">
+                                          <CheckCircle2 size={12} className="stroke-[3]" />
+                                        </div>
+                                      ) : status === "In Progress" ? (
+                                        <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center scale-105 transition">
+                                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                        </div>
+                                      ) : (
+                                        <div className="w-5 h-5 rounded-full border-2 border-slate-200 dark:border-neutral-700 hover:border-primary transition" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-5 text-center">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -874,29 +902,9 @@ export default function PracticePage() {
                                         ? "text-primary bg-primary/10 dark:text-purple-400"
                                         : "text-slate-300 dark:text-neutral-700 hover:text-slate-500"
                                       }`}
+                                    title={isSaved ? "Remove Bookmark" : "Bookmark Problem"}
                                   >
                                     <Bookmark size={14} className={isSaved ? "fill-primary dark:fill-purple-400" : ""} />
-                                  </button>
-                                </td>
-                                <td className="py-4 px-5 text-center">
-                                  <button
-                                    onClick={() => {
-                                      if (!ensureLoggedIn()) return;
-                                      if (isInSheet(prob.id)) {
-                                        removeFromSheet(prob.id);
-                                        toast.success('Removed from My Sheet');
-                                      } else {
-                                        addToSheet(prob.id);
-                                        toast.success('Added to My Sheet! ✨');
-                                      }
-                                    }}
-                                    title={isInSheet(prob.id) ? 'Remove from My Sheet' : 'Add to My Sheet'}
-                                    className={`focus:outline-none p-1.5 rounded-lg transition ${isInSheet(prob.id)
-                                        ? 'text-purple-500 bg-purple-500/10 dark:text-purple-400'
-                                        : 'text-slate-300 dark:text-neutral-700 hover:text-purple-500 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20'
-                                      }`}
-                                  >
-                                    <ScrollText size={14} />
                                   </button>
                                 </td>
                               </tr>
@@ -1408,7 +1416,7 @@ export default function PracticePage() {
                     key={comp.name}
                     onClick={() => {
                       setSelectedCompanyFilter(comp.name);
-                      setActiveView("problem-list");
+                      setActiveView("practice-home");
                       setCurrentPage(1);
                       toast.success(`Filtering problems by: ${comp.name}`);
                     }}

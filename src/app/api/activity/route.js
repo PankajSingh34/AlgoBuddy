@@ -59,8 +59,10 @@ export async function GET(request) {
     if (!authResult.success) {
       return jsonResponse({ error: "Authentication required" }, authResult.type === "CONFIG_ERROR" ? 500 : 401);
     }
+    const MAX_DAYS = 365;
     const { searchParams } = new URL(request.url);
-    const days = parseInt(searchParams.get("days") || "30", 10);
+    const rawDays = parseInt(searchParams.get("days") || "30", 10);
+    const days = Number.isFinite(rawDays) ? Math.min(Math.max(rawDays, 1), MAX_DAYS) : 30;
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
@@ -71,7 +73,8 @@ export async function GET(request) {
       .select("activity_date, created_at")
       .eq("user_id", authResult.user.id)
       .gte("created_at", sinceStr)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
     if (error) {
       const errorCode = error?.code;

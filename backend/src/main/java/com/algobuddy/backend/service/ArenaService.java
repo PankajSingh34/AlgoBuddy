@@ -379,7 +379,17 @@ public class ArenaService {
         if (matchIdStr.startsWith("mock-match-")) {
             isWinner = request.isWinner();
         } else {
-            UUID verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+            UUID verifiedWinnerId = null;
+            for (int verifyAttempt = 1; verifyAttempt <= MAX_RETRIES; verifyAttempt++) {
+                try {
+                    verifiedWinnerId = verifyMatchResult(matchIdStr, requestingUserId);
+                    break;
+                } catch (SecurityException e) {
+                    if (verifyAttempt == MAX_RETRIES) throw e;
+                    log.warn("Verify failed, retrying {}/{}", verifyAttempt, MAX_RETRIES);
+                    try { Thread.sleep(1000L * verifyAttempt); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                }
+            }
             isWinner = requestingUserId.equals(verifiedWinnerId);
         }
         final boolean finalIsWinner = isWinner;
@@ -455,6 +465,7 @@ public class ArenaService {
                         opponentProfile.setRating(Math.max(0, opponentProfile.getRating() + opponentRatingChange));
                         opponentProfile.setXp(opponentProfile.getXp() + opponentXp);
                         opponentProfile.setLevel((opponentProfile.getXp() / 1000) + 1);
+                        opponentProfile.setTotalProblemsSolved(opponentProfile.getTotalProblemsSolved() + (!finalIsWinner ? 1 : 0));
                         if (!finalIsWinner) opponentProfile.setBattlesWon(opponentProfile.getBattlesWon() + 1);
                         else opponentProfile.setBattlesLost(opponentProfile.getBattlesLost() + 1);
                     }

@@ -255,6 +255,14 @@ const ATOMIC_MATCH_UPDATE_SCRIPT = `
 
   elseif action == "disconnect" then
     match.status = "disconnected"
+    -- Award win to the remaining player
+    if match.players then
+      for _, p in ipairs(match.players) do
+        if p.userId ~= actorUserId then
+          match.winnerId = p.userId
+        end
+      end
+    end
     redis.call('SET', matchKey, cjson.encode(match), 'EX', 3600)
     -- Extract opponent info
     local opponentSocketId = ''
@@ -281,7 +289,9 @@ const io = new Server(server, {
 });
 
 io.use((socket, next) => {
-  const ip = socket.handshake.address;
+  const headers = socket.handshake.headers || {};
+  const realIp = headers["x-real-ip"];
+  const ip = (realIp && typeof realIp === "string") ? realIp.trim() : socket.handshake.address;
   if (isConnectionRateLimited(ip)) {
     return next(new Error("Rate limited"));
   }
@@ -447,6 +457,7 @@ io.on("connection", async (socket) => {
   } else {
     // Store verified userId from the JWT payload
     socket.data.userId = authPayload.sub || authPayload.id;
+    socket.data.token = token;
     console.log(`Authenticated user connected: ${socket.id}, userId: ${socket.data.userId}`);
   }
 
@@ -699,6 +710,12 @@ io.on("connection", async (socket) => {
       const matchId = await redisClient.hget(`{arena}:socket:${socket.id}`, "matchId");
       if (!matchId || matchId !== data.matchId) return;
 
+      await redisClient.hset(
+        `{arena}:match:${matchId}:testResults`,
+        socket.data.userId,
+        JSON.stringify({ passed: data.passed, total: data.total, status: data.status, failedAttempts: data.failedAttempts, timestamp: Date.now() })
+      );
+
       socket.to(data.matchId).emit("opponent_test_result", {
         userId: socket.data.userId,
         passed: data.passed,
@@ -760,6 +777,72 @@ io.on("connection", async (socket) => {
       if (!matchId || matchId !== data.matchId) return;
 
       try {
+        const testResultsStr = await redisClient.hget(
+          `{arena}:match:${matchId}:testResults`,
+          socket.data.userId
+        );
+
+        if (!testResultsStr) {
+          return socket.emit("error", { message: "Cannot complete match: no test results recorded" });
+        }
+
+        const testResults = JSON.parse(testResultsStr);
+        if (!testResults.passed || testResults.passed < 1) {
+          return socket.emit("error", { message: "Cannot complete match: insufficient test results" });
+        }
+
+        // Server-side verification to prevent client spoofing
+        const initialMatchStr = await redisClient.get(`{arena}:match:${matchId}`);
+        if (!initialMatchStr) {
+          return socket.emit("error", { message: "Cannot complete match: match not found" });
+        }
+        const match = JSON.parse(initialMatchStr);
+        const topic = match.topic || "Arrays";
+
+        let verificationCode = data.code || "";
+        const lang = (data.language || "javascript").toLowerCase();
+
+        if (lang === "javascript" || lang === "js") {
+          if (topic === "Arrays") {
+            verificationCode += `\n;
+if (typeof twoSum !== 'function' || JSON.stringify(twoSum([2,7,11,15], 9)) !== '[0,1]' || JSON.stringify(twoSum([3,2,4], 6)) !== '[1,2]') {
+  throw new Error("Validation test cases failed!");
+}`;
+          } else if (topic === "Strings") {
+            verificationCode += `\n;
+if (typeof isAnagram !== 'function' || isAnagram("anagram", "nagaram") !== true || isAnagram("rat", "car") !== false) {
+  throw new Error("Validation test cases failed!");
+}`;
+          }
+        }
+
+        if (lang === "javascript" || lang === "js") {
+          const origin = socket.handshake.headers.origin || "http://localhost:3000";
+          try {
+            const res = await fetch(`${origin}/api/code-lab`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${socket.data.token}`
+              },
+              body: JSON.stringify({ code: verificationCode })
+            });
+
+            if (!res.ok) {
+              return socket.emit("error", { message: "Server-side code verification failed" });
+            }
+
+            const resData = await res.json();
+            const isSuccess = resData.status === 3 || resData.status === "SUCCESS";
+            if (!isSuccess) {
+              return socket.emit("error", { message: "Your code failed verification test cases!" });
+            }
+          } catch (verErr) {
+            console.error("[match_complete] Code verification request failed:", verErr);
+            return socket.emit("error", { message: "Verification service unavailable" });
+          }
+        }
+
         const resultStr = await redisClient.eval(
           ATOMIC_MATCH_UPDATE_SCRIPT,
           1,
@@ -783,6 +866,7 @@ io.on("connection", async (socket) => {
           }
         }
         await redisClient.expire(`{arena}:match:${matchId}`, 60 * 60);
+        await redisClient.del(`{arena}:match:${matchId}:testResults`);
       } catch (err) {
         console.error(`[match_complete] Error for user ${socket.data.userId}:`, err);
       }
@@ -910,7 +994,9 @@ app.get("/debug", async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const headers = req.headers || {};
+    const realIp = headers["x-real-ip"];
+    const clientIp = (realIp && typeof realIp === "string") ? realIp.trim() : (req.ip || req.connection.remoteAddress);
     if (isDebugRateLimited(clientIp)) {
       return res.status(429).json({ error: "Too many requests" });
     }

@@ -1,9 +1,10 @@
 'use client';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { FaCopy, FaCheck, FaCode } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import hljs from 'highlight.js';
 import sanitizeHtml from 'sanitize-html';
+import { toast } from 'react-hot-toast';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'highlight.js/styles/github.css';
 import 'highlight.js/styles/github-dark.css';
@@ -213,6 +214,13 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
   const [copied, setCopied] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const topRef = useRef(null);
+  const copyTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+    }
+  }, []);
 
   const resolvedCode = useMemo(() => {
     if (selectedLanguage === 'pseudocode') {
@@ -255,11 +263,17 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
 
   const copyToClipboard = async (text) => {
     try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API is not available');
+      }
+
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success('Code copied!');
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);
+      toast.error('Could not copy code.');
     }
   };
 
@@ -323,9 +337,11 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
             </span>
 
             <motion.button
+              type="button"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => copyToClipboard(resolvedCode)}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d2d2f]"
               aria-label="Copy code"
               style={{
                 display: 'flex',
@@ -508,10 +524,11 @@ const CodeBlock = ({ variant = 'standard', title, codeExamples, fileNames }) => 
           </div>
 
           <motion.button
+            type="button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => copyToClipboard(resolvedCode)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-gray-800 dark:text-gray-100 text-sm font-medium"
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-gray-800 dark:text-gray-100 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-neutral-950"
             aria-label="Copy code"
           >
             <AnimatePresence mode="wait">

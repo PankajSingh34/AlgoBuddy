@@ -2103,9 +2103,27 @@ export const algorithmRegistry = {
     ],
     robots: "index, follow",
   },
-
   component: dynamic(() =>
     import("@/app/visualizer/string/longest-substring/page")
+  ),
+},
+"string/minimum-window-substring": {
+  metadata: {
+    title: "Minimum Window Substring | AlgoBuddy",
+    description:
+      "Visualize the Minimum Window Substring algorithm using the Sliding Window technique.",
+    keywords: [
+      "Minimum Window Substring",
+      "Sliding Window",
+      "HashMap",
+      "String Algorithms",
+      "AlgoBuddy",
+    ],
+    robots: "index, follow",
+  },
+
+  component: dynamic(() =>
+    import("@/app/visualizer/string/minimum-window-substring/page")
   ),
 },
 };
