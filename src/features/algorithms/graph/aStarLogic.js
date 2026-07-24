@@ -2,7 +2,7 @@
  * Pure generator logic for A* Search Algorithm
  */
 
-export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
+export function* aStarGenerator(nodeList, edgeList, startNode, goalNode, heuristicType = "euclidean") {
   if (!startNode || !goalNode || startNode === goalNode) return;
 
   // Build position map and weighted adjacency list (directed)
@@ -20,7 +20,11 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
     const pa = pos[a];
     const pb = pos[b];
     if (!pa || !pb) return 0;
-    return Math.sqrt(Math.pow(pa.x - pb.x, 2) + Math.pow(pa.y - pb.y, 2));
+    const dx = Math.abs(pa.x - pb.x);
+    const dy = Math.abs(pa.y - pb.y);
+    if (heuristicType === "manhattan") return dx + dy;
+    if (heuristicType === "chebyshev") return Math.max(dx, dy);
+    return Math.sqrt(dx * dx + dy * dy);
   };
 
   const gScore = {};
