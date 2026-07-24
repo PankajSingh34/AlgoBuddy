@@ -177,6 +177,8 @@ const MergeSortVisualizer = () => {
     speed: engine.speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.sorted || false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const isInCurrentRange = (index) => index >= visualState.currentIndices.left && index <= visualState.currentIndices.right;

@@ -153,6 +153,8 @@ export default function HeapSortVisualizer() {
     speed: engine.speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.isSorted || false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const handleExplainStep = () => {

@@ -114,6 +114,8 @@ const Animation = () => {
     speed: engine.speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.done || false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const maxVal = dataArray.length > 0 ? Math.max(...dataArray, 1) : 1; 

@@ -362,6 +362,8 @@ export default function TreeTraversalVisualizer({ initialMode = 'in-order' }) {
     sorting: engine.isPlaying,
     sorted: false,
     enabled: true,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const handleResetTree = () => {

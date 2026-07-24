@@ -70,6 +70,8 @@ const NQueensAnimation = () => {
     onReset: handleReset,
     speed: engine.speed / 1000,
     onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const activeFrameData = frames.length > 0 && engine.currentStep >= 0
