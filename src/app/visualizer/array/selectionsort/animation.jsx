@@ -153,7 +153,9 @@ const SelectionSortVisualizer = () => {
       speed: engine.speed / 1000,
       sorting: engine.isPlaying,
       sorted: sorted,
-    });
+      onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
+  });
   
     const handleExplainStep = () => {
       const prompt = `I am currently looking at the Selection Sort algorithm, at step ${engine.currentStep} of ${visualState.totalSteps}.

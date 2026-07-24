@@ -178,6 +178,8 @@ const ShellSortVisualizer = () => {
     speed: engine.speed / 500,
     sorting: engine.isPlaying,
     sorted: currentStepData?.sorted || false,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   const handleExplainStep = () => {

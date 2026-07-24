@@ -116,6 +116,8 @@ const InfixToPrefixVisualizer = () => {
     sorting: engine.isPlaying,
     sorted: engine.currentStep === steps.length - 1 && steps.length > 0,
     enabled: true,
+    onStepForward: engine.stepForward,
+    onStepBackward: engine.stepBackward,
   });
 
   /* ----------  render  ---------- */

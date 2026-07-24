@@ -24,6 +24,7 @@ import { useCallback, useEffect } from "react";
  * @param {Function} opts.onSpeedChange     — called with the next speed value (number)
  * @param {Function} [opts.onTogglePlayPause] — called to toggle play/pause while running
  * @param {Function} [opts.onStepForward]   — called to advance one step (when paused)
+ * @param {Function} [opts.onStepBackward]  — called to go back one step (when paused)
  * @param {Function} [opts.onNextStep]      — called to go to the next step
  * @param {Function} [opts.onPrevStep]      — called to go to the previous step
  * @param {number}   opts.speed             — current speed value (0.5 – 5, step 0.5)
@@ -40,6 +41,7 @@ export default function useVisualizerKeyboard({
   onSpeedChange,
   onTogglePlayPause,
   onStepForward,
+  onStepBackward,
   onNextStep,
   onPrevStep,
   speed,
@@ -73,6 +75,13 @@ export default function useVisualizerKeyboard({
           if (onStepForward && !sorted) {
             e.preventDefault();
             onStepForward();
+          }
+          break;
+
+        case "ArrowLeft":
+          if (onStepBackward && !sorted) {
+            e.preventDefault();
+            onStepBackward();
           }
           break;
 
@@ -111,7 +120,7 @@ export default function useVisualizerKeyboard({
       }
     },
     // exhaustive-deps: all props consumed inside the handler are listed here
-    [onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, onNextStep, onPrevStep, speed, sorting, sorted]
+    [onStart, onReset, onSpeedChange, onTogglePlayPause, onStepForward, onStepBackward, onNextStep, onPrevStep, speed, sorting, sorted]
   );
 
   useEffect(() => {
