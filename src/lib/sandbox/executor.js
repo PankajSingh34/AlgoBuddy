@@ -194,7 +194,12 @@ async function executeCode(code) {
     // Dispose corrupted isolates; return healthy ones to pool
     if (isolate) {
       if (isolateCorrupted) {
-        disposeIsolate(isolate);
+        try {
+          isolate.dispose();
+        } catch {
+          // Already disposed — don't double-dispose
+        }
+        activeIsolateCount--;
         releaseIsolate(createIsolate());
       } else {
         releaseIsolate(isolate);
