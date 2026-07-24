@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle, RefreshCw, Check } from "lucide-react";
+import { useState, useRef } from "react";
+import { AlertCircle, RefreshCw, Check, Download, Upload } from "lucide-react";
 
 const INPUT_PARSERS = {
   array: {
@@ -56,8 +56,44 @@ export function CustomInputPanel({ inputType, onApply, currentData }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef(null);
 
   const parser = INPUT_PARSERS[inputType] || INPUT_PARSERS.array;
+
+  function handleExportJSON() {
+    if (!currentData || !currentData.nodes || !currentData.edges) {
+      setError("No valid graph data to export");
+      return;
+    }
+    const dataStr = JSON.stringify(currentData, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "algobuddy-graph.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (!parsed.nodes || !parsed.edges) throw new Error("Invalid graph JSON format");
+        setError("");
+        onApply(parsed);
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+      } catch (err) {
+        setError("Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // reset
+  }
 
   function handleApply() {
     try {
@@ -134,6 +170,30 @@ export function CustomInputPanel({ inputType, onApply, currentData }) {
             <RefreshCw size={14} /> Reset
           </button>
         </div>
+
+        {inputType === "graph" && (
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-neutral-800">
+            <button
+              onClick={handleExportJSON}
+              className="flex-1 flex items-center justify-center gap-2 h-10 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md active:scale-98"
+            >
+              <Download size={16} /> Export JSON
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 flex items-center justify-center gap-2 h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md active:scale-98"
+            >
+              <Upload size={16} /> Import JSON
+            </button>
+            <input 
+              type="file" 
+              accept=".json"
+              ref={fileInputRef}
+              onChange={handleImportJSON}
+              className="hidden" 
+            />
+          </div>
+        )}
       </div>
     </div>
   );
