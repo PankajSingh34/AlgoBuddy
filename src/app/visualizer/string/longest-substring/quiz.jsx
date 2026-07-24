@@ -1,195 +1,166 @@
 "use client";
 
-import { useState } from "react";
+import QuizEngine from "@/app/components/ui/QuizEngine";
 
 const questions = [
   {
-    question:
-      "What technique is primarily used to solve the Longest Substring Without Repeating Characters problem efficiently?",
+    question: "Which algorithmic technique is used to solve the Longest Substring Without Repeating Characters problem efficiently?",
     options: [
-      "Dynamic Programming",
       "Sliding Window",
+      "Dynamic Programming",
       "Binary Search",
       "Greedy",
     ],
     answer: "Sliding Window",
     explanation:
-      "The Sliding Window technique expands and shrinks the window to maintain unique characters in O(n) time.",
+      "The Sliding Window technique maintains a window of unique characters while scanning the string.",
   },
   {
-    question:
-      "What is the time complexity of the optimal Sliding Window solution?",
-    options: ["O(n²)", "O(log n)", "O(n)", "O(n log n)"],
+    question: "What is the optimal time complexity of the Sliding Window solution?",
+    options: ["O(n)", "O(n²)", "O(log n)", "O(n log n)"],
     answer: "O(n)",
     explanation:
-      "Each character is visited at most twice (once by left pointer and once by right pointer).",
+      "Each character is visited at most twice by the left and right pointers.",
   },
   {
-    question:
-      "Which data structure is commonly used to store previously seen characters?",
-    options: ["Queue", "HashMap", "Linked List", "Stack"],
-    answer: "HashMap",
+    question: "Which data structure is commonly used to store the last occurrence of characters?",
+    options: ["Hash Map", "Queue", "Stack", "Linked List"],
+    answer: "Hash Map",
     explanation:
-      "A HashMap stores the last occurrence index of every character.",
+      "A Hash Map provides O(1) average lookup time for character indices.",
   },
   {
-    question:
-      "If a duplicate character is encountered, what should happen?",
+    question: "What happens when a duplicate character is encountered?",
     options: [
-      "Ignore it",
-      "Restart from beginning",
       "Move the left pointer after the previous occurrence",
-      "Delete the string",
+      "Restart the algorithm",
+      "Ignore the duplicate",
+      "Sort the string",
     ],
     answer: "Move the left pointer after the previous occurrence",
     explanation:
-      "The left pointer jumps to maintain a substring with unique characters.",
+      "The left pointer is updated to keep all characters in the window unique.",
   },
   {
-    question:
-      "For the input 'abcabcbb', what is the longest substring length?",
-    options: ["2", "3", "4", "5"],
-    answer: "3",
-    explanation:
-      "The longest unique substrings are 'abc', 'bca', and 'cab', each of length 3.",
-  },
-  {
-    question:
-      "For the input 'bbbbb', what is the answer?",
-    options: ["0", "1", "2", "5"],
-    answer: "1",
-    explanation:
-      "Every substring contains only one unique character.",
-  },
-  {
-    question:
-      "For the input 'pwwkew', what is the longest substring length?",
-    options: ["2", "3", "4", "5"],
-    answer: "3",
-    explanation:
-      "The longest substring without repeating characters is 'wke'.",
-  },
-  {
-    question:
-      "Which pointer is responsible for expanding the current window?",
+    question: "Which pointer expands the current window?",
     options: [
+      "Right Pointer",
       "Left Pointer",
       "Middle Pointer",
-      "Right Pointer",
-      "Hash Pointer",
+      "None",
     ],
     answer: "Right Pointer",
     explanation:
-      "The right pointer keeps expanding the window by including new characters.",
+      "The right pointer keeps moving forward to include new characters.",
   },
   {
-    question:
-      "Why is a HashMap preferred over a nested loop approach?",
+    question: "Which pointer shrinks the current window?",
     options: [
-      "Consumes less memory",
-      "Provides O(1) average lookup time",
-      "Uses recursion",
-      "Sorts characters automatically",
+      "Left Pointer",
+      "Right Pointer",
+      "Middle Pointer",
+      "Last Pointer",
     ],
-    answer: "Provides O(1) average lookup time",
+    answer: "Left Pointer",
     explanation:
-      "HashMap enables constant-time lookup of previously seen characters.",
+      "The left pointer removes characters from the beginning of the window.",
   },
   {
-    question:
-      "What is the space complexity of the optimal solution?",
-    options: ["O(1)", "O(log n)", "O(min(n, charset))", "O(n²)"],
+    question: "For the input 'abcabcbb', what is the answer?",
+    options: ["3", "2", "4", "5"],
+    answer: "3",
+    explanation:
+      "The longest substring without repeating characters is 'abc'.",
+  },
+  {
+    question: "For the input 'bbbbb', what is the answer?",
+    options: ["1", "2", "5", "0"],
+    answer: "1",
+    explanation:
+      "Only one unique character can exist in the substring.",
+  },
+  {
+    question: "For the input 'pwwkew', what is the answer?",
+    options: ["3", "2", "4", "5"],
+    answer: "3",
+    explanation:
+      "The longest substring is 'wke'.",
+  },
+  {
+    question: "What is the space complexity of the optimal solution?",
+    options: ["O(min(n, charset))", "O(n²)", "O(log n)", "O(1)"],
     answer: "O(min(n, charset))",
     explanation:
-      "The HashMap stores at most one entry for each unique character.",
+      "The Hash Map stores only unique characters currently tracked.",
+  },
+  {
+    question: "Why is a Hash Map preferred?",
+    options: [
+      "Provides O(1) average lookup",
+      "Consumes zero memory",
+      "Automatically sorts characters",
+      "Uses recursion",
+    ],
+    answer: "Provides O(1) average lookup",
+    explanation:
+      "Fast lookup allows efficient Sliding Window implementation.",
+  },
+  {
+    question: "If the current character has never appeared before, what should happen?",
+    options: [
+      "Expand the window",
+      "Shrink the window",
+      "Restart",
+      "Remove previous characters",
+    ],
+    answer: "Expand the window",
+    explanation:
+      "The window continues growing while characters remain unique.",
+  },
+  {
+    question: "Which topic does this problem commonly belong to in coding interviews?",
+    options: [
+      "Sliding Window",
+      "Graphs",
+      "Trees",
+      "Dynamic Programming",
+    ],
+    answer: "Sliding Window",
+    explanation:
+      "It is one of the most common Sliding Window interview questions.",
+  },
+  {
+    question: "What is the main goal of the algorithm?",
+    options: [
+      "Find the longest substring without repeating characters",
+      "Sort the string",
+      "Reverse the string",
+      "Count vowels",
+    ],
+    answer: "Find the longest substring without repeating characters",
+    explanation:
+      "The objective is to maximize the length while maintaining unique characters.",
+  },
+  {
+    question: "What does the algorithm update whenever a longer valid substring is found?",
+    options: [
+      "Maximum length",
+      "Minimum length",
+      "Hash Map size",
+      "String order",
+    ],
+    answer: "Maximum length",
+    explanation:
+      "The maximum length variable stores the best answer found so far.",
   },
 ];
 
-export default function Quiz() {
-  const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState("");
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [score, setScore] = useState(0);
-
-  const question = questions[current];
-
-  const handleNext = () => {
-    if (selected === question.answer) {
-      setScore((prev) => prev + 1);
-    }
-
-    setSelected("");
-    setShowAnswer(false);
-
-    if (current < questions.length - 1) {
-      setCurrent(current + 1);
-    } else {
-      alert(`Quiz Completed!\nYour Score: ${score + (selected === question.answer ? 1 : 0)}/${questions.length}`);
-    }
-  };
-
+export default function LongestSubstringQuiz() {
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-8">
-      <h2 className="text-2xl font-bold mb-6">
-        Longest Substring Quiz
-      </h2>
-
-      <h3 className="font-semibold mb-4">
-        Q{current + 1}. {question.question}
-      </h3>
-
-      <div className="space-y-3">
-        {question.options.map((option) => (
-          <button
-            key={option}
-            onClick={() => setSelected(option)}
-            disabled={showAnswer}
-            className={`w-full text-left border rounded-lg px-4 py-3 transition
-            ${
-              selected === option
-                ? "bg-indigo-100 border-indigo-500"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-
-      {!showAnswer ? (
-        <button
-          disabled={!selected}
-          onClick={() => setShowAnswer(true)}
-          className="mt-6 bg-indigo-600 text-white px-5 py-2 rounded-lg"
-        >
-          Check Answer
-        </button>
-      ) : (
-        <>
-          <div
-            className={`mt-6 p-4 rounded-lg ${
-              selected === question.answer
-                ? "bg-green-100"
-                : "bg-red-100"
-            }`}
-          >
-            <p>
-              <strong>Correct Answer:</strong> {question.answer}
-            </p>
-
-            <p className="mt-2">{question.explanation}</p>
-          </div>
-
-          <button
-            onClick={handleNext}
-            className="mt-6 bg-green-600 text-white px-5 py-2 rounded-lg"
-          >
-            {current === questions.length - 1
-              ? "Finish Quiz"
-              : "Next Question"}
-          </button>
-        </>
-      )}
-    </div>
+    <QuizEngine
+      title="Longest Substring Without Repeating Characters Quiz"
+      subtitle="Test your understanding of the Sliding Window technique used to solve the Longest Substring Without Repeating Characters problem."
+      questions={questions}
+    />
   );
 }
