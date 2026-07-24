@@ -72,4 +72,19 @@ export function* bfsGenerator(adj, startNode) {
       line: 4,
     };
   }
+
+  const allNodesCount = Object.keys(adj).length;
+  const isDisconnected = visited.size < allNodesCount;
+
+  yield {
+    visitedNodes: new Set(visited),
+    visitingNodes: new Set(),
+    activeEdge: null,
+    queue: [],
+    currentNode: null,
+    description: isDisconnected 
+      ? `Queue exhausted. Graph is disconnected (${allNodesCount - visited.size} nodes unreachable).`
+      : `BFS traversal complete. All reachable nodes visited.`,
+    line: 12,
+  };
 }
