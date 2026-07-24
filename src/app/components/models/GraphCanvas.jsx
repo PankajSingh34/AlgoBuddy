@@ -216,6 +216,16 @@ const handleMouseUp = useCallback(() => {
     [interactive, isDirected, onRemoveEdge, onReverseEdge]
   );
 
+  const handleEdgeWheel = useCallback(
+    (e, edgeIdx, currentWeight) => {
+      if (!interactive || !isWeighted || !onUpdateEdgeWeight) return;
+      e.stopPropagation();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      onUpdateEdgeWeight(edgeIdx, (currentWeight ?? 1) + delta);
+    },
+    [interactive, isWeighted, onUpdateEdgeWeight]
+  );
+
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
 
   const formatMetric = (value) => {
@@ -331,7 +341,7 @@ const handleMouseUp = useCallback(() => {
           : { x: tgt.x, y: tgt.y };
 
         return (
-          <g key={idx}>
+          <g key={idx} onWheel={(e) => handleEdgeWheel(e, idx, edge.weight)}>
             <line
               x1={src.x}
               y1={src.y}
@@ -340,7 +350,7 @@ const handleMouseUp = useCallback(() => {
               className={edgeClass}
               strokeWidth={isActive ? 2 : 1.5}
               markerEnd={markerEnd}
-              style={{ cursor: interactive ? "pointer" : "default" }}
+              style={{ cursor: interactive ? (isWeighted ? "ns-resize" : "pointer") : "default" }}
               onContextMenu={(e) => handleEdgeRightClick(e, idx)}
             />
             {isWeighted && (
