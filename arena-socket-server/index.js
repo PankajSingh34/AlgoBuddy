@@ -801,9 +801,14 @@ io.on("connection", async (socket) => {
         }
         const match = JSON.parse(initialMatchStr);
         const topic = match.topic || "Arrays";
+        const VERIFIED_TOPICS = new Set(["Arrays", "Strings"]);
 
         let verificationCode = data.code || "";
         const lang = (data.language || "javascript").toLowerCase();
+
+        if (!VERIFIED_TOPICS.has(topic)) {
+          return socket.emit("error", { message: `Match topic "${topic}" does not support server-side verification yet.` });
+        }
 
         if (lang === "javascript" || lang === "js") {
           if (topic === "Arrays") {
