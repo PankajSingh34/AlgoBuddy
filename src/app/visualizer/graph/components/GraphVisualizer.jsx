@@ -10,7 +10,8 @@ import {
   Code2,
   Download,
   AlertTriangle,
-  Palette
+  Palette,
+  Grid
 } from "lucide-react";
 import { 
   BarChart, 
@@ -435,6 +436,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   }, [isEditing, undo, redo, canUndo, canRedo]);
 
   const [targetNode, setTargetNode] = useState("");
+  const [astarHeuristic, setAstarHeuristic] = useState("euclidean");
+  const [snapToGrid, setSnapToGrid] = useState(false);
   const canvasContainerRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -583,6 +586,13 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const nodeLabelById = Object.fromEntries(nodes.map((node) => [node.id, node.label || node.id]));
 
   const addNode = ({ x, y }) => {
+    let finalX = x;
+    let finalY = y;
+    if (snapToGrid) {
+      finalX = Math.round(x / 40) * 40;
+      finalY = Math.round(y / 40) * 40;
+    }
+    
     const usedIds = new Set(nodes.map((node) => node.id));
     let nextId = `${nodes.length}`;
     let counter = nodes.length;
@@ -595,8 +605,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       ...current,
       {
         id: nextId,
-        x,
-        y,
+        x: finalX,
+        y: finalY,
         label: String.fromCharCode(65 + (counter % 26)),
       },
     ]);
@@ -604,10 +614,17 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   };
 
   const moveNode = (id, x, y) => {
+    let finalX = x;
+    let finalY = y;
+    if (snapToGrid) {
+      finalX = Math.round(x / 40) * 40;
+      finalY = Math.round(y / 40) * 40;
+    }
+
     setNodes((current) =>
       current.map((node) =>
         node.id === id
-          ? { ...node, x, y }
+          ? { ...node, x: finalX, y: finalY }
           : node
       )
     );
@@ -710,6 +727,17 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
             {isEditing && (
               <>
+                <button
+                  onClick={() => setSnapToGrid(!snapToGrid)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    snapToGrid
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300"
+                  }`}
+                >
+                  <Grid className="h-4 w-4" />
+                  Snap to Grid
+                </button>
                 <button
                   onClick={clearGraph}
                   className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
@@ -875,6 +903,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               isDirected={isDirected}
               visitedSet={currentFrameData.visitedNodes}
               currentNode={currentFrameData.currentNode}
+              snapToGrid={snapToGrid}
               className="w-full h-full flex-1"
             />
           </div>

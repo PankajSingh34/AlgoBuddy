@@ -99,6 +99,7 @@ export default function GraphCanvas({
   onRemoveEdge,
   onReverseEdge,
   onUpdateEdgeWeight, // NEW prop — (edgeIdx, newWeight) => void
+  snapToGrid = false, // Snap-to-grid toggle
 }) {
   const svgRef = useRef(null);
   const [edgeStart, setEdgeStart] = useState(null);
@@ -273,6 +274,9 @@ const handleMouseUp = useCallback(() => {
           onTouchCancel={handleMouseUp}
         >
       <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" className="stroke-surface-200 dark:stroke-surface-800" strokeWidth="1" />
+        </pattern>
         <marker
           id="arrowhead"
           viewBox="0 0 10 10"
@@ -310,6 +314,8 @@ const handleMouseUp = useCallback(() => {
           />
         </marker>
       </defs>
+
+      {snapToGrid && <rect width="100%" height="100%" fill="url(#grid)" className="pointer-events-none" />}
 
       {edges.map((edge, idx) => {
         const src = nodeMap[edge.from];
