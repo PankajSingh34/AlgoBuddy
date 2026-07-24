@@ -1,8 +1,8 @@
 import Animation from "./animation";
-import ExploreOther from "@/app/components/ui/exploreOther";
 import Code from "./codeBlock";
 import Content from "./content";
 
+import ExploreOther from "@/app/components/ui/exploreOther";
 import VisualizerPageLayout, {
   createVisualizerPaths,
 } from "@/app/visualizer/components/VisualizerPageLayout";
@@ -12,19 +12,19 @@ export default function Page() {
     <VisualizerPageLayout
       paths={createVisualizerPaths(
         "String",
-        "Longest Substring Without Repeating Characters"
+        "Minimum Window Substring"
       )}
-      title="Longest Substring Without Repeating Characters"
+      title="Minimum Window Substring"
       animation={<Animation />}
       content={<Content />}
       code={<Code />}
       exploreOther={
         <ExploreOther
-          title="Explore other string algorithms"
+          title="Explore other Sliding Window algorithms"
           links={[
             {
-              text: "Minimum Window Substring",
-              url: "../minimum-window-substring",
+              text: "Longest Substring Without Repeating Characters",
+              url: "../longest-substring",
             },
           ]}
         />

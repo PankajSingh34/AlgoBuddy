@@ -29,15 +29,27 @@ export async function GET(request) {
     const cookieStore = await cookies();
     const supabase = getSupabaseServerClient(cookieStore);
 
-    const { data: applications, error } = await supabase
-      .from("applications")
-      .select("*, job:job_id(title, company, location, salary_range, job_type)")
-      .eq("student_id", authResult.user.id)
-      .order("applied_at", { ascending: false });
+    const BATCH_SIZE = 100;
+    let offset = 0;
+    let allApplications = [];
+    let hasMore = true;
 
-    if (error) {
-      console.error("[/api/applications/export GET] Supabase error:", error.message);
-      return new Response("Export failed", { status: 500 });
+    while (hasMore) {
+      const { data: batch, error: batchError } = await supabase
+        .from("applications")
+        .select("*, job:job_id(title, company, location, salary_range, job_type)")
+        .eq("student_id", authResult.user.id)
+        .order("applied_at", { ascending: false })
+        .range(offset, offset + BATCH_SIZE - 1);
+
+      if (batchError) {
+        console.error("[/api/applications/export GET] Supabase error:", batchError.message);
+        return new Response("Export failed", { status: 500 });
+      }
+
+      allApplications = allApplications.concat(batch || []);
+      offset += BATCH_SIZE;
+      hasMore = batch && batch.length === BATCH_SIZE;
     }
 
     const columns = [
@@ -55,7 +67,7 @@ export async function GET(request) {
       { key: "student_skills", label: "Skills" },
     ];
 
-    const rows = (applications || []).map((a) => ({
+    const rows = allApplications.map((a) => ({
       job_title: a.job?.title || "",
       company: a.job?.company || "",
       location: a.job?.location || "",

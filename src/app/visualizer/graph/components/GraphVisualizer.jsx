@@ -9,7 +9,8 @@ import {
   Wand2,
   Code2,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  Palette
 } from "lucide-react";
 import { 
   BarChart, 
@@ -25,7 +26,7 @@ import GraphCanvas from "@/app/components/models/GraphCanvas";
 import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
-import useGraphHistory from "@/app/hooks/useGraphHistory";
+import ThemeSettingsModal from "@/app/visualizer/components/ThemeSettingsModal";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 import { bfsGenerator } from "@/features/algorithms/graph/bfsLogic";
@@ -40,10 +41,8 @@ import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
 import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
 import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
 import { fordFulkersonGenerator } from "@/features/algorithms/graph/fordFulkersonLogic";
-import { 
-  adjacencyListFrames,
-  adjacencyMatrixFrames
-} from "../utils/algorithms";
+import { adjacencyListGenerator } from "@/features/algorithms/graph/adjacencyListLogic";
+import { adjacencyMatrixGenerator } from "@/features/algorithms/graph/adjacencyMatrixLogic";
 import { ALGORITHM_PSEUDOCODE } from "../constants/pseudocode";
 
 const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star", "ford-fulkerson"]);
@@ -85,28 +84,6 @@ const defaultGraphs = {
     ]
   },
   dijkstra: {
-    nodes: [
-      { id: "0", x: 100, y: 250, label: "A" },
-      { id: "1", x: 300, y: 100, label: "B" },
-      { id: "2", x: 300, y: 400, label: "C" },
-      { id: "3", x: 500, y: 100, label: "D" },
-      { id: "4", x: 500, y: 400, label: "E" },
-      { id: "5", x: 700, y: 250, label: "F" },
-    ],
-    edges: [
-      { from: "0", to: "1", weight: 4, directed: true },
-      { from: "0", to: "2", weight: 2, directed: true },
-      { from: "1", to: "3", weight: 5, directed: true },
-      { from: "1", to: "2", weight: 1, directed: true },
-      { from: "2", to: "1", weight: 8, directed: true },
-      { from: "2", to: "3", weight: 10, directed: true },
-      { from: "2", to: "4", weight: 3, directed: true },
-      { from: "3", to: "5", weight: 2, directed: true },
-      { from: "4", to: "3", weight: 4, directed: true },
-      { from: "4", to: "5", weight: 6, directed: true },
-    ]
-  },
-  "a-star": {
     nodes: [
       { id: "0", x: 100, y: 250, label: "A" },
       { id: "1", x: 300, y: 100, label: "B" },
@@ -416,9 +393,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       } else {
         resetGraph(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
       }
-    } catch (e) {
-      console.error("Failed to parse custom graph from localStorage", e);
-      resetGraph(defaultGraphs[algorithm]?.nodes || [], defaultGraphs[algorithm]?.edges || []);
+    } catch (err) {
+      console.error("Failed to load custom graph:", err);
     }
     setIsLoaded(true);
   }, [algorithm]);
@@ -429,6 +405,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       localStorage.setItem(`algobuddy_custom_edges_${algorithm}`, JSON.stringify(edges));
     }
   }, [nodes, edges, algorithm, isLoaded]);
+
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -497,16 +475,12 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
     if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
     if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
-    if (algorithm === "a-star") {
-      const goalNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
-      return Array.from(aStarGenerator(nodes, edges, startNodeId, goalNodeId));
-    }
     if (algorithm === "ford-fulkerson") {
       const sinkNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
       return Array.from(fordFulkersonGenerator(nodes, edges, startNodeId, sinkNodeId));
     }
-    if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
-    if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
+    if (algorithm === "adjacency-list") return Array.from(adjacencyListGenerator(nodes, edges));
+    if (algorithm === "adjacency-matrix") return Array.from(adjacencyMatrixGenerator(nodes, edges));
     return [];
   }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
 
@@ -779,6 +753,14 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             >
               <Download className="h-4 w-4" />
               {isExporting ? "Exporting..." : "Export PNG"}
+            </button>
+            
+            <button
+              onClick={() => setIsThemeModalOpen(true)}
+              className="flex items-center gap-2 rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
+            >
+              <Palette className="h-4 w-4" />
+              Color Themes
             </button>
 
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
@@ -1119,6 +1101,11 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
         </div>
       </div>
+      
+      <ThemeSettingsModal 
+        isOpen={isThemeModalOpen} 
+        onClose={() => setIsThemeModalOpen(false)} 
+      />
       </div>
     </div>
   );

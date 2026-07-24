@@ -96,6 +96,9 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     }
   }
 
+  const allNodesCount = Object.keys(adj).length;
+  const isDisconnected = visited.size < allNodesCount;
+
   yield {
     visitedNodes: new Set(visited),
     visitingNodes: new Set(),
@@ -104,8 +107,10 @@ export function* dijkstraGenerator(adj, startNode, targetNode = null) {
     pq: [],
     currentNode: null,
     description: (targetNode && !visited.has(targetNode))
-      ? `Target node ${targetNode} is unreachable.`
-      : `Dijkstra's algorithm complete`,
+      ? `Target node ${targetNode} is unreachable (disconnected graph).`
+      : isDisconnected
+        ? `Queue exhausted. Graph is disconnected (${allNodesCount - visited.size} nodes unreachable).`
+        : `Dijkstra's algorithm complete`,
     line: 5,
   };
 }

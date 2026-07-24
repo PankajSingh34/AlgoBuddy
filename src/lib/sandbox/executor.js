@@ -1,6 +1,9 @@
 const ivm = require("isolated-vm");
+const pino = require("pino");
 const { EXECUTION_STATUS } = require("./errorCodes");
 const { MAX_TIMEOUT_MS, MAX_MEMORY_MB, MAX_OUTPUT_LENGTH } = require("./sandbox.config");
+
+const log = pino({ level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug") }).child({ module: "sandbox" });
 
 // Sanitize error messages to prevent information leakage
 function sanitizeError(err) {
@@ -68,7 +71,7 @@ async function executeCode(code) {
 
   try {
     // Audit log: execution started
-    console.log(`[sandbox:audit] Execution started: ${executionId}, codeLength: ${code.length}, isolation: isolated-vm`);
+    log.info({ executionId, codeLength: code.length, isolation: "isolated-vm" }, "Execution started");
 
     // Acquire an isolate from the pool
     isolate = await acquireIsolate();
@@ -121,7 +124,7 @@ async function executeCode(code) {
     const executionTime = Date.now() - startTime;
 
     // Audit log: execution completed successfully
-    console.log(`[sandbox:audit] Execution completed: ${executionId}, status: SUCCESS, time: ${executionTime}ms, isolation: isolated-vm`);
+    log.info({ executionId, status: "SUCCESS", executionTimeMs: executionTime, isolation: "isolated-vm" }, "Execution completed");
 
     return {
       status: EXECUTION_STATUS.SUCCESS,
@@ -143,7 +146,7 @@ async function executeCode(code) {
     isolateCorrupted = isTimeout || isMemoryLimit;
 
     // Audit log: execution failed
-    console.log(`[sandbox:audit] Execution failed: ${executionId}, status: ${err.code || 'ERROR'}, time: ${elapsed}ms, error: ${sanitizedMessage}, isolation: isolated-vm, isolateCorrupted: ${isolateCorrupted}`);
+    log.warn({ executionId, status: err.code ?? "ERROR", executionTimeMs: elapsed, error: sanitizedMessage, isolation: "isolated-vm", isolateCorrupted }, "Execution failed");
 
     if (isTimeout) {
       return {
@@ -203,9 +206,9 @@ async function executeCode(code) {
 // Clean up function for graceful shutdown
 async function cleanup() {
   isShuttingDown = true;
-  // Drain wait queue so waiting acquireIsolate calls throw
-  waitQueue.splice(0).forEach(resolve => {
-    try { resolve(); } catch {}
+  const shutdownError = new Error("Sandbox is shutting down");
+  waitQueue.splice(0).forEach(reject => {
+    try { reject(shutdownError); } catch {}
   });
   for (const isolate of pool) {
     try { isolate.dispose(); } catch {}
