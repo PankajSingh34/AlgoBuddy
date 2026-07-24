@@ -1,7 +1,7 @@
 "use client";
 "use client";
 
-import { bellmanFordFrames } from "@/app/visualizer/graph/utils/algorithms";
+import { bellmanFordGenerator } from "@/features/algorithms/graph/bellmanFordLogic";
 import { useMemo, useRef, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
@@ -131,7 +131,7 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   // Bellman-Ford: compute frames when type === "bellman-ford"
   const bellmanFrames = useMemo(() => {
     if (type !== "bellman-ford") return [];
-    return bellmanFordFrames(nodes, edges, "A");
+    return Array.from(bellmanFordGenerator(nodes, edges, "A"));
   }, [type]);
 
   const bellmanFrame = type === "bellman-ford"

@@ -39,10 +39,8 @@ import { kosarajuGenerator } from "@/features/algorithms/graph/kosarajuLogic";
 import { tarjanGenerator } from "@/features/algorithms/graph/tarjanLogic";
 import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
 import { fordFulkersonGenerator } from "@/features/algorithms/graph/fordFulkersonLogic";
-import { 
-  adjacencyListFrames,
-  adjacencyMatrixFrames
-} from "../utils/algorithms";
+import { adjacencyListGenerator } from "@/features/algorithms/graph/adjacencyListLogic";
+import { adjacencyMatrixGenerator } from "@/features/algorithms/graph/adjacencyMatrixLogic";
 import { ALGORITHM_PSEUDOCODE } from "../constants/pseudocode";
 
 const weightedAlgorithms = new Set(["dijkstra", "bellman-ford", "floyd-warshall", "prim", "kruskal", "a-star", "ford-fulkerson"]);
@@ -450,8 +448,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       const sinkNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
       return Array.from(fordFulkersonGenerator(nodes, edges, startNodeId, sinkNodeId));
     }
-    if (algorithm === "adjacency-list") return adjacencyListFrames(nodes, edges);
-    if (algorithm === "adjacency-matrix") return adjacencyMatrixFrames(nodes, edges);
+    if (algorithm === "adjacency-list") return Array.from(adjacencyListGenerator(nodes, edges));
+    if (algorithm === "adjacency-matrix") return Array.from(adjacencyMatrixGenerator(nodes, edges));
     return [];
   }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
 
