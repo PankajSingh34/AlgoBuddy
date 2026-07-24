@@ -9,7 +9,8 @@ import {
   Wand2,
   Code2,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  Palette
 } from "lucide-react";
 import { 
   BarChart, 
@@ -25,6 +26,7 @@ import GraphCanvas from "@/app/components/models/GraphCanvas";
 import AdjacencyPanel from "@/app/components/models/AdjacencyPanel";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
 import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
+import ThemeSettingsModal from "@/app/visualizer/components/ThemeSettingsModal";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import { CustomInputPanel } from "@/app/visualizer/components/CustomInputPanel";
 import { bfsGenerator } from "@/features/algorithms/graph/bfsLogic";
@@ -388,10 +390,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         setNodes(defaultGraphs[algorithm]?.nodes || []);
         setEdges(defaultGraphs[algorithm]?.edges || []);
       }
-    } catch (e) {
-      console.error("Failed to parse custom graph from localStorage", e);
-      setNodes(defaultGraphs[algorithm]?.nodes || []);
-      setEdges(defaultGraphs[algorithm]?.edges || []);
+    } catch (err) {
+      console.error("Failed to load custom graph:", err);
     }
     setIsLoaded(true);
   }, [algorithm]);
@@ -402,6 +402,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       localStorage.setItem(`algobuddy_custom_edges_${algorithm}`, JSON.stringify(edges));
     }
   }, [nodes, edges, algorithm, isLoaded]);
+
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [targetNode, setTargetNode] = useState("");
   const canvasContainerRef = useRef(null);
@@ -724,6 +726,14 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             >
               <Download className="h-4 w-4" />
               {isExporting ? "Exporting..." : "Export PNG"}
+            </button>
+            
+            <button
+              onClick={() => setIsThemeModalOpen(true)}
+              className="flex items-center gap-2 rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
+            >
+              <Palette className="h-4 w-4" />
+              Color Themes
             </button>
 
             {["dijkstra", "a-star", "ford-fulkerson"].includes(algorithm) && (
@@ -1064,6 +1074,11 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
         </div>
         </div>
       </div>
+      
+      <ThemeSettingsModal 
+        isOpen={isThemeModalOpen} 
+        onClose={() => setIsThemeModalOpen(false)} 
+      />
       </div>
     </div>
   );

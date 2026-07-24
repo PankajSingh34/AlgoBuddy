@@ -385,23 +385,23 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             const isAStarOpen = type === "a-star" && currentAStarFrame?.openSet?.has(node.id);
             const isAStarVisited = type === "a-star" && currentAStarFrame?.visited?.has(node.id);
 
-            let nodeFill = active ? "var(--color-primary)" : "white";
-            let nodeStroke = active ? "var(--color-primary)" : "var(--color-neutral-300)";
-            let textFill = active ? "white" : "var(--color-surface-800)";
+            let nodeFill = active ? "var(--vis-active-node-fill, var(--color-primary))" : "var(--vis-inactive-node-fill, white)";
+            let nodeStroke = active ? "var(--vis-active-node-stroke, var(--color-primary))" : "var(--vis-inactive-node-stroke, var(--color-neutral-300))";
+            let textFill = active ? "var(--vis-active-text-fill, white)" : "var(--vis-inactive-text-fill, var(--color-surface-800))";
 
             if (type === "a-star") {
               if (isAStarPathNode) {
-                nodeFill = "#a855f7"; nodeStroke = "#a855f7"; textFill = "white";
+                nodeFill = "var(--vis-path-fill, #a855f7)"; nodeStroke = "var(--vis-path-stroke, #a855f7)"; textFill = "white";
               } else if (isAStarGoal) {
-                nodeFill = "#ef4444"; nodeStroke = "#ef4444"; textFill = "white";
+                nodeFill = "var(--vis-goal-fill, #ef4444)"; nodeStroke = "var(--vis-goal-stroke, #ef4444)"; textFill = "white";
               } else if (isAStarStart) {
-                nodeFill = "#22c55e"; nodeStroke = "#22c55e"; textFill = "white";
+                nodeFill = "var(--vis-start-fill, #22c55e)"; nodeStroke = "var(--vis-start-stroke, #22c55e)"; textFill = "white";
               } else if (isAStarOpen) {
-                nodeFill = "#eab308"; nodeStroke = "#eab308"; textFill = "white";
+                nodeFill = "var(--vis-open-fill, #eab308)"; nodeStroke = "var(--vis-open-stroke, #eab308)"; textFill = "white";
               } else if (isAStarVisited) {
-                nodeFill = "#3b82f6"; nodeStroke = "#3b82f6"; textFill = "white";
+                nodeFill = "var(--vis-visited-astar-fill, #3b82f6)"; nodeStroke = "var(--vis-visited-astar-stroke, #3b82f6)"; textFill = "white";
               } else {
-                nodeFill = "white"; nodeStroke = "var(--color-neutral-300)"; textFill = "var(--color-surface-800)";
+                nodeFill = "var(--vis-inactive-node-fill, white)"; nodeStroke = "var(--vis-inactive-node-stroke, var(--color-neutral-300))"; textFill = "var(--vis-inactive-text-fill, var(--color-surface-800))";
               }
             }
 

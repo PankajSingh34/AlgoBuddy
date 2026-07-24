@@ -5,9 +5,9 @@ import { useRef, useState, useCallback } from "react";
 
 const NODE_RADIUS = 26;
 const COLORS = {
-  unvisited: { fill: "#111", stroke: "#22c55e" },
-  visiting:  { fill: "#854d0e", stroke: "#f97316" },
-  visited:   { fill: "#14532d", stroke: "#22c55e" },
+  unvisited: { fill: "var(--vis-unvisited-fill, #111)", stroke: "var(--vis-unvisited-stroke, #22c55e)" },
+  visiting:  { fill: "var(--vis-visiting-fill, #854d0e)", stroke: "var(--vis-visiting-stroke, #f97316)" },
+  visited:   { fill: "var(--vis-visited-fill, #14532d)", stroke: "var(--vis-visited-stroke, #22c55e)" },
 };
 
 function edgeEndpoint(x1, y1, x2, y2, radius) {

@@ -364,3 +364,90 @@ html {
     scrollbar-color: var(--color-primary) transparent;
   }
 }
+
+/* ── Visualizer Color Themes ── */
+:root {
+  /* Default Theme (matches previous hardcoded values) */
+  --vis-unvisited-fill: #111111;
+  --vis-unvisited-stroke: #22c55e;
+  --vis-visiting-fill: #854d0e;
+  --vis-visiting-stroke: #f97316;
+  --vis-visited-fill: #14532d;
+  --vis-visited-stroke: #22c55e;
+  
+  --vis-active-node-fill: var(--color-primary);
+  --vis-active-node-stroke: var(--color-primary);
+  --vis-active-text-fill: #ffffff;
+  
+  --vis-inactive-node-fill: #ffffff;
+  --vis-inactive-node-stroke: var(--color-neutral-300);
+  --vis-inactive-text-fill: var(--color-surface-800);
+
+  --vis-path-fill: #a855f7;
+  --vis-path-stroke: #a855f7;
+  --vis-goal-fill: #ef4444;
+  --vis-goal-stroke: #ef4444;
+  --vis-start-fill: #22c55e;
+  --vis-start-stroke: #22c55e;
+  --vis-open-fill: #eab308;
+  --vis-open-stroke: #eab308;
+  --vis-visited-astar-fill: #3b82f6;
+  --vis-visited-astar-stroke: #3b82f6;
+}
+
+[data-vis-theme="high-contrast"] {
+  --vis-unvisited-fill: #ffffff;
+  --vis-unvisited-stroke: #000000;
+  --vis-visiting-fill: #ffeb3b;
+  --vis-visiting-stroke: #000000;
+  --vis-visited-fill: #4caf50;
+  --vis-visited-stroke: #000000;
+  
+  --vis-active-node-fill: #000000;
+  --vis-active-node-stroke: #ffffff;
+  --vis-active-text-fill: #ffffff;
+  
+  --vis-inactive-node-fill: #ffffff;
+  --vis-inactive-node-stroke: #000000;
+  --vis-inactive-text-fill: #000000;
+
+  --vis-path-fill: #9c27b0;
+  --vis-path-stroke: #000000;
+  --vis-goal-fill: #f44336;
+  --vis-goal-stroke: #000000;
+  --vis-start-fill: #4caf50;
+  --vis-start-stroke: #000000;
+  --vis-open-fill: #ffeb3b;
+  --vis-open-stroke: #000000;
+  --vis-visited-astar-fill: #2196f3;
+  --vis-visited-astar-stroke: #000000;
+}
+
+[data-vis-theme="protanopia-safe"] {
+  /* Deuteranopia and Protanopia (Red/Green blindness) */
+  --vis-unvisited-fill: #e0e0e0;
+  --vis-unvisited-stroke: #1e88e5; /* Blue */
+  --vis-visiting-fill: #ffb300; /* Amber */
+  --vis-visiting-stroke: #ffb300;
+  --vis-visited-fill: #004d40; /* Dark Teal */
+  --vis-visited-stroke: #004d40;
+  
+  --vis-active-node-fill: #1e88e5;
+  --vis-active-node-stroke: #1e88e5;
+  --vis-active-text-fill: #ffffff;
+  
+  --vis-inactive-node-fill: #ffffff;
+  --vis-inactive-node-stroke: #9e9e9e;
+  --vis-inactive-text-fill: #212121;
+
+  --vis-path-fill: #8e24aa; /* Purple */
+  --vis-path-stroke: #8e24aa;
+  --vis-goal-fill: #d81b60; /* Pinkish-Red */
+  --vis-goal-stroke: #d81b60;
+  --vis-start-fill: #1e88e5; /* Blue */
+  --vis-start-stroke: #1e88e5;
+  --vis-open-fill: #ffc107; /* Yellow */
+  --vis-open-stroke: #ffc107;
+  --vis-visited-astar-fill: #039be5; /* Light Blue */
+  --vis-visited-astar-stroke: #039be5;
+}
