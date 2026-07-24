@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Play, Pause, PenLine, Target, ShieldAlert, Trash2 } from "lucide-react";
+import { Play, Pause, PenLine, Target, ShieldAlert, Trash2, Clock, Map, Zap, CheckCircle2 } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
@@ -24,6 +24,7 @@ const AStarAnimation = () => {
   const [walls, setWalls] = useState(() => new Set());
   
   const [frames, setFrames] = useState([]);
+  const [executionStats, setExecutionStats] = useState(null);
 
   useEffect(() => saveToStorage("astar-grid-size", gridSize), [gridSize]);
   useEffect(() => saveToStorage("astar-heuristic", heuristic), [heuristic]);
@@ -49,6 +50,7 @@ const AStarAnimation = () => {
 
   const resetBoard = useCallback(() => {
     setFrames([]);
+    setExecutionStats(null);
     setStart({ row: 0, col: 0 });
     setGoal({ row: gridSize - 1, col: gridSize - 1 });
     setWalls(new Set());
@@ -62,8 +64,23 @@ const AStarAnimation = () => {
     event.preventDefault();
     if (engine.isPlaying) return;
 
+    const startTime = performance.now();
     const newFrames = Array.from(astarGenerator(start, goal, walls, gridSize, heuristic));
+    const endTime = performance.now();
+
     setFrames(newFrames);
+    if (newFrames.length > 0) {
+      const lastFrame = newFrames[newFrames.length - 1];
+      setExecutionStats({
+        pathLength: lastFrame.path?.length || 0,
+        nodesExplored: lastFrame.closed?.length || 0,
+        executionTimeMs: (endTime - startTime).toFixed(2),
+        success: lastFrame.goalReached
+      });
+    } else {
+      setExecutionStats(null);
+    }
+
     engine.reset();
     engine.play();
   }, [engine, start, goal, walls, gridSize, heuristic]);
@@ -346,6 +363,38 @@ const AStarAnimation = () => {
             </div>
           </div>
         </div>
+
+        {executionStats && frames.length > 0 && engine.currentStep === frames.length - 1 && (
+          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-[#a435f0]/30 shadow-lg shadow-[#a435f0]/10 overflow-hidden mt-6 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-[#a435f0]/10 px-6 py-4 border-b border-[#a435f0]/10 flex items-center gap-3">
+              <CheckCircle2 className="text-[#a435f0]" size={20} />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Execution Statistics</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-800">
+              <div className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Map className="text-blue-500" size={24} />
+                </div>
+                <div className="text-3xl font-black text-gray-900 dark:text-white mb-1">{executionStats.nodesExplored}</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Nodes Explored</div>
+              </div>
+              <div className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Zap className="text-amber-500" size={24} />
+                </div>
+                <div className="text-3xl font-black text-gray-900 dark:text-white mb-1">{executionStats.pathLength}</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Final Path Length</div>
+              </div>
+              <div className="p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="text-emerald-500" size={24} />
+                </div>
+                <div className="text-3xl font-black text-gray-900 dark:text-white mb-1">{executionStats.executionTimeMs} <span className="text-lg text-gray-400 font-normal">ms</span></div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Execution Time</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
