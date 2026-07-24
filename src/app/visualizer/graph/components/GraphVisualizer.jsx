@@ -812,10 +812,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
             {!isEditing && (
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 rounded-lg bg-surface-100 px-3 py-1.5 text-sm font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300">
-                  <Info className="h-4 w-4 text-primary" />
-                  {currentFrameData.description || "Ready to start"}
-                </div>
+
                 {currentFrameData.queue && currentFrameData.queue.length > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-primary dark:bg-blue-900/20 dark:text-[#c27cf7]">
                     Queue: [{currentFrameData.queue.join(", ")}]
@@ -877,6 +874,19 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               currentNode={currentFrameData.currentNode}
               className="w-full h-full flex-1"
             />
+            
+            {/* Step Explanation / Algorithm Narrator Text Box */}
+            {!isEditing && (
+              <div className="bg-[#a435f0]/5 dark:bg-[#a435f0]/10 border-t border-[#a435f0]/20 px-6 py-4 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-[#a435f0] animate-pulse"></span>
+                  <span className="text-xs font-bold text-[#a435f0] dark:text-[#c56eff] uppercase tracking-wider">Algorithm Narrator</span>
+                </div>
+                <p className="text-sm md:text-base font-mono text-gray-800 dark:text-gray-200 leading-relaxed">
+                  {currentFrameData.description || "Ready to start"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
