@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Play, Pause, PenLine, Target, ShieldAlert, Trash2 } from "lucide-react";
+import { Play, Pause, PenLine, Target, ShieldAlert, Trash2, Grid3x3 } from "lucide-react";
 import ResetButton from "@/app/components/ui/resetButton";
 import GoButton from "@/app/components/ui/goButton";
 import PlaybackControls from "@/app/components/ui/PlaybackControls";
@@ -9,6 +9,7 @@ import useVisualizerKeyboard from "@/app/hooks/useVisualizerKeyboard";
 import { loadFromStorage, saveToStorage } from "@/utils/storage";
 import { useAnimationEngine } from "@/lib/visualizer/useAnimationEngine";
 import { astarGenerator } from "@/features/algorithms/ai/astarLogic";
+import { generateRecursiveBacktrackerMaze } from "@/features/algorithms/ai/mazeGenerator";
 
 const pointKey = (row, col) => `${row},${col}`;
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -57,6 +58,14 @@ const AStarAnimation = () => {
   useVisualizerReset(resetBoard);
 
   const engine = useAnimationEngine({ steps: frames, initialSpeed: 1000 });
+
+  const handleGenerateMaze = useCallback(() => {
+    if (engine.isPlaying) return;
+    setFrames([]);
+    engine.reset();
+    const newWalls = generateRecursiveBacktrackerMaze(gridSize, start, goal);
+    setWalls(newWalls);
+  }, [engine, gridSize, start, goal]);
 
   const handleGo = useCallback((event) => {
     event.preventDefault();
@@ -230,6 +239,15 @@ const AStarAnimation = () => {
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={handleGenerateMaze}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 transition-colors"
+              disabled={engine.isPlaying}
+            >
+              <Grid3x3 size={16} />
+              Generate Maze
+            </button>
             <button
               type="button"
               onClick={() => setWalls(new Set())}
