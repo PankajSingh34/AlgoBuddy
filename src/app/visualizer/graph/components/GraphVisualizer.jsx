@@ -435,6 +435,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   }, [isEditing, undo, redo, canUndo, canRedo]);
 
   const [targetNode, setTargetNode] = useState("");
+  const [astarHeuristic, setAstarHeuristic] = useState("euclidean");
   const canvasContainerRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -467,7 +468,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
     if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
     if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId, targetNode || null));
-    if (algorithm === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId));
+    if (algorithm === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId, astarHeuristic));
     if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
     if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
     if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
@@ -482,7 +483,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     if (algorithm === "adjacency-list") return Array.from(adjacencyListGenerator(nodes, edges));
     if (algorithm === "adjacency-matrix") return Array.from(adjacencyMatrixGenerator(nodes, edges));
     return [];
-  }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
+  }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted, astarHeuristic]);
 
   const hasNegativeWeightError = algorithm === "dijkstra" && edges.some(e => Number(e.weight) < 0);
 
@@ -778,6 +779,24 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
                   {nodes.map(n => (
                     <option key={n.id} value={n.id}>{n.label || n.id}</option>
                   ))}
+                </select>
+              </div>
+            )}
+
+            {algorithm === "a-star" && (
+              <div className="flex items-center gap-2 ml-2">
+                <label className="text-sm font-medium text-surface-600 dark:text-surface-300">Heuristic:</label>
+                <select
+                  value={astarHeuristic}
+                  onChange={(e) => {
+                    setAstarHeuristic(e.target.value);
+                    engine.reset();
+                  }}
+                  className="bg-surface-50 border border-surface-200 dark:bg-surface-800 dark:border-surface-600 rounded px-2 py-1 text-sm text-surface-900 dark:text-white"
+                >
+                  <option value="euclidean">Euclidean</option>
+                  <option value="manhattan">Manhattan</option>
+                  <option value="chebyshev">Chebyshev</option>
                 </select>
               </div>
             )}
