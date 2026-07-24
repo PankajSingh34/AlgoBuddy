@@ -448,11 +448,18 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   const isWeighted = weightedAlgorithms.has(algorithm);
   const isDirected = isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(algorithm);
 
-  const frames = useMemo(() => {
+  const [comparisonAlgorithm, setComparisonAlgorithm] = useState("");
+
+  const generateFrames = useCallback((alg) => {
+    if (!alg) return [];
+    
+    // Check if the target algorithm requires weighted/directed manually
+    const isW = weightedAlgorithms.has(alg);
+    
     const adj = {};
     nodes.forEach(n => adj[n.id] = []);
     edges.forEach(e => {
-      if (isWeighted) {
+      if (isW) {
         adj[e.from].push({ node: e.to, weight: e.weight ?? 1 });
         if (!e.directed) adj[e.to].push({ node: e.from, weight: e.weight ?? 1 });
       } else {
@@ -464,27 +471,30 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
     const startNodeId = initialStartNode || (nodes.length > 0 ? nodes[0].id : null);
     const finalGoalNodeId = targetNode || (nodes.length > 1 ? nodes[nodes.length - 1].id : null);
     
-    if (algorithm === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
-    if (algorithm === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
-    if (algorithm === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId, targetNode || null));
-    if (algorithm === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId));
-    if (algorithm === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
-    if (algorithm === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
-    if (algorithm === "prim") return Array.from(primGenerator(adj, startNodeId));
-    if (algorithm === "kruskal") return Array.from(kruskalGenerator(nodes, edges));
-    if (algorithm === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
-    if (algorithm === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
-    if (algorithm === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
-    if (algorithm === "ford-fulkerson") {
+    if (alg === "bfs") return Array.from(bfsGenerator(adj, startNodeId));
+    if (alg === "dfs") return Array.from(dfsGenerator(adj, startNodeId));
+    if (alg === "dijkstra") return Array.from(dijkstraGenerator(adj, startNodeId, targetNode || null));
+    if (alg === "a-star") return Array.from(aStarGenerator(nodes, edges, startNodeId, finalGoalNodeId));
+    if (alg === "bellman-ford") return Array.from(bellmanFordGenerator(nodes, edges, startNodeId));
+    if (alg === "floyd-warshall") return Array.from(floydWarshallGenerator(nodes, edges));
+    if (alg === "prim") return Array.from(primGenerator(adj, startNodeId));
+    if (alg === "kruskal") return Array.from(kruskalGenerator(nodes, edges));
+    if (alg === "topological-sort") return Array.from(topologicalSortGenerator(adj, nodes.map(n => n.id)));
+    if (alg === "kosaraju") return Array.from(kosarajuGenerator(adj, nodes));
+    if (alg === "tarjan") return Array.from(tarjanGenerator(adj, nodes));
+    if (alg === "ford-fulkerson") {
       const sinkNodeId = nodes.length > 1 ? nodes[nodes.length - 1].id : null;
       return Array.from(fordFulkersonGenerator(nodes, edges, startNodeId, sinkNodeId));
     }
-    if (algorithm === "adjacency-list") return Array.from(adjacencyListGenerator(nodes, edges));
-    if (algorithm === "adjacency-matrix") return Array.from(adjacencyMatrixGenerator(nodes, edges));
+    if (alg === "adjacency-list") return Array.from(adjacencyListGenerator(nodes, edges));
+    if (alg === "adjacency-matrix") return Array.from(adjacencyMatrixGenerator(nodes, edges));
     return [];
-  }, [nodes, edges, algorithm, initialStartNode, targetNode, isWeighted]);
+  }, [nodes, edges, initialStartNode, targetNode]);
 
-  const hasNegativeWeightError = algorithm === "dijkstra" && edges.some(e => Number(e.weight) < 0);
+  const frames = useMemo(() => generateFrames(algorithm), [generateFrames, algorithm]);
+  const frames2 = useMemo(() => generateFrames(comparisonAlgorithm), [generateFrames, comparisonAlgorithm]);
+
+  const hasNegativeWeightError = (algorithm === "dijkstra" || comparisonAlgorithm === "dijkstra") && edges.some(e => Number(e.weight) < 0);
 
   const onStep = useCallback((step) => {
     // No specific local state needs to be updated here 
@@ -492,6 +502,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
   }, []);
 
   const engine = useAnimationEngine({ steps: frames, onStep, initialSpeed: 1000 });
+  const engine2 = useAnimationEngine({ steps: frames2, onStep, initialSpeed: 1000 });
 
   // Handle edge weight updates from GraphCanvas
   const handleUpdateEdgeWeight = useCallback((edgeIdx, newWeight) => {
@@ -499,13 +510,15 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       prev.map((e, i) => (i === edgeIdx ? { ...e, weight: newWeight } : e))
     );
     engine.reset();
-  }, [engine]);
+    engine2.reset();
+  }, [engine, engine2]);
 
   // When adding an edge, default weight = 1
   const handleAddEdge = useCallback((edge) => {
     setEdges((prev) => [...prev, { ...edge, weight: 1, directed: isDirected }]);
     engine.reset();
-  }, [isDirected, engine]);
+    engine2.reset();
+  }, [isDirected, engine, engine2]);
 
   const handleCustomGraphInput = useCallback((parsedEdges) => {
     if (parsedEdges === null) {
@@ -540,42 +553,54 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       resetGraph(newNodes, newEdges);
     }
     engine.reset();
-  }, [algorithm, isDirected, engine]);
+    engine2.reset();
+  }, [algorithm, isDirected, engine, engine2]);
 
   const togglePlay = () => {
-    if (engine.currentStep === frames.length - 1 && frames.length > 0) {
-      engine.reset();
-      setTimeout(() => engine.play(), 50);
-    } else if (engine.isPlaying) {
+    if (engine.isPlaying || engine2.isPlaying) {
       engine.pause();
+      engine2.pause();
     } else {
-      engine.play();
+      if (engine.currentStep >= frames.length - 1 && frames.length > 0) engine.reset();
+      if (engine2.currentStep >= frames2.length - 1 && frames2.length > 0) engine2.reset();
+      setTimeout(() => {
+        if (frames.length > 0) engine.play();
+        if (frames2.length > 0) engine2.play();
+      }, 50);
     }
     setIsEditing(false); // If they press play/pause, it shouldn't be in edit mode
   };
 
   const reset = () => {
     engine.reset();
+    engine2.reset();
     setIsEditing(true);
   };
 
   const stepForward = () => {
     engine.stepForward();
+    engine2.stepForward();
     setIsEditing(false);
   };
 
   const stepBackward = () => {
     engine.stepBackward();
+    engine2.stepBackward();
     setIsEditing(false);
+  };
+
+  const setSpeed = (s) => {
+    engine.setSpeed(s * 1000);
+    engine2.setSpeed(s * 1000);
   };
 
   useVisualizerKeyboard({
     onStart: togglePlay,
     onTogglePlayPause: togglePlay,
-    sorting: engine.isPlaying,
+    sorting: engine.isPlaying || engine2.isPlaying,
     onReset: reset,
     speed: engine.speed / 1000,
-    onSpeedChange: (s) => engine.setSpeed(s * 1000),
+    onSpeedChange: setSpeed,
   });
 
   const currentFrameData = frames[engine.currentStep] || {};
@@ -601,6 +626,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       },
     ]);
     engine.reset();
+    engine2.reset();
   };
 
   const moveNode = (id, x, y) => {
@@ -619,17 +645,20 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       (current) => current.filter((edge) => edge.from !== id && edge.to !== id)
     );
     engine.reset();
+    engine2.reset();
   };
 
   const removeEdge = (edgeIndex) => {
     setEdges((current) => current.filter((_, index) => index !== edgeIndex));
     engine.reset();
+    engine2.reset();
   };
 
   const clearGraph = useCallback(() => {
     resetGraph([], []);
     engine.reset();
-  }, [resetGraph, engine]);
+    engine2.reset();
+  }, [resetGraph, engine, engine2]);
 
   const generateRandomGraph = useCallback(() => {
     const input = window.prompt("Enter number of nodes (max 20):", "6");
@@ -680,7 +709,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
 
     resetGraph(newNodes, newEdges);
     engine.reset();
-  }, [isWeighted, isDirected, engine, resetGraph]);
+    engine2.reset();
+  }, [isWeighted, isDirected, engine, engine2, resetGraph]);
 
   const reverseEdge = (edgeIndex) => {
     setEdges((current) =>
@@ -689,6 +719,7 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
       ),
     );
     engine.reset();
+    engine2.reset();
   };
 
   return (
@@ -707,6 +738,28 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               <Settings2 className="h-4 w-4" />
               {isEditing ? "Editing Mode" : "Visualization Mode"}
             </button>
+
+            {!isEditing && (
+              <div className="flex items-center gap-2 rounded-lg bg-surface-100 px-3 py-1.5 dark:bg-surface-800">
+                <label className="text-sm font-medium text-surface-600 dark:text-surface-300">Compare:</label>
+                <select
+                  value={comparisonAlgorithm}
+                  onChange={(e) => {
+                    setComparisonAlgorithm(e.target.value);
+                    engine.reset();
+                    engine2.reset();
+                  }}
+                  className="bg-transparent text-sm font-bold text-primary outline-none"
+                >
+                  <option value="">None</option>
+                  {Object.keys(defaultGraphs).map(alg => (
+                    <option key={alg} value={alg} disabled={alg === algorithm}>
+                      {alg.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {isEditing && (
               <>
@@ -857,8 +910,9 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             )}
           </div>
         </div>
-        <div className="flex flex-col lg:flex-row gap-6 items-stretch min-h-[420px]">
-          <div ref={canvasContainerRef} className="flex-1 border rounded-xl overflow-hidden bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col">
+        <div className={`grid gap-6 items-stretch min-h-[420px] ${comparisonAlgorithm ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+          <div ref={canvasContainerRef} className="border rounded-xl overflow-hidden bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col">
+            {comparisonAlgorithm && <div className="bg-surface-50 p-2 text-center text-xs font-bold border-b dark:border-surface-800 text-primary">{algorithm.toUpperCase()}</div>}
             <GraphCanvas
               nodes={nodes}
               edges={edges}
@@ -878,6 +932,29 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
               className="w-full h-full flex-1"
             />
           </div>
+          {comparisonAlgorithm && (
+            <div className="border rounded-xl overflow-hidden bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 flex flex-col">
+              <div className="bg-surface-50 p-2 text-center text-xs font-bold border-b dark:border-surface-800 text-primary">{comparisonAlgorithm.toUpperCase()}</div>
+              <GraphCanvas
+                nodes={nodes}
+                edges={edges}
+                onAddNode={addNode}
+                onAddEdge={handleAddEdge}
+                onRemoveNode={removeNode}
+                onRemoveEdge={removeEdge}
+                onReverseEdge={reverseEdge}
+                onMoveNode={moveNode}
+                onUpdateEdgeWeight={handleUpdateEdgeWeight}
+                animationState={!isEditing ? (frames2[engine2.currentStep] || {}) : {}}
+                interactive={isEditing}
+                isWeighted={weightedAlgorithms.has(comparisonAlgorithm)}
+                isDirected={isDirectedManual !== null ? isDirectedManual : directedAlgorithms.has(comparisonAlgorithm)}
+                visitedSet={(frames2[engine2.currentStep] || {}).visitedNodes}
+                currentNode={(frames2[engine2.currentStep] || {}).currentNode}
+                className="w-full h-full flex-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* Controls Bar */}
@@ -898,8 +975,8 @@ export default function GraphVisualizer({ algorithm = "bfs", startNode: initialS
             onStepForward={stepForward}
             onStepBackward={stepBackward}
             onReset={reset}
-            progressText={`${engine.currentStep + 1} / ${frames.length || 1}`}
-            disabled={frames.length === 0 || hasNegativeWeightError}
+            progressText={`${Math.max(engine.currentStep, engine2.currentStep) + 1} / ${Math.max(frames.length, frames2.length) || 1}`}
+            disabled={(frames.length === 0 && frames2.length === 0) || hasNegativeWeightError}
           />
         </div>
 
