@@ -111,6 +111,9 @@ export default async function RootLayout({ children }) {
                   }
                   if (theme === 'dark') document.documentElement.classList.add('dark');
                   else document.documentElement.classList.remove('dark');
+                  
+                  var visTheme = localStorage.getItem('vis-theme') || 'default';
+                  document.documentElement.setAttribute('data-vis-theme', visTheme);
                 } catch(e) {}
               })();
             `,

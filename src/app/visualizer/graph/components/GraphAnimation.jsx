@@ -1,9 +1,8 @@
 "use client";
-"use client";
 
-import { bellmanFordFrames } from "@/app/visualizer/graph/utils/algorithms";
+import { bellmanFordGenerator } from "@/features/algorithms/graph/bellmanFordLogic";
 import { useMemo, useRef, useState } from "react";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import useVisualizerReset from "@/app/hooks/useVisualizerReset";
 import { VisualizerCanvas } from "@/app/visualizer/components/VisualizerCanvas";
 import { aStarGenerator } from "@/features/algorithms/graph/aStarLogic";
@@ -98,7 +97,8 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
 
   const sequence = sequences[type] || sequences.bfs;
   const aStarSequenceLength = aStarData.length || 1;
-  const effectiveLength = type === "a-star" ? aStarSequenceLength : sequence.length;
+  const effectiveLength = type === "a-star" ? aStarSequenceLength : (type === "bellman-ford" ? null : sequence.length);
+
   const current = type === "a-star"
     ? (currentAStarFrame?.current || startNodeAStar)
     : sequence[Math.min(step, sequence.length - 1)];
@@ -131,16 +131,19 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
   // Bellman-Ford: compute frames when type === "bellman-ford"
   const bellmanFrames = useMemo(() => {
     if (type !== "bellman-ford") return [];
-    return bellmanFordFrames(nodes, edges, "A");
+    return Array.from(bellmanFordGenerator(nodes, edges, "A"));
   }, [type]);
 
   const bellmanFrame = type === "bellman-ford"
     ? bellmanFrames[Math.min(step, bellmanFrames.length - 1)]
     : null;
 
-  const totalSteps = type === "bellman-ford" ? bellmanFrames.length : sequence.length;
-  const advance = () => setStep((value) => (value + 1) % totalSteps);
-  const advance = () => setStep((value) => (value + 1) % effectiveLength);
+  const totalSteps = type === "bellman-ford"
+    ? bellmanFrames.length
+    : (effectiveLength ?? sequence.length);
+
+  const advance = () => setStep((value) => Math.min(value + 1, totalSteps - 1));
+  const stepBack = () => setStep((value) => Math.max(0, value - 1));
   const reset = () => setStep(0);
 
   const handleToggleDirected = () => {
@@ -252,10 +255,101 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
         </div>
       </div>
 
+      {/* ── Timeline Scrubber ─────────────────────────────────────────────── */}
+      <div className="mb-5 rounded-xl border border-surface-200 bg-surface-50 px-4 py-3 dark:border-surface-800 dark:bg-surface-950">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+            Timeline
+          </span>
+          <span className="text-xs font-medium tabular-nums text-surface-600 dark:text-surface-300">
+            Step <span className="font-bold text-primary">{step + 1}</span> / {totalSteps}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Step Back */}
+          <button
+            type="button"
+            onClick={stepBack}
+            disabled={step === 0}
+            aria-label="Step back"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-surface-300 bg-white text-surface-600 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* Range slider */}
+          <input
+            id="timeline-scrubber"
+            type="range"
+            min={0}
+            max={totalSteps - 1}
+            value={step}
+            step={1}
+            onChange={(e) => setStep(Number(e.target.value))}
+            aria-label={`Timeline scrubber: step ${step + 1} of ${totalSteps}`}
+            className="
+              h-2 w-full cursor-pointer appearance-none rounded-full
+              bg-surface-200 dark:bg-surface-700
+              accent-primary
+              [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:w-4
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:rounded-full
+              [&::-webkit-slider-thumb]:bg-primary
+              [&::-webkit-slider-thumb]:shadow-md
+              [&::-webkit-slider-thumb]:transition-transform
+              [&::-webkit-slider-thumb]:hover:scale-125
+              [&::-moz-range-thumb]:h-4
+              [&::-moz-range-thumb]:w-4
+              [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:border-0
+              [&::-moz-range-thumb]:bg-primary
+              [&::-moz-range-thumb]:shadow-md
+            "
+            style={{
+              background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${(step / Math.max(totalSteps - 1, 1)) * 100}%, var(--color-neutral-200) ${(step / Math.max(totalSteps - 1, 1)) * 100}%, var(--color-neutral-200) 100%)`,
+            }}
+          />
+
+          {/* Step Forward */}
+          <button
+            type="button"
+            onClick={advance}
+            disabled={step === totalSteps - 1}
+            aria-label="Step forward"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-surface-300 bg-white text-surface-600 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Step tick marks */}
+        <div className="mt-1 flex justify-between px-11">
+          {Array.from({ length: Math.min(totalSteps, 10) }, (_, i) => {
+            const tickStep = Math.round((i / (Math.min(totalSteps, 10) - 1)) * (totalSteps - 1));
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setStep(tickStep)}
+                aria-label={`Jump to step ${tickStep + 1}`}
+                className="flex flex-col items-center gap-0.5 group"
+              >
+                <span className={`h-1.5 w-0.5 rounded-full transition-colors ${tickStep <= step ? "bg-primary" : "bg-surface-300 dark:bg-surface-600"}`} />
+                <span className={`text-[9px] tabular-nums transition-colors ${tickStep === step ? "font-bold text-primary" : "text-surface-400 dark:text-surface-500 group-hover:text-primary"}`}>
+                  {tickStep + 1}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
         <VisualizerCanvas
           onSwipeLeft={advance}
-          onSwipeRight={() => setStep((s) => Math.max(0, s - 1))}
+          onSwipeRight={stepBack}
           watchKey={step}
         >
         <svg
@@ -325,6 +419,8 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
               ? "#f97316"
               : isAStarPath
               ? "#a855f7"
+              : type === "bellman-ford" && bellmanFrame?.activeEdge?.from === edge.from && bellmanFrame?.activeEdge?.to === edge.to
+              ? "orange"
               : active
               ? "var(--color-primary)"
               : "var(--color-neutral-300)";
@@ -340,14 +436,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                   y1={start.y}
                   x2={ex}
                   y2={ey}
-                  stroke={
-                    type === "bellman-ford" && bellmanFrame?.activeEdge?.from === edge.from && bellmanFrame?.activeEdge?.to === edge.to
-                      ? "orange"
-                      : active
-                        ? "var(--color-primary)"
-                        : "var(--color-neutral-300)"
-                  }
-                  strokeWidth={active ? "1.8" : "1"}
                   stroke={edgeColor}
                   strokeWidth={isAStarActive || isAStarPath ? "2" : active ? "1.8" : "1"}
                   markerEnd={
@@ -385,23 +473,23 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
             const isAStarOpen = type === "a-star" && currentAStarFrame?.openSet?.has(node.id);
             const isAStarVisited = type === "a-star" && currentAStarFrame?.visited?.has(node.id);
 
-            let nodeFill = active ? "var(--color-primary)" : "white";
-            let nodeStroke = active ? "var(--color-primary)" : "var(--color-neutral-300)";
-            let textFill = active ? "white" : "var(--color-surface-800)";
+            let nodeFill = active ? "var(--vis-active-node-fill, var(--color-primary))" : "var(--vis-inactive-node-fill, white)";
+            let nodeStroke = active ? "var(--vis-active-node-stroke, var(--color-primary))" : "var(--vis-inactive-node-stroke, var(--color-neutral-300))";
+            let textFill = active ? "var(--vis-active-text-fill, white)" : "var(--vis-inactive-text-fill, var(--color-surface-800))";
 
             if (type === "a-star") {
               if (isAStarPathNode) {
-                nodeFill = "#a855f7"; nodeStroke = "#a855f7"; textFill = "white";
+                nodeFill = "var(--vis-path-fill, #a855f7)"; nodeStroke = "var(--vis-path-stroke, #a855f7)"; textFill = "white";
               } else if (isAStarGoal) {
-                nodeFill = "#ef4444"; nodeStroke = "#ef4444"; textFill = "white";
+                nodeFill = "var(--vis-goal-fill, #ef4444)"; nodeStroke = "var(--vis-goal-stroke, #ef4444)"; textFill = "white";
               } else if (isAStarStart) {
-                nodeFill = "#22c55e"; nodeStroke = "#22c55e"; textFill = "white";
+                nodeFill = "var(--vis-start-fill, #22c55e)"; nodeStroke = "var(--vis-start-stroke, #22c55e)"; textFill = "white";
               } else if (isAStarOpen) {
-                nodeFill = "#eab308"; nodeStroke = "#eab308"; textFill = "white";
+                nodeFill = "var(--vis-open-fill, #eab308)"; nodeStroke = "var(--vis-open-stroke, #eab308)"; textFill = "white";
               } else if (isAStarVisited) {
-                nodeFill = "#3b82f6"; nodeStroke = "#3b82f6"; textFill = "white";
+                nodeFill = "var(--vis-visited-astar-fill, #3b82f6)"; nodeStroke = "var(--vis-visited-astar-stroke, #3b82f6)"; textFill = "white";
               } else {
-                nodeFill = "white"; nodeStroke = "var(--color-neutral-300)"; textFill = "var(--color-surface-800)";
+                nodeFill = "var(--vis-inactive-node-fill, white)"; nodeStroke = "var(--vis-inactive-node-stroke, var(--color-neutral-300))"; textFill = "var(--vis-inactive-text-fill, var(--color-surface-800))";
               }
             }
 
@@ -434,14 +522,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
                   cx={node.x}
                   cy={node.y}
                   r="6"
-                  fill={active ? "var(--color-primary)" : "white"}
-                  stroke={
-                    type === "bellman-ford" && bellmanFrame?.activeEdge?.from === edge.from && bellmanFrame?.activeEdge?.to === edge.to
-                      ? "orange"
-                      : active
-                        ? "var(--color-primary)"
-                        : "var(--color-neutral-300)"
-                  }
                   fill={nodeFill}
                   stroke={nodeStroke}
                   strokeWidth="1.5"
@@ -531,7 +611,6 @@ export default function GraphAnimation({ type = "bfs", title = "Graph" }) {
         <div className="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-950">
           <p className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
             Step {step + 1} of {totalSteps}
-            Step {step + 1} of {effectiveLength}
           </p>
           <div className="space-y-2">
             {type === "a-star" ? (

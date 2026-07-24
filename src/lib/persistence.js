@@ -1,4 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("persistence");
 
 const STORAGE_KEYS = {
   PRACTICE_PROGRESS: 'algobuddy_practice_progress',
@@ -43,12 +46,12 @@ class PersistenceManager {
         .select('*')
         .eq('user_id', userId);
       if (error) {
-        console.error(`Failed to load ${table} from server:`, error);
+        log.error({ table, err: error }, "Failed to load from server.");
         return null;
       }
       return data;
     } catch (e) {
-      console.error(`Error loading ${table} from server:`, e);
+      log.error({ table, err: e }, "Error loading from server.");
       return null;
     }
   }
@@ -59,10 +62,10 @@ class PersistenceManager {
         .from(table)
         .upsert(data, { onConflict: conflictColumns });
       if (error) {
-        console.error(`Failed to sync ${table} to server:`, error);
+        log.error({ table, err: error }, "Failed to sync to server.");
       }
     } catch (e) {
-      console.error(`Error syncing ${table} to server:`, e);
+      log.error({ table, err: e }, "Error syncing to server.");
     }
   }
 

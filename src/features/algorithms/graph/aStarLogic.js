@@ -169,7 +169,7 @@ export function* aStarGenerator(nodeList, edgeList, startNode, goalNode) {
     activeEdge: null,
     phase: "no_path",
     goalNode,
-    description: `No path exists from ${startNode} to ${goalNode}.`,
+    description: `Target ${goalNode} is unreachable (disconnected graph).`,
     line: 6,
   };
 }
