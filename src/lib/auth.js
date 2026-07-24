@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseConfig as _getSupabaseConfig } from "./shared-utils.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("auth");
 
 // For testing purposes, allow overriding the dependency functions
 let cookiesImpl = null;
@@ -22,7 +25,7 @@ export function getSupabaseConfig() {
 export async function getAuthenticatedUser() {  
   const config = getSupabaseConfig();
   if (!config) {
-    console.error("[Authentication Helper] Config error: Missing or invalid Supabase environment variables.");
+    log.error("Config error: Missing or invalid Supabase environment variables.");
     return { success: false, type: "CONFIG_ERROR" };
   }
 
@@ -78,19 +81,19 @@ export async function getAuthenticatedUser() {
     }
 
     if (raceResult?.__timedOut) {
-      console.warn("[Authentication Helper] Auth check timed out — treating as unauthenticated.");
+      log.warn("Auth check timed out — treating as unauthenticated.");
       return { success: false, type: "UNAUTHENTICATED" };
     }
 
     const { data, error } = raceResult;
 
     if (error) {
-      console.error("[Authentication Helper] Auth provider error during getUser:", error.message || error);
+      log.error({ err: error }, "Auth provider error during getUser.");
       return { success: false, type: "AUTH_PROVIDER_ERROR" };
     }
 
     if (!data || !data.user) {
-      console.warn("[Authentication Helper] Unauthenticated request: No user session found.");
+      log.warn("Unauthenticated request: No user session found.");
       return { success: false, type: "UNAUTHENTICATED" };
     }
 
@@ -99,10 +102,10 @@ export async function getAuthenticatedUser() {
     // Network-level errors (e.g. UND_ERR_CONNECT_TIMEOUT) still reach here.
     // The explicit timeout case is now handled above via the __timedOut sentinel.
     if (err?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-      console.warn("[Authentication Helper] Network timeout — treating as unauthenticated.");
+      log.warn("Network timeout — treating as unauthenticated.");
       return { success: false, type: "UNAUTHENTICATED" };
     }
-    console.error("[Authentication Helper] Critical exception during authentication verification:", err.message || err);
+    log.error({ err }, "Critical exception during authentication verification.");
     return { success: false, type: "AUTH_PROVIDER_ERROR" };
   }
 }
@@ -120,7 +123,7 @@ export async function verifySupabaseToken(token) {
 
   const config = getSupabaseConfig();
   if (!config) {
-    console.error("[verifySupabaseToken] Config error: Missing Supabase environment variables.");
+    log.error("Config error: Missing Supabase environment variables.");
     return null;
   }
 
@@ -133,13 +136,13 @@ export async function verifySupabaseToken(token) {
 
     const { data, error } = await adminClient.auth.getUser(token);
     if (error || !data?.user) {
-      console.warn("[verifySupabaseToken] Token verification failed:", error?.message || "No user returned");
+      log.warn({ reason: error?.message ?? "No user returned" }, "Token verification failed.");
       return null;
     }
 
     return data.user;
   } catch (err) {
-    console.error("[verifySupabaseToken] Error:", err.message || err);
+    log.error({ err }, "Error in verifySupabaseToken.");
     return null;
   }
 }
