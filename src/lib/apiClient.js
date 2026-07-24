@@ -114,7 +114,11 @@ class ApiClient {
         // refresh failed
       }
 
-      localStorage.removeItem("supabase.auth.token");
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch {
+        // signOut failed — best-effort cleanup
+      }
 
       if (typeof window !== "undefined") {
         window.location.href = "/login";
