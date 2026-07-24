@@ -920,11 +920,8 @@ if (typeof isAnagram !== 'function' || isAnagram("anagram", "nagaram") !== true 
         }
       }
 
-      // Clean up rate limit and socket key
+      // Clean up socket key (rate limit key expires naturally via TTL)
       await redisClient.del(`{arena}:socket:${socket.id}`);
-      if (socket.data && socket.data.userId) {
-        await redisClient.del(`{arena}:ratelimit:${socket.data.userId}`);
-      }
 
       console.log(`User disconnected: ${socket.id}`);
     } catch (error) {
